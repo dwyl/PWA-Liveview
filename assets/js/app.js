@@ -5,14 +5,13 @@ import { LiveSocket } from "phoenix_live_view";
 import topbar from "../vendor/topbar.cjs";
 import initYdoc from "./initYJS.js";
 
-let liveSocket = null;
+// let liveSocket = null;
 
 async function init() {
   const ydoc = await initYdoc();
   const { solHook } = await import("./solHook");
   const SolHook = solHook(ydoc);
-  window.SolHook = SolHook;
-  liveSocket = new LiveSocket("/live", Socket, {
+  const liveSocket = new LiveSocket("/live", Socket, {
     longPollFallbackMs: 2500,
     params: { _csrf_token: csrfToken },
     hooks: { SolHook },

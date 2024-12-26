@@ -26,13 +26,22 @@ if (deploy) {
     splitting: true,
     metafile: true,
   };
-  let result = await build(opts);
-  fs.writeFileSync("meta.json", JSON.stringify(result.metafile, null, 2));
+  await build(opts);
+  // fs.writeFileSync("meta.json", JSON.stringify(result.metafile, null, 2));
+  process.exit(0);
 }
 
 if (watch) {
   context(opts)
-    .then((ctx) => ctx.watch())
+    .then(async (ctx) => {
+      await ctx.watch();
+
+      process.stdin.on("close", () => {
+        process.exit(0);
+      });
+
+      process.stdin.resume();
+    })
     .catch((error) => {
       console.log(`Build error: ${error}`);
       process.exit(1);

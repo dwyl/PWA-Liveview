@@ -7,16 +7,32 @@ export const solHook = (ydoc) => ({
   },
   async mounted() {
     const Counter = lazy(() => import("./counter.jsx"));
+    const TextInput = lazy(() => import("./textInput.jsx"));
 
     this.handleEvent("user", ({ user_id }) => {
-      const userID = String(user_id);
-      const countMap = ydoc.getMap("count").get(userID);
-      let c = 0;
+      let userID = String(user_id),
+        countMap = ydoc.getMap("count").get(userID),
+        textMap = ydoc.getMap("text").get(userID),
+        counter = 0,
+        text = "";
+
       if (countMap) {
-        c = ydoc.getMap("count").get(userID).c;
+        counter = countMap.c;
       }
+
+      if (textMap) {
+        text = textMap.t;
+      }
+
       render(
-        () => <Counter userID={user_id} val={c} max={10} ydoc={ydoc} />,
+        () => (
+          <>
+            <Counter userID={userID} val={counter} max={10} ydoc={ydoc} />
+            <br />
+            <p>Text saved on every change:</p>
+            <TextInput ydoc={ydoc} userID={userID} val={text} />
+          </>
+        ),
         this.el
       );
     });
