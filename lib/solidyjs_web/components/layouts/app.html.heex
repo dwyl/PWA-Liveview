@@ -1,0 +1,27 @@
+<header class="px-4 sm:px-6 lg:px-8">
+  <div class="flex items-center justify-between border-b border-zinc-100 py-3 text-sm">
+    <div class="flex items-center gap-4">
+      <a href="/">
+        <img src={~p"/images/logo.svg"} width="36" alt="phoenix" />
+      </a>
+      <p class="bg-brand/5 text-brand rounded-full px-2 font-medium leading-6">
+        v{Application.spec(:phoenix, :vsn)}
+      </p>
+      <p>
+        <img width="30px" alt="status" src={~p"/images/yjs.png"} />
+      </p>
+      <p>
+        <img width="30px" alt="status" src={~p"/images/solidjs.svg"} />
+      </p>
+      <p>
+        <img width="30px" alt="status" id="online-status" src={~p"/images/online.svg"} />
+      </p>
+    </div>
+  </div>
+</header>
+<main class="px-4 py-20 sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-2xl">
+    <.flash_group flash={@flash} />
+    {@inner_content}
+  </div>
+</main>
