@@ -64,7 +64,7 @@ defmodule Solidyjs.MixProject do
   defp aliases do
     [
       # setup: ["deps.get", "assets.setup", "assets.build"],
-      watch: ["cmd --cd assets node build.js --watch"],
+      # watch: ["cmd --cd assets node build.js --watch"],
       # "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
       # "assets.build": ["tailwind solidyjs", "esbuild solidyjs"],
       "assets.deploy": [

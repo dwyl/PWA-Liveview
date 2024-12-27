@@ -13,7 +13,7 @@ export default function TextInput(props) {
 
   createEffect(async () => updateStore(props.ydoc, props.userID, text()));
   return (
-    <div id="inputDiv" class="w-full max-w-[300px] relative px-[0] py-[10px]">
+    <div id="inputText" class="w-full max-w-[300px] relative px-[0] py-[10px]">
       <input
         id="textInput"
         class="w-full m-0"

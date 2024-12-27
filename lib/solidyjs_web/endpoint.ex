@@ -23,7 +23,8 @@ defmodule SolidyjsWeb.Endpoint do
     at: "/",
     from: :solidyjs,
     gzip: false,
-    only: SolidyjsWeb.static_paths()
+    only: SolidyjsWeb.static_paths(),
+    headers: %{"cache-control" => "public, max-age=31536000"}
 
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.

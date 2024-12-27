@@ -15,7 +15,21 @@ config :solidyjs, SolidyjsWeb.Endpoint,
   debug_errors: true,
   secret_key_base: "cOwEjvqFsw3kkx0aVeZDDPdVsLolgX9XRc5ve9BDvVsvwV4485cBFyuNVg+GlAke",
   watchers: [
-    node: ["build.js", "--watch", cd: Path.expand("../assets", __DIR__)],
+    npx: [
+      "vite",
+      "build",
+      "--mode",
+      "development",
+      "--watch",
+      "--config",
+      "vite.config.js",
+      cd: Path.expand("../assets", __DIR__)
+    ],
+    # node: [
+    #   "node_modules/vite/bin/vite.js",
+    #   cd: Path.expand("../assets", __DIR__)
+    # ],
+    # node: ["build.js", "--watch", cd: Path.expand("../assets", __DIR__)],
     # esbuild: {Esbuild, :install_and_run, [:solidyjs, ~w(--sourcemap=inline --watch)]},
     tailwind: {Tailwind, :install_and_run, [:solidyjs, ~w(--watch)]}
   ]

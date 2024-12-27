@@ -17,7 +17,11 @@ defmodule SolidyjsWeb do
   those modules here.
   """
 
-  def static_paths, do: ~w(assets fonts images favicon.ico robots.txt)
+  def static_paths,
+    do:
+      ~w(assets static fonts images favicon.ico robots.txt  sw.js manifest.webmanifest preload-helper.js)
+
+  # yjs.js preload-helper.js registerSW.js sw.js y-indexeddb.js web.js workbox-window.prod.es5.js)
 
   def router do
     quote do

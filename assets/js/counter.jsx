@@ -10,19 +10,18 @@ async function updateStore(ydoc, user_id, c) {
 }
 
 function remainderMod(n, d) {
-  console.log(n, d, d >= n ? n - (d % n) : n - d);
   return d > n ? n - (d % n) : n - d;
 }
 
 export default function Counter(props) {
   const ydoc = props.ydoc;
   const userID = String(props.userID);
-  const [count, setCount] = createSignal(10);
-  const [take, setTake] = createSignal(0);
+  const [count, setCount] = createSignal(props.val);
+  const [take, setTake] = createSignal(props.max - props.val);
 
   // first and only render
-  setCount(props.val);
   createEffect(async () => updateStore(ydoc, userID, count()));
+  createEffect(() => console.log(count()));
 
   return (
     <>
@@ -44,7 +43,7 @@ export default function Counter(props) {
         </div>
         <div class="w-2/3 max-w-full px-2">
           <div
-            id="inputDiv"
+            id="inputStock"
             class="w-full max-w-[300px] relative px-[0] py-[10px]"
           >
             <input
@@ -87,15 +86,6 @@ function Bins(props) {
         <Dynamic component={i() <= props.id ? BlueBin : BlackBin} value={i()} />
       )}
     </Index>
-  );
-}
-
-function Stock(props) {
-  const [stock, setStock] = createSignal(props.initStock);
-  return (
-    <div>
-      <button>Put Order: +</button>
-    </div>
   );
 }
 
