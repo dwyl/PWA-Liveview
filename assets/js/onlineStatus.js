@@ -4,24 +4,34 @@ const lineStatus = {
 };
 
 function setOnline(el, status) {
+  if (!el) return;
   el.style.opacity = status.opacity;
   el.style.backgroundColor = status.bg;
 }
 
 export function statusListener() {
   const domEl = document.getElementById("online-status");
-  window.onoffline = () => {
+
+  // Check initial status immediately
+  setOnline(domEl, navigator.onLine ? lineStatus.on : lineStatus.off);
+
+  // if (!navigator.onLine && navigator.serviceWorker.controller) {
+  //   navigator.serviceWorker.controller.postMessage({
+  //     type: "IS_OFFLINE",
+  //   });
+  // }
+
+  window.addEventListener("offline", () => {
     setOnline(domEl, lineStatus.off);
-    navigator.serviceWorker.controller.postMessage({
-      type: `IS_OFFLINE`,
-      // add more properties if needed
-    });
-  };
-  window.ononline = () => {
+    // navigator.serviceWorker.controller?.postMessage({
+    //   type: "IS_OFFLINE",
+    // });
+  });
+
+  window.addEventListener("online", () => {
     setOnline(domEl, lineStatus.on);
-    navigator.serviceWorker.controller.postMessage({
-      type: `IS_ONLINE`,
-      // add more properties if needed
-    });
-  };
+    // navigator.serviceWorker.controller?.postMessage({
+    //   type: "IS_ONLINE",
+    // });
+  });
 }

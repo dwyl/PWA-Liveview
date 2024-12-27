@@ -1,6 +1,6 @@
 import { render } from "solid-js/web";
 import { lazy } from "solid-js";
-import { updateSW } from "./app.js";
+// import { updateSW } from "./app.js";
 
 export const SolidComp = ({ ydoc, user_id, el }) => {
   const Counter = lazy(() => import("./counter.jsx"));
@@ -46,17 +46,17 @@ export const solHook = (ydoc) => ({
     console.log("destroyed");
   },
   async mounted() {
-    let self = this;
-
-    console.log("mounted");
-
     this.handleEvent("user", ({ user_id }) => {
-      // localStorage.setItem("cached_user_id", user_id);
+      if (!ydoc.getMap("user").get("id")) {
+        ydoc.getMap("count").set(user_id.toString(), { c: 10 });
+      }
       ydoc.getMap("user").set("id", user_id.toString());
       SolidComp({ ydoc, user_id, el: this.el });
-      let c = ydoc.getMap("count").get(String(user_id));
-      console.log({ c }, { user_id });
-      self.pushEvent("stock", c);
+    });
+
+    ydoc.getMap("count").observe(() => {
+      const userID = ydoc.getMap("user").get("id");
+      this.pushEvent("stock", ydoc.getMap("count").get(userID));
     });
   },
 });

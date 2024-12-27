@@ -53,6 +53,10 @@ registerRoute(
   })
 );
 
+// self.addEventListener("message", (event) => {
+//   console.log(`[Message] event: `, event.data.type);
+// });
+
 // handle reconnection
 window.addEventListener("online", () => {
   isOffline = false;
@@ -60,19 +64,21 @@ window.addEventListener("online", () => {
   window.location.reload();
 });
 
-// window.addEventListener("offline", () => {
-//   if (isOffline) {
-//     isOffline = true;
-//     const container = document.getElementById("solid");
-//     if (container && window.ydoc) {
-//       window.SolidComp?.({
-//         ydoc: window.ydoc,
-//         user_id: localStorage.getItem("cached_user_id"),
-//         el: container,
-//       });
-//     }
-//   }
-// });
+window.addEventListener("offline", () => {
+  isOffline = true;
+  // if (!navigator.onLine || isOffline) {
+  //   console.log("SolidComp");
+  //   console.log(ydoc.getMap("user").get("id"));
+  //   const container = document.getElementById("solid");
+  //   if (container) {
+  //     return window.SolidComp({
+  //       ydoc: window.ydoc,
+  //       user_id: ydoc.getMap("user").get("id"),
+  //       el: container,
+  //     });
+  //   }
+  // }
+});
 
 // Caching HTML for Offline Use
 registerRoute(
@@ -155,17 +161,21 @@ async function init() {
   liveSocket.connect();
   window.liveSocket = liveSocket;
   window.ydoc = ydoc;
-  // if (isOffline) {
-  //   console.log("SolidComp");
-  //   const container = document.getElementById("solid");
-  //   if (container) {
-  //     return window.SolidComp({
-  //       ydoc: window.ydoc,
-  //       user_id: yodc.getMap("user").get("id"),
-  //       el: container,
-  //     });
-  //   }
-  // }
+
+  if (!navigator.onLine || isOffline) {
+    displayComponent();
+  }
+}
+
+function displayComponent() {
+  const container = document.getElementById("solid");
+  if (container) {
+    return window.SolidComp({
+      ydoc: window.ydoc,
+      user_id: ydoc.getMap("user").get("id"),
+      el: container,
+    });
+  }
 }
 
 init();
