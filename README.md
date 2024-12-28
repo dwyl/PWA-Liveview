@@ -403,10 +403,10 @@ export default defineConfig(({ command, mode }) => {
 ```
 </details>
 <br/>
+
 ## Manifest
 
 The "manifest.webmanifest" file will be generated from "vite.config.js".
-
 
 ```json
 {
@@ -425,6 +425,9 @@ The "manifest.webmanifest" file will be generated from "vite.config.js".
   ]
 }
 ```
+<br/>
+
+✅ Insert the links to the icons in the (root layout) HTML:
 
 ```html
 // root.html.heex
