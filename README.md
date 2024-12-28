@@ -67,7 +67,7 @@ When offline:
 - Changes are stored in IndexedDB
 - When back online, YJS will sync changes
 
-## pmpm and Vite setup
+## pnpm and Vite setup
 
 ## Vite config
 
