@@ -1,6 +1,13 @@
 # Solidyjs
 
-A real-time collaborative stock management system with offline support.
+An Elixir-LiveView webapp with a real-time collaborative system with offline support (PWA).
+
+Ingredients are:
+
+- Phoenix LiveView
+- Yjs
+- Vite-plugin-PWA
+- SolidJS
 
 ## Guide
 
