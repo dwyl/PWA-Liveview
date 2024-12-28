@@ -68,7 +68,7 @@ We used:
 </details>
 <br/>
 
-__Why `Vite` and not Esbuild__ ?
+➡️ __Why `Vite` and not Esbuild__ ?
 
 For developing the app, `Esbuild` is comfortable and perfect.
 
@@ -83,7 +83,7 @@ For example, in this code, the biggest is `Phoenix` (30kB gzip).
 
 This is important for the first rendering, and since you are doing SSR, you want to keep the first rendering performance.
 
-__Why `SolidJS`__ ?
+➡️ __Why `SolidJS`__ ?
 
 The idea is to have a LiveView skeleton with reactive components with a __minimal__ impact on the code.
 
