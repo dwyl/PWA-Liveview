@@ -1,4 +1,4 @@
-# ExLvYjsPWA
+# ExLivePWA
 
 An Elixir-LiveView demo webapp to demonstrate how to make a real-time collaborative app with offline support (PWA).
 
