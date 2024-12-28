@@ -45,12 +45,19 @@ If you go through the code, you will notice that the impact of using `SolidJS` i
 
 # Table of contents
 1[Guide](#guilde)
+
 2[pnpm and Vite setup](#pnpm-and-vite-setup)
+
 3[Vite config](#vite-config)
+
 4[Manifest](#manifest)
-5[Yjs, persistence and CRDT](#yjs-persistence-and-crdt)
-6[Workbox strategy]()#workbox-strategy)
+
+5[Yjs and persistence and CRDT](#yjs-persistence-and-crdt)
+
+6[Workbox strategy](#workbox-strategy)
+
 7[Data flow](#data-flow)
+
 8[Video and screenshots](#video-and-screenshots)
 
 ## Guide
@@ -73,7 +80,7 @@ When offline:
 
 ## Manifest
 
-## Yjs, persistence and CRDT strategy(ies)
+## Yjs and persistence and CRDT strategy
 
 ## Workbox strategy
 
