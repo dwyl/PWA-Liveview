@@ -129,15 +129,6 @@ def static_paths,
     do: ~w(assets fonts images favicon.ico robots.txt  sw.js manifest.webmanifest)
 ```
 
-### Offline Support
-
-YJS's IndexedDB persistence handles offline support automatically.
-
-When offline:
-
-- Users can still modify the stock locally
-- Changes are stored in IndexedDB
-- When back online, YJS will sync changes
 
 ## pnpm and Vite setup
 
@@ -187,6 +178,15 @@ You will need is to have at least two very low resolution icons of size 192 and 
 A generator: <https://favicon.inbrowser.app/tools/favicon-generator>
 
 ## Yjs and persistence and CRDT strategy
+
+YJS's IndexedDB persistence handles offline support automatically.
+
+When offline:
+
+- Users can still modify the stock locally
+- Changes are stored in IndexedDB
+- When back online, YJS will sync changes
+
 
 ## Workbox strategy
 
