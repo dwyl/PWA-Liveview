@@ -66,7 +66,7 @@ We integrated a few languages and libraries in the demo:
     "workbox-window": "^7.3.0",
     "y-indexeddb": "^9.0.12",
     "yjs": "^13.6.21",
-     "leaflet": "^1.9.4"
+    "leaflet": "^1.9.4"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.9",
