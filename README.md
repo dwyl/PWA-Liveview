@@ -2,7 +2,7 @@
 
 An Elixir-LiveView demo webapp to demonstrate how to make a real-time collaborative app with offline support (PWA).
 
-As an application, geolocation on maps in remote areas with vey little or no signal that we can save and share.
+As an application, geolocation on maps in remote areas with very little or no signal that we can save and share.
 
 # Table of contents
 
