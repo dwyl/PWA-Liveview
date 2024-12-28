@@ -6,7 +6,7 @@ An Elixir-LiveView demo webapp to demonstrate how to make a real-time collaborat
 
 0[Ingredients and comments](#ingredients-and-comments)
 
-1[Guide](#guilde)
+1[Guides](#guides)
 
 2[pnpm and Vite setup](#pnpm-and-vite-setup)
 
@@ -111,9 +111,22 @@ If you go through the code, you will notice that the impact of using `SolidJS` i
 
 
 
-## Guide
+## Guides
 
-<https://vite-pwa-org.netlify.app/guide/>
+Vite PWA: <https://vite-pwa-org.netlify.app/guide/>
+
+Mozilla: <https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Tutorials/js13kGames/Offline_Service_workers>
+
+* how vite-plugin-pwa builds the service worker:
+<https://vite-pwa-org.netlify.app/guide/cookbook.html>
+It will generate the `sw.js`  and the `manifest.webmanifest` files that are served by `Phoenix`, in the root folder "priv/static".
+
+✅ modify the static paths:
+
+```elixir
+def static_paths,
+    do: ~w(assets fonts images favicon.ico robots.txt  sw.js manifest.webmanifest)
+```
 
 ### Offline Support
 
@@ -130,6 +143,37 @@ When offline:
 ## Vite config
 
 ## Manifest
+
+```json
+// manifest.webmanifest
+{
+  "name": "ExLivePWA",
+  "short_name": "ExLivePWA",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "lang": "en",
+  "scope": "/",
+  "description": "A LiveView + SolidJS PWA and Yjs demo",
+  "theme_color": "#ffffff",
+  "icons": [
+    { "src": "/images/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/images/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
+```
+
+```html
+// root.html.heex
+<head>[
+[...]
+<link rel="icon-192" href={~p"/images/icon-192.png"} />
+<link rel="icon-512" href={~p"/images/icon-512.png"} />
+<link rel="icon" href="/favicon.ico" sizes="48x48" />
+<link rel="manifest" href="/manifest.webmanifest" />
+[...]
+</head>
+```
 
 ## Yjs and persistence and CRDT strategy
 
