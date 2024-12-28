@@ -135,7 +135,8 @@ I opted for `SolidJS` with is very lightweight and fast.
 In fact, both  `Svelte` and `SolidJS` are comparable. in terms of performance.
 
 However, `SolidJS` is very close to Vanilla Javascript with a touch of `React`
-for the style (like `LiveView`) whilst _not at all_ for `Svelte`.
+for the style (like `LiveView`) whilst _not at all_ for `Svelte`. 
+The main rule with `SolidJS` is: _don't destructure the props_ and you are good to go.
 
 If you go through the code, you will notice that the impact of using `SolidJS` is minimal on the code and very lightweight.
 
