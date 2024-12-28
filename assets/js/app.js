@@ -1,20 +1,14 @@
 // Include phoenix_html to handle method=PUT/DELETE in forms and buttons.
 import "phoenix_html";
-import { Socket } from "phoenix";
-import { LiveSocket } from "phoenix_live_view";
-import topbar from "../vendor/topbar.cjs";
-import initYdoc from "./initYJS.js";
-
 import { registerSW } from "virtual:pwa-register";
 import { registerRoute } from "workbox-routing";
 import { NetworkFirst, StaleWhileRevalidate } from "workbox-strategies";
-import { solHook } from "./solHook.jsx";
 
-let isOffline = false,
-  ydoc = null,
-  csrfToken = document
-    .querySelector("meta[name='csrf-token']")
-    .getAttribute("content");
+let isOffline = false;
+
+const csrfToken = document
+  .querySelector("meta[name='csrf-token']")
+  .getAttribute("content");
 
 export const updateSW = registerSW({
   onNeedRefresh() {
@@ -151,8 +145,14 @@ self.addEventListener("fetch", (event) => {
 });
 
 async function init() {
-  ydoc = await initYdoc();
+  const { default: initYdoc } = await import("./initYJS.js");
+  const ydoc = await initYdoc();
+
+  const { solHook } = await import("./solHook.jsx");
   const SolHook = solHook(ydoc);
+
+  const { LiveSocket } = await import("phoenix_live_view");
+  const { Socket } = await import("phoenix");
   const liveSocket = new LiveSocket("/live", Socket, {
     longPollFallbackMs: 2500,
     params: { _csrf_token: csrfToken },
@@ -161,6 +161,25 @@ async function init() {
   liveSocket.connect();
   window.liveSocket = liveSocket;
   window.ydoc = ydoc;
+
+  // starts with longpoll
+  // liveSocket.getSocket().onOpen(async () => {
+  //   try {
+  //     const url = new URL(window.location.href);
+  //     url.searchParams.set("bypass_service_worker", Date.now().toString());
+
+  //     const response = await fetch(url);
+  //     console.log("response", response);
+  //     if (response.redirected) {
+  //       window.location.replace(response.url);
+  //     }
+  //   } catch (error) {
+  //     console.error(
+  //       "Error while checking for redirection on LiveView socket connection.",
+  //       error
+  //     );
+  //   }
+  // });
 
   if (!navigator.onLine || isOffline) {
     displayComponent();
@@ -172,7 +191,7 @@ function displayComponent() {
   if (container) {
     return window.SolidComp({
       ydoc: window.ydoc,
-      user_id: ydoc.getMap("user").get("id"),
+      userID: localStorage.getItem("userID"),
       el: container,
     });
   }
@@ -180,9 +199,21 @@ function displayComponent() {
 
 init();
 
+// Show online/offline status
 import("./onlineStatus").then(({ statusListener }) => statusListener());
 
 // Show progress bar on live navigation and form submits
-topbar.config({ barColors: { 0: "#29d" }, shadowColor: "rgba(0, 0, 0, .3)" });
-window.addEventListener("phx:page-loading-start", (_info) => topbar.show(300));
-window.addEventListener("phx:page-loading-stop", (_info) => topbar.hide());
+import("../vendor/topbar.cjs").then(({ default: topbar }) => {
+  topbar.config({ barColors: { 0: "#29d" }, shadowColor: "rgba(0, 0, 0, .3)" });
+  window.addEventListener("phx:page-loading-start", (_info) =>
+    topbar.show(300)
+  );
+  window.addEventListener("phx:page-loading-stop", (_info) => topbar.hide());
+});
+
+window.addEventListener("phx:live_reload:attached", ({ detail: reloader }) => {
+  // Enable server log streaming to client.
+  // Disable with reloader.disableServerLogs()
+  reloader.enableServerLogs();
+  window.liveReloader = reloader;
+});

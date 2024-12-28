@@ -1,18 +1,19 @@
 # Solidyjs
 
-To start your Phoenix server:
+A real-time collaborative stock management system with offline support.
 
-  * Run `mix setup` to install and setup dependencies
-  * Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
+#### Offline Support
 
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+YJS's IndexedDB persistence handles offline support automatically.
 
-Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
+When offline:
 
-## Learn more
+- Users can still modify the stock locally
+- Changes are stored in IndexedDB
+- When back online, YJS will sync changes
 
-  * Official website: https://www.phoenixframework.org/
-  * Guides: https://hexdocs.pm/phoenix/overview.html
-  * Docs: https://hexdocs.pm/phoenix
-  * Forum: https://elixirforum.com/c/phoenix-forum
-  * Source: https://github.com/phoenixframework/phoenix
+#### Synchronization Flow
+
+- User A changes stock → YJS update → Hook observes → LiveView broadcast
+- LiveView broadcasts to all users → Hook receives "new_stock" → YJS update
+- YJS update → All components observe change → UI updates

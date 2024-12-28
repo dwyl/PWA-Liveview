@@ -33,7 +33,7 @@ const buildOps = {
       "js/onlineStatus.js",
       "js/solHook.jsx",
       "js/counter.jsx",
-      "js/textInput.jsx",
+      "js/SolidComp.jsx",
       "js/initYJS.js",
     ],
     output: {

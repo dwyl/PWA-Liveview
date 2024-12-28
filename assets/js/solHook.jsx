@@ -1,62 +1,50 @@
-import { render } from "solid-js/web";
-import { lazy } from "solid-js";
-// import { updateSW } from "./app.js";
-
-export const SolidComp = ({ ydoc, user_id, el }) => {
-  const Counter = lazy(() => import("./counter.jsx"));
-  const TextInput = lazy(() => import("./textInput.jsx"));
-  let userID = String(user_id),
-    countMap = ydoc.getMap("count").get(userID),
-    textMap = ydoc.getMap("text").get(userID),
-    counter = 0,
-    text = "";
-
-  if (countMap) {
-    counter = countMap.c;
-  }
-
-  if (textMap) {
-    text = textMap.t;
-  }
-
-  render(
-    () => (
-      <>
-        {/* <button
-          class="font-bold py-2 px-4 rounded border border-gray-800"
-          onClick={() => updateSW(true)}
-        >
-          Refresh
-        </button> */}
-
-        <Counter userID={userID} val={counter} max={10} ydoc={ydoc} />
-        <br />
-        <p>Text saved on every change:</p>
-        <TextInput ydoc={ydoc} userID={userID} val={text} />
-      </>
-    ),
-    el
-  );
-};
-
-window.SolidComp = SolidComp;
+import { SolidComp } from "./SolidComp";
 
 export const solHook = (ydoc) => ({
   destroyed() {
     console.log("destroyed");
   },
   async mounted() {
-    this.handleEvent("user", ({ user_id }) => {
-      if (!ydoc.getMap("user").get("id")) {
-        ydoc.getMap("count").set(user_id.toString(), { c: 10 });
+    let isHandlingServerUpdate = false,
+      userID = null;
+
+    this.handleEvent("user", async ({ user_id, global_stock, max }) => {
+      userID = String(user_id);
+      localStorage.setItem("userID", userID);
+
+      const stockMap = ydoc.getMap("stock");
+      if (!stockMap.has("globalStock")) {
+        stockMap.set("globalStock", { c: Number(global_stock) });
       }
-      ydoc.getMap("user").set("id", user_id.toString());
-      SolidComp({ ydoc, user_id, el: this.el });
+
+      SolidComp({ ydoc, userID, max, el: this.el });
     });
 
-    ydoc.getMap("count").observe(() => {
-      const userID = ydoc.getMap("user").get("id");
-      this.pushEvent("stock", ydoc.getMap("count").get(userID));
+    this.handleEvent("new_stock", async ({ c }) => {
+      isHandlingServerUpdate = true;
+      console.log("Received broadcast stock update:", c);
+      try {
+        const stockMap = ydoc.getMap("stock");
+        stockMap.set("globalStock", { c });
+      } finally {
+        isHandlingServerUpdate = false;
+      }
+    });
+
+    const stockMap = ydoc.getMap("stock");
+    stockMap.observe((event) => {
+      if (!isHandlingServerUpdate) {
+        console.log(Array.from(event.changes.keys.entries()));
+        const globalStock = stockMap.get("globalStock");
+        if (globalStock) {
+          // Push to LiveView only if change originated from current user
+          // This prevents broadcast loops
+          this.pushEvent("stock", {
+            user_id: localStorage.getItem("userID"),
+            c: globalStock.c,
+          });
+        }
+      }
     });
   },
 });

@@ -60,6 +60,7 @@ config :solidyjs, SolidyjsWeb.Endpoint,
 # Watch static and templates for browser reloading.
 config :solidyjs, SolidyjsWeb.Endpoint,
   live_reload: [
+    web_console_logger: true,
     patterns: [
       ~r"priv/static/(?!uploads/).*(js|css|png|jpeg|jpg|gif|svg)$",
       ~r"lib/solidyjs_web/(controllers|live|components)/.*(ex|heex)$"

@@ -1,69 +1,47 @@
 // import initYdoc from "./initYJS.js";
-import { createSignal, createEffect, Index } from "solid-js";
+import { Index } from "solid-js";
 import { Dynamic } from "solid-js/web";
 
-async function updateStore(ydoc, user_id, c) {
-  const countMap = ydoc.getMap("count");
-  const userID = String(user_id);
-  countMap.set(userID, { user_id, c: Number(c) });
-  // return Array.from(countMap.values());
-}
-
-function remainderMod(n, d) {
-  return d > n ? n - (d % n) : n - d;
-}
-
 export default function Counter(props) {
-  const ydoc = props.ydoc;
-  const userID = String(props.userID);
-  const [count, setCount] = createSignal(props.val);
-  const [take, setTake] = createSignal(props.max - props.val);
+  const { max, userID, onStockChange } = props;
 
-  // first and only render
-  createEffect(async () => updateStore(ydoc, userID, count()));
-  createEffect(() => console.log(count()));
+  const handleTake = () => {
+    // keep a circular range for the demo
+    const newStock = props.stock === 0 ? max : props.stock - 1;
+    onStockChange(newStock);
+  };
 
   return (
     <>
-      <hr />
+      <h1 class="mt-4 mb-4 text-2xl text-gray-600">SolidJS dynamic</h1>
+      <div class="text-sm text-gray-600 mt-4 mb-2">User ID: {userID}</div>
       <button
-        class="font-bold py-2 px-4 rounded border border-gray-800"
-        onClick={() => {
-          setTake(take() + 1);
-          setCount(remainderMod(props.max, take()));
-        }}
+        class="font-bold py-2 mt-4 px-4 rounded border border-gray-800"
+        onClick={handleTake}
       >
         Take from stock
       </button>
-      <div class="flex flex-row items-start justify-between">
-        <div class="flex flex-col items-center w-1/3">
-          <br />
-          <p class="mt-2 text-center">Stock: {count()}</p>
-          <br />
-        </div>
-        <div class="w-2/3 max-w-full px-2">
-          <div
-            id="inputStock"
-            class="w-full max-w-[300px] relative px-[0] py-[10px]"
-          >
-            <input
-              id="rangeInput"
-              class="w-full m-0"
-              type="range"
-              min="0"
-              max={props.max}
-              step="1"
-              value={count()}
-              // onChange={(e) => setCount(e.currentTarget.value)}
-            />
+      <div
+        id="inputStock"
+        class="w-full mt-4 max-w-[300px] relative px-[0] py-[10px]"
+      >
+        <label for="rangeInput">Read-only Stock: {props.stock}</label>
+        <input
+          id="rangeInput"
+          class="w-full m-0 mt-4"
+          type="range"
+          min="0"
+          max={max}
+          step="1"
+          value={props.stock}
+          disabled
+        />
 
-            <div
-              id="binContainer"
-              class="flex justify-between mt-[10px] px-[10px] py-[0] box-border"
-            >
-              <Bins id={count()} max={props.max} />
-            </div>
-          </div>
+        <div
+          id="binContainer"
+          class="flex justify-between mt-[10px] px-[10px] py-[0] box-border"
+        >
+          <Bins id={props.stock} max={max} />
         </div>
       </div>
     </>
@@ -71,15 +49,16 @@ export default function Counter(props) {
 }
 
 const BlueBin = (props) => (
-  <div style={"color: blue; font-wieght: bold"}>{props.value}</div>
+  <div style={"color: blue; font-weight: bold"}>{props.value}</div>
 );
 
 const BlackBin = (props) => (
-  <div style={"color: black; font-wieght: normal"}>{props.value}</div>
+  <div style={"color: black; font-weight: normal"}>{props.value}</div>
 );
 
 function Bins(props) {
   const range = [...Array(props.max + 1).keys()];
+  console.log("Bins", props.max, range);
   return (
     <Index each={range}>
       {(i) => (
@@ -88,31 +67,3 @@ function Bins(props) {
     </Index>
   );
 }
-
-// const createOrReadFromDB = async (props) => {
-//   const res = await initYdoc({ yodc: props.ydoc, user_id: props.userID });
-//   console.log("initTdoc", res);
-// };
-// async function initYdoc({ ydoc, user_id }) {
-//   const userID = String(user_id);
-//   const usersMap = ydoc.getMap("users");
-//   const countMap = ydoc.getMap("count");
-
-//   let user = usersMap.get(userID);
-//   if (!user) {
-//     console.log("create user");
-//     user = { id: userID, name: "toto" };
-//     usersMap.set(userID, user);
-//   }
-
-//   let count = countMap.get(userID);
-//   if (!count) {
-//     console.log("create count");
-//     countMap.set(userID, { userID: userID, c: 0 });
-//   }
-
-//   // const users = Object.fromEntries(usersMap.entries());
-//   const counters = Object.fromEntries(countMap.entries());
-
-//   return counters;
-// }

@@ -8,6 +8,7 @@ defmodule SolidyjsWeb.Router do
     plug :put_root_layout, html: {SolidyjsWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug :set_user_id
   end
 
   pipeline :api do
@@ -19,6 +20,18 @@ defmodule SolidyjsWeb.Router do
 
     # get "/", PageController, :home
     live "/", CounterLive
+  end
+
+  def set_user_id(conn, _opts) do
+    conn
+    |> get_session(:user_id)
+    |> case do
+      nil ->
+        Plug.Conn.put_session(conn, :user_id, :rand.uniform(1000))
+
+      _user_id ->
+        conn
+    end
   end
 
   # Other scopes may use custom stacks.

@@ -4,7 +4,7 @@ export default async function initYJS() {
   const { IndexeddbPersistence } = await import("y-indexeddb");
   const storeName = "cart-store";
   const ydoc = new Y.Doc();
-  const persistence = new IndexeddbPersistence(storeName, ydoc);
-  await persistence.whenSynced; // Wait until the state is fully loaded
+  const provider = new IndexeddbPersistence(storeName, ydoc);
+  await provider.whenSynced; // Wait until the state is fully loaded
   return ydoc;
 }
