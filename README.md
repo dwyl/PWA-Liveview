@@ -430,7 +430,7 @@ The "manifest.webmanifest" file will be generated from "vite.config.js".
 ✅ Insert the links to the icons in the (root layout) HTML:
 
 ```html
-// root.html.heex
+<!-- root.html.heex -->
 <head>
 [...]
 <link rel="icon-192" href={~p"/images/icon-192.png"} />
