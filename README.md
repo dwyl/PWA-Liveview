@@ -43,6 +43,7 @@ However, `SolidJS` is very close to Vanilla Javascript with a touch of `React` f
 
 If you go through the code, you will notice that the impact of using `SolidJS` is minimal on the code.
 
+# Table of contents
 1[Guide](#guilde)
 2[pnpm and Vite setup](#pnpm-and-vite-setup)
 3[Vite config](#vite-config)
