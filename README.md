@@ -2,12 +2,71 @@
 
 An Elixir-LiveView demo webapp to demonstrate how to make a real-time collaborative app with offline support (PWA).
 
-Ingredients are:
+# Table of contents
+
+0[Ingredients and comments](#ingredients-and-comments)
+
+1[Guide](#guilde)
+
+2[pnpm and Vite setup](#pnpm-and-vite-setup)
+
+3[Vite config](#vite-config)
+
+4[Manifest](#manifest)
+
+5[Yjs and persistence and CRDT](#yjs-persistence-and-crdt)
+
+6[Workbox strategy](#workbox-strategy)
+
+7[Data flow](#data-flow)
+
+8[Video and screenshots](#video-and-screenshots)
+
+## Ingredients and comments
+
+We used:
 
 - `Phoenix LiveView`
 - `Yjs` & `y-indexeddb`
 - `Vite-plugin-PWA`
 - `SolidJS`
+
+<details><summary>Package.json</summary>
+  
+```json
+{
+  "name": "assets",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "type": "module",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "phoenix": "file:../deps/phoenix",
+    "phoenix_html": "file:../deps/phoenix_html",
+    "phoenix_live_view": "file:../deps/phoenix_live_view",
+    "solid": "link:virtual:pwa-register/solid",
+    "solid-js": "^1.9.3",
+    "workbox-routing": "^7.3.0",
+    "workbox-strategies": "^7.3.0",
+    "workbox-window": "^7.3.0",
+    "y-indexeddb": "^9.0.12",
+    "yjs": "^13.6.21"
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.9",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "vite": "^6.0.5",
+    "vite-plugin-pwa": "^0.21.1",
+    "vite-plugin-solid": "^2.11.0"
+  },
+```
+</details>
+<br/>
 
 __Why `Vite` and not Esbuild__ ?
 
@@ -43,22 +102,7 @@ However, `SolidJS` is very close to Vanilla Javascript with a touch of `React` f
 
 If you go through the code, you will notice that the impact of using `SolidJS` is minimal on the code.
 
-# Table of contents
-1[Guide](#guilde)
 
-2[pnpm and Vite setup](#pnpm-and-vite-setup)
-
-3[Vite config](#vite-config)
-
-4[Manifest](#manifest)
-
-5[Yjs and persistence and CRDT](#yjs-persistence-and-crdt)
-
-6[Workbox strategy](#workbox-strategy)
-
-7[Data flow](#data-flow)
-
-8[Video and screenshots](#video-and-screenshots)
 
 ## Guide
 
