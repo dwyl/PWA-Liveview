@@ -28,7 +28,7 @@ We used:
 
 - `Phoenix LiveView`
 - `Yjs` & `y-indexeddb`
-- `Vite-plugin-PWA`
+- `Vite-plugin-PWA` and `Workbox`
 - `SolidJS`
 
 <details><summary>Package.json</summary>
@@ -67,6 +67,14 @@ We used:
 ```
 </details>
 <br/>
+
+__Service Worker?__ It is `Web Worker` with tow superpower:
+* it can read/write to the `Cache API` with a request/reponse
+* proxy  HTTP GET requests
+
+This means: whenever the frontend sends an HTTP request to the Phoenix backend, the SW can proxy it (`GET` and  `POST` modulo `CORS`) and respond with its cache for `GET`. For `POST`, you need `IndexedDB`.
+
+It works over _HTTPS_.
 
 ➡️ __Why `Vite` and not Esbuild__ ?
 
