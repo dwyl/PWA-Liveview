@@ -36,8 +36,9 @@ We used:
 - `Vite-plugin-PWA` and `Workbox`
 - `SolidJS`
 
-<details><summary>Package.json</summary>
-  
+
+<details><summary>[package json](#package-json)</summary>
+
 ```json
 {
   "name": "assets",
@@ -144,6 +145,17 @@ def static_paths,
 
 
 ## pnpm and Vite setup
+
+Make your life easier with `pnpm` or `bun`.
+
+* [pnpm] Make your life easier with `pnpm`, save space, gain speed and confidence with symlinked libraries
+<https://pnpm.io/installation>
+
+* [Vite]: check "package.json"
+  
+```
+pnpm add -D vite
+```
 
 ## Vite config
 
