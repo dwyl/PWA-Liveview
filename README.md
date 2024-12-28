@@ -37,6 +37,8 @@ We used:
 - `Yjs` & `y-indexeddb`
 - `Vite-plugin-PWA` and `Workbox`
 - `SolidJS`
+- `Zig` to produce the WASM-browser file
+- `Leaflet`
 
 
 [package json](#package-json)
