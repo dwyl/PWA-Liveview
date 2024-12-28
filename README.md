@@ -26,7 +26,7 @@ An Elixir-LiveView demo webapp to demonstrate how to make a real-time collaborat
 
 [Add WebAssembly](#add-webassembly)
 
-[Demo with auto-spaning map with geolocalisation]#demo-with-auto-spaning-map-with-geolocalisation)
+[Demo with auto-spaning map with geolocalisation](#demo-with-auto-spaning-map-with-geolocalisation)
 
 
 ## Ingredients and comments
