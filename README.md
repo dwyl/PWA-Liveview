@@ -14,7 +14,7 @@ An Elixir-LiveView demo webapp to demonstrate how to make a real-time collaborat
 
 4[Manifest](#manifest)
 
-5[Yjs and persistence and CRDT](#yjs-,--persistence-and-crdt)
+5[Yjs for persistence and CRDT strategy](#yjs-for--persistence-and-crdt-strategy)
 
 6[Workbox strategy](#workbox-strategy)
 
@@ -177,7 +177,7 @@ You will need is to have at least two very low resolution icons of size 192 and 
 
 A generator: <https://favicon.inbrowser.app/tools/favicon-generator>
 
-## Yjs, persistence and CRDT strategy
+## Yjs for persistence and CRDT strategy
 
 YJS's IndexedDB persistence handles offline support automatically.
 
