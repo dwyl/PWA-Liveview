@@ -31,7 +31,7 @@ An Elixir-LiveView demo webapp to demonstrate how to make a real-time collaborat
 
 ## Ingredients and comments
 
-We used:
+We integrated a few languages and libraries in the demo:
 
 - `Phoenix LiveView`
 - `Yjs` & `y-indexeddb`
