@@ -263,9 +263,11 @@ Let's check!
 ## Demo with auto-spaning map with geolocalisation
 
 As long as the web app is initialized with network connectivity, 
-you can create a web app that uses geolocation even when offline
+you can create a web app that uses geolocation even when offline.
+
 Indeed, GPS functionality on mobile phones operates independently of internet
 or cellular connections.
+
 Your device's GPS receiver can obtain location data from satellites without requiring network access
 
 
