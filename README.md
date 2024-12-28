@@ -17,7 +17,7 @@ However, unless you are very experienced with `Workbox`, when you want to setup 
 
 This second point is valid for any LieView webapp. You should use dynamic imports for code splitting. `Vite` can use `Rollup`  to build so you can take advantage of its code splitting performance. This means that instead of loading a big chunk of 100kB or more, you end up with loading several JS files. For example here, the biggest is `Phoenix` (30kB gzip). This is important for the first rendering, and since you are doing SSR, you would degrade the first rendering performance.
 
-__ hy `SolidJS`__ ?
+__Why `SolidJS`__ ?
 
 The idea is to have a LiveView skeleton with reactive components with a __minimal__ impact on the code.
 
