@@ -150,10 +150,10 @@ def static_paths,
 
 Make your life easier with `pnpm` or `bun`.
 
-* [pnpm] Make your life easier with `pnpm`, save space, gain speed and confidence with symlinked libraries
+* pnpm: Make your life easier with `pnpm`, save space, gain speed and confidence with symlinked libraries
 <https://pnpm.io/installation>
 
-* [Vite]  Check the  (#package-json)
+* Vite:  [Check the package.json](#package-json)
   
 ```
 pnpm add -D vite
