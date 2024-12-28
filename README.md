@@ -99,7 +99,7 @@ you want to keep the first rendering performance.
 
 ➡️ __Why `SolidJS`__ ?
 
-The idea is to have a LiveView skeleton with reactive components with a __minimal__ impact on the code.
+The idea is to keep the `LiveView` skeleton but with all reactive components replaced, with a __minimal__ impact on the code.
 
 ❗️This part is optioniated.
 
