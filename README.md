@@ -145,7 +145,7 @@ Mozilla: <https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Tuto
 <https://vite-pwa-org.netlify.app/guide/cookbook.html>
 It will generate the `sw.js`  and the `manifest.webmanifest` files that are served by `Phoenix`, in the root folder "priv/static".
 
-✅ modify the static paths:
+✅ modify the static paths: the files "sw.js" and "manifest.webmanifest" are generated for you by `Vite` from the "vite.config.js" file.
 
 ```elixir
 def static_paths,
