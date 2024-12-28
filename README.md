@@ -72,16 +72,22 @@ We used:
 
 For developing the app, `Esbuild` is comfortable and perfect.
 
-However, unless you are very experienced with `Workbox`, when you want to setup a Servce Worker,
-it is safer to optin for `Vite`.
+However, unless you are very experienced with `Workbox`, 
+it is safer to optin for `Vite`
+when you want to setup a Servce Worker.
 
-This second point is valid for any `LiveView` webapp. You should use dynamic imports for code splitting. 
-`Vite` can use `Rollup`  to build so you can take advantage of its code splitting performance.
+This second point is valid for any `LiveView` webapp. 
+You should use dynamic imports for code splitting. 
+`Vite` can use `Rollup`  to build so you can take advantage
+of its code splitting performance.
 
-This means that instead of loading a big chunk of 100kB or more, you end up with loading several JS files. 
+This means that instead of loading a big chunk of 100kB or more,
+you end up with loading several JS files.
+
 For example, in this code, the biggest is `Phoenix` (30kB gzip). 
 
-This is important for the first rendering, and since you are doing SSR, you want to keep the first rendering performance.
+This is important for the first rendering, and since you are doing SSR,
+you want to keep the first rendering performance.
 
 ➡️ __Why `SolidJS`__ ?
 
@@ -98,7 +104,8 @@ Since I don't want to learn `Svelte` which is far from Vanila Javascript,
 I opted for `SolidJS` with is very lightweight and fast.
 
 In fact, both  `Svelte` and `SolidJS` are comparable. 
-However, `SolidJS` is very close to Vanilla Javascript with a touch of `React` for the style (like `LiveView`) whilst _not at all_ for `Svelte`.
+However, `SolidJS` is very close to Vanilla Javascript with a touch of `React`
+for the style (like `LiveView`) whilst _not at all_ for `Svelte`.
 
 If you go through the code, you will notice that the impact of using `SolidJS` is minimal on the code.
 
