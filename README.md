@@ -26,6 +26,8 @@ An Elixir-LiveView demo webapp to demonstrate how to make a real-time collaborat
 
 [Add WebAssembly](#add-webassembly)
 
+[Demo with auto-spaning map with geolocalisation]demo-with-auto-spaning-map-with-geolocalisation)
+
 
 ## Ingredients and comments
 
@@ -248,4 +250,18 @@ br/>
 ## Add Navigation
 
 ## Add WebAssembly
+
+A WASM file is just a static asset.
+Since it will be cache, we can run it.
+Let's check!
+
+## Demo with auto-spaning map with geolocalisation
+
+As long as the web app is initialized with network connectivity, 
+you can create a web app that uses geolocation even when offline
+Indeed, GPS functionality on mobile phones operates independently of internet
+or cellular connections.
+Your device's GPS receiver can obtain location data from satellites without requiring network access
+
+
 
