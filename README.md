@@ -37,7 +37,9 @@ We used:
 - `SolidJS`
 
 
-<details><summary>[package json](#package-json)</summary>
+[package json](#package-json)
+
+<details><summary>package.json file</summary>
 
 ```json
 {
@@ -151,7 +153,7 @@ Make your life easier with `pnpm` or `bun`.
 * [pnpm] Make your life easier with `pnpm`, save space, gain speed and confidence with symlinked libraries
 <https://pnpm.io/installation>
 
-* [Vite]: check "package.json"
+* [Vite]: check (#package-json)
   
 ```
 pnpm add -D vite
