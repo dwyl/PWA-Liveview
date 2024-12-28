@@ -88,7 +88,8 @@ We integrated a few languages and libraries in the demo:
 </details>
 <br/>
 
-➡️ __Service Worker?__ It is `Web Worker` with tow superpower:
+➡️ __Service Worker?__ It is a `Web Worker` with two superpowers:
+
 * it can read/write to the `Cache API` with a request/reponse
 * proxy  HTTP GET requests
 
