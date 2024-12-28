@@ -500,10 +500,14 @@ When offline:
 
 ## Add Navigation
 
+You intercept request in the form `request.mode === "navigate"` and 
+serve the assets accordingly from the cache when offline.
+
 ## Add WebAssembly
 
-A WASM file is just a static asset.
-Since it will be cache, we can run it.
+A WASM file is just a static asset even if its a calculator.
+Since it will be cached, it can be called
+and Javascript can run it.
 Let's check!
 
 ## Demo with auto-spaning map with geolocalisation
