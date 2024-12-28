@@ -14,7 +14,7 @@ An Elixir-LiveView demo webapp to demonstrate how to make a real-time collaborat
 
 4[Manifest](#manifest)
 
-5[Yjs for persistence and CRDT strategy](#yjs-for--persistence-and-crdt-strategy)
+5[Yjs for persistence and CRDT strategy](#yjs-for-persistence-and-crdt-strategy)
 
 6[Workbox strategy](#workbox-strategy)
 
