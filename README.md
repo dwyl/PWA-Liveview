@@ -18,9 +18,11 @@ it is safer to optin for `Vite`.
 
 This second point is valid for any `LiveView` webapp. You should use dynamic imports for code splitting. 
 `Vite` can use `Rollup`  to build so you can take advantage of its code splitting performance.
+
 This means that instead of loading a big chunk of 100kB or more, you end up with loading several JS files. 
 For example, in this code, the biggest is `Phoenix` (30kB gzip). 
-This is important for the first rendering, and since you are doing SSR, you would degrade the first rendering performance.
+
+This is important for the first rendering, and since you are doing SSR, you want to keep the first rendering performance.
 
 __Why `SolidJS`__ ?
 
