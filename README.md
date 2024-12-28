@@ -4,6 +4,11 @@ A little Elixir-LiveView demo webapp to demonstrate how to make a real-time coll
 
 As an application, geolocation on maps in remote areas with very little or no signal that we can save and share.
 
+This is what you want with a loading time of 0.4s (it is not CSS heavy 😬)
+<br/>
+
+<img width="619" alt="Screenshot 2024-12-28 at 04 45 26" src="https://github.com/user-attachments/assets/e6244e79-2d31-47df-9bce-a2d2a4984a33" />
+
 # Table of contents
 
 0[Ingredients and comments](#ingredients-and-comments)
@@ -485,10 +490,7 @@ br/>
   <br/>
 <img width="323" alt="Screenshot 2024-12-28 at 12 45 10" src="https://github.com/user-attachments/assets/c13ae6d3-64e1-4126-abb8-ad1fdbb1e622" />
 
-* This is what you want with a loading time of 0.4s.
-<br/>
 
-<img width="619" alt="Screenshot 2024-12-28 at 04 45 26" src="https://github.com/user-attachments/assets/e6244e79-2d31-47df-9bce-a2d2a4984a33" />
 
 ## Add Navigation
 
