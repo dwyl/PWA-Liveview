@@ -23,7 +23,7 @@ The idea is to have a LiveView skeleton with reactive components with a __minima
 
 ❗️This part is optioniated.
 
-Indeed, you obviously need a reactive Javascript framework to have an offline responsive UI. 
+You obviously need a reactive Javascript framework to have an offline responsive UI. 
 Since you don't want to bring in slow and heavy frameworks such as `React` or `Vue` or `Nuxt`for this, the choice could be between frameworks that don't use a  virtual DOM. Among them, you have  `Svelte` and `SolidJS`.
 Since I don't want to learn `Svelte` which is far from Vanila Javascript, I opted for `SolidJS` with is very lightweight and fast. In fact, both  `Svelte` and `SolidJS` are comparable. 
 However, `SolidJS` is very close to Vanilla Javascript with a touch of `React` for the style (like `LiveView`) whilst _not at all_ for `Svelte`.
