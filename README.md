@@ -145,8 +145,10 @@ When offline:
 
 ## Manifest
 
+The "manifest.webmanifest" file will be generated from "vite.config.js".
+
+
 ```json
-// manifest.webmanifest
 {
   "name": "ExLivePWA",
   "short_name": "ExLivePWA",
@@ -166,7 +168,7 @@ When offline:
 
 ```html
 // root.html.heex
-<head>[
+<head>
 [...]
 <link rel="icon-192" href={~p"/images/icon-192.png"} />
 <link rel="icon-512" href={~p"/images/icon-512.png"} />
@@ -175,6 +177,14 @@ When offline:
 [...]
 </head>
 ```
+
+### Icons
+
+<https://vite-pwa-org.netlify.app/assets-generator/#pwa-minimal-icons-requirements>
+
+You will need is to have at least two very low resolution icons of size 192 and 512, one extra of 180 for OSX and one 62 for Microsoft, all placed in "/priv/static/images".
+
+A generator: <https://favicon.inbrowser.app/tools/favicon-generator>
 
 ## Yjs and persistence and CRDT strategy
 
