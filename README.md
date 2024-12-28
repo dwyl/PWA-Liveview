@@ -68,7 +68,7 @@ We used:
 </details>
 <br/>
 
-__Service Worker?__ It is `Web Worker` with tow superpower:
+➡️ __Service Worker?__ It is `Web Worker` with tow superpower:
 * it can read/write to the `Cache API` with a request/reponse
 * proxy  HTTP GET requests
 
