@@ -43,7 +43,14 @@ However, `SolidJS` is very close to Vanilla Javascript with a touch of `React` f
 
 If you go through the code, you will notice that the impact of using `SolidJS` is minimal on the code.
 
-
+1[Guide](#guilde)
+2[pnpm and Vite setup](#pnpm-and-vite-setup)
+3[Vite config](#vite-config)
+4[Manifest](#manifest)
+5[Yjs, persistence and CRDT](#yjs-persistence-and-crdt)
+6[Workbox strategy]()#workbox-strategy)
+7[Data flow](#data-flow)
+8[Video and screenshots](#video-and-screenshots)
 
 ## Guide
 
@@ -59,6 +66,18 @@ When offline:
 - Changes are stored in IndexedDB
 - When back online, YJS will sync changes
 
+## pmpm and Vite setup
+
+## Vite config
+
+## Manifest
+
+## Yjs, persistence and CRDT strategy(ies)
+
+## Workbox strategy
+
+## Data flow
+
 ### Synchronization Flow
 
 - User A changes stock → YJS update → Hook observes → LiveView broadcast
@@ -66,7 +85,7 @@ When offline:
 - YJS update → All components observe change → UI updates
 
 
-### Screenshots of what you should obtain
+## Video and Screenshots
 
 * Chrome browser menu: the manifest file, the Service Worker, the Cache storage, the IndexedDB database:
 br/>
