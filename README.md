@@ -171,7 +171,7 @@ pnpm add -D vite
 
 ## Vite config
 
-It will use two plugins:   `solidPlugin()`  and `VitePWA`.
+It will use two plugins:   [solidPlugin](https://github.com/solidjs/vite-plugin-solid)  and [VitePWA](https://vite-pwa-org.netlify.app/)
 
 ❗️ For the `solidPlugin`, it is important to pass the JSX extensions to  `resolver.extension` to be able to compile 
 JSX extension files. This is because  `SolidJS` identifies these files as components to parse the JSX.
