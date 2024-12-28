@@ -4,9 +4,13 @@ import solidPlugin from "vite-plugin-solid";
 import tailwindcss from "tailwindcss";
 import autoprefixer from "autoprefixer";
 
+// https://web.dev/articles/add-manifest?utm_source=devtools
 const manifestOpts = {
-  name: "Your App",
-  short_name: "App",
+  name: "SolidYjs",
+  short_name: "SolidYjs",
+  display: "standalone",
+  scope: "/",
+  description: "A LiveView + SolidJS PWA and Yjs demo",
   theme_color: "#ffffff",
   icons: [
     {
@@ -34,7 +38,9 @@ const buildOps = {
       "js/solHook.jsx",
       "js/counter.jsx",
       "js/SolidComp.jsx",
+      "js/bins.jsx",
       "js/initYJS.js",
+      "js/refreshSW.js",
     ],
     output: {
       assetFileNames: "assets/[name][extname]",
@@ -45,6 +51,48 @@ const buildOps = {
   commonjsOptions: {
     exclude: [],
     include: ["vendor/topbar.cjs"],
+  },
+};
+
+const runtimeCachingNavigation = {
+  urlPattern: ({ request }) => request.mode === "navigate", // Handle navigation requests
+  handler: "NetworkFirst",
+  options: {
+    cacheName: "navigation-cache",
+    networkTimeoutSeconds: 3,
+    plugins: [
+      {
+        // Customize what happens on fetch failure
+        fetchDidFail: async ({ request }) => {
+          console.warn("Navigation request failed:", request.url);
+        },
+      },
+    ],
+  },
+};
+
+const runtimeCachingLongPoll = {
+  urlPattern: ({ url }) => url.pathname.startsWith("/live/longpoll"),
+  handler: "NetworkFirst",
+  options: {
+    cacheName: "long-poll-cache",
+    networkTimeoutSeconds: 5,
+    plugins: [
+      {
+        // Handle offline fallback for longpoll
+        handlerDidError: async ({ request }) => {
+          const url = new URL(request.url);
+          return new Response(
+            JSON.stringify({
+              events: [],
+              status: "ok",
+              token: url.searchParams.get("token"),
+            }),
+            { headers: { "Content-Type": "application/json" } }
+          );
+        },
+      },
+    ],
   },
 };
 
@@ -89,6 +137,8 @@ const devOps = {
 const PWAOpts = {
   devOptions: devOps,
   registerType: "autoUpdate",
+  includeAssets: ["favicon.ico", "robots.txt", "icon-192.png", "icon-512.png"],
+  manifest: manifestOpts,
   outDir: "../priv/static/",
   filename: "sw.js",
   manifestFilename: "manifest.webmanifest",
@@ -102,9 +152,10 @@ const PWAOpts = {
       runtimeCachingNetworkFirstAssets,
       runtimeCachingCacheFirstFonts,
       runtimeCachingCacheFirstImages,
+      runtimeCachingLongPoll,
+      runtimeCachingNavigation,
     ],
   },
-  manifest: manifestOpts,
 };
 
 const CSSSOpts = {

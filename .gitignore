@@ -35,4 +35,4 @@ solidyjs-*.tar
 npm-debug.log
 /assets/node_modules/
 
-/lib/solidyjs_web/controllers/
+

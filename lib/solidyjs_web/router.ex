@@ -17,8 +17,7 @@ defmodule SolidyjsWeb.Router do
 
   scope "/", SolidyjsWeb do
     pipe_through :browser
-
-    # get "/", PageController, :home
+    # get "/manifest.webmanifest", ManifestController, :serve
     live "/", CounterLive
   end
 

@@ -7,6 +7,7 @@ export const SolidComp = ({ ydoc, userID, max, el }) => {
   const stockMap = ydoc.getMap("stock");
   const initialStock = stockMap.get("globalStock")?.c ?? 10;
   const [stock, setStock] = createSignal(initialStock);
+  const [range, setRange] = createSignal([]);
 
   if (stockMap.has(userID)) {
     setStock(stockMap.get(userID).c);
@@ -18,16 +19,19 @@ export const SolidComp = ({ ydoc, userID, max, el }) => {
   };
 
   createEffect(() => {
+    setRange((ar) => [...ar, ...Array(Number(max)).keys()]);
+  });
+
+  createEffect(() => {
     stockMap.observe(() => {
       const userData = stockMap.get("globalStock");
-      console.log(userData, userData.c, stock());
       if (userData && userData.c !== stock()) {
         setStock(userData.c);
       }
     });
   });
 
-  createEffect(() => console.log("udpated stock: ", stock()));
+  createEffect(() => console.log("udpated stock & range: ", stock(), range()));
 
   render(
     () => (
@@ -36,6 +40,7 @@ export const SolidComp = ({ ydoc, userID, max, el }) => {
         stock={stock()}
         max={max}
         userID={userID}
+        range={range()}
       />
     ),
     el

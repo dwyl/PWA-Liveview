@@ -1,5 +1,4 @@
 export default async function initYJS() {
-  console.log("initYJS-----");
   const Y = await import("yjs");
   const { IndexeddbPersistence } = await import("y-indexeddb");
   const storeName = "cart-store";

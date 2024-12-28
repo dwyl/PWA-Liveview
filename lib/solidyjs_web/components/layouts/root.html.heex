@@ -11,7 +11,12 @@
     <.live_title suffix=" · Phoenix Framework">
       {assigns[:page_title] || "Solidyjs"}
     </.live_title>
-    <%!-- <link rel="preload" as="style" href={~p"/assets/app.css"} /> --%>
+    <%!-- -------------------%>
+    <link rel="icon-192" href={~p"/images/icon-192.png"} />
+    <link rel="icon-512" href={~p"/images/icon-512.png"} />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <%!-- -------------------%>
     <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
     <script defer phx-track-static type="module" src={~p"/assets/app.js"}>
     </script>

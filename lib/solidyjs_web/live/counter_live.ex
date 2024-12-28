@@ -6,6 +6,7 @@ defmodule SolidyjsWeb.CounterLive do
     ~H"""
     <h1 class="mt-4 mb-4 text-2xl text-gray-600">LiveView Static</h1>
     <p class="text-sm text-gray-600 mt-4 mb-2">User: {@user_id}</p>
+    <p class="text-sm text-gray-600 mt-4 mb-2">Remaing stock: {@global_stock}</p>
     <hr />
     <br />
     <div id="solid" phx-hook="SolHook" phx-update="ignore"></div>
@@ -19,10 +20,13 @@ defmodule SolidyjsWeb.CounterLive do
       PubSub.subscribe(Solidyjs.PubSub, "bc_stock")
     end
 
+    init_stock = 20
+    max = 20
+
     {:ok,
      socket
-     |> assign(%{global_stock: 10, user_id: user_id})
-     |> push_event("user", %{user_id: user_id, global_stock: 20, max: 20})}
+     |> assign(%{global_stock: init_stock, user_id: user_id})
+     |> push_event("user", %{user_id: user_id, global_stock: init_stock, max: max})}
   end
 
   def handle_params(_, uri, socket) do
@@ -30,8 +34,8 @@ defmodule SolidyjsWeb.CounterLive do
   end
 
   def handle_event("stock", %{"user_id" => userid} = map, socket) do
-    cond do
-      socket.assigns.user_id == String.to_integer(userid) ->
+    case socket.assigns.user_id == String.to_integer(userid) do
+      true ->
         c = Map.get(map, "c")
 
         :ok =
@@ -43,7 +47,7 @@ defmodule SolidyjsWeb.CounterLive do
 
         {:noreply, assign(socket, :global_stock, c)}
 
-      true ->
+      _ ->
         {:noreply, socket}
     end
   end
@@ -59,6 +63,7 @@ defmodule SolidyjsWeb.CounterLive do
        |> assign(:global_stock, c)
        |> push_event("new_stock", %{c: c})}
     else
+      # Ignore user's own broadcast
       {:noreply, socket}
     end
   end

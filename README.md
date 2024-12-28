@@ -2,7 +2,11 @@
 
 A real-time collaborative stock management system with offline support.
 
-#### Offline Support
+## Guide
+
+<https://vite-pwa-org.netlify.app/guide/>
+
+### Offline Support
 
 YJS's IndexedDB persistence handles offline support automatically.
 
@@ -12,7 +16,7 @@ When offline:
 - Changes are stored in IndexedDB
 - When back online, YJS will sync changes
 
-#### Synchronization Flow
+### Synchronization Flow
 
 - User A changes stock → YJS update → Hook observes → LiveView broadcast
 - LiveView broadcasts to all users → Hook receives "new_stock" → YJS update

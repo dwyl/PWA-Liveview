@@ -1,20 +1,17 @@
 // import initYdoc from "./initYJS.js";
-import { Index } from "solid-js";
-import { Dynamic } from "solid-js/web";
+import { Bins } from "./bins.jsx";
 
 export default function Counter(props) {
-  const { max, userID, onStockChange } = props;
-
   const handleTake = () => {
     // keep a circular range for the demo
-    const newStock = props.stock === 0 ? max : props.stock - 1;
-    onStockChange(newStock);
+    const newStock = props.stock === 0 ? props.max : props.stock - 1;
+    props.onStockChange(newStock);
   };
 
   return (
     <>
       <h1 class="mt-4 mb-4 text-2xl text-gray-600">SolidJS dynamic</h1>
-      <div class="text-sm text-gray-600 mt-4 mb-2">User ID: {userID}</div>
+      <div class="text-sm text-gray-600 mt-4 mb-2">User ID: {props.userID}</div>
       <button
         class="font-bold py-2 mt-4 px-4 rounded border border-gray-800"
         onClick={handleTake}
@@ -31,7 +28,7 @@ export default function Counter(props) {
           class="w-full m-0 mt-4"
           type="range"
           min="0"
-          max={max}
+          max={props.max}
           step="1"
           value={props.stock}
           disabled
@@ -41,29 +38,9 @@ export default function Counter(props) {
           id="binContainer"
           class="flex justify-between mt-[10px] px-[10px] py-[0] box-border"
         >
-          <Bins id={props.stock} max={max} />
+          <Bins id={props.stock} range={props.range} max={props.max} />
         </div>
       </div>
     </>
-  );
-}
-
-const BlueBin = (props) => (
-  <div style={"color: blue; font-weight: bold"}>{props.value}</div>
-);
-
-const BlackBin = (props) => (
-  <div style={"color: black; font-weight: normal"}>{props.value}</div>
-);
-
-function Bins(props) {
-  const range = [...Array(props.max + 1).keys()];
-  console.log("Bins", props.max, range);
-  return (
-    <Index each={range}>
-      {(i) => (
-        <Dynamic component={i() <= props.id ? BlueBin : BlackBin} value={i()} />
-      )}
-    </Index>
   );
 }

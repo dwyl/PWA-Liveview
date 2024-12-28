@@ -10,7 +10,8 @@ export const solHook = (ydoc) => ({
 
     this.handleEvent("user", async ({ user_id, global_stock, max }) => {
       userID = String(user_id);
-      localStorage.setItem("userID", userID);
+      sessionStorage.setItem("userID", userID);
+      sessionStorage.setItem("max", max);
 
       const stockMap = ydoc.getMap("stock");
       if (!stockMap.has("globalStock")) {
@@ -18,11 +19,17 @@ export const solHook = (ydoc) => ({
       }
 
       SolidComp({ ydoc, userID, max, el: this.el });
+
+      if (window.liveSocket.isConnected()) {
+        this.pushEvent("stock", {
+          user_id: sessionStorage.getItem("userID"),
+          c: stockMap.get("globalStock").c,
+        });
+      }
     });
 
     this.handleEvent("new_stock", async ({ c }) => {
       isHandlingServerUpdate = true;
-      console.log("Received broadcast stock update:", c);
       try {
         const stockMap = ydoc.getMap("stock");
         stockMap.set("globalStock", { c });
@@ -34,15 +41,16 @@ export const solHook = (ydoc) => ({
     const stockMap = ydoc.getMap("stock");
     stockMap.observe((event) => {
       if (!isHandlingServerUpdate) {
-        console.log(Array.from(event.changes.keys.entries()));
         const globalStock = stockMap.get("globalStock");
         if (globalStock) {
           // Push to LiveView only if change originated from current user
           // This prevents broadcast loops
-          this.pushEvent("stock", {
-            user_id: localStorage.getItem("userID"),
-            c: globalStock.c,
-          });
+          if (window.liveSocket.isConnected()) {
+            this.pushEvent("stock", {
+              user_id: sessionStorage.getItem("userID"),
+              c: globalStock.c,
+            });
+          }
         }
       }
     });
