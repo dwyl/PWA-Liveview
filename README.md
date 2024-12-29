@@ -47,7 +47,7 @@ We integrated a few languages and libraries in the demo:
 - `Yjs` & `y-indexeddb` for local in-brwoser persistence and sync,
 - `Vite-plugin-PWA` and `Workbox` for JS bundling and PWA setup,
 - `SolidJS` to produce reactive UI,
-- `WASM` natively read by `Javascript`
+- `Zig` compiled to `WASM` natively read by `Javascript` in the browser,
 - `Leaflet` to power a map.
 
 
