@@ -537,7 +537,7 @@ It will return createSignal stateful values (`createSignal<boolean>`) for offlin
 
 * Screenshot of the demo app
 <br/>
-<img width="504" alt="Screenshot 2024-12-29 at 12 01 59" src="https://github.com/user-attachments/assets/ad97b309-61e9-485c-a8b4-472515430b97" />
+<img width="504" alt="Screenshot 2024-12-29 at 12 06 05" src="https://github.com/user-attachments/assets/8cd61e6c-83db-466c-a7b2-7bd15be299d0" />
 <br/>
 
 ## Add Navigation
