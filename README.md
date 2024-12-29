@@ -467,6 +467,38 @@ When offline:
 
 ## Workbox strategy
 
+Thel available strategies and use cases:
+
+* `CacheFirst` is best for static assets: fonts, images. It checks cahce first. Only makes network request if resource isn't in cache
+
+* `NetworkFirst` is best for API calls, dynamic content. It tries network request first, and falls back to cached content if network fails/times out. It prioritizes fresh content with offline fallback
+
+* `StaleWhileRevalidate`. It serves cached version immediately (if available). It updates cache in background for next time.
+It is best for: News feeds, social media content, frequently updated content
+Balances speed with content freshness
+
+* `NetworkOnly`. It never uses cache, always fetches from network. You need real-time data accuracy
+
+* `CacheOnly`. Only serves from cache, never makes network requests
+
+
+Each strategy can be configured with additional options:
+
+- `cacheName`: Identify different caches
+- `expiration`: Control cache size and age
+- `networkTimeoutSeconds`: Timeout for network requests
+- `matchOptions`: Fine-tune cache matching
+- `plugins`: Add custom caching behaviors
+
+
+### needRefresh and offLineReady
+
+In Vite's GitHub repo, <https://github.com/vite-pwa/vite-plugin-pwa/tree/main/docs/frameworks>,
+you pick your favorite framework ro setup `needRefres` and `offlieReady`.
+
+You can use the built-in Vite virtual module `virtual:pwa-register/solid` for `SolidJS`.
+It will return createSignal stateful values (`createSignal<boolean>`) for offlineReady and `needRefresh`.
+
 ## Data flow
 
 ### Synchronization Flow
