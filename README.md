@@ -523,16 +523,20 @@ It will return createSignal stateful values (`createSignal<boolean>`) for offlin
     - the IndexedDB database:
 <br/>
 <img width="282" alt="Screenshot 2024-12-28 at 19 26 09" src="https://github.com/user-attachments/assets/33b5ca41-0dfb-4594-8e63-793741fcd175" />
+<br/>
 
 * Memory used for the Service Worker `Cache`, `IndexedDB` with `y-indexedb`
 <br/>
 <img width="474" alt="Screenshot 2024-12-28 at 19 25 38" src="https://github.com/user-attachments/assets/3b9fe308-f790-42f3-9d1a-6acccfce5606" />
+<br/>
 
 * The "proof" of the installed PWA (TODO: change the named of this repo).
-  <br/>
+<br/>
 <img width="323" alt="Screenshot 2024-12-28 at 12 45 10" src="https://github.com/user-attachments/assets/c13ae6d3-64e1-4126-abb8-ad1fdbb1e622" />
+<br/>
 
-
+<img width="304" alt="Screenshot 2024-12-29 at 12 01 59" src="https://github.com/user-attachments/assets/ad97b309-61e9-485c-a8b4-472515430b97" />
+<br/>
 
 ## Add Navigation
 
