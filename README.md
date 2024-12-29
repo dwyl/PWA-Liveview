@@ -498,7 +498,7 @@ Each strategy can be configured with additional options:
 ### needRefresh and offLineReady
 
 In Vite's GitHub repo, <https://github.com/vite-pwa/vite-plugin-pwa/tree/main/docs/frameworks>,
-you pick your favorite framework ro setup `needRefres` and `offlieReady`.
+you pick your favorite framework to setup `needRefresh` and `offlineReady`.
 
 You need `workbox-window` as a dev dependency.
 
