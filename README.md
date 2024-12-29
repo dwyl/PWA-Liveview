@@ -105,9 +105,9 @@ When you wnat to bring in offline capabilities, you will want to use `Workbox`.
 [<img width="913" alt="Screenshot 2024-12-29 at 09 51 54" src="https://github.com/user-attachments/assets/70f5ba5c-65cc-4fe1-82ce-26f6335c1396" />](https://web.dev/learn/pwa/workbox)
 
 
-However, unless you are very experienced with `Workbox`, 
+However, unless you are very experienced in working with `Workbox` directly,
 it is safer to optin for `Vite`
-when you want to setup a Servce Worker. It will generate the "sw.js" from your "vite.config.js" file for you.
+when you want to use `Workbox`. It will generate the "sw.js" from your "vite.config.js" file for you.
 
 This second point is valid for any `LiveView` webapp. 
 You should use_ dynamic imports for code splitting_. 
