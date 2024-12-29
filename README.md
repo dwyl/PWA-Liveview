@@ -2,7 +2,10 @@
 
 A little Elixir-LiveView demo webapp to demonstrate how to make a real-time collaborative app with offline support (PWA) using CRDT.
 
-As an application, geolocation on maps in remote areas with very little or no signal that we can save and share.
+As an application, two pages:
+
+- a collaborative stock manager. A user clicks and visualizes the decrasing stock level. It is broadcasted to every user. You need a CRDT strategy.
+- a collaborative flight animation. Two users can enter their geolocation and share it. Once ready, a user can run a flight animation on a map, using Leaflet. The flight computation and animation works offline as we use a `WebAssembly` WASM module to compute the orthodrome and Leaflet to animate it. It is a simple `Zig` function to compute points using spherical interpolation.
 
 This is what you want with an aggresive cache and code splitting: a loading time of 0.4s (it is not CSS heavy 😬)
 <br/>
@@ -40,12 +43,12 @@ This is what you want with an aggresive cache and code splitting: a loading time
 
 We integrated a few languages and libraries in the demo:
 
-- `Phoenix LiveView`
-- `Yjs` & `y-indexeddb`
-- `Vite-plugin-PWA` and `Workbox`
-- `SolidJS`
+- `Phoenix LiveView` to orchestrate the app,
+- `Yjs` & `y-indexeddb` for local in-brwoser persistence and sync,
+- `Vite-plugin-PWA` and `Workbox` for JS bundling and PWA setup,
+- `SolidJS` to produce reactive UI,
 - `WASM` natively read by `Javascript`
-- `Leaflet`
+- `Leaflet` to power a map.
 
 
 [package json](#package-json)
@@ -539,7 +542,7 @@ It will return createSignal stateful values (`createSignal<boolean>`) for offlin
 You intercept request in the form `request.mode === "navigate"` and 
 serve the assets accordingly from the cache when offline.
 
-## Add WebAssembly
+## Add WebAssembly and a collaborative map
 
 A WASM module is  a static asset so it will be cached when called.
 Javascript can run it.
