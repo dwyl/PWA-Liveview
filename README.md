@@ -541,9 +541,8 @@ serve the assets accordingly from the cache when offline.
 
 ## Add WebAssembly
 
-A WASM file is just a static asset even if its a calculator.
-Since it will be cached, it can be called
-and Javascript can run it.
+A WASM module is  a static asset so it will be cached when called.
+Javascript can run it.
 Let's check!
 
 ## Demo with auto-spaning map with geolocalisation
