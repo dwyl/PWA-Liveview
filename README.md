@@ -133,16 +133,13 @@ You indeed obviously need a reactive Javascript framework to have an offline res
 
 ❗️The choice is a question of oponion.
  
-Among the frameworks that don't use a virtual DOM, you have  `Svelte` and `SolidJS`.
+> Among the frameworks that don't use a virtual DOM, you have  `Svelte` and `SolidJS`.
 In fact, both  `Svelte` and `SolidJS` are comparable. in terms of performance.
-
 Since I didn't want to learn `Svelte` which is far from Vanila Javascript, 
 I opted for `SolidJS` with is very lightweight and fast,
 very close to Vanilla Javascript with a touch of `React`
 for the style (like `LiveView`) whilst _not at all_ for `Svelte`.
-
 The main rule with `SolidJS` is: _don't destructure the props_ and you are good to go.
-
 If you go through the code, you will notice that the impact of using `SolidJS` is minimal on the code and very lightweight.
 
 
