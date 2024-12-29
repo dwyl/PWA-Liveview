@@ -101,12 +101,16 @@ It works over _HTTPS_.
 
 For developing the app, `Esbuild` is comfortable and perfect.
 
+When you wnat to bring in offline capabilities, you will want to use `Workbox`.
+[<img width="913" alt="Screenshot 2024-12-29 at 09 51 54" src="https://github.com/user-attachments/assets/70f5ba5c-65cc-4fe1-82ce-26f6335c1396" />](https://web.dev/learn/pwa/workbox)
+
+
 However, unless you are very experienced with `Workbox`, 
 it is safer to optin for `Vite`
-when you want to setup a Servce Worker.
+when you want to setup a Servce Worker. It will generate the "sw.js" from your "vite.config.js" file for you.
 
 This second point is valid for any `LiveView` webapp. 
-You should use dynamic imports for code splitting. 
+You should use_ dynamic imports for code splitting_. 
 `Vite` can use `Rollup`  to build so you can take advantage
 of its code splitting performance.
 
