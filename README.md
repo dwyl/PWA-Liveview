@@ -187,7 +187,7 @@ resolve: {
 },`
 ```
 
-❗️ In the `VitePWA` configuration, it is important to set the key `workbox.inlineWorkboxRuntime` to `true`
+‼️ In the `VitePWA` configuration, it is important to set the key `workbox.inlineWorkboxRuntime` to `true`
 in order to produce a _unique_  "sw.js" file.
 
 Otherwise `Vite/Workbox` will produce some timestamped saved into the directory "priv/static", 
