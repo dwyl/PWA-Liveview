@@ -70,7 +70,6 @@ We integrated a few languages and libraries in the demo:
     "solid-js": "^1.9.3",
     "workbox-routing": "^7.3.0",
     "workbox-strategies": "^7.3.0",
-    "workbox-window": "^7.3.0",
     "y-indexeddb": "^9.0.12",
     "yjs": "^13.6.21",
     "leaflet": "^1.9.4"
@@ -82,7 +81,8 @@ We integrated a few languages and libraries in the demo:
     "tailwindcss": "^3.4.17",
     "vite": "^6.0.5",
     "vite-plugin-pwa": "^0.21.1",
-    "vite-plugin-solid": "^2.11.0"
+    "vite-plugin-solid": "^2.11.0",
+    "workbox-window": "^7.3.0"
   },
 ```
 </details>
@@ -499,6 +499,8 @@ Each strategy can be configured with additional options:
 
 In Vite's GitHub repo, <https://github.com/vite-pwa/vite-plugin-pwa/tree/main/docs/frameworks>,
 you pick your favorite framework ro setup `needRefres` and `offlieReady`.
+
+You need `workbox-window` as a dev dependency.
 
 You can use the built-in Vite virtual module `virtual:pwa-register/solid` for `SolidJS`.
 It will return createSignal stateful values (`createSignal<boolean>`) for offlineReady and `needRefresh`.
