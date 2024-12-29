@@ -44,7 +44,7 @@ We integrated a few languages and libraries in the demo:
 - `Yjs` & `y-indexeddb`
 - `Vite-plugin-PWA` and `Workbox`
 - `SolidJS`
-- `Zig` to produce the WASM-browser file which can be natively read
+- `WASM` natively read by `Javascript`
 - `Leaflet`
 
 
