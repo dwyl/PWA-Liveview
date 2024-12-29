@@ -122,20 +122,18 @@ you want to keep the first rendering performance.
 
 The idea is to keep the `LiveView` skeleton but with all reactive components replaced, with a __minimal__ impact on the code.
 
-❗️This part is optioniated.
+You indeed obviously need a reactive Javascript framework to have an offline responsive UI.
 
-You obviously need a reactive Javascript framework to have an offline responsive UI. 
-Since you don't want to bring in slow and heavy frameworks such as `React` or `Vue` or `Nuxt`for this, 
-the choice could be between frameworks that don't use a  virtual DOM. 
-
-Among them, you have  `Svelte` and `SolidJS`.
-Since I don't want to learn `Svelte` which is far from Vanila Javascript, 
-I opted for `SolidJS` with is very lightweight and fast.
-
+❗️The choice is a question of oponion.
+ 
+Among the frameworks that don't use a virtual DOM, you have  `Svelte` and `SolidJS`.
 In fact, both  `Svelte` and `SolidJS` are comparable. in terms of performance.
 
-However, `SolidJS` is very close to Vanilla Javascript with a touch of `React`
-for the style (like `LiveView`) whilst _not at all_ for `Svelte`. 
+Since I didn't want to learn `Svelte` which is far from Vanila Javascript, 
+I opted for `SolidJS` with is very lightweight and fast,
+very close to Vanilla Javascript with a touch of `React`
+for the style (like `LiveView`) whilst _not at all_ for `Svelte`.
+
 The main rule with `SolidJS` is: _don't destructure the props_ and you are good to go.
 
 If you go through the code, you will notice that the impact of using `SolidJS` is minimal on the code and very lightweight.
