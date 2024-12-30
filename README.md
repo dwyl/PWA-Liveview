@@ -568,7 +568,7 @@ This module computes the lat/long every 1 degree along the great circle joining 
 
 It is displayed as a polygone with `Leaflet`.
 
-> Note the size of the module: _465kB_ whilst `Leaflet` is _43kB_.
+> Note the size of the WASM module when compiled to `.ReleaseSmall`: _13kB_ whilst `Leaflet` is _43kB_ and `Phoenix.js` is 30kB.
 
 > It does note really make sense to use a WASM module for this as JavaScript is probably fast enough to compute this as well. It is more to demonstrate what can be done.
 
