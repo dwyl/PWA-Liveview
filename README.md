@@ -5,7 +5,8 @@ A little Elixir-LiveView demo webapp to demonstrate how to make a real-time coll
 As an application, two pages:
 
 - a collaborative stock manager. A user clicks and visualizes the stock level in an animated read-only `<input type=range/>`. It is broadcasted to every user. You need a CRDT strategy.
-- a collaborative flight animation. Two users can enter their geolocation and share it. Once ready, a flight can be scheduled and saved by `Phoenix` into the backend database. A user can run a flight animation on a map, using Leaflet. The flight computation and animation works offline as we use a `WebAssembly` WASM module to compute the orthodrome and Leaflet to animate it. It is a simple `Zig` function to compute points using spherical interpolation.
+- a collaborative flight animation. Two users can enter their geolocation and share it. Once ready, a flight can be scheduled and saved by `Phoenix` into the backend database. A user can run a flight animation on a map, using Leaflet. The flight computation and animation works offline as we use a `WebAssembly` WASM module to compute the orthodrome and Leaflet to animate it. It is `Zig` code that computes points (lat/long) every 1 degree along the great circle joining these two points.
+
 
 This is what you want with an aggresive cache and code splitting: a loading time of 0.4s (it is not CSS heavy 😬)
 <br/>
@@ -553,9 +554,16 @@ Javascript can run it.
 
 We add the `Vite` plugin `vite-plugin-wasm` to bring in WASM files, so the list of our plugins is `plugins: [wasm(), solidPlugin(), VitePWA(PWAOpts)]`. 
 
-We compile  the `Zig` into WASM format for the browser. It uses [the Haversine formulas](https://en.wikipedia.org/wiki/Haversine_formula).
+We compile  the `Zig` into WASM format for the browser.
+It uses [the Haversine formulas](https://en.wikipedia.org/wiki/Haversine_formula).
 
-Note the size of the module: 465kB whilst `Leaflet` is 43kB.
+This module computes the lat/long every 1 degree along the great circle joining two points.
+
+It is displayed as a polygone with `Leaflet`.
+
+> Note the size of the module: _465kB_ whilst `Leaflet` is _43kB_.
+
+> It does note really make sense to use a WASM module for this as JavaScript is probably fast enough to compute this as well. It is more to demonstrate what can be done.
 
 <details><summary>Zig code to produce an array of Great Circle points between two coordinates</summary>
 
