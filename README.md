@@ -879,8 +879,7 @@ async function loadWasm() {
 
 ## Add Navigation
 
-You intercept request in the form `request.mode === "navigate"` and 
-serve the assets accordingly from the cache when offline.
+Tricky!!!! Not there yet
 
 
 
