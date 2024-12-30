@@ -4,6 +4,7 @@ A little Elixir-LiveView demo webapp to demonstrate how to make a real-time coll
 
 As an application, two pages:
 
+
 - a collaborative stock manager. A user clicks and visualizes the stock level in an animated read-only `<input type=range/>`.
 It is broadcasted to every user. You need a CRDT strategy.
 - a collaborative flight animation. Two users can enter their geolocation and share it.
@@ -13,8 +14,9 @@ A user can run a flight animation on a map, using Leaflet.
 The flight computation and animation works offline as we use a `WebAssembly` WASM module
 to compute the orthodrome and Leaflet to animate it.
 It is `Zig` code that computes points (lat/long) every 1 degree along the great circle joining these two points.
-
-
+<br/>
+<img width="635" alt="Screenshot 2024-12-30 at 07 39 51" src="https://github.com/user-attachments/assets/2eb459e6-29fb-4dbb-a101-841cbad5af95" />
+<br/>
 This is what you want with an aggresive cache and code splitting: a loading time of 0.4s (it is not CSS heavy 😬)
 <br/>
 
