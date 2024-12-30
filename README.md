@@ -119,11 +119,93 @@ It works over _HTTPS_.
 
 For developing the app, `Esbuild` is comfortable and perfect.
 
+<br/>
+<details>
+  <sumary>Your `build.js` looks like this</sumary>
+
+```js
+import { context, build } from "esbuild";
+import { solidPlugin } from "esbuild-plugin-solid";
+
+const args = process.argv.slice(2);
+const watch = args.includes("--watch");
+const deploy = args.includes("--deploy");
+console.log(args);
+
+let opts = {
+  entryPoints: [
+    "./js/app.js",
+    "./js/bins",
+    "./js/counter",
+    "./js/SolidComp",
+    "./js/initYJS",
+    "./js/onlineStatus",
+    "./js/solHook",
+    "./wasm/great_circle.wasm",
+  ],
+  bundle: true,
+  logLevel: "info",
+  target: "esnext",
+  outdir: "../priv/static/assets",
+  external: ["*.css", "fonts/*", "images/*"],
+  loader: {
+    ".js": "jsx",
+    ".svg": "file",
+    ".png": "file",
+    ".jpg": "file",
+    ".wasm": "file",
+  },
+  plugins: [solidPlugin()],
+  nodePaths: ["../deps"],
+  format: "esm",
+};
+
+if (deploy) {
+  opts = {
+    ...opts,
+    minify: true,
+    splitting: true,
+    metafile: true,
+  };
+  await build(opts);
+  // fs.writeFileSync("meta.json", JSON.stringify(result.metafile, null, 2));
+  process.exit(0);
+}
+
+if (watch) {
+  context(opts)
+    .then(async (ctx) => {
+      await ctx.watch();
+
+      process.stdin.on("close", () => {
+        process.exit(0);
+      });
+
+      process.stdin.resume();
+    })
+    .catch((error) => {
+      console.log(`Build error: ${error}`);
+      process.exit(1);
+    });
+}
+
+```
+</details>
+<br/>
+ with a watcher run as a command in `Elixir`:
+
+ ```elixir
+# config.dev.exs
+wtachers: {
+   node: ["build.js", "--watch", cd: Path.expand("../assets", __DIR__)]
+]
+```
+
 When you wnat to bring in offline capabilities, you will want to use `Workbox`.
 [<img width="913" alt="Screenshot 2024-12-29 at 09 51 54" src="https://github.com/user-attachments/assets/70f5ba5c-65cc-4fe1-82ce-26f6335c1396" />](https://web.dev/learn/pwa/workbox)
 
 
-However, unless you are very experienced in working with `Workbox` directly,
+Unless you are very experienced in working with `Workbox` directly,
 it is safer to optin for `Vite`
 when you want to use `Workbox`. It will generate the "sw.js" from your "vite.config.js" file for you.
 
