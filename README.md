@@ -1,6 +1,6 @@
 # ExLivePWA
 
-A little Elixir-LiveView demo webapp to demonstrate how to make a real-time collaborative app with offline support (PWA) using CRDT.
+A little Elixir-LiveView demo webapp to demonstrate how to setup a real-time collaborative app with offline support (PWA) using CRDT.
 
 As an application, two pages:
 
