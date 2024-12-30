@@ -15,7 +15,7 @@ The flight computation and animation works offline as we use a `WebAssembly` WAS
 to compute the orthodrome and Leaflet to animate it.
 It is `Zig` code that computes points (lat/long) every 1 degree along the great circle joining these two points.
 <br/>
-<img width="635" alt="Screenshot 2024-12-30 at 07 39 51" src="https://github.com/user-attachments/assets/2eb459e6-29fb-4dbb-a101-841cbad5af95" />
+<div align="center"><img width="635" alt="Screenshot 2024-12-30 at 07 39 51" src="https://github.com/user-attachments/assets/2eb459e6-29fb-4dbb-a101-841cbad5af95" /></div>
 <br/>
 This is what you want with an aggresive cache and code splitting: a loading time of 0.4s (it is not CSS heavy 😬)
 <br/>
