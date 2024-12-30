@@ -1,0 +1,38 @@
+{
+  "name": "assets",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build": "esbuild --outfile=./js/nsw.js --bundle ./js/sw.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@solidjs/router": "^0.15.2",
+    "phoenix": "file:../deps/phoenix",
+    "phoenix_html": "file:../deps/phoenix_html",
+    "phoenix_live_view": "file:../deps/phoenix_live_view",
+    "solid": "link:virtual:pwa-register/solid",
+    "solid-js": "^1.9.3",
+    "workbox-routing": "^7.3.0",
+    "workbox-strategies": "^7.3.0",
+    "workbox-window": "^7.3.0",
+    "y-indexeddb": "^9.0.12",
+    "yjs": "^13.6.21"
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.9",
+    "autoprefixer": "^10.4.20",
+    "esbuild": "^0.24.2",
+    "esbuild-plugin-solid": "^0.6.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "vite": "^6.0.5",
+    "vite-plugin-pwa": "^0.21.1",
+    "vite-plugin-solid": "^2.11.0",
+    "workbox-cli": "^7.3.0"
+  }
+}

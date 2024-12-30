@@ -3,6 +3,8 @@ import { defineConfig, loadEnv } from "vite";
 import solidPlugin from "vite-plugin-solid";
 import tailwindcss from "tailwindcss";
 import autoprefixer from "autoprefixer";
+import wasm from "vite-plugin-wasm";
+// import tailwindcss from "@tailwindcss/vite";
 
 // https://web.dev/articles/add-manifest?utm_source=devtools
 const manifestOpts = {
@@ -41,6 +43,7 @@ const buildOps = {
       "js/bins.jsx",
       "js/initYJS.js",
       "js/refreshSW.js",
+      "wasm/great_circle.wasm",
     ],
     output: {
       assetFileNames: "assets/[name][extname]",
@@ -48,11 +51,63 @@ const buildOps = {
       entryFileNames: "assets/[name].js",
     },
   },
+  // external: ["wasm/great_circle.wasm"],
   commonjsOptions: {
     exclude: [],
     include: ["vendor/topbar.cjs"],
   },
 };
+
+const runtimeCachingTiles = {
+  urlPattern: ({ url }) => url.origin === "https://tile.openstreetmap.org",
+  handler: "CacheFirst", // Serve from cache, fallback to network
+  options: {
+    cacheName: "map-tiles-cache",
+    expiration: {
+      maxEntries: 1000, // Limit the number of cached tiles
+      maxAgeSeconds: 60 * 60 * 24 * 7, // Cache tiles for 7 days
+    },
+    cacheableResponse: {
+      statuses: [200], // Only cache successful responses
+    },
+    fetchOptions: {
+      mode: "cors", // Ensure CORS mode for cross-origin requests
+    },
+    plugins: [
+      {
+        cacheDidUpdate: async ({ request, response }) => {
+          // Log if the response is opaque
+          if (response && response.type === "opaque") {
+            console.warn("Opaque response detected:", request.url);
+          }
+        },
+      },
+      {
+        fetchDidFail: async ({ request }) => {
+          console.warn("Tile request failed:", request.url);
+        },
+      },
+    ],
+  },
+};
+
+// const runtimeCachingPng = {
+//   urlPattern: ({ url }) => url.pathname.endsWith(".png"), // Match tile images
+//   handler: "CacheFirst",
+//   options: {
+//     cacheName: "tile-cache",
+//     plugins: [
+//       {
+//         cacheDidUpdate: async ({ request, response }) => {
+//           if (response && response.type === "opaque") {
+//             // Log opaque responses
+//             console.warn("Opaque response detected for:", request.url);
+//           }
+//         },
+//       },
+//     ],
+//   },
+// };
 
 const runtimeCachingNavigation = {
   urlPattern: ({ request }) => request.mode === "navigate", // Handle navigation requests
@@ -154,6 +209,7 @@ const PWAOpts = {
       runtimeCachingCacheFirstImages,
       runtimeCachingLongPoll,
       runtimeCachingNavigation,
+      runtimeCachingTiles,
     ],
   },
 };
@@ -175,7 +231,7 @@ export default defineConfig(({ command, mode }) => {
   }
 
   return {
-    plugins: [solidPlugin(), VitePWA(PWAOpts)],
+    plugins: [wasm(), solidPlugin(), VitePWA(PWAOpts)],
     resolve: {
       extensions: [".mjs", ".js", ".ts", ".jsx", ".tsx", ".json"],
     },

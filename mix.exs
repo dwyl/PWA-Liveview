@@ -40,18 +40,18 @@ defmodule Solidyjs.MixProject do
       {:phoenix_live_dashboard, "~> 0.8.3"},
       # {:esbuild, "~> 0.8", runtime: Mix.env() == :dev},
       {:tailwind, "~> 0.2", runtime: Mix.env() == :dev},
+      {:telemetry_metrics, "~> 1.0"},
+      {:telemetry_poller, "~> 1.0"},
+      {:jason, "~> 1.2"},
+      {:dns_cluster, "~> 0.1.1"},
+      {:bandit, "~> 1.5"},
       {:heroicons,
        github: "tailwindlabs/heroicons",
        tag: "v2.1.1",
        sparse: "optimized",
        app: false,
        compile: false,
-       depth: 1},
-      {:telemetry_metrics, "~> 1.0"},
-      {:telemetry_poller, "~> 1.0"},
-      {:jason, "~> 1.2"},
-      {:dns_cluster, "~> 0.1.1"},
-      {:bandit, "~> 1.5"}
+       depth: 1}
     ]
   end
 
@@ -63,13 +63,13 @@ defmodule Solidyjs.MixProject do
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     [
-      # setup: ["deps.get", "assets.setup", "assets.build"],
-      # watch: ["cmd --cd assets node build.js --watch"],
+      setup: ["deps.get", "cmd --cd assets pnpm i"],
+      # watch: ["cmd --cd assets vite build --watch"],
       # "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
       # "assets.build": ["tailwind solidyjs", "esbuild solidyjs"],
       "assets.deploy": [
         "tailwind solidyjs --minify",
-        "cmd --cd assets node build.js --deploy",
+        "cmd --cd assets vite build ",
         "phx.digest"
       ]
     ]

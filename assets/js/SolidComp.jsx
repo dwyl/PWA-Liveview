@@ -31,8 +31,6 @@ export const SolidComp = ({ ydoc, userID, max, el }) => {
     });
   });
 
-  createEffect(() => console.log("udpated stock & range: ", stock(), range()));
-
   render(
     () => (
       <Counter

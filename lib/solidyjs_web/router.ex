@@ -19,6 +19,7 @@ defmodule SolidyjsWeb.Router do
     pipe_through :browser
     # get "/manifest.webmanifest", ManifestController, :serve
     live "/", CounterLive
+    live "/map", MapLive
   end
 
   def set_user_id(conn, _opts) do

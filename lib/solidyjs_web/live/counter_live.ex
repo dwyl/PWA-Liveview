@@ -1,15 +1,21 @@
 defmodule SolidyjsWeb.CounterLive do
   use SolidyjsWeb, :live_view
   alias Phoenix.PubSub
+  # import SolidyjsWeb.CoreComponents, only: [icon: 1]
+  use Phoenix.Component
+  alias SolidyjsWeb.Menu
 
   def render(assigns) do
     ~H"""
-    <h1 class="mt-4 mb-4 text-2xl text-gray-600">LiveView Static</h1>
-    <p class="text-sm text-gray-600 mt-4 mb-2">User: {@user_id}</p>
-    <p class="text-sm text-gray-600 mt-4 mb-2">Remaing stock: {@global_stock}</p>
-    <hr />
-    <br />
-    <div id="solid" phx-hook="SolHook" phx-update="ignore"></div>
+    <div>
+      <Menu.display />
+      <h1 class="mt-4 mb-4 text-2xl text-gray-600">LiveView</h1>
+      <p class="text-sm text-gray-600 mt-4 mb-2">User ID: {@user_id}</p>
+      <p class="text-sm text-gray-600 mt-4 mb-2">Remaing stock: {@global_stock}</p>
+      <hr />
+      <br />
+      <div id="solid" phx-hook="SolHook" phx-update="ignore"></div>
+    </div>
     """
   end
 
@@ -29,6 +35,7 @@ defmodule SolidyjsWeb.CounterLive do
      |> push_event("user", %{user_id: user_id, global_stock: init_stock, max: max})}
   end
 
+  # see also on_mount {Module, :default}: https://hexdocs.pm/phoenix_live_view/Phoenix.LiveView.html#on_mount/1
   def handle_params(_, uri, socket) do
     {:noreply, assign(socket, :uri, URI.parse(uri).path)}
   end
