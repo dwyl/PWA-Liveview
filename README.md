@@ -556,21 +556,27 @@ serve the assets accordingly from the cache when offline.
 
 ## Add WebAssembly and a collaborative map
 
-A WASM module is  a static asset so it will be cached when called.
+A WASM module is a static asset so it will be cached when called.
 Javascript can run it.
 
-We add the `Vite` plugin `vite-plugin-wasm` to bring in WASM files, so the list of our plugins is `plugins: [wasm(), solidPlugin(), VitePWA(PWAOpts)]`. 
+We add the `Vite` plugin `vite-plugin-wasm` to bring in WASM files,
+so the list of our plugins is:
 
-We compile  the `Zig` into WASM format for the browser.
-It uses [the Haversine formulas](https://en.wikipedia.org/wiki/Haversine_formula).
+`plugins: [wasm(), solidPlugin(), VitePWA(PWAOpts)]`. 
+
+We compile  the `Zig` into WASM format for the browser with `.ReleaseSmall`.
+This brings down the size from 450kB down to 13kB.
 
 This module computes the lat/long every 1 degree along the great circle joining two points.
+It uses [the Haversine formulas](https://en.wikipedia.org/wiki/Haversine_formula).
 
 It is displayed as a polygone with `Leaflet`.
 
-> Note the size of the WASM module when compiled to `.ReleaseSmall`: _13kB_ whilst `Leaflet` is _43kB_ and `Phoenix.js` is 30kB.
+> Note the size of the WASM module when compiled to `.ReleaseSmall`: _13kB_
+whilst `Leaflet` is _43kB_ and `Phoenix.js` is 30kB.
 
-> It does note really make sense to use a WASM module for this as JavaScript is probably fast enough to compute this as well. It is more to demonstrate what can be done.
+> It does note really make sense to use a WASM module for this as JavaScript
+is probably fast enough to compute this as well. It is more to demonstrate what can be done.
 
 <details><summary>Zig code to produce an array of Great Circle points between two coordinates</summary>
 
