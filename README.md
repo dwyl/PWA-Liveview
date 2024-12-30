@@ -490,7 +490,7 @@ export default defineConfig(({ command, mode }) => {
   }
 
   return {
-    plugins: [solidPlugin(), VitePWA(PWAOpts)],
+    plugins: [solidPlugin(), wasm(), VitePWA(PWAOpts)],
     resolve: {
       extensions: [".mjs", ".js", ".ts", ".jsx", ".tsx", ".json"],
     },
