@@ -90,7 +90,8 @@ We integrated a few languages and libraries in the demo.
     "workbox-strategies": "^7.3.0",
     "y-indexeddb": "^9.0.12",
     "yjs": "^13.6.21",
-    "leaflet": "^1.9.4"
+    "leaflet": "^1.9.4",
+    "workbox-window": "^7.3.0"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.9",
@@ -99,8 +100,7 @@ We integrated a few languages and libraries in the demo.
     "tailwindcss": "^3.4.17",
     "vite": "^6.0.5",
     "vite-plugin-pwa": "^0.21.1",
-    "vite-plugin-solid": "^2.11.0",
-    "workbox-window": "^7.3.0"
+    "vite-plugin-solid": "^2.11.0"
   },
 ```
 </details>
