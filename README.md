@@ -55,7 +55,7 @@ We integrated a few languages and libraries in the demo:
 
 - `Phoenix LiveView` to orchestrate the app,
 - `Yjs` & `y-indexeddb` for local in-browser persistence and sync,
-- `Vite-plugin-PWA` and `Workbox` for JS bundling and PWA setup,
+- `Vite` and `Workbox` for JS bundling and PWA setup,
 - `SolidJS` to produce reactive UI,
 - `Zig` compiled to `WASM` natively read by `Javascript` in the browser,
 - `Leaflet` to power a map.
