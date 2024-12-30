@@ -119,9 +119,8 @@ It works over _HTTPS_.
 
 For developing the app, `Esbuild` is comfortable and perfect.
 
-<br/>
-<details>
-  <sumary>Your `build.js` looks like this</sumary>
+<br/><details>
+  <summary>Your `build.js` looks like this</summary>
 
 ```js
 import { context, build } from "esbuild";
