@@ -2,7 +2,7 @@
 
 const std = @import("std");
 const math = std.math;
-const toRad = math.degreesToRadians;
+const toRadian = math.degreesToRadians;
 
 // Constants for geometric calculations
 const RADIANS_PER_DEGREE = math.pi / 180.0;
@@ -37,10 +37,10 @@ export fn calculateHaversine(
     end_lat_deg: f64,
     end_lon_deg: f64,
 ) f64 {
-    const start_lat_rad = start_lat_deg * RADIANS_PER_DEGREE;
-    const start_lon_rad = start_lon_deg * RADIANS_PER_DEGREE;
-    const end_lat_rad = end_lat_deg * RADIANS_PER_DEGREE;
-    const end_lon_rad = end_lon_deg * RADIANS_PER_DEGREE;
+    const start_lat_rad = toRadian(start_lat_deg);
+    const start_lon_rad = toRadian(start_lon_deg);
+    const end_lat_rad = toRadian(end_lat_deg);
+    const end_lon_rad = toRadian(end_lon_deg);
 
     const haversine =
         math.pow(f64, math.sin((end_lat_rad - start_lat_rad) / 2), 2) +
@@ -98,10 +98,10 @@ export fn computeGreatCirclePoints(
 ) [*]f64 {
     // log("Computing great circle points\n");
     // Convert coordinates to radians
-    const start_lat_rad = toRad(start_lat_deg);
-    const start_lon_rad = toRad(start_lon_deg);
-    const end_lat_rad = toRad(end_lat_deg);
-    const end_lon_rad = toRad(end_lon_deg);
+    const start_lat_rad = toRadian(start_lat_deg);
+    const start_lon_rad = toRadian(start_lon_deg);
+    const end_lat_rad = toRadian(end_lat_deg);
+    const end_lon_rad = toRadian(end_lon_deg);
 
     const angular_distance = calculateHaversine(
         start_lat_deg,
@@ -168,78 +168,4 @@ export fn computeGreatCirclePoints(
 
 // fn log(msg: []const u8) void {
 //     consoleLog(msg.ptr, msg.len);
-// }
-
-// const std = @import("std");
-// const math = std.math;
-
-// pub const memory: []u8 = undefined;
-// const NUM_POINTS = 200;
-// const POINT_SIZE = 16;
-// const BUFFER_SIZE = NUM_POINTS * POINT_SIZE;
-
-// // Static buffer to store the points
-// var point_buffer: [BUFFER_SIZE]u8 align(8) = undefined;
-// var gc_length: f64 = 0.0;
-
-// export fn getBufferPtr() [*]u8 {
-//     return &point_buffer;
-// }
-
-// export fn getBufferSize() usize {
-//     return BUFFER_SIZE;
-// }
-
-// export fn greate_circle_length() f64 {
-//     return gc_length;
-// }
-
-// export fn computeGreatCircle(lat1: f64, lon1: f64, lat2: f64, lon2: f64) usize {
-//     var points = std.mem.bytesAsSlice([2]f64, &point_buffer);
-
-//     // degrees to radians
-//     const start_lat = lat1 * math.pi / 180.0;
-//     const start_lon = lon1 * math.pi / 180.0;
-//     const end_lat = lat2 * math.pi / 180.0;
-//     const end_lon = lon2 * math.pi / 180.0;
-
-//     // Calculate great circle distance
-//     const gcLen = math.pow(f64, math.sin((end_lat - start_lat) / 2), 2) +
-//         std.math.cos(start_lat) * math.cos(end_lat) *
-//         std.math.pow(f64, math.sin((end_lon - start_lon) / 2), 2);
-
-//     gc_length = gcLen;
-
-//     const d = if (gcLen < 1e-15) 0 else 2 * math.atan2(
-//         math.sqrt(gcLen),
-//         math.sqrt(1 - gcLen),
-//     );
-
-//     // Handle special case when points are very close
-//     if (d == 0) {
-//         points[0][0] = lat1;
-//         points[0][1] = lon1;
-//         return POINT_SIZE; // Return just one point
-//     }
-
-//     const sin_d = math.sin(d);
-
-//     for (points[0..NUM_POINTS], 0..) |*point, i| {
-//         const f = @as(f64, @floatFromInt(i)) / @as(f64, @floatFromInt(NUM_POINTS - 1));
-
-//         const A = if (sin_d == 0) 1 - f else math.sin((1 - f) * d) / sin_d;
-//         const B = if (sin_d == 0) f else math.sin(f * d) / sin_d;
-
-//         const x = A * math.cos(start_lat) * math.cos(start_lon) +
-//             B * math.cos(end_lat) * math.cos(end_lon);
-//         const y = A * math.cos(start_lat) * math.sin(start_lon) +
-//             B * math.cos(end_lat) * math.sin(end_lon);
-//         const z = A * math.sin(start_lat) + B * math.sin(end_lat);
-
-//         // Convert back to degrees for Leaflet
-//         point[0] = math.atan2(z, math.sqrt(x * x + y * y)) * 180.0 / math.pi;
-//         point[1] = math.atan2(y, x) * 180.0 / math.pi;
-//     }
-
-//     return BUFFER_SIZE;
 // }

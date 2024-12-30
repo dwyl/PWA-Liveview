@@ -6,12 +6,12 @@ pub fn build(b: *std.Build) void {
         .os_tag = .freestanding,
     });
     // set a preferred release mode, allowing the user to decide how to optimize.
-    const optimize = b.standardOptimizeOption(.{});
+    // const optimize = b.standardOptimizeOption(.{});
 
     const exe_mod = b.createModule(.{
         .root_source_file = b.path("src/great_circle.zig"),
         .target = target,
-        .optimize = optimize,
+        .optimize = .ReleaseSmall,
     });
 
     const exe = b.addExecutable(.{

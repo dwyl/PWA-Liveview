@@ -15,11 +15,13 @@ defmodule SolidyjsWeb.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/", SolidyjsWeb do
-    pipe_through :browser
-    # get "/manifest.webmanifest", ManifestController, :serve
-    live "/", CounterLive
-    live "/map", MapLive
+  live_session :default do
+    scope "/", SolidyjsWeb do
+      pipe_through :browser
+      # get "/manifest.webmanifest", ManifestController, :serve
+      live "/", CounterLive, :index
+      live "/map", MapLive, :index
+    end
   end
 
   def set_user_id(conn, _opts) do

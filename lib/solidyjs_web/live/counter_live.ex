@@ -37,6 +37,7 @@ defmodule SolidyjsWeb.CounterLive do
 
   # see also on_mount {Module, :default}: https://hexdocs.pm/phoenix_live_view/Phoenix.LiveView.html#on_mount/1
   def handle_params(_, uri, socket) do
+    IO.inspect(uri)
     {:noreply, assign(socket, :uri, URI.parse(uri).path)}
   end
 

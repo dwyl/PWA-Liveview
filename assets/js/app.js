@@ -1,11 +1,45 @@
 // Include phoenix_html to handle method=PUT/DELETE in forms and buttons.
+import "../css/app.css";
 import "phoenix_html";
 import { updateSW } from "./refreshSW.js";
 
 updateSW();
+//---------------
+let isOffline = !navigator.onLine;
 
-let isOffline = false;
+//--------------
+function setupOfflineComponentObserver(elementId, renderCallback) {
+  console.log("Setting up offline component observer");
+  const targetElement = document.getElementById(elementId);
 
+  if (!targetElement || !isOffline) {
+    return;
+  }
+
+  console.log(`Observing offline component: ${elementId}`);
+  const observer = new MutationObserver(renderCallback);
+  observer.observe(targetElement, { childList: true, subtree: true });
+}
+
+// Usage in your DOMContentLoaded
+window.addEventListener("DOMContentLoaded", () => {
+  setupOfflineComponentObserver("solid", handleStockOfflineRender);
+  setupOfflineComponentObserver("map", handleMapOfflineRender);
+});
+
+const handleStockOfflineRender = async (mutationsList, observer) => {
+  if (mutationsList.length === 0) {
+    await displayStock();
+  }
+};
+
+const handleMapOfflineRender = async (mutationsList, observer) => {
+  if (mutationsList.length === 0) {
+    await displayMap();
+  }
+};
+
+//--------------
 const onlineStatusHandlers = {
   // handle reconnection
   online: () => {
@@ -20,6 +54,7 @@ const onlineStatusHandlers = {
 window.addEventListener("online", onlineStatusHandlers.online);
 window.addEventListener("offline", onlineStatusHandlers.offline);
 
+//--------------
 async function initApp() {
   try {
     const { default: initYdoc } = await import("./initYJS.js");
@@ -30,6 +65,7 @@ async function initApp() {
     const SolHook = solHook(ydoc); // setup SolidJS component
 
     const { MapHook } = await import("./mapHook.jsx");
+    window.MapHook = MapHook; // setup Map component
 
     // Only try to setup LiveSocket if we're online
     if (navigator.onLine && !isOffline) {
@@ -38,14 +74,14 @@ async function initApp() {
 
     // Always try to display the component in offline mode
     if (!navigator.onLine || isOffline) {
-      await displayComponent();
+      if (document.getElementById("map")) {
+        await displayMap();
+      } else if (document.getElementById("solid")) {
+        return displayStock();
+      }
     }
   } catch (error) {
     console.error("Init failed:", error);
-    // If init fails, try to display offline component
-    if (!navigator.onLine || isOffline) {
-      await displayComponent();
-    }
   }
 }
 
@@ -66,24 +102,24 @@ async function initLiveSocket({ SolHook, MapHook }) {
   window.liveSocket = liveSocket;
 }
 
-async function displayComponent() {
+async function displayMap() {
+  const { RenderMap } = await import("./mapHook.jsx");
+  console.log("Map rendering-----");
+  return RenderMap();
+}
+
+async function displayStock() {
   try {
     if (!window.SolidComp || !window.ydoc) {
       console.error("Components not available");
       return;
     }
-
-    const container = document.getElementById("solid");
-    if (!container) {
-      console.error("Solid container not found");
-      return;
-    }
-
+    console.log("Solid rendering-----");
     return window.SolidComp({
       ydoc: window.ydoc,
       userID: sessionStorage.getItem("userID"),
       max: sessionStorage.getItem("max"),
-      el: container,
+      el: document.getElementById("solid"),
     });
   } catch (error) {
     console.error("Error displaying component:", error);
@@ -92,9 +128,10 @@ async function displayComponent() {
 
 await initApp();
 
+//--------------
 // Show online/offline status
-import("./onlineStatus").then(({ statusListener }) => statusListener());
-
+import("./onlineStatus.js").then(({ statusListener }) => statusListener());
+//--------------
 // Show progress bar on live navigation and form submits
 import("../vendor/topbar.cjs").then(configureTopbar);
 

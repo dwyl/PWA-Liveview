@@ -22,7 +22,7 @@ config :solidyjs, SolidyjsWeb.Endpoint,
   live_view: [signing_salt: "zhtHGb8Q"]
 
 # Configure esbuild (the version is required)
-# config :esbuild, :version, "0.24.2",
+# config :esbuild, :version, "0.24.2"
 #   solidyjs: [
 #     args:
 #       ~w(js/app.js --bundle --target=es2017 --outdir=../priv/static/assets --external:/fonts/* --external:/images/*),

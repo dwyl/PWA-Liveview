@@ -2,7 +2,7 @@ import { SolidComp } from "./SolidComp";
 
 export const solHook = (ydoc) => ({
   destroyed() {
-    console.log("destroyed");
+    console.warn("stock destroyed");
   },
   async mounted() {
     let isHandlingServerUpdate = false,
