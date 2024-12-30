@@ -573,7 +573,7 @@ It uses [the Haversine formulas](https://en.wikipedia.org/wiki/Haversine_formula
 It is displayed as a polygone with `Leaflet`.
 
 > Note the size of the WASM module when compiled to `.ReleaseSmall`: _13kB_
-whilst `Leaflet` is _43kB_ and `Phoenix.js` is 30kB.
+whilst `Leaflet` is _43kB_ and `Phoenix_live_view.js` is 30kB.
 
 > It does note really make sense to use a WASM module for this as JavaScript
 is probably fast enough to compute this as well. It is more to demonstrate what can be done.
