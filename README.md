@@ -441,7 +441,7 @@ The "manifest.webmanifest" file will be generated from "vite.config.js".
   "background_color": "#ffffff",
   "lang": "en",
   "scope": "/",
-  "description": "A LiveView + SolidJS PWA and Yjs demo",
+  "description": "A Phoenix LiveView PWA demo webapp",
   "theme_color": "#ffffff",
   "icons": [
     { "src": "/images/icon-192.png", "sizes": "192x192", "type": "image/png" },
