@@ -7,6 +7,9 @@ As an application, two pages:
 
 - a collaborative stock manager. A user clicks and visualizes the stock level in an animated read-only `<input type=range/>`.
 It is broadcasted to every user. You need a CRDT strategy.
+<br/>
+<div align="center"><img width="1425" alt="Screenshot 2024-12-29 at 13 15 19" src="https://github.com/user-attachments/assets/f5e68b4d-6229-4736-a4b3-a60fc813b6bf" /></div>
+<br/>
 - a collaborative flight animation. Two users can enter their geolocation and share it.
 Once ready, a great circle joining these two points is drawn on the map. The data is saved and sent
 to `Phoenix` which in turn saves into the backend database.
@@ -548,9 +551,7 @@ It will return createSignal stateful values (`createSignal<boolean>`) for offlin
 <br/>
 
 * Screenshot of the demo app
-<br/>
-<img width="1425" alt="Screenshot 2024-12-29 at 13 15 19" src="https://github.com/user-attachments/assets/f5e68b4d-6229-4736-a4b3-a60fc813b6bf" />
-<br/>
+
 
 ## Add Navigation
 
