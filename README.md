@@ -20,7 +20,7 @@ It is `Zig` code that computes points (lat/long) every 1 degree along the great 
 With an aggresive cache and code splitting, you get an FCP (first content loading time) of 0.4s and a full render of 1.0s for the page with the map and WASM.
 <br/>
 
-<img width="619" alt="Screenshot 2024-12-28 at 04 45 26" src="https://github.com/user-attachments/assets/e6244e79-2d31-47df-9bce-a2d2a4984a33" />
+<<div align="center"><img width="619" alt="Screenshot 2024-12-28 at 04 45 26" src="https://github.com/user-attachments/assets/e6244e79-2d31-47df-9bce-a2d2a4984a33" /></div>
 
 # Table of contents
 
