@@ -575,6 +575,35 @@ It is displayed as a polygone with `Leaflet`.
 > Note the size of the WASM module when compiled to `.ReleaseSmall`: _13kB_
 whilst `Leaflet` is _43kB_ and `Phoenix_live_view.js` is 30kB.
 
+<details>
+  <summary>Weight of files</summary>
+
+  ```sh
+../priv/static/manifest.webmanifest                 0.36 kB
+../priv/static/assets/great_circle.wasm            13.16 kB
+../priv/static/assets/mapHook.css                  15.04 kB │ gzip:  6.38 kB
+../priv/static/assets/onlineStatus.js               0.37 kB │ gzip:  0.25 kB
+../priv/static/assets/bins.js                       0.43 kB │ gzip:  0.26 kB
+../priv/static/assets/initYJS.js                    0.48 kB │ gzip:  0.30 kB
+../priv/static/assets/SolidComp.js                  0.73 kB │ gzip:  0.45 kB
+../priv/static/assets/refreshSW.js                  0.85 kB │ gzip:  0.50 kB
+../priv/static/assets/great_circle.js               0.85 kB │ gzip:  0.50 kB
+../priv/static/assets/solHook.js                    0.88 kB │ gzip:  0.43 kB
+../priv/static/assets/preload-helper.js             0.99 kB │ gzip:  0.60 kB
+../priv/static/assets/counter.js                    1.40 kB │ gzip:  0.73 kB
+../priv/static/assets/mapHook.js                    1.42 kB │ gzip:  0.85 kB
+../priv/static/assets/y-indexeddb.js                2.82 kB │ gzip:  1.21 kB
+../priv/static/assets/topbar.js                     3.05 kB │ gzip:  1.52 kB
+../priv/static/assets/app.js                        3.86 kB │ gzip:  1.53 kB
+../priv/static/assets/workbox-window.prod.es5.js    5.72 kB │ gzip:  2.35 kB
+../priv/static/assets/web.js                       18.10 kB │ gzip:  7.28 kB
+../priv/static/assets/phoenix.js                   20.26 kB │ gzip:  6.16 kB
+../priv/static/assets/yjs.js                       85.58 kB │ gzip: 26.28 kB
+../priv/static/assets/phoenix_live_view.esm.js     96.62 kB │ gzip: 30.31 kB
+../priv/static/assets/leaflet-src.js              149.70 kB │ gzip: 43.40 kB
+```
+</details>
+
 > It does note really make sense to use a WASM module for this as JavaScript
 is probably fast enough to compute this as well. It is more to demonstrate what can be done.
 
