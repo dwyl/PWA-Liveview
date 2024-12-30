@@ -51,7 +51,7 @@ With an aggresive cache and code splitting, you get an FCP (first content loadin
 
 ## Ingredients and comments
 
-We integrated a few languages and libraries in the demo:
+We integrated a few languages and libraries in the demo.
 
 - `Phoenix LiveView` to orchestrate the app,
 - `Yjs` & `y-indexeddb` for local in-browser persistence and sync,
@@ -60,6 +60,7 @@ We integrated a few languages and libraries in the demo:
 - `Zig` compiled to `WASM` natively read by `Javascript` in the browser,
 - `Leaflet` to power a map.
 - `SQlite` backend database
+
 
 
 [package json](#package-json)
