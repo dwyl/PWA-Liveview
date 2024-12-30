@@ -634,11 +634,6 @@ It will return createSignal stateful values (`createSignal<boolean>`) for offlin
 * Screenshot of the demo app
 
 
-## Add Navigation
-
-You intercept request in the form `request.mode === "navigate"` and 
-serve the assets accordingly from the cache when offline.
-
 ## Add WebAssembly and a collaborative map
 
 A WASM module is a static asset so it will be cached when called.
@@ -881,15 +876,11 @@ async function loadWasm() {
   return instance.exports;
 ```
 
-## Demo with auto-spaning map with geolocalisation
 
-As long as the web app is initialized with network connectivity, 
-you can create a web app that uses geolocation even when offline.
+## Add Navigation
 
-Indeed, GPS functionality on mobile phones operates independently of internet
-or cellular connections.
-
-Your device's GPS receiver can obtain location data from satellites without requiring network access
+You intercept request in the form `request.mode === "navigate"` and 
+serve the assets accordingly from the cache when offline.
 
 
 
