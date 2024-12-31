@@ -138,8 +138,11 @@ const ExternalResources = {
   options: {
     cacheName: "external",
     expiration: {
-      maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
-      maxEntries: 100,
+      maxAgeSeconds: 60 * 60, // 1 hours
+      maxEntries: 500,
+    },
+    matchOptions: {
+      ignoreVary: true, // Important for some external resources
     },
   },
 };

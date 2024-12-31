@@ -15,23 +15,13 @@ export function statusListener() {
   // Check initial status immediately
   setOnline(domEl, navigator.onLine ? lineStatus.on : lineStatus.off);
 
-  // if (!navigator.onLine && navigator.serviceWorker.controller) {
-  //   navigator.serviceWorker.controller.postMessage({
-  //     type: "IS_OFFLINE",
-  //   });
-  // }
-
   window.addEventListener("offline", () => {
-    setOnline(domEl, lineStatus.off);
-    // navigator.serviceWorker.controller?.postMessage({
-    //   type: "IS_OFFLINE",
-    // });
+    console.log("---> off");
+    return setOnline(domEl, lineStatus.off);
   });
 
   window.addEventListener("online", () => {
+    console.log("---> on");
     setOnline(domEl, lineStatus.on);
-    // navigator.serviceWorker.controller?.postMessage({
-    //   type: "IS_ONLINE",
-    // });
   });
 }
