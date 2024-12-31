@@ -882,7 +882,103 @@ async function loadWasm() {
 
 ## Add Navigation
 
-Tricky!!!! Not there yet
+Ok! Only missing caching correctly.
+
+One approach is to render conditionnally. This means that if the user is connected, the app renders "normally",
+in the sens that the background HTML is rendered and all the needed Javascript is run.
+
+When the user is offline - and wants to navigate to a page he already visited - you still render the background HTML,
+but you need to trigger the Javascript rendering.
+
+You have to discover the tricky parts:
+- online status. The `navigator.onLine` innacurate  information when you load a page off-line.
+- a navigation off-line is a full page reload instead of a "replace" when you navigate between pages in the same `live_session`.
+
+One way to overcome the online status is simply to send a request to the backend. A negative response means the user is off-line.
+Once you have this bit, you:
+- setup and connect the `LiveSocket` and its hooks and/or JavaScript if any
+- or by-pass the `LiveSocket` and "mount" the "hooks" an/or JavaScript.
+
+```js
+const lineStatus = { on: true };
+
+async function checkOnlineStatus() {
+  try {
+    const response = await fetch("/test");
+    if (response.ok) return response.ok;
+  } catch (error) {
+    console.error("Error checking online status:", error);
+    return false;
+  }
+}
+```
+
+and my "app.js" becomes (I am using dynamic imports)
+
+```js
+async function initApp({ on }) {
+  try {
+    const { default: initYdoc } = await import("./initYJS.js");
+    const ydoc = await initYdoc();
+    window.ydoc = ydoc; // Set this early so it's available for offline use
+
+    if (on) {
+      const { solHook } = await import("./solHook.jsx");
+      const SolHook = solHook(ydoc); // setup SolidJS component
+
+      const { MapHook } = await import("./mapHook.jsx");
+      window.MapHook = MapHook; // setup Map component
+      return initLiveSocket({ SolHook, MapHook });
+    }
+
+    const path = window.location.pathname;
+    if (!on) {
+      console.log("path: ", window.location.pathname);
+
+      if (path === "/map") {
+        const { MapHook } = await import("./mapHook.jsx");
+        window.MapHook = MapHook; // setup Map component
+        return displayMap();
+      } else if (path === "/") {
+        const { solHook } = await import("./solHook.jsx");
+        const SolHook = solHook(ydoc); // setup SolidJS component
+
+        return displayStock();
+      }
+    }
+  } catch (error) {
+    console.error("Init failed:", error);
+  }
+}
+
+async function initLiveSocket({ SolHook, MapHook }) {
+  console.log("initLiveSocket");
+  const { LiveSocket } = await import("phoenix_live_view");
+  const { Socket } = await import("phoenix");
+  const csrfToken = document
+    .querySelector("meta[name='csrf-token']")
+    .getAttribute("content");
+
+  const liveSocket = new LiveSocket("/live", Socket, {
+    longPollFallbackMs: 100,
+    params: { _csrf_token: csrfToken },
+    hooks: { SolHook, MapHook },
+  });
+
+  liveSocket.connect();
+  window.liveSocket = liveSocket;
+  liveSocket.getSocket().onOpen(() => {
+    console.log("Socket connected", liveSocket?.isConnected());
+  });
+  return true;
+}
+```
+
+Lastly, when the user get back on-line, trigger a full reload to sync the backend to the frontend.
+
+```js
+window.addEventListener("online", () => window.location.reload());
+```
 
 
 
