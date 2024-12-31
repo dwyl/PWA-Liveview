@@ -898,6 +898,16 @@ Once you have this bit, you:
 - setup and connect the `LiveSocket` and its hooks and/or JavaScript if any
 - or by-pass the `LiveSocket` and "mount" the "hooks" an/or JavaScript.
 
+Since you rely on the path, use:
+
+```elixir
+use Phoenix.Component
+use ExLivePWAWeb, :verified_routes
+
+<.link navigate={~p"/"} replace><span>Home</span></.link>
+```
+
+You can run a simple `fetch` request to the backend where you setup a `GET` route and respond with json:
 ```js
 const lineStatus = { on: true };
 
@@ -911,8 +921,17 @@ async function checkOnlineStatus() {
   }
 }
 ```
+<br/>
+```elixir
+use ExLvePWAWeb, :controller
 
-and my "app.js" becomes (I am using dynamic imports)
+def test(conn, _params) do
+  json(conn, %{ok: 200})
+end
+```
+<br/>
+
+and the entry file "app.js" becomes (using dynamic imports thanks to `Vite` (or `Esbuild` as well if you change to `esnext`).
 
 ```js
 async function initApp({ on }) {
