@@ -2,7 +2,9 @@
 
 A little Elixir-LiveView demo webapp to demonstrate how to setup a real-time collaborative app with offline support (PWA) using CRDT.
 
-[WIP]
+[WIP]: the most important missing bit is how to cache the base page when using Liveview's navigaton (without full reload). 
+If I use a listener to a new URL, you POST a message t othe SW to him to cache this page. However, this is an extra functionality
+that needs to write your own SW....
 
 As an application, a two pages collaborative real-time webapp where you can navigate off-line between them, _given that you visited these pages before)_.
 
