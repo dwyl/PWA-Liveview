@@ -63,7 +63,7 @@ We integrated a few languages and libraries in the demo.
 - `SolidJS` to produce reactive UI,
 - `Zig` compiled to `WASM` natively read by `Javascript` in the browser,
 - `Leaflet` to power a map.
-- `SQlite` backend database
+- `SQlite` backend database (optional)
 
 
 
