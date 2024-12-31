@@ -932,19 +932,16 @@ async function initApp({ on }) {
     }
 
     const path = window.location.pathname;
-    if (!on) {
-      console.log("path: ", window.location.pathname);
+    const path = window.location.pathname;
 
-      if (path === "/map") {
-        const { MapHook } = await import("./mapHook.jsx");
-        window.MapHook = MapHook; // setup Map component
-        return displayMap();
-      } else if (path === "/") {
-        const { solHook } = await import("./solHook.jsx");
-        const SolHook = solHook(ydoc); // setup SolidJS component
-
-        return displayStock();
-      }
+    if (path === "/map") {
+      const { MapHook } = await import("./mapHook.jsx");
+      window.MapHook = MapHook; // setup Leaflet Map component
+      return displayMap();
+    } else if (path === "/") {
+      const { solHook } = await import("./solHook.jsx");
+      solHook(ydoc); // setup SolidJS component
+      return displayStock();
     }
   } catch (error) {
     console.error("Init failed:", error);
@@ -974,11 +971,11 @@ async function initLiveSocket({ SolHook, MapHook }) {
 }
 ```
 
-Lastly, when the user get back on-line, trigger a full reload to sync the backend to the frontend.
+For example, when the user get back on-line, you may want to trigger a full reload to sync the backend to the frontend.
 
 ```js
 window.addEventListener("online", () => window.location.reload());
 ```
-
+However, sometimes this does not work. You click on the navigation menu and you are done.
 
 
