@@ -47,11 +47,10 @@ With an aggresive cache and code splitting, you get an FCP (first content loadin
 
 8[Video and screenshots](#video-and-screenshots)
 
+[Add WebAssembly and a collaborative map](#add-webassembly-and-a-collaborative-map)
+
 [Add navigation](#add-navigation)
 
-[Add WebAssembly](#add-webassembly)
-
-[Demo with auto-spaning map with geolocalisation](#demo-with-auto-spaning-map-with-geolocalisation)
 
 
 ## Ingredients and comments
