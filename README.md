@@ -955,7 +955,6 @@ async function initApp({ on }) {
     }
 
     const path = window.location.pathname;
-    const path = window.location.pathname;
 
     if (path === "/map") {
       const { MapHook } = await import("./mapHook.jsx");
