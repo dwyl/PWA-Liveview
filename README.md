@@ -4,7 +4,7 @@ A little Elixir-LiveView demo webapp to demonstrate how to setup a real-time col
 
 [WIP]
 
-As an application, a two pages webapp where you can navigate off-line between them, _given that you visited these pages before)_.
+As an application, a two pages collaborative real-time webapp where you can navigate off-line between them, _given that you visited these pages before)_.
 
 
 - a collaborative stock manager. A user clicks and visualizes the stock level in an animated read-only `<input type=range/>`.
