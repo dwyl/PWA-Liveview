@@ -61,7 +61,7 @@ We integrated a few languages and libraries in the demo.
 - `Yjs` & `y-indexeddb` for local in-browser persistence and sync,
 - `Vite` and `Workbox` for JS bundling and PWA setup,
 - `SolidJS` to produce reactive UI,
-- `Zig` compiled to `WASM` natively read by `Javascript` in the browser,
+- `Zig` for the great cirlce calculations, compiled to `WASM`, natively read by `Javascript` in the browser,
 - `Leaflet` to power a map.
 - `SQlite` backend database (optional)
 
@@ -231,12 +231,11 @@ You indeed obviously need a reactive Javascript framework to have an offline res
 
 ❗️The choice is a question of oponion.
  
-> Among the frameworks that don't use a virtual DOM, you have  `Svelte` and `SolidJS`.
-In fact, both  `Svelte` and `SolidJS` are comparable. in terms of performance.
-Since I didn't want to learn `Svelte` which is far from Vanila Javascript, 
-I opted for `SolidJS` with is very lightweight and fast,
-very close to Vanilla Javascript with a touch of `React`
-for the style (like `LiveView`) whilst _not at all_ for `Svelte`.
+> Among the frameworks, you most probably want to a very light one, that does not use a virtual DOM.
+You have  `Svelte` and `SolidJS`.
+In fact, both  `Svelte` and `SolidJS` are comparable. in terms of performance and bundle size.
+Since `Svelte` is far from Vanila Javascript, 
+I opted for `SolidJS` with is very close to  `React` like `LiveView` is, whilst _not at all_ for `Svelte`.
 The main rule with `SolidJS` is: _don't destructure the props_ and you are good to go.
 If you go through the code, you will notice that the impact of using `SolidJS` is minimal on the code and very lightweight.
 
@@ -638,8 +637,12 @@ It will return createSignal stateful values (`createSignal<boolean>`) for offlin
 
 ## Add WebAssembly and a collaborative map
 
+
 A WASM module is a static asset so it will be cached when called.
 Javascript can run it.
+
+We used `Zig` to cod and produce it. Since the great circle is CPU intensive, it makes sense to use calcuation box like WASM.
+Furthermore, this (simple) module is lighting fast.
 
 We add the `Vite` plugin `vite-plugin-wasm` to bring in WASM files,
 so the list of our plugins is:
