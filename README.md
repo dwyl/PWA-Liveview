@@ -923,7 +923,9 @@ async function checkOnlineStatus() {
   }
 }
 ```
+
 <br/>
+
 ```elixir
 use ExLvePWAWeb, :controller
 
@@ -931,6 +933,7 @@ def test(conn, _params) do
   json(conn, %{ok: 200})
 end
 ```
+
 <br/>
 
 and the entry file "app.js" becomes (using dynamic imports thanks to `Vite` (or `Esbuild` as well if you change to `esnext`).
@@ -996,6 +999,7 @@ For example, when the user get back on-line, you may want to trigger a full relo
 ```js
 window.addEventListener("online", () => window.location.reload());
 ```
+
 However, sometimes this does not work. You click on the navigation menu and you are done.
 
 
