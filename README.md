@@ -17,7 +17,7 @@ Once ready, a great circle joining these two points is drawn on the map. The dat
 to `Phoenix` which in turn saves into the backend database.
 A user can run a flight animation on a map, using Leaflet.
 The flight computation and animation works offline as we use a `WebAssembly` WASM module
-to compute the orthodrome (CPU intensive) and Leaflet to animate it.
+to compute the great circle points of te road (CPU intensive) and Leaflet display it, and we animate the voyage.
 It is `Zig` code that computes points (lat/long) every 1 degree along the great circle joining these two points.
 <br/>
 <div align="center"><img width="635" alt="Screenshot 2024-12-30 at 07 39 51" src="https://github.com/user-attachments/assets/2eb459e6-29fb-4dbb-a101-841cbad5af95" /></div>
