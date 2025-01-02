@@ -4,97 +4,92 @@ import "phoenix_html";
 import { updateSW } from "./refreshSW.js";
 
 updateSW();
-//---------------
-const lineStatus = { on: true };
 
+const paths = new Set();
+const myroutes = ["/", "/map"];
+let lineStatus = true;
+
+async function addCurrentPageToCache({ current, routes }) {
+  await navigator.serviceWorker.ready;
+  const newPath = new URL(current).pathname;
+
+  if (!routes.includes(newPath)) return;
+  if (paths.has(newPath)) return;
+
+  if (newPath === window.location.pathname) {
+    console.log("addCurrentPageToCache", newPath, window.location.pathname);
+    paths.add(newPath);
+    const htmlContent = document.documentElement.outerHTML;
+    const contentLength = new TextEncoder().encode(htmlContent).length;
+    const headers = new Headers({
+      "Content-Type": "text/html",
+      "Content-Length": contentLength,
+    });
+
+    const response = new Response(htmlContent, {
+      headers: headers,
+      status: 200,
+      statusText: "OK",
+    });
+
+    const cache = await caches.open("lv-pages");
+    return cache.put(current, response);
+  } else return;
+}
+
+// we cache the two pages "/3 and "/map" only once.
+navigation.addEventListener("navigate", async ({ destination: { url } }) => {
+  console.log("navigate", url, window.location.pathname);
+  return addCurrentPageToCache({ current: url, routes: myroutes });
+});
+
+//---------------
 async function checkOnlineStatus() {
   try {
     const response = await fetch("/test");
-    if (response.ok) return response.ok;
+    console.log(response);
+    return response.ok || false;
   } catch (error) {
     console.error("Error checking online status:", error);
     return false;
   }
 }
 
+// --------------
 window.addEventListener("online", () => window.location.reload());
 //--------------
-/*
-function setupOfflineComponentObserver(elementId, renderCallback) {
-  console.log("Observer", elementId);
-  const targetElement = document.getElementById(elementId);
-  if (!targetElement || window.liveSocket?.isConnected()) {
-    return;
-  }
-
-  const observer = new MutationObserver(renderCallback);
-  observer.observe(targetElement, { childList: true, subtree: true });
-}
-
-// phx:page-loading-start
-window.addEventListener("DOMContentLoaded", () => {
-  if (window.location.pathname === "/") {
-    setupOfflineComponentObserver("solid", handleSolidOfflineRender);
-  } else if (window.location.pathname === "/map") {
-    setupOfflineComponentObserver("map", handleMapOfflineRender);
-  }
-});
-
-const handleSolidOfflineRender = async (mutationsList, observer) => {
-  console.log(mutationsList.length);
-  if (mutationsList.length === 0) {
-    await displayStock();
-  }
-};
-
-const handleMapOfflineRender = async (mutationsList, observer) => {
-  console.log(mutationsList.length);
-  if (mutationsList.length === 0) {
-    await displayMap();
-  }
-};
 
 //--------------
-
-// window.addEventListener("online", () => (lineStatus.on = true));
-// window.addEventListener("offline", () => (lineStatus.on = false));
-*/
-//--------------
-async function initApp({ on }) {
+async function initApp(lineStatus) {
+  console.log("initApp----", lineStatus);
   try {
     const { default: initYdoc } = await import("./initYJS.js");
     const ydoc = await initYdoc();
     window.ydoc = ydoc; // Set this early so it's available for offline use
+    const { solHook } = await import("./solHook.jsx");
+    const { MapHook } = await import("./mapHook.jsx");
 
-    if (on) {
-      const { solHook } = await import("./solHook.jsx");
+    if (lineStatus) {
       const SolHook = solHook(ydoc); // setup SolidJS component
-
-      const { MapHook } = await import("./mapHook.jsx");
-      window.MapHook = MapHook; // setup Map component
+      // window.MapHook = MapHook; // setup Map component
       return initLiveSocket({ SolHook, MapHook });
     }
 
     const path = window.location.pathname;
-    // if (!on) {
 
     if (path === "/map") {
-      const { MapHook } = await import("./mapHook.jsx");
-      window.MapHook = MapHook; // setup Leaflet Map component
+      // window.MapHook = MapHook; // setup Leaflet Map component
       return displayMap();
     } else if (path === "/") {
-      const { solHook } = await import("./solHook.jsx");
       solHook(ydoc); // setup SolidJS component
       return displayStock();
     }
-    // }
   } catch (error) {
     console.error("Init failed:", error);
   }
 }
 
 async function initLiveSocket({ SolHook, MapHook }) {
-  console.log("initLiveSocket");
   const { LiveSocket } = await import("phoenix_live_view");
   const { Socket } = await import("phoenix");
   const csrfToken = document
@@ -122,7 +117,6 @@ async function displayMap() {
 }
 
 async function displayStock() {
-  console.log("displayStock");
   try {
     if (!window.SolidComp || !window.ydoc) {
       console.error("Components not available", window.SolidComp, window.ydoc);
@@ -140,24 +134,26 @@ async function displayStock() {
   }
 }
 
-lineStatus.on = await checkOnlineStatus();
-
-console.log(
-  "initial line status: socket, navigator, onlineStatus: ",
-  window.liveSocket?.isConnected(),
-  navigator.onLine,
-  lineStatus.on
-);
+// **************************************
+lineStatus = await checkOnlineStatus();
 await initApp(lineStatus);
+
+if ("serviceWorker" in navigator && lineStatus) {
+  await addCurrentPageToCache({
+    current: window.location.href,
+    routes: myroutes,
+  });
+}
 
 //--------------
 // Show online/offline status
 import("./onlineStatus.js").then(({ statusListener }) => statusListener());
+
 //--------------
 // Show progress bar on live navigation and form submits
-import("../vendor/topbar.cjs").then(configureTopbar);
+await import("../vendor/topbar.cjs").then(configureTopbar);
 
-function configureTopbar({ default: topbar }) {
+async function configureTopbar({ default: topbar }) {
   topbar.config({ barColors: { 0: "#29d" }, shadowColor: "rgba(0, 0, 0, .3)" });
   window.addEventListener("phx:page-loading-start", (_info) =>
     topbar.show(300)

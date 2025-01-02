@@ -49,7 +49,7 @@ async function computeRoute() {
 
     L.Icon.Default.imagePath = "images/";
 
-    const lat1 = 48.88; // San Francisco
+    const lat1 = 48.88; // Paris
     const lon1 = 2.3;
     const lat2 = 40.7128; // New York
     const lon2 = -74.006;
@@ -84,10 +84,9 @@ async function computeRoute() {
     marker.addTo(map);
 
     // Create the animated marker
-    const rendered = L.canvas();
+    L.polyline(latLngs, { renderer: L.canvas() }).addTo(map);
     // draw the great circle path
-    L.polyline(latLngs, { renderer: rendered }).addTo(map);
-    return animatePlan(marker, latLngs, 500);
+    return animatePlan(marker, latLngs, 200);
   } catch (error) {
     console.error(`Unable to instantiate module`, error);
     throw error;
@@ -112,7 +111,7 @@ function animatePlan(marker, latLngs, time) {
 }
 
 export async function RenderMap() {
-  const countID = await computeRoute();
+  await computeRoute();
 }
 
 export const MapHook = {
@@ -125,14 +124,13 @@ export const MapHook = {
   async mounted() {
     try {
       this.countId = await computeRoute();
-      console.log(this.countId);
     } catch (error) {
       console.error(`Unable to run the map`, error);
       throw error;
     }
   },
   reconnected() {
-    console.log("Reconnection detected");
+    console.warn("Reconnection detected");
     this.mounted();
   },
 };

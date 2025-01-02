@@ -18,7 +18,7 @@ defmodule SolidyjsWeb.Router do
   live_session :default do
     scope "/", SolidyjsWeb do
       pipe_through :browser
-      get "/test", CheckConn, :test
+      get "/test", CheckOnline, :test
       # get "/manifest.webmanifest", ManifestController, :serve
       live "/", CounterLive, :index
       live "/map", MapLive, :index

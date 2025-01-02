@@ -18,7 +18,7 @@ defmodule SolidyjsWeb do
   """
 
   def static_paths,
-    do: ~w(assets fonts images favicon.ico robots.txt  sw.js manifest.webmanifest)
+    do: ~w(assets fonts images favicon.ico robots.txt  sw.js custom-sw.js manifest.webmanifest)
 
   # sw.js
   # get "/", PageController, :home

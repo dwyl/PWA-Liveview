@@ -41,6 +41,12 @@ defmodule SolidyjsWeb.CounterLive do
     {:noreply, assign(socket, :uri, URI.parse(uri).path)}
   end
 
+  def handle_event("stock", %{"user_id" => nil} = map, socket) do
+    IO.inspect(socket.assigns.user_id)
+    IO.inspect(Map.get(map, "c"))
+    {:noreply, socket}
+  end
+
   def handle_event("stock", %{"user_id" => userid} = map, socket) do
     case socket.assigns.user_id == String.to_integer(userid) do
       true ->

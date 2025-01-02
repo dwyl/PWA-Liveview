@@ -60,52 +60,19 @@ const buildOps = {
   },
 };
 
+const LVLongPoll = {
+  urlPattern: ({ url }) => url.pathname.startsWith("/live/longpoll"),
+  handler: "NetworkOnly",
+};
+
+const LVTestOnline = {
+  urlPattern: ({ url }) => url.pathname.startsWith("/test"),
+  handler: "NetworkOnly",
+};
+
 const LVWebSocket = {
   urlPattern: ({ url }) => url.pathname.startsWith("/live/websocket"),
   handler: "NetworkOnly", // Websockets must always go to network
-};
-
-const LVNavigation = {
-  urlPattern: ({ request }) =>
-    request.mode === "navigate" ||
-    request.headers.get("accept")?.includes("text/html"),
-  handler: "NetworkFirst",
-  options: {
-    cacheName: "lv-nav",
-    networkTimeoutSeconds: 3,
-    plugins: [
-      {
-        fetchDidFail: async ({ request }) => {
-          console.warn("Navigation request failed:", request.url);
-        },
-      },
-    ],
-  },
-};
-
-const LVLongPoll = {
-  urlPattern: ({ url }) => url.pathname.startsWith("/live/longpoll"),
-  handler: "NetworkFirst",
-  options: {
-    cacheName: "longpoll",
-    networkTimeoutSeconds: 5,
-    plugins: [
-      {
-        handlerDidError: async ({ request }) => {
-          const url = new URL(request.url);
-          // Provide a graceful fallback for offline mode
-          return new Response(
-            JSON.stringify({
-              events: [],
-              status: "ok",
-              token: url.searchParams.get("token"),
-            }),
-            { headers: { "Content-Type": "application/json" } }
-          );
-        },
-      },
-    ],
-  },
 };
 
 const StaticAssets = {
@@ -126,19 +93,16 @@ const StaticAssets = {
   },
 };
 
-const ExternalResources = {
+const Fonts = {
   urlPattern: ({ url }) => {
-    const externalPatterns = [
-      "https://fonts.googleapis.com",
-      "https://tile.openstreetmap.org",
-    ];
+    const externalPatterns = ["https://fonts.googleapis.com"];
     return externalPatterns.some((pattern) => url.href.startsWith(pattern));
   },
   handler: "CacheFirst",
   options: {
     cacheName: "external",
     expiration: {
-      maxAgeSeconds: 60 * 60, // 1 hours
+      maxAgeSeconds: 60 * 60 * 24 * 365, // 1 hours
       maxEntries: 500,
     },
     matchOptions: {
@@ -147,9 +111,16 @@ const ExternalResources = {
   },
 };
 
-const CacheFirstScript = {
+const Scripts = {
   urlPattern: ({ request }) => request.destination === "script",
   handler: "CacheFirst",
+  options: {
+    cacheName: "scripts",
+    expiration: {
+      maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+      maxEntries: 50,
+    },
+  },
 };
 
 const Tiles = {
@@ -159,7 +130,7 @@ const Tiles = {
     cacheName: "tiles",
     expiration: {
       maxEntries: 1000, // Adjust based on your needs
-      maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+      maxAgeSeconds: 60 * 60, // 1 hours
     },
     plugins: [
       {
@@ -171,17 +142,25 @@ const Tiles = {
   },
 };
 
-// const NetworkFirstMap = {
-//   urlPattern: ({ url }) => url.pathname.startsWith("/map"), // Match the "/map" route
-//   handler: "NetworkFirst", // Try network first, fallback to cache
-//   options: {
-//     cacheName: "map-page", // Cache name for LiveView routes
-//     expiration: {
-//       maxEntries: 50, // Max number of entries in the cache
-//       maxAgeSeconds: 7 * 24 * 60 * 60, // Cache for 7 days
-//     },
-//   },
-// };
+const LiveReload = {
+  urlPattern: ({ url }) => url.pathname.startsWith("/phoenix"),
+  handler: "NetworkOnly",
+};
+
+const Pages = {
+  urlPattern: ({ url }) =>
+    url.pathname.startsWith("/map") || url.pathname.startsWith("/"),
+  handler: "NetworkFirst",
+  options: {
+    plugins: [
+      {
+        fetchDidFail: async ({ request }) => {
+          console.warn("Online status request failed:", request.url);
+        },
+      },
+    ],
+  },
+};
 
 const devOps = {
   enabled: true,
@@ -191,33 +170,43 @@ const devOps = {
 const PWAOpts = {
   devOptions: devOps,
   registerType: "autoUpdate",
+  filename: "sw.js",
   strategies: "generateSW",
-  // stsrategies: "injectManifest",
+  // srcDir: "./js",
   includeAssets: ["favicon.ico", "robots.txt"],
   manifest: manifestOpts,
   outDir: "../priv/static/",
-  filename: "sw.js",
   manifestFilename: "manifest.webmanifest",
+  injectManifest: {
+    injectionPoint: undefined,
+  },
   workbox: {
-    navigationPreload: true, // <----???
+    //   navigationPreload: true, // <----???
     globDirectory: path.resolve(__dirname, "../priv/static/"),
     globPatterns: [
-      // "*/*.*",
-      // "*.*",
       "assets/**/*.{js,jsx,css,ico, wasm}",
       "images/**/*.{png,jpg,svg,webp}",
     ],
     swDest: "../priv/static/sw.js",
     navigateFallback: null, // Do not fallback to index.html !!!!!!!!!
     inlineWorkboxRuntime: true, // Inline the Workbox runtime into the service worker. You can't serve timestamped URLs with Phoenix
-    runtimeCaching: [
-      LVWebSocket,
-      LVLongPoll,
-      LVNavigation,
-      StaticAssets,
-      ExternalResources,
-      Tiles,
+    additionalManifestEntries: [
+      { url: "/", revision: null },
+      { url: "/map", revision: null },
     ],
+    runtimeCaching: [
+      Tiles,
+      StaticAssets,
+      Scripts,
+      Fonts,
+      LVLongPoll,
+      LVWebSocket,
+      LVTestOnline,
+      LiveReload,
+      Pages,
+    ],
+    clientsClaim: true,
+    skipWaiting: true,
   },
 };
 
