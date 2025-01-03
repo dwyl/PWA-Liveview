@@ -23,7 +23,8 @@ If not, you can still display some degradated cached pages.
 
 __TLTR__
 
-- put in `Cache` HTML text content pages,
+- run two strategies in "app.js": one "normal" LiveSocket connected with JavaScript hooks or mebedded, and one "offline" to run the Javasript,
+- put the landing page HTML content text in `Cache` on app start-up,
 - if not landing page, use `navigator.addEventListener("navigate")` to put the visited whole HTML (includes csrf) in `Cache`,
 - set `workbox.runtimeCaching` URL/handler-strategy in an ordely manner,
 - set `workbox.inlineWorkboxRuntime: true` to have a unique "sw.js" file, 
