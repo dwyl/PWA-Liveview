@@ -124,7 +124,9 @@ We integrated a few languages and libraries in the demo.
 </details>
 <br/>
 
-➡️ __Service Worker?__ It is a `Web Worker` with two superpowers:
+### ➡️ __Service Worker?__ 
+
+It is a `Web Worker` with two superpowers:
 
 * it can read/write to the `Cache API` with a request/reponse
 * proxy  HTTP GET requests
@@ -133,7 +135,7 @@ This means: whenever the frontend sends an HTTP request to the Phoenix backend, 
 
 It works over _HTTPS_.
 
-➡️ __Why `Vite` and not Esbuild__ ?
+### ➡️ __Why `Vite` and not Esbuild__ ?
 
 For developing the app, `Esbuild` is comfortable and perfect.
 
@@ -241,17 +243,19 @@ For example, in this code, the biggest is `Phoenix` (30kB gzip).
 This is important for the first rendering, and since you are doing SSR,
 you want to keep the first rendering performance.
 
-➡️ __Why `SolidJS`__ ?
+### ➡️ __Why `SolidJS`__ ?
 
-The idea is to keep the `LiveView` skeleton but with all reactive components replaced, with a __minimal__ impact on the code.
+The idea is to keep the `LiveView` skeleton with all reactive components replaced with a reactive JavaScript framework.
 
 You indeed obviously need a reactive Javascript framework to have an offline responsive UI.
+
+It should have a __minimal__ impact on the code.
 
 ❗️The choice is a question of oponion.
  
 > Among the frameworks, you most probably want to a very light one, that does not use a virtual DOM.
 You have  `Svelte` and `SolidJS`.
-In fact, both  `Svelte` and `SolidJS` are comparable. in terms of performance and bundle size.
+In fact, both  `Svelte` and `SolidJS` are comparable in terms of performance and bundle size.
 Since `Svelte` is far from Vanila Javascript, 
 I opted for `SolidJS` with is very close to  `React` like `LiveView` is, whilst _not at all_ for `Svelte`.
 The main rule with `SolidJS` is: _don't destructure the props_ and you are good to go.
