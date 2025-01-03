@@ -23,14 +23,14 @@ If not, you can still display some degradated cached pages.
 
 __TLTR__
 
-- use `navigator.addEventListener("navigate")` to cache "by hand" the whole HTML (includes csrf),
-- use `strategies: "generateSW"`,
-- use carefully ordered routes to `workbox.runtimeCaching`,
+- put in `Cache` HTML text content pages,
+- if not landing page, use `navigator.addEventListener("navigate")` to put the visited whole HTML (includes csrf) in `Cache`,
+- set `workbox.runtimeCaching` URL/handler-strategy in an ordely manner,
 - set `workbox.inlineWorkboxRuntime: true` to have a unique "sw.js" file, 
-- set the pages URL in `workbox.additionalManifestEntries`
+- set the targeted URLs in `workbox.additionalManifestEntries`
 - set `workbox.navigateFallback: null`
-- for `SolidJS`, set the correect file extensions: `resolve: {  extensions: [".mjs", ".js", ".json", "wasm"]}`,
-- Implement a pooling heartbeat as `navigator.onLine` is unreliable when navigating.
+- for `SolidJS`, set the correct file extensions: `resolve: {  extensions: [".mjs", ".js", ".json", "wasm"]}` 
+- Implement a pooling heartbeat for the status visual indicator as `navigator.onLine`  unreliable when navigating.
 
 
 ## Show case
