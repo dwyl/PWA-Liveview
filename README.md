@@ -2,13 +2,9 @@
 
 A little Elixir-LiveView demo webapp to demonstrate how to setup a real-time collaborative app with offline support (PWA) using CRDT.
 
-__[WIP]__: the most important missing bit is how to cache the base page when using Liveview's navigaton (with a `replace`, without full reload). 
-Why? LV sends the HTML text over a websocket. You can't proxy that. THere is nothing at "/" or any other page. So?
-If I use a listener to a new URL, I can POST a message to the SW to cache this page. I do only this in my custom SW, it works but I don't have anymore the rest of the caching that is "auto"-generate by the Vite config (rather easy to wirte).
-Meaning basically write everything.
-So if I use `href` navigation, old style, it works as the page is no more `replace`....
+__[WIP]__: 🎉 Did it! Need to rewrite all below as it is a bit more complicated than expected when you include navigation between already visited pages .....
 
-TBC
+TLTR: use `navigator.addEventListener("navigate")` to cache "by hand" the whole HTML (includes csrf), and have carefully ordered routes. Implement a polling heartbeat as `navigator.onLine` is unreliable when navigating. Just a bit 🤯..
 
 
 As an application, a two pages collaborative real-time webapp where you can navigate off-line between them, _given that you visited these pages before)_.
