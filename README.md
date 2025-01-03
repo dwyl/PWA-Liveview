@@ -17,6 +17,8 @@ If you want some interactivity, you need to use a reactive JavaScript framework 
 
 If not, you can still display some degradated cached pages.
 
+> The routes here are static, just "/" and "/map". It is howver possible to capture dynamic routes with `Workbox` using eg `urlPattern: new RegExp('/users/[^/]+/books')` if you navigate to "users/:user_id/books" for example.
+
 ## How?
 
 __TLTR__
