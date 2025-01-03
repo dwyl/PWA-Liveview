@@ -28,11 +28,14 @@ It is broadcasted to every user. You need a CRDT strategy.
 <div align="center"><img width="1425" alt="Screenshot 2024-12-29 at 13 15 19" src="https://github.com/user-attachments/assets/f5e68b4d-6229-4736-a4b3-a60fc813b6bf" /></div>
 <br/>
 - a collaborative flight animation. Two users can enter their geolocation and share it.
-Once ready, a great circle joining these two points is drawn on the map. The data is saved and sent
-to `Phoenix` which in turn saves into the backend database.
-A user can run a flight animation on a map, using Leaflet.
-The flight computation and animation works offline as we use a `WebAssembly` WASM module (coded and compiled with `Zig`)
-to compute the great circle points of te road (CPU intensive) and Leaflet display it, and we animate the voyage.
+Once ready, a great circle joining these two points is computed using a `WebAssembly` compute container  - coded and compiled with `zig` - and drawn into a canvas rendered in a `Leafletjs` map. 
+
+The data is saved and sent to `Phoenix` which in turn saves into the backend database.
+
+The fgreat circle computation works offline as we use a `WebAssembly` WASM module (CPU intensive task).
+
+The filght animation is a simple JavaScript loop.
+
 <br/>
 <div align="center"><img width="635" alt="Screenshot 2024-12-30 at 07 39 51" src="https://github.com/user-attachments/assets/2eb459e6-29fb-4dbb-a101-841cbad5af95" /></div>
 <br/>
