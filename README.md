@@ -22,12 +22,12 @@ TLTR: use `navigator.addEventListener("navigate")` to cache "by hand" the whole 
 
 As an application, a two pages collaborative real-time webapp where you can navigate off-line between them, _given that you visited these pages before)_.
 
-- a collaborative stock manager. A user clicks and visualizes the stock level in an animated read-only `<input type=range/>`.
+* a collaborative stock manager. A user clicks and visualizes the stock level in an animated read-only `<input type=range/>`.
 It is broadcasted to every user. You need a CRDT strategy.
 <br/>
 <div align="center"><img width="1425" alt="Screenshot 2024-12-29 at 13 15 19" src="https://github.com/user-attachments/assets/f5e68b4d-6229-4736-a4b3-a60fc813b6bf" /></div>
 <br/>
-- a collaborative flight animation. Two users can enter their geolocation and share it.
+* a collaborative flight animation. Two users can enter their geolocation and share it.
 Once ready, a great circle joining these two points is computed using a `WebAssembly` compute container  - coded and compiled with `zig` - and drawn into a canvas rendered in a `Leafletjs` map. 
 
 The data is saved and sent to `Phoenix` which in turn saves into the backend database.
