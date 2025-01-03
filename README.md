@@ -1,6 +1,8 @@
 # ExLivePWA
 
-__[WIP]__: 🎉 Did it! Need to rewrite all below as it is a bit more complicated than expected when you include navigation between already visited pages .....
+ 🎉 Did it!
+ 
+__[WIP]__: need to rewrite most of all below as it is a bit more complicated than expected when you include navigation between already visited pages .....
 
 
 ## What? 
