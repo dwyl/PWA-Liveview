@@ -204,9 +204,8 @@ if (watch) {
 }
 
 ```
-</details>
-<br/>
- with a watcher run as a command in `Elixir`:
+
+with a watcher run as a command in `Elixir`:
 
  ```elixir
 # config.dev.exs
@@ -214,18 +213,20 @@ wtachers: {
    node: ["build.js", "--watch", cd: Path.expand("../assets", __DIR__)]
 ]
 ```
-
+</details>
+<br/>
+ 
 When you wnat to bring in offline capabilities, you will want to use `Workbox`.
 <br/>
 [<img width="913" alt="Screenshot 2024-12-29 at 09 51 54" src="https://github.com/user-attachments/assets/70f5ba5c-65cc-4fe1-82ce-26f6335c1396" />](https://web.dev/learn/pwa/workbox)
 <br/>
 
 Unless you are very experienced with `Workbox`,
-it is safer to optin for `Vite` when you want to use `Workbox`. 
+it is safer to opt in for `Vite` when you want to use `Workbox`. 
 It will generate the "sw.js" from your "vite.config.js" file for you.
 
 This second point is valid for any `LiveView` webapp. 
-You should use_ dynamic imports for code splitting_. 
+You can use_ dynamic imports for code splitting_. 
 `Vite` can use `Rollup`  to build so you can take advantage
 of its code splitting performance.
 
