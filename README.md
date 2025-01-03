@@ -334,8 +334,36 @@ def static_paths,
     do: ~w(assets fonts images favicon.ico robots.txt  sw.js manifest.webmanifest)
 ```
 
+
+### Workbox routes strategy
+
+The available strategies and use cases:
+
+* `CacheFirst` is best for static assets: fonts, images. It checks cahce first. Only makes network request if resource isn't in cache
+
+* `NetworkFirst` is best for API calls, dynamic content. It tries network request first, and falls back to cached content if network fails/times out. It prioritizes fresh content with offline fallback
+
+* `StaleWhileRevalidate`. It serves cached version immediately (if available). It updates cache in background for next time.
+It is best for: News feeds, social media content, frequently updated content
+Balances speed with content freshness
+
+* `NetworkOnly`. It never uses cache, always fetches from network. You need real-time data accuracy
+
+* `CacheOnly`. Only serves from cache, never makes network requests
+
+
+Each strategy can be configured with additional options:
+
+- `cacheName`: Identify different caches
+- `expiration`: Control cache size and age
+- `networkTimeoutSeconds`: Timeout for network requests
+- `matchOptions`: Fine-tune cache matching
+- `plugins`: Add custom caching behaviors
+
+
 We also pass the routes and strategies to the Service Worker in `workbox.runtimeCaching`.
-to an ul pattern, you pass a so-called handler or strategy: from cache or from network first.
+
+Each url pattern has a corresponding `handler` with a strategy.
 
 
 <details><summary>Workbox routes strategy</summary>
@@ -443,8 +471,10 @@ const Pages = {
   },
 };
 ```
+</details>
+<br/>
 
-‼️ Tt is __important__ to respect the order of the pattern matching:
+‼️ Tt is __important__ to respect the order as `Workbox` uses pattern matching:
 
 ```js
 workbox: {
@@ -474,7 +504,7 @@ workbox: {
 }
 ```
 
-❗️ As per `Vpte-PWA` documentation, set: 
+❗️ As per `Vite-PWA` documentation, set: 
 
 ```js
 injectManifest: {
@@ -482,210 +512,11 @@ injectManifest: {
 },
 ```
 
-We pass all the Javascript files located in "/assets/js" to `Rollup` to compile, minify and chunk them.
 
 ❗️ Note how `topbar` needs its own treatment. We also need to rename the extensoin to `cjs`.
 
-<details><summary>vite.config.js file</summary>
 
-```js
-import { VitePWA } from "vite-plugin-pwa";
-import { defineConfig, loadEnv } from "vite";
-import solidPlugin from "vite-plugin-solid";
-import tailwindcss from "tailwindcss";
-import autoprefixer from "autoprefixer";
-
-// https://web.dev/articles/add-manifest?utm_source=devtools
-const manifestOpts = {
-  name: "SolidYjs",
-  short_name: "SolidYjs",
-  display: "standalone",
-  scope: "/",
-  description: "A LiveView + SolidJS PWA and Yjs demo",
-  theme_color: "#ffffff",
-  icons: [
-    {
-      src: "/images/icon-192.png",
-      sizes: "192x192",
-      type: "image/png",
-    },
-    {
-      src: "/images/icon-512.png",
-      sizes: "512x512",
-      type: "image/png",
-    },
-  ],
-};
-
-const buildOps = {
-  outDir: "../priv/static/",
-  emptyOutDir: false,
-  target: ["esnext"],
-  manifest: false,
-  rollupOptions: {
-    input: [
-      "js/app.js",
-      "js/onlineStatus.js",
-      "js/solHook.jsx",
-      "js/counter.jsx",
-      "js/SolidComp.jsx",
-      "js/bins.jsx",
-      "js/initYJS.js",
-      "js/refreshSW.js",
-    ],
-    output: {
-      assetFileNames: "assets/[name][extname]",
-      chunkFileNames: "assets/[name].js",
-      entryFileNames: "assets/[name].js",
-    },
-  },
-  commonjsOptions: {
-    exclude: [],
-    include: ["vendor/topbar.cjs"],
-  },
-};
-
-const runtimeCachingNavigation = {
-  urlPattern: ({ request }) => request.mode === "navigate", // Handle navigation requests
-  handler: "NetworkFirst",
-  options: {
-    cacheName: "navigation-cache",
-    networkTimeoutSeconds: 3,
-    plugins: [
-      {
-        // Customize what happens on fetch failure
-        fetchDidFail: async ({ request }) => {
-          console.warn("Navigation request failed:", request.url);
-        },
-      },
-    ],
-  },
-};
-
-const runtimeCachingLongPoll = {
-  urlPattern: ({ url }) => url.pathname.startsWith("/live/longpoll"),
-  handler: "NetworkFirst",
-  options: {
-    cacheName: "long-poll-cache",
-    networkTimeoutSeconds: 5,
-    plugins: [
-      {
-        // Handle offline fallback for longpoll
-        handlerDidError: async ({ request }) => {
-          const url = new URL(request.url);
-          return new Response(
-            JSON.stringify({
-              events: [],
-              status: "ok",
-              token: url.searchParams.get("token"),
-            }),
-            { headers: { "Content-Type": "application/json" } }
-          );
-        },
-      },
-    ],
-  },
-};
-
-const runtimeCachingNetworkFirstAssets = {
-  urlPattern: ({ url }) => !url.pathname.startsWith("/assets/"),
-  handler: "NetworkFirst",
-  options: {
-    cacheName: "dynamic-routes",
-    networkTimeoutSeconds: 3,
-  },
-};
-
-const runtimeCachingCacheFirstFonts = {
-  urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-  handler: "CacheFirst",
-  options: {
-    cacheName: "google-fonts-cache",
-    expiration: {
-      maxEntries: 10,
-      maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
-    },
-  },
-};
-
-const runtimeCachingCacheFirstImages = {
-  urlPattern: /\.(?:png|jpg|jpeg|svg|gif)$/,
-  handler: "CacheFirst",
-  options: {
-    cacheName: "images",
-    expiration: {
-      maxEntries: 50,
-      maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
-    },
-  },
-};
-
-const devOps = {
-  enabled: true,
-  type: "module",
-};
-
-const PWAOpts = {
-  devOptions: devOps,
-  registerType: "autoUpdate",
-  includeAssets: ["favicon.ico", "robots.txt", "icon-192.png", "icon-512.png"],
-  manifest: manifestOpts,
-  outDir: "../priv/static/",
-  filename: "sw.js",
-  manifestFilename: "manifest.webmanifest",
-  workbox: {
-    globDirectory: "../priv/static/",
-    globPatterns: ["assets/**/*.{js,jsx,css,ico,png,svg,webp,woff,woff2}"],
-    swDest: "../priv/static/sw.js",
-    inlineWorkboxRuntime: true,
-    navigateFallback: null,
-    runtimeCaching: [
-      runtimeCachingNetworkFirstAssets,
-      runtimeCachingCacheFirstFonts,
-      runtimeCachingCacheFirstImages,
-      runtimeCachingLongPoll,
-      runtimeCachingNavigation,
-    ],
-  },
-};
-
-const CSSSOpts = {
-  postcss: {
-    plugins: [tailwindcss, autoprefixer],
-  },
-};
-
-export default defineConfig(({ command, mode }) => {
-  const env = loadEnv(mode, process.cwd(), "");
-  if (command != "build") {
-    process.stdin.on("close", () => {
-      process.exit(0);
-    });
-
-    process.stdin.resume();
-  }
-
-  return {
-    plugins: [solidPlugin(), wasm(), VitePWA(PWAOpts)],
-    resolve: {
-      extensions: [".mjs", ".js", ".ts", ".jsx", ".tsx", ".json"],
-    },
-    // optimizeDeps: {
-    //   include: ["@solidjs/router"],
-    // },
-    publicDir: false,
-    build: buildOps,
-    css: CSSSOpts,
-    define: {
-      __APP_ENV__: env.APP_ENV,
-    },
-  };
-});
-```
-</details>
-<br/>
-
-## Manifest
+### Manifest
 
 The "manifest.webmanifest" file will be generated from "vite.config.js".
 
@@ -739,32 +570,6 @@ When offline:
 - Users can still modify the stock locally
 - Changes are stored in IndexedDB
 - When back online, YJS will sync changes
-
-
-## Workbox strategy
-
-Thel available strategies and use cases:
-
-* `CacheFirst` is best for static assets: fonts, images. It checks cahce first. Only makes network request if resource isn't in cache
-
-* `NetworkFirst` is best for API calls, dynamic content. It tries network request first, and falls back to cached content if network fails/times out. It prioritizes fresh content with offline fallback
-
-* `StaleWhileRevalidate`. It serves cached version immediately (if available). It updates cache in background for next time.
-It is best for: News feeds, social media content, frequently updated content
-Balances speed with content freshness
-
-* `NetworkOnly`. It never uses cache, always fetches from network. You need real-time data accuracy
-
-* `CacheOnly`. Only serves from cache, never makes network requests
-
-
-Each strategy can be configured with additional options:
-
-- `cacheName`: Identify different caches
-- `expiration`: Control cache size and age
-- `networkTimeoutSeconds`: Timeout for network requests
-- `matchOptions`: Fine-tune cache matching
-- `plugins`: Add custom caching behaviors
 
 
 ### needRefresh and offLineReady
@@ -1046,7 +851,7 @@ export fn computeGreatCirclePoints(
 </details>
 <br/>
 
-Then you can run the module in the browser:
+Then you can run the module in the browser. The `MapHook` implements this.
 
 ```js
 async function loadWasm() {
@@ -1059,24 +864,9 @@ async function loadWasm() {
 
 ## Add Navigation
 
-Ok! Only missing caching correctly.
+### Connectivity check
 
-One approach is to render conditionnally. This means that if the user is connected, the app renders "normally",
-in the sens that the background HTML is rendered and all the needed Javascript is run.
-
-When the user is offline - and wants to navigate to a page he already visited - you still render the background HTML,
-but you need to trigger the Javascript rendering.
-
-You have to discover the tricky parts:
-- online status. The `navigator.onLine` innacurate  information when you load a page off-line.
-- a navigation off-line is a full page reload instead of a "replace" when you navigate between pages in the same `live_session`.
-
-One way to overcome the online status is simply to send a request to the backend. A negative response means the user is off-line.
-Once you have this bit, you:
-- setup and connect the `LiveSocket` and its hooks and/or JavaScript if any
-- or by-pass the `LiveSocket` and "mount" the "hooks" an/or JavaScript.
-
-Since you rely on the path, use:
+In Liveview, we use `navigate` as all the routes are under the same `live_sessions`:
 
 ```elixir
 use Phoenix.Component
@@ -1085,7 +875,13 @@ use ExLivePWAWeb, :verified_routes
 <.link navigate={~p"/"} replace><span>Home</span></.link>
 ```
 
-You can run a simple `GET` request from the client and the route and corresponding controller:
+When the user is off line, the navigation is a full page reload.
+
+Since `navigator.onLine` may not be reliable when you need an alternative strategy.
+
+You can run a simple `GET` request from the client to check whether it is connected or not.
+The route and corresponding controller to the call:
+
 ```js
 async function checkServerReachability() {
   try {
@@ -1097,9 +893,9 @@ async function checkServerReachability() {
   }
 }
 ```
-
 <br/>
-and the routes:
+
+is:
 
 ```elixir
 live_session :default do
@@ -1112,7 +908,7 @@ live_session :default do
 end
 ```
 
-The controller:
+with:
 
 ```elixir
 defmoduel MyAppWeb.ConnectivityController do
@@ -1123,14 +919,16 @@ defmoduel MyAppWeb.ConnectivityController do
   end
 end
 ```
-
 <br/>
 
-The entry file "app.js" runs an IIFE and uses dynamic imports (thanks to `Vite`, but `Esbuild` can do it as well to `esnext`).
+### The app.js file
+
+This entry file runs an IIFE and uses dynamic imports (thanks to `Vite`, but `Esbuild` can do it as well to `esnext`).
 
 We check if the client is online, and if positive, we bring in the hook and connect the LiveSocket.
 
-Otherwise, we don't try to connect the LiveSocket and just bring in the corresponding Javascript for the current page. 
+Otherwise, we don't try to connect the LiveSocket and just bring in the corresponding Javascript to the current page. 
+
 Here, we just defined two pages, "/" and "/map" and the corresponding Javascript to execute. This could be further improved.
 
 ```js
@@ -1210,8 +1008,9 @@ navigation.addEventListener("navigate", async ({ destination: { url } }) => {
 });
 ```
 
-❗️ To be able to cache the "text/html" page, you need to pass the _"Content-Length"_.
-Because Javascript uses UTF-16, you need to `encode` to compute the length.
+‼️ To be able to cache the "text/html" page, you need to pass the _"Content-Length"_.
+
+Because Javascript uses UTF-16, you need to `encode` the text to compute the length.
 
 ```js
 async function addCurrentPageToCache({ current, routes }) {
