@@ -169,7 +169,6 @@ let opts = {
     "./js/counter",
     "./js/SolidComp",
     "./js/initYJS",
-    "./js/onlineStatus",
     "./js/solHook",
     "./wasm/great_circle.wasm",
   ],
@@ -232,7 +231,8 @@ wtachers: {
 </details>
 <br/>
  
-When you wnat to bring in offline capabilities, you will want to use `Workbox`.
+When you want to bring in offline capabilities, you will want to use `Workbox`.
+
 <br/>
 [<img width="913" alt="Screenshot 2024-12-29 at 09 51 54" src="https://github.com/user-attachments/assets/70f5ba5c-65cc-4fe1-82ce-26f6335c1396" />](https://web.dev/learn/pwa/workbox)
 <br/>
@@ -249,30 +249,26 @@ of its code splitting performance.
 This means that instead of loading a big chunk of 100kB or more,
 you end up with loading several JS files.
 
-For example, in this code, the biggest is `Phoenix` (30kB gzip). 
+For example, in this code, the biggest JavaScript files are  `Phoenix` (30kB gzip) and `Leaflet-src.js` (43kB gzip).
 
 This is important for the first rendering, and since you are doing SSR,
-you want to keep the first rendering performance.
+you want to keep the first rendering fast performance.
 
-### ➡️ __Why `SolidJS`__ ?
+### ➡️ __Opiniaated reactive frameork choice: why `SolidJS`__ ?
 
-The idea is to keep the `LiveView` skeleton with all reactive components replaced with a reactive JavaScript framework.
+The idea is to keep the `LiveView` skeleton while all the reactive components are replaced with a reactive JavaScript framework.
 
 You indeed obviously need a reactive Javascript framework to have an offline responsive UI.
 
 It should have a __minimal__ impact on the code.
-
-❗️The choice is a question of oponion.
  
-> Among the frameworks, you most probably want to a very light one, that does not use a virtual DOM.
-You have  `Svelte` and `SolidJS`.
-In fact, both  `Svelte` and `SolidJS` are comparable in terms of performance and bundle size.
-Since `Svelte` is far from Vanila Javascript, 
-I opted for `SolidJS` with is very close to  `React` like `LiveView` is, whilst _not at all_ for `Svelte`.
+> Among the frameworks, you most probably want a very light one.
+Among the ones that do not use a virtual DOM, you have  `Svelte` and `SolidJS`.
+Both  `Svelte` and `SolidJS` are comparable in terms of performance and bundle size.
+However, `Svelte` is far from Vanila Javascript.
+Instead, `SolidJS` with is very close to  `React` like `LiveView` is.
 The main rule with `SolidJS` is: _don't destructure the props_ and you are good to go.
 If you go through the code, you will notice that the impact of using `SolidJS` is minimal on the code and very lightweight.
-
-
 
 ## Guides
 
