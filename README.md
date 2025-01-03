@@ -1,14 +1,26 @@
 # ExLivePWA
 
-A little Elixir-LiveView demo webapp to demonstrate how to setup a real-time collaborative app with offline support (PWA) using CRDT.
-
 __[WIP]__: 🎉 Did it! Need to rewrite all below as it is a bit more complicated than expected when you include navigation between already visited pages .....
+
+
+## What? 
+
+A little Elixir-LiveView demo webapp to demonstrate how to setup a real-time collaborative app with offline support (PWA) using CRDT with off-line navigation.
+
+## Why?
+
+Some applications may have some interactivity that you may want ot preserve when off-line, or you simply don't want the app to break down in case the user goes off-line.
+
+If you want some interactivity, you need to use a reactive JavaScript framework. If not, you can still display some degradated cached pages.
+
+## How?
 
 TLTR: use `navigator.addEventListener("navigate")` to cache "by hand" the whole HTML (includes csrf), and have carefully ordered routes. Implement a polling heartbeat as `navigator.onLine` is unreliable when navigating. Just a bit 🤯..
 
 
-As an application, a two pages collaborative real-time webapp where you can navigate off-line between them, _given that you visited these pages before)_.
+## Show case
 
+As an application, a two pages collaborative real-time webapp where you can navigate off-line between them, _given that you visited these pages before)_.
 
 - a collaborative stock manager. A user clicks and visualizes the stock level in an animated read-only `<input type=range/>`.
 It is broadcasted to every user. You need a CRDT strategy.
@@ -272,7 +284,9 @@ pnpm add -D vite
 
 ## Vite config
 
-It will use two plugins:   [solidPlugin](https://github.com/solidjs/vite-plugin-solid)  and [VitePWA](https://vite-pwa-org.netlify.app/)
+Since we use a reactive JavaScript framework (`SolidJS` here) for the offline reactivity), we need to bring a plugin: [solidPlugin](https://github.com/solidjs/vite-plugin-solid).
+
+For the PWA, we need to use [VitePWA](https://vite-pwa-org.netlify.app/).
 
 ❗️ For the `solidPlugin`, it is important to pass the JSX extensions to  `resolver.extension` to be able to compile 
 JSX extension files. This is because  `SolidJS` identifies these files as components to parse the JSX.
@@ -298,6 +312,12 @@ workbox: {
 }
 ```
 
+You tell that Phoenix Liveview as no "index.html" file to display:
+
+```js
+navigateFallback: null,
+```
+
 
 ✅ modify the static paths: the files "sw.js" and "manifest.webmanifest" are generated for you by `Vite` from the "vite.config.js" file.
 
@@ -308,6 +328,151 @@ def static_paths,
 
 We also pass the routes and strategies to the Service Worker in `workbox.runtimeCaching`.
 to an ul pattern, you pass a so-called handler or strategy: from cache or from network first.
+
+
+<details><summary>Workbox routes strategy</summary>
+
+```js
+const LVLongPoll = {
+  urlPattern: ({ url }) => url.pathname.startsWith("/live/longpoll"),
+  handler: "NetworkOnly",
+};
+
+const LVTestOnline = {
+  urlPattern: ({ url }) => url.pathname.startsWith("/test"),
+  handler: "NetworkOnly",
+};
+
+const LVWebSocket = {
+  urlPattern: ({ url }) => url.pathname.startsWith("/live/websocket"),
+  handler: "NetworkOnly", // Websockets must always go to network
+};
+
+const StaticAssets = {
+  urlPattern: ({ url }) => {
+    const staticPaths = ["/assets/", "/images/"];
+    return staticPaths.some((path) => url.pathname.startsWith(path));
+  },
+  handler: "CacheFirst",
+  options: {
+    cacheName: "static",
+    expiration: {
+      maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+      maxEntries: 200,
+    },
+    matchOptions: {
+      ignoreVary: true, // Important for Phoenix static asset handling
+    },
+  },
+};
+
+const Fonts = {
+  urlPattern: ({ url }) => {
+    const externalPatterns = ["https://fonts.googleapis.com"];
+    return externalPatterns.some((pattern) => url.href.startsWith(pattern));
+  },
+  handler: "CacheFirst",
+  options: {
+    cacheName: "external",
+    expiration: {
+      maxAgeSeconds: 60 * 60 * 24 * 365, // 1 hours
+      maxEntries: 500,
+    },
+    matchOptions: {
+      ignoreVary: true, // Important for some external resources
+    },
+  },
+};
+
+const Scripts = {
+  urlPattern: ({ request }) => request.destination === "script",
+  handler: "CacheFirst",
+  options: {
+    cacheName: "scripts",
+    expiration: {
+      maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+      maxEntries: 50,
+    },
+  },
+};
+
+const Tiles = {
+  urlPattern: ({ url }) => url.origin === "https://tile.openstreetmap.org",
+  handler: "StaleWhileRevalidate",
+  options: {
+    cacheName: "tiles",
+    expiration: {
+      maxEntries: 1000, // Adjust based on your needs
+      maxAgeSeconds: 60 * 60, // 1 hours
+    },
+    plugins: [
+      {
+        fetchDidFail: async ({ request }) => {
+          console.warn("Tile request failed:", request.url);
+        },
+      },
+    ],
+  },
+};
+
+const LiveReload = {
+  urlPattern: ({ url }) => url.pathname.startsWith("/phoenix"),
+  handler: "NetworkOnly",
+};
+
+const Pages = {
+  urlPattern: ({ url }) =>
+    url.pathname.startsWith("/map") || url.pathname.startsWith("/"),
+  handler: "NetworkFirst",
+  options: {
+    plugins: [
+      {
+        fetchDidFail: async ({ request }) => {
+          console.warn("Online status request failed:", request.url);
+        },
+      },
+    ],
+  },
+};
+```
+
+‼️ Tt is __important__ to respect the order of the pattern matching:
+
+```js
+workbox: {
+  runtimeCaching: [
+    runtimeCaching: [
+      Tiles,
+      StaticAssets,
+      Scripts,
+      Fonts,
+      LVLongPoll,
+      LVWebSocket,
+      LVTestOnline,
+      LiveReload,
+      Pages,
+    ,
+}
+```
+
+‼️ You need to set the possible pathname of your routes into:
+
+```js
+workbox: {
+  additionalManifestEntries: [
+    { url: "/", revision: null },
+    { url: "/map", revision: null },
+  ],
+}
+```
+
+❗️ As per `Vpte-PWA` documentation, set: 
+
+```js
+injectManifest: {
+  injectionPoint: undefined,
+},
+```
 
 We pass all the Javascript files located in "/assets/js" to `Rollup` to compile, minify and chunk them.
 
@@ -912,59 +1077,87 @@ use ExLivePWAWeb, :verified_routes
 <.link navigate={~p"/"} replace><span>Home</span></.link>
 ```
 
-You can run a simple `fetch` request to the backend where you setup a `GET` route and respond with json:
+You can run a simple `GET` request from the client and the route and corresponding controller:
 ```js
-const lineStatus = { on: true };
-
-async function checkOnlineStatus() {
+async function checkServerReachability() {
   try {
-    const response = await fetch("/test");
-    if (response.ok) return response.ok;
+    const response = await fetch("/connectivity", { method: "HEAD" });
+    return response.ok;
   } catch (error) {
-    console.error("Error checking online status:", error);
+    console.error("Error checking server reachability:", error);
     return false;
   }
 }
 ```
 
 <br/>
+and the routes:
 
 ```elixir
-use ExLvePWAWeb, :controller
+live_session :default do
+  scope "/", MyAppWeb do
+    pipe_through :browser
+    get "/connectivity", ConnectivityController, :check
+    live "/", CounterLive, :index
+    live "/map", MapLive, :index
+  end
+end
+```
 
-def test(conn, _params) do
-  json(conn, %{ok: 200})
+The controller:
+
+```elixir
+defmoduel MyAppWeb.ConnectivityController do
+  use SolidyjsWeb, :controller
+
+  def check(conn, _params) do
+    send_resp(conn, 200, "online")
+  end
 end
 ```
 
 <br/>
 
-and the entry file "app.js" becomes (using dynamic imports thanks to `Vite` (or `Esbuild` as well if you change to `esnext`).
+The entry file "app.js" runs an IIFE and uses dynamic imports (thanks to `Vite`, but `Esbuild` can do it as well to `esnext`).
+
+We check if the client is online, and if positive, we bring in the hook and connect the LiveSocket.
+
+Otherwise, we don't try to connect the LiveSocket and just bring in the corresponding Javascript for the current page. 
+Here, we just defined two pages, "/" and "/map" and the corresponding Javascript to execute. This could be further improved.
 
 ```js
-async function initApp({ on }) {
+(async () => {
+  appState.isOnline = await checkServerReachability();
+  await initApp(appState.isOnline);
+
+  if ("serviceWorker" in navigator && appState.isOnline) {
+    await addCurrentPageToCache({
+      current: window.location.href,
+      routes: CONFIG.ROUTES,
+    });
+  }
+})();
+```
+
+```js
+async function initApp(lineStatus) {
   try {
     const { default: initYdoc } = await import("./initYJS.js");
     const ydoc = await initYdoc();
     window.ydoc = ydoc; // Set this early so it's available for offline use
+    const { solHook } = await import("./solHook.jsx");
+    const { MapHook } = await import("./mapHook.jsx");
 
-    if (on) {
-      const { solHook } = await import("./solHook.jsx");
+    if (lineStatus) {
       const SolHook = solHook(ydoc); // setup SolidJS component
-
-      const { MapHook } = await import("./mapHook.jsx");
-      window.MapHook = MapHook; // setup Map component
       return initLiveSocket({ SolHook, MapHook });
     }
 
     const path = window.location.pathname;
 
     if (path === "/map") {
-      const { MapHook } = await import("./mapHook.jsx");
-      window.MapHook = MapHook; // setup Leaflet Map component
       return displayMap();
     } else if (path === "/") {
-      const { solHook } = await import("./solHook.jsx");
       solHook(ydoc); // setup SolidJS component
       return displayStock();
     }
@@ -974,7 +1167,6 @@ async function initApp({ on }) {
 }
 
 async function initLiveSocket({ SolHook, MapHook }) {
-  console.log("initLiveSocket");
   const { LiveSocket } = await import("phoenix_live_view");
   const { Socket } = await import("phoenix");
   const csrfToken = document
@@ -996,12 +1188,106 @@ async function initLiveSocket({ SolHook, MapHook }) {
 }
 ```
 
-For example, when the user get back on-line, you may want to trigger a full reload to sync the backend to the frontend.
+To cache the current page other than "/" (which was cached when the app is lanucned), we use a listener on the "navigate" event and ensure to cache the page only once. 
+
 
 ```js
-window.addEventListener("online", () => window.location.reload());
+const appState = {
+  paths: new Set(),
+  isOnline: false,
+};
+
+navigation.addEventListener("navigate", async ({ destination: { url } }) => {
+  return addCurrentPageToCache({ current: url, routes: CONFIG.ROUTES });
+});
 ```
 
-However, sometimes this does not work. You click on the navigation menu and you are done.
+❗️ To be able to cache the "text/html" page, you need to pass the _"Content-Length"_.
+Because Javascript uses UTF-16, you need to `encode` to compute the length.
+
+```js
+async function addCurrentPageToCache({ current, routes }) {
+  await navigator.serviceWorker.ready;
+  const newPath = new URL(current).pathname;
+
+  if (!routes.includes(newPath)) return;
+  // we cache the two pages "/"" and "/map" only once.
+  if (appState.paths.has(newPath)) return;
+
+  if (newPath === window.location.pathname) {
+    console.log("addCurrentPageToCache", newPath);
+    appState.paths.add(newPath);
+    const htmlContent = document.documentElement.outerHTML;
+    const contentLength = new TextEncoder().encode(htmlContent).length;
+    const headers = new Headers({
+      "Content-Type": "text/html",
+      "Content-Length": contentLength,
+    });
+
+    const response = new Response(htmlContent, {
+      headers: headers,
+      status: 200,
+      statusText: "OK",
+    });
+
+    const cache = await caches.open("CONFIG.CACHE_NAME");
+    return cache.put(current, response);
+  } else return;
+}
+```
+
+#### On/off line status
+
+You may want to display when the client if on-line or not.
+You cannot rely on `banvigator.onLine` especially when the client is off-line and recovers signal
+Indeed, navigation off-line is full page load, and by default the navigaor is `onLine = true`.
+This means that the event `navigator.ononLine` will never be triggered.
+
+We need to do more work for this. One solution is to periodically pool the server.
+
+```js
+function updateOnlineStatusUI(online) {
+  const statusElement = document.getElementById("online-status");
+  if (statusElement) {
+    statusElement.style.backgroundColor = online ? "lavender" : "tomato";
+    statusElement.style.opacity = online ? "0.8" : "1";
+    statusElement.textContent = online ? "Online" : "Offline";
+  }
+}
+
+function startPolling(interval = CONFIG.POLL_INTERVAL) {
+  setInterval(async () => {
+    const wasOnline = appState.isOnline;
+    appState.isOnline = await checkServerReachability();
+    if (appState.isOnline !== wasOnline) {
+      // updateOnlineStatusUI(appState.isOnline);
+      window.location.reload();
+    }
+  }, interval);
+  console.log("Started polling...");
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  console.log("Initializing status monitoring...");
+  appState.isOnline = await checkServerReachability();
+  updateOnlineStatusUI(appState.isOnline);
+
+  // Start polling only if offline
+  if (!appState.isOnline) {
+    startPolling();
+  }
+
+  // Monitor online and offline events
+  window.addEventListener("online", async () => window.location.reload());
+
+  window.addEventListener("offline", () => {
+    console.log("Browser offline event fired");
+    appState.isOnline = false;
+    updateOnlineStatusUI(appState.isOnline);
+    startPolling(); // Start polling when offline
+  });
+});
+```
+
 
 
