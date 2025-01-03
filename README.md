@@ -5,17 +5,28 @@ __[WIP]__: 🎉 Did it! Need to rewrite all below as it is a bit more complicate
 
 ## What? 
 
-An Elixir-LiveView demo webapp to demonstrate how to setup a real-time collaborative app with offline support (PWA) using CRDT with off-line navigation.
+An Elixir-LiveView demo webapp to demonstrate how to setup a real-time collaborative app with __offline support__ (PWA) using CRDT with navigation.
 
 ## Why?
 
 Some applications may have some interactivity that you may want ot preserve when off-line, or you simply don't want the app to break down in case the user goes off-line.
 
-If you want some interactivity, you need to use a reactive JavaScript framework. If not, you can still display some degradated cached pages.
+If you want some interactivity, you need to use a reactive JavaScript framework which will be mirrored by the server.
+
+If not, you can still display some degradated cached pages.
 
 ## How?
 
-TLTR: use `navigator.addEventListener("navigate")` to cache "by hand" the whole HTML (includes csrf), and have carefully ordered routes. Implement a polling heartbeat as `navigator.onLine` is unreliable when navigating. Just a bit 🤯..
+__TLTR__
+
+- use `navigator.addEventListener("navigate")` to cache "by hand" the whole HTML (includes csrf),
+- use `strategies: "generateSW"`,
+- use carefully ordered routes to `workbox.runtimeCaching`,
+- set `workbox.inlineWorkboxRuntime: true` to have a unique "sw.js" file, 
+- set the pages URL in `workbox.additionalManifestEntries`
+- set `workbox.navigateFallback: null`
+- for `SolidJS`, set the correect file extensions: `resolve: {  extensions: [".mjs", ".js", ".json", "wasm"]}`,
+- Implement a pooling heartbeat as `navigator.onLine` is unreliable when navigating.
 
 
 ## Show case
@@ -290,7 +301,7 @@ Make your life easier with `pnpm` or `bun`.
 pnpm add -D vite
 ```
 
-## Vite config
+## Vite config and Workbox recipy
 
 Since we use a reactive JavaScript framework (`SolidJS` here) for the offline reactivity), we need to bring a plugin: [solidPlugin](https://github.com/solidjs/vite-plugin-solid).
 
@@ -504,6 +515,8 @@ workbox: {
 }
 ```
 
+### Other `Workbox` settings
+
 ❗️ As per `Vite-PWA` documentation, set: 
 
 ```js
@@ -513,9 +526,31 @@ injectManifest: {
 ```
 
 
-❗️ Note how `topbar` needs its own treatment. We also need to rename the extensoin to `cjs`.
+❗️ Note how `topbar` needs its own treatment. We also need to rename the extensoin to `cjs` and set the `rollup` option:
+
+```js
+commonjsOptions: {
+exclude: [],
+  include: ["vendor/topbar.cjs"],
+},
+```
 
 
+Set: 
+
+```js
+clientsClaim: true,
+skipWaiting: true,
+```
+
+With `clientsClaim: true`, you take control of all open pages as soon as the service worker activates.
+
+With `skipWaiting: true`, new service worker versions activate immediately.
+
+ Without these settings, you might have some pages using old service worker versions 
+ while others use new ones, which could lead to inconsistent behavior in your offline capabilities.
+
+ 
 ### Manifest
 
 The "manifest.webmanifest" file will be generated from "vite.config.js".
@@ -835,8 +870,8 @@ export fn computeGreatCirclePoints(
 
         // Convert back to geographic coordinates
         const point = cartesianToGeographic(x, y, z);
-
         buffer[i * 2] = point.lat;
+
         buffer[i * 2 + 1] = point.lon;
     }
 
@@ -866,7 +901,7 @@ async function loadWasm() {
 
 ### Connectivity check
 
-In Liveview, we use `navigate` as all the routes are under the same `live_sessions`:
+In Liveview, we use `navigate` as all the routes are under the same `live_sessions`. Make sure to use `replace` for the url.
 
 ```elixir
 use Phoenix.Component
@@ -877,10 +912,11 @@ use ExLivePWAWeb, :verified_routes
 
 When the user is off line, the navigation is a full page reload.
 
-Since `navigator.onLine` may not be reliable when you need an alternative strategy.
+The `online` and `offline` events alone cannot always determine connectivity, especially when the server is unreachable.
 
-You can run a simple `GET` request from the client to check whether it is connected or not.
-The route and corresponding controller to the call:
+You can rn a server reachability check (via HEAD requests) to ensure accurate detection of reconnection, independent of browser state.
+
+The route and corresponding controller to:
 
 ```js
 async function checkServerReachability() {
@@ -925,10 +961,13 @@ end
 
 This entry file runs an IIFE and uses dynamic imports (thanks to `Vite`, but `Esbuild` can do it as well to `esnext`).
 
-We check if the client is online, and if positive, we bring in the hook and connect the LiveSocket.
+There is a different initialization paths for online/offline:
 
+- Online: Full LiveSocket setup with hooks
+- Offline: Direct component rendering (Map/Stock)
+
+> We check if the client is online, and if positive, we bring in the hook and connect the LiveSocket.
 Otherwise, we don't try to connect the LiveSocket and just bring in the corresponding Javascript to the current page. 
-
 Here, we just defined two pages, "/" and "/map" and the corresponding Javascript to execute. This could be further improved.
 
 ```js
@@ -1045,12 +1084,21 @@ async function addCurrentPageToCache({ current, routes }) {
 
 #### On/off line status
 
-You may want to display when the client if on-line or not.
+Besides the Progress bar during navigation, there is an Online status visual indicator.
+
+Indeed, you may want to display when the client if on-line or not.
+
 You cannot rely on `banvigator.onLine` especially when the client is off-line and recovers signal
 Indeed, navigation off-line is full page load, and by default the navigaor is `onLine = true`.
 This means that the event `navigator.ononLine` will never be triggered.
 
 We need to do more work for this. One solution is to periodically pool the server.
+
+The `updateOnlineStatusUI` function updates the status indicator (online-status) dynamically.
+
+The reload logic is inside the polling function (`startPolling`) and only executes when the app transitions from offline to online.
+
+When offline, the polling continues until reconnection.
 
 ```js
 function updateOnlineStatusUI(online) {
