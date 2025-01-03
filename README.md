@@ -7,7 +7,7 @@ __[WIP]__: need to rewrite most of all below as it is a bit more complicated tha
 
 ## What? 
 
-An Elixir-LiveView demo webapp to demonstrate how to setup a real-time collaborative app with __offline support__ (PWA) using CRDT with navigation.
+An Elixir-LiveView demo webapp to demonstrate how to setup a real-time collaborative app with __offline support__ (PWA) using CRDT with on/offline navigation.
 
 ## Why?
 
