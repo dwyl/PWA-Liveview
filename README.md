@@ -5,7 +5,7 @@ __[WIP]__: 🎉 Did it! Need to rewrite all below as it is a bit more complicate
 
 ## What? 
 
-A little Elixir-LiveView demo webapp to demonstrate how to setup a real-time collaborative app with offline support (PWA) using CRDT with off-line navigation.
+An Elixir-LiveView demo webapp to demonstrate how to setup a real-time collaborative app with offline support (PWA) using CRDT with off-line navigation.
 
 ## Why?
 
