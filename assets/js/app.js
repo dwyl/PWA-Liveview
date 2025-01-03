@@ -5,20 +5,28 @@ import { updateSW } from "./refreshSW.js";
 
 updateSW();
 
-const paths = new Set();
-const myroutes = ["/", "/map"];
-let lineStatus = true;
+const CONFIG = {
+  ROUTES: Object.freeze(["/", "/map"]),
+  POLL_INTERVAL: 5000,
+  CACHE_NAME: "lv-pages",
+};
+
+const appState = {
+  paths: new Set(),
+  isOnline: false,
+};
 
 async function addCurrentPageToCache({ current, routes }) {
   await navigator.serviceWorker.ready;
   const newPath = new URL(current).pathname;
 
   if (!routes.includes(newPath)) return;
-  if (paths.has(newPath)) return;
+  // we cache the two pages "/"" and "/map" only once.
+  if (appState.paths.has(newPath)) return;
 
   if (newPath === window.location.pathname) {
-    console.log("addCurrentPageToCache", newPath, window.location.pathname);
-    paths.add(newPath);
+    console.log("addCurrentPageToCache", newPath);
+    appState.paths.add(newPath);
     const htmlContent = document.documentElement.outerHTML;
     const contentLength = new TextEncoder().encode(htmlContent).length;
     const headers = new Headers({
@@ -32,36 +40,74 @@ async function addCurrentPageToCache({ current, routes }) {
       statusText: "OK",
     });
 
-    const cache = await caches.open("lv-pages");
+    const cache = await caches.open("CONFIG.CACHE_NAME");
     return cache.put(current, response);
   } else return;
 }
 
-// we cache the two pages "/3 and "/map" only once.
+// Monitor navigation events and cache the current page if in declared routes
 navigation.addEventListener("navigate", async ({ destination: { url } }) => {
-  console.log("navigate", url, window.location.pathname);
-  return addCurrentPageToCache({ current: url, routes: myroutes });
+  return addCurrentPageToCache({ current: url, routes: CONFIG.ROUTES });
 });
 
 //---------------
-async function checkOnlineStatus() {
+// Check server reachability
+async function checkServerReachability() {
   try {
-    const response = await fetch("/test");
-    console.log(response);
-    return response.ok || false;
+    const response = await fetch("/connectivity", { method: "HEAD" });
+    return response.ok;
   } catch (error) {
-    console.error("Error checking online status:", error);
+    console.error("Error checking server reachability:", error);
     return false;
   }
 }
 
-// --------------
-window.addEventListener("online", () => window.location.reload());
-//--------------
+function updateOnlineStatusUI(online) {
+  const statusElement = document.getElementById("online-status");
+  if (statusElement) {
+    statusElement.style.backgroundColor = online ? "lavender" : "tomato";
+    statusElement.style.opacity = online ? "0.8" : "1";
+    statusElement.textContent = online ? "Online" : "Offline";
+  }
+}
+
+// && !appState.reloaded
+
+function startPolling(interval = CONFIG.POLL_INTERVAL) {
+  setInterval(async () => {
+    const wasOnline = appState.isOnline;
+    appState.isOnline = await checkServerReachability();
+    if (appState.isOnline !== wasOnline) {
+      // updateOnlineStatusUI(appState.isOnline);
+      window.location.reload();
+    }
+  }, interval);
+  console.log("Started polling...");
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  console.log("Initializing status monitoring...");
+  appState.isOnline = await checkServerReachability();
+  updateOnlineStatusUI(appState.isOnline);
+
+  // Start polling only if offline
+  if (!appState.isOnline) {
+    startPolling();
+  }
+
+  // Monitor online and offline events
+  window.addEventListener("online", async () => window.location.reload());
+
+  window.addEventListener("offline", () => {
+    console.log("Browser offline event fired");
+    appState.isOnline = false;
+    updateOnlineStatusUI(appState.isOnline);
+    startPolling(); // Start polling when offline
+  });
+});
 
 //--------------
 async function initApp(lineStatus) {
-  console.log("initApp----", lineStatus);
   try {
     const { default: initYdoc } = await import("./initYJS.js");
     const ydoc = await initYdoc();
@@ -71,14 +117,12 @@ async function initApp(lineStatus) {
 
     if (lineStatus) {
       const SolHook = solHook(ydoc); // setup SolidJS component
-      // window.MapHook = MapHook; // setup Map component
       return initLiveSocket({ SolHook, MapHook });
     }
 
     const path = window.location.pathname;
 
     if (path === "/map") {
-      // window.MapHook = MapHook; // setup Leaflet Map component
       return displayMap();
     } else if (path === "/") {
       solHook(ydoc); // setup SolidJS component
@@ -112,7 +156,7 @@ async function initLiveSocket({ SolHook, MapHook }) {
 
 async function displayMap() {
   const { RenderMap } = await import("./mapHook.jsx");
-  console.log("Map rendering-----");
+  console.log("Render Map-----");
   return RenderMap();
 }
 
@@ -122,7 +166,7 @@ async function displayStock() {
       console.error("Components not available", window.SolidComp, window.ydoc);
       return;
     }
-    console.log("Solid rendering-----");
+    console.log("Render Stock-----");
     return window.SolidComp({
       ydoc: window.ydoc,
       userID: sessionStorage.getItem("userID"),
@@ -135,19 +179,18 @@ async function displayStock() {
 }
 
 // **************************************
-lineStatus = await checkOnlineStatus();
-await initApp(lineStatus);
+(async () => {
+  console.log("~~~~~ Init ~~~~~");
+  appState.isOnline = await checkServerReachability();
+  await initApp(appState.isOnline);
 
-if ("serviceWorker" in navigator && lineStatus) {
-  await addCurrentPageToCache({
-    current: window.location.href,
-    routes: myroutes,
-  });
-}
-
-//--------------
-// Show online/offline status
-import("./onlineStatus.js").then(({ statusListener }) => statusListener());
+  if ("serviceWorker" in navigator && appState.isOnline) {
+    await addCurrentPageToCache({
+      current: window.location.href,
+      routes: CONFIG.ROUTES,
+    });
+  }
+})();
 
 //--------------
 // Show progress bar on live navigation and form submits
@@ -155,10 +198,14 @@ await import("../vendor/topbar.cjs").then(configureTopbar);
 
 async function configureTopbar({ default: topbar }) {
   topbar.config({ barColors: { 0: "#29d" }, shadowColor: "rgba(0, 0, 0, .3)" });
-  window.addEventListener("phx:page-loading-start", (_info) =>
-    topbar.show(300)
-  );
-  window.addEventListener("phx:page-loading-stop", (_info) => topbar.hide());
+  window.addEventListener("phx:page-loading-start", (_info) => {
+    topbar.show(300);
+    document.body.style.cursor = "wait";
+  });
+  window.addEventListener("phx:page-loading-stop", (_info) => {
+    document.body.style.cursor = "default";
+    topbar.hide();
+  });
 }
 
 // Enable server log streaming to client. Disable with reloader.disableServerLogs()

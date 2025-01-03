@@ -177,6 +177,7 @@ const PWAOpts = {
   manifest: manifestOpts,
   outDir: "../priv/static/",
   manifestFilename: "manifest.webmanifest",
+  injectRegister: "auto", // Automatically inject the SW registration script
   injectManifest: {
     injectionPoint: undefined,
   },
