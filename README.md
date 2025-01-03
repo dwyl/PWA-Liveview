@@ -26,12 +26,12 @@ __TLTR__
 - run two strategies in "app.js": one "normal" where the LiveSocket is connected with JavaScript hooks or embedded Javascript, and one "offline" to run the JavaScript only,
 - put the landing page HTML content text in `Cache` on app start-up,
 - if not landing page, use `navigator.addEventListener("navigate")` to put the visited whole HTML (includes csrf) in `Cache`,
-- set `workbox.runtimeCaching` URL/handler-strategy in an ordely manner,
+- set `workbox.runtimeCaching` entries URL/handler-strategy in an ordely manner,
 - set `workbox.inlineWorkboxRuntime: true` to have a unique "sw.js" file, 
-- set the targeted URLs in `workbox.additionalManifestEntries`
-- set `workbox.navigateFallback: null`
-- for `SolidJS`, set the correct file extensions: `resolve: {  extensions: [".mjs", ".js", ".json", "wasm"]}` 
-- Implement a pooling heartbeat for the status visual indicator as `navigator.onLine`  unreliable when navigating.
+- set the targeted URLs in `workbox.additionalManifestEntries` entries,
+- set `workbox.navigateFallback: null`,
+- for `SolidJS`, set the correct file extensions: `resolve: {  extensions: [".mjs", ".js", ".json", "wasm"]}`,
+- implement a pooling heartbeat for the status visual indicator as `navigator.onLine`  unreliable when navigating.
 
 
 ## Show case
