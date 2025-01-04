@@ -13,9 +13,18 @@ An Elixir-LiveView demo webapp to demonstrate how to setup a real-time collabora
 
 Some applications may have some interactivity that you may want ot preserve when off-line, or you simply don't want the app to break down in case the user goes off-line.
 
-If you want some interactivity, you need to use a reactive JavaScript framework which will be mirrored by the server.
+If pages are static, you can still display some degradated cached pages.
 
-If not, you can still display some degradated cached pages.
+I did not found resources related to this subject. This is probably because Liveview architecture using websockets might not seem suitable for PWA.
+
+Indeed, if you want to persist some interactivity, you need to use a reactive JavaScript framework instead for some bits which will be mirrored by the server.
+
+This opens two subjects:
+
+- how to sync multiple clients?
+- how to sync the server?
+
+
 
 > The routes here are static, just "/" and "/map". It is howver possible to capture dynamic routes with `Workbox` using eg `urlPattern: new RegExp('/users/[^/]+/books')` if you navigate to "users/:user_id/books" for example.
 
