@@ -13,7 +13,7 @@ An Elixir-LiveView demo webapp to demonstrate how to setup a real-time collabora
 
 Some applications may have some interactivity that you may want ot preserve when off-line, or you simply don't want the app to break down in case the user goes off-line.
 
-If pages are static, you can still display some degradated cached pages.
+If pages are static, you can still display some degradated cached pages. You can also navigate between off-line pages but you need to solve how to cache these websockets rendered pages.
 
 I did not found resources related to this subject. This is probably because Liveview architecture using websockets might not seem suitable for PWA.
 
