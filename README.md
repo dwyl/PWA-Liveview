@@ -971,7 +971,7 @@ Here, we just defined two pages, "/" and "/map" and the corresponding Javascript
 
 ```js
 (async () => {
-  appState.isOnline = await checkServerReachability();
+  appState.isOnline = await checkServer();
   await initApp(appState.isOnline);
 
   if ("serviceWorker" in navigator && appState.isOnline) {
@@ -1100,7 +1100,7 @@ The reload logic is inside the polling function (`startPolling`) and only execut
 When offline, the polling continues until reconnection.
 
 ```js
-function updateOnlineStatusUI(online) {
+function updateOnlineStatus(online) {
   const statusElement = document.getElementById("online-status");
   if (statusElement) {
     statusElement.style.backgroundColor = online ? "lavender" : "tomato";
@@ -1112,9 +1112,9 @@ function updateOnlineStatusUI(online) {
 function startPolling(interval = CONFIG.POLL_INTERVAL) {
   setInterval(async () => {
     const wasOnline = appState.isOnline;
-    appState.isOnline = await checkServerReachability();
+    appState.isOnline = await checkServer();
     if (appState.isOnline !== wasOnline) {
-      // updateOnlineStatusUI(appState.isOnline);
+      // updateOnlineStatus(appState.isOnline);
       window.location.reload();
     }
   }, interval);
@@ -1123,8 +1123,8 @@ function startPolling(interval = CONFIG.POLL_INTERVAL) {
 
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("Initializing status monitoring...");
-  appState.isOnline = await checkServerReachability();
-  updateOnlineStatusUI(appState.isOnline);
+  appState.isOnline = await checkServer();
+  updateOnlineStatus(appState.isOnline);
 
   // Start polling only if offline
   if (!appState.isOnline) {
@@ -1137,7 +1137,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   window.addEventListener("offline", () => {
     console.log("Browser offline event fired");
     appState.isOnline = false;
-    updateOnlineStatusUI(appState.isOnline);
+    updateOnlineStatus(appState.isOnline);
     startPolling(); // Start polling when offline
   });
 });
