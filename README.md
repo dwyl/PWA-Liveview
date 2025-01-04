@@ -490,19 +490,17 @@ const Pages = {
 
 ```js
 workbox: {
-  runtimeCaching: [
-    runtimeCaching: [
-      Tiles,
-      StaticAssets,
-      Scripts,
-      Fonts,
-      LVLongPoll,
-      LVWebSocket,
-      LVTestOnline,
-      LiveReload,
-      Pages,
-    ,
-}
+ runtimeCaching: [
+  Tiles,
+  StaticAssets,
+  Scripts,
+  Fonts,
+  LVLongPoll,
+  LVWebSocket,
+  LVTestOnline,
+  LiveReload,
+  Pages,
+},...
 ```
 
 ‼️ You need to set the possible pathname of your routes into:
