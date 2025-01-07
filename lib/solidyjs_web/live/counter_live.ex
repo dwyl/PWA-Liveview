@@ -23,7 +23,7 @@ defmodule SolidyjsWeb.CounterLive do
     %{"user_id" => user_id} = session
 
     if connected?(socket) do
-      PubSub.subscribe(Solidyjs.PubSub, "bc_stock")
+      :ok = PubSub.subscribe(:pubsub, "bc_stock")
     end
 
     init_stock = 20
@@ -36,13 +36,13 @@ defmodule SolidyjsWeb.CounterLive do
   end
 
   # see also on_mount {Module, :default}: https://hexdocs.pm/phoenix_live_view/Phoenix.LiveView.html#on_mount/1
+
   def handle_params(_, uri, socket) do
-    IO.inspect(uri)
-    {:noreply, assign(socket, :uri, URI.parse(uri).path)}
+    IO.inspect(uri, label: "mount /")
+    {:noreply, socket}
   end
 
   def handle_event("stock", %{"user_id" => nil} = map, socket) do
-    IO.inspect(socket.assigns.user_id)
     IO.inspect(Map.get(map, "c"))
     {:noreply, socket}
   end
@@ -54,7 +54,7 @@ defmodule SolidyjsWeb.CounterLive do
 
         :ok =
           PubSub.broadcast(
-            Solidyjs.PubSub,
+            :pubsub,
             "bc_stock",
             {:new_stock, %{c: c, from_user_id: userid}}
           )

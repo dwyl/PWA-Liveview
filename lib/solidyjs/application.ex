@@ -7,13 +7,14 @@ defmodule Solidyjs.Application do
 
   @impl true
   def start(_type, _args) do
+    :previous = :ets.new(:previous, [:named_table, :public])
+
     children = [
       SolidyjsWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:solidyjs, :dns_cluster_query) || :ignore},
-      {Phoenix.PubSub, name: Solidyjs.PubSub},
-      # Start a worker by calling: Solidyjs.Worker.start_link(arg)
-      # {Solidyjs.Worker, arg},
-      # Start to serve requests, typically the last entry
+      {Phoenix.PubSub, name: :pubsub},
+      Solidyjs.Repo,
+      {SqliteHandler, [":memory", "airports"]},
       SolidyjsWeb.Endpoint
     ]
 

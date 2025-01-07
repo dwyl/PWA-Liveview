@@ -52,7 +52,7 @@ navigation.addEventListener("navigate", async ({ destination: { url } }) => {
 
 //---------------
 // Check server reachability
-async function checkServerReachability() {
+async function checkServer() {
   try {
     const response = await fetch("/connectivity", { method: "HEAD" });
     return response.ok;
@@ -71,14 +71,11 @@ function updateOnlineStatusUI(online) {
   }
 }
 
-// && !appState.reloaded
-
 function startPolling(interval = CONFIG.POLL_INTERVAL) {
   setInterval(async () => {
     const wasOnline = appState.isOnline;
-    appState.isOnline = await checkServerReachability();
+    appState.isOnline = await checkServer();
     if (appState.isOnline !== wasOnline) {
-      // updateOnlineStatusUI(appState.isOnline);
       window.location.reload();
     }
   }, interval);
@@ -87,7 +84,7 @@ function startPolling(interval = CONFIG.POLL_INTERVAL) {
 
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("Initializing status monitoring...");
-  appState.isOnline = await checkServerReachability();
+  appState.isOnline = await checkServer();
   updateOnlineStatusUI(appState.isOnline);
 
   // Start polling only if offline
@@ -108,16 +105,20 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 //--------------
 async function initApp(lineStatus) {
+  console.log("Init...");
   try {
     const { default: initYdoc } = await import("./initYJS.js");
     const ydoc = await initYdoc();
     window.ydoc = ydoc; // Set this early so it's available for offline use
     const { solHook } = await import("./solHook.jsx");
-    const { MapHook } = await import("./mapHook.jsx");
+    const { mapHook } = await import("./mapHook.jsx");
+    const { formHook } = await import("./formHook.jsx");
+    const SolHook = solHook(ydoc); // setup SolidJS component
+    const MapHook = mapHook({ ydoc, userID: 1 });
+    const FormHook = formHook(ydoc);
 
     if (lineStatus) {
-      const SolHook = solHook(ydoc); // setup SolidJS component
-      return initLiveSocket({ SolHook, MapHook });
+      return initLiveSocket({ SolHook, MapHook, FormHook });
     }
 
     const path = window.location.pathname;
@@ -125,7 +126,6 @@ async function initApp(lineStatus) {
     if (path === "/map") {
       return displayMap();
     } else if (path === "/") {
-      solHook(ydoc); // setup SolidJS component
       return displayStock();
     }
   } catch (error) {
@@ -133,7 +133,7 @@ async function initApp(lineStatus) {
   }
 }
 
-async function initLiveSocket({ SolHook, MapHook }) {
+async function initLiveSocket({ SolHook, MapHook, FormHook }) {
   const { LiveSocket } = await import("phoenix_live_view");
   const { Socket } = await import("phoenix");
   const csrfToken = document
@@ -143,7 +143,7 @@ async function initLiveSocket({ SolHook, MapHook }) {
   const liveSocket = new LiveSocket("/live", Socket, {
     longPollFallbackMs: 100,
     params: { _csrf_token: csrfToken },
-    hooks: { SolHook, MapHook },
+    hooks: { SolHook, MapHook, FormHook },
   });
 
   liveSocket.connect();
@@ -157,7 +157,12 @@ async function initLiveSocket({ SolHook, MapHook }) {
 async function displayMap() {
   const { RenderMap } = await import("./mapHook.jsx");
   console.log("Render Map-----");
+
   return RenderMap();
+}
+async function displayForm() {
+  const { RenderForm } = await import("./formHook.jsx");
+  return RenderForm();
 }
 
 async function displayStock() {
@@ -167,6 +172,7 @@ async function displayStock() {
       return;
     }
     console.log("Render Stock-----");
+
     return window.SolidComp({
       ydoc: window.ydoc,
       userID: sessionStorage.getItem("userID"),
@@ -181,7 +187,8 @@ async function displayStock() {
 // **************************************
 (async () => {
   console.log("~~~~~ Init ~~~~~");
-  appState.isOnline = await checkServerReachability();
+  appState.isOnline = await checkServer();
+  console.log(appState.isOnline);
   await initApp(appState.isOnline);
 
   if ("serviceWorker" in navigator && appState.isOnline) {

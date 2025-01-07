@@ -10,6 +10,10 @@ import Config
 config :solidyjs,
   generators: [timestamp_type: :utc_datetime]
 
+config :solidyjs,
+  ecto_repos: [Solidyjs.Repo]
+
+config :exqlite, force_build: false
 # Configures the endpoint
 config :solidyjs, SolidyjsWeb.Endpoint,
   url: [host: "localhost"],
@@ -18,7 +22,7 @@ config :solidyjs, SolidyjsWeb.Endpoint,
     formats: [html: SolidyjsWeb.ErrorHTML, json: SolidyjsWeb.ErrorJSON],
     layout: false
   ],
-  pubsub_server: Solidyjs.PubSub,
+  pubsub_server: :pubsub,
   live_view: [signing_salt: "zhtHGb8Q"]
 
 # Configure esbuild (the version is required)

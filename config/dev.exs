@@ -1,5 +1,6 @@
 import Config
 
+config :solidyjs, Solidyjs.Repo, database: ":memory", default_transaction_mode: :immediate
 # For development, we disable any cache and enable
 # debugging and code reloading.
 #

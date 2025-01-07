@@ -81,18 +81,17 @@ export const solHook = (ydoc) => ({
 
     const stockMap = ydoc.getMap("stock");
     stockMap.observe((event) => {
-      if (!isHandlingServerUpdate) {
-        const globalStock = stockMap.get("globalStock");
-        if (globalStock) {
-          // Push to LiveView only if change originated from current user
-          // This prevents broadcast loops
-          console.log("observe", window.liveSocket?.isConnected());
-          if (window.liveSocket?.isConnected()) {
-            this.pushEvent("stock", {
-              user_id: sessionStorage.getItem("userID"),
-              c: globalStock.c,
-            });
-          }
+      if (isHandlingServerUpdate) return;
+      const globalStock = stockMap.get("globalStock");
+      if (globalStock) {
+        // Push to LiveView only if change originated from current user
+        // This prevents broadcast loops
+        console.log("observe", window.liveSocket?.isConnected());
+        if (window.liveSocket?.isConnected()) {
+          this.pushEvent("stock", {
+            user_id: sessionStorage.getItem("userID"),
+            c: globalStock.c,
+          });
         }
       }
     });

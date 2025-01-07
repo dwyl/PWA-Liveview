@@ -38,13 +38,15 @@ const buildOps = {
   rollupOptions: {
     input: [
       "js/app.js",
-      "js/onlineStatus.js",
       "js/solHook.jsx",
       "js/counter.jsx",
       "js/SolidComp.jsx",
       "js/bins.jsx",
       "js/initYJS.js",
       "js/refreshSW.js",
+      "js/formCities.jsx",
+      "js/formHook.jsx",
+      "js/progressCircle.jsx",
       "wasm/great_circle.wasm",
     ],
     output: {
@@ -53,7 +55,6 @@ const buildOps = {
       entryFileNames: "assets/[name].js",
     },
   },
-  // external: ["wasm/great_circle.wasm"],
   commonjsOptions: {
     exclude: [],
     include: ["vendor/topbar.cjs"],
@@ -206,8 +207,10 @@ const PWAOpts = {
       LiveReload,
       Pages,
     ],
-    clientsClaim: true,
-    skipWaiting: true,
+    clientsClaim: true, // take control of all open pages as soon as the service worker activates
+    skipWaiting: true, // New service worker versions activate immediately
+    // Without these settings, you might have some pages using old service worker versions
+    // while others use new ones, which could lead to inconsistent behavior in your offline capabilities.
   },
 };
 

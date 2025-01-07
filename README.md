@@ -44,3 +44,7 @@ This is done by running `setInterval`
 Efficient Reloads: Using a reloaded flag in the polling logic allows the app to reload once on reconnection, avoiding redundant reloads or unnecessary complexity.
 
 This approach ensures consistent synchronization of client and server states while maintaining accurate offline/online indicators.
+
+### Airports list
+
+<https://openflights.org/data.php>
