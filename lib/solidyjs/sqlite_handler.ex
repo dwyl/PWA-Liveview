@@ -34,43 +34,21 @@ defmodule SqliteHandler do
 
     case Sqlite3.open(db, mode: :readwrite) do
       {:ok, conn} ->
-        Airports.parse_csv_file()
-        |> insert(state)
+        case Airports.parse_csv_file()
+             |> insert(state) do
+          :ok ->
+            Sqlite3.close(conn)
+            {:noreply, state}
 
-        Sqlite3.close(conn)
-        {:noreply, state}
-
-      {:error, reason} ->
-        {:stop, reason}
+          {:error, reason} ->
+            {:stop, reason}
+        end
     end
   end
 
   def create_table(conn, table) do
     :ok = Sqlite3.execute(conn, "DROP TABLE IF EXISTS #{table}")
 
-    # :ok =
-    #   Sqlite3.execute(
-    #     conn,
-    #     "CREATE TABLE IF NOT EXISTS #{table} (
-    #     id integer primary key,
-    #     ident text,
-    #     elevation_ft text,
-    #     type text,
-    #     name text,
-    #     continent text,
-    #     iso_country text,
-    #     iso_region text,
-    #     municipality text,
-    #     iata_code text,
-    #     local_code text,
-    #     gps_code text,
-    #     coordinates text,
-    #     lat real,
-    #     long real
-    #     )"
-    #   )
-
-    # airport_id integer,
     :ok =
       Sqlite3.execute(
         conn,
@@ -101,28 +79,28 @@ defmodule SqliteHandler do
     GenServer.call(__MODULE__, :municipalities)
   end
 
-  def insert(rows, {db, name} = state) do
+  def insert(rows, {db, name}) do
     case Sqlite3.open(db, mode: :readwrite) do
       {:ok, conn} ->
         :ok =
           Enum.each(rows, fn row ->
             {:ok, stmt} =
               Sqlite3.prepare(conn, "INSERT INTO #{name} (
-            name,
-            city,
-            country,
-            iata,
-            icao,
-            latitude,
-            longitude,
-            altitude,
-            dst,
-            tz,
-            type,
-            source)
-          VALUES
-            (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12)
-          ")
+                name,
+                city,
+                country,
+                iata,
+                icao,
+                latitude,
+                longitude,
+                altitude,
+                dst,
+                tz,
+                type,
+                source)
+              VALUES
+                (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12)
+              ")
 
             :ok =
               Sqlite3.bind(stmt, [
@@ -145,10 +123,8 @@ defmodule SqliteHandler do
             :ok = Sqlite3.execute(conn, "END TRANSACTION")
           end)
 
-        {:noreply, state}
-
       {:error, reason} ->
-        {:reply, {:error, reason}, state}
+        {:error, reason}
     end
   end
 
@@ -175,10 +151,11 @@ defmodule SqliteHandler do
         data =
           get_municipalities(conn, stmt)
           |> Enum.map(fn [city, latitude, longitude] ->
-            Map.put(%{}, city, %{"latitude" => latitude, "longitude" => longitude})
+            %{city: city, latitude: latitude, longitude: longitude}
+            # Map.put(%{}, city, %{"latitude" => latitude, "longitude" => longitude})
           end)
 
-        Sqlite3.close(conn)
+        :ok = Sqlite3.close(conn)
 
         {:reply, data, state}
 

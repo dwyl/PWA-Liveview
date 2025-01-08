@@ -4,7 +4,7 @@ defmodule SolidyjsWeb.MapLive do
   alias SolidyjsWeb.Menu
   alias Phoenix.LiveView.AsyncResult
   alias Phoenix.PubSub
-  import SolidyjsWeb.CoreComponents, only: [button: 1]
+  # import SolidyjsWeb.CoreComponents, only: [button: 1]
 
   require Logger
 
@@ -32,12 +32,18 @@ defmodule SolidyjsWeb.MapLive do
   end
 
   @impl true
-  def mount(_params, _session, socket) do
+  def mount(_params, session, socket) do
+    %{"user_id" => user_id} = session
+    dbg(user_id)
+
     if connected?(socket) do
       :ok = PubSub.subscribe(:pubsub, "download_progress")
     end
 
-    {:ok, socket}
+    {:ok,
+     socket
+     |> assign(:user_id, user_id)
+     |> push_event("user", %{user_id: user_id})}
   end
 
   @impl true

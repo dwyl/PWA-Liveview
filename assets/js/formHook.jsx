@@ -1,78 +1,110 @@
 import { render } from "solid-js/web";
 import { createSignal } from "solid-js";
 
-export const formHook = (ydoc, userID) => ({
+export const formHook = (ydoc) => ({
+  selections: new Map(),
   destroyed() {
     console.warn("form destroyed");
   },
   async mounted() {
-    // const [progressCount, setProgressCount] = createSignal(0);
     const [cities, setCities] = createSignal([]);
-    // const [lock, setLock] = createSignal(false);
     const [isInitialized, setIsInitialized] = createSignal(false);
 
     const airportsMap = ydoc.getMap("airports");
+    // save airports list into y-indexeddb
     this.handleEvent("airports", ({ airports }) => {
-      console.log(airports);
-      // airports.forEach((airport) => {
-      //   const municipality = Object.keys(airport)[0];
-      //   airportsMap.set(municipality, airport[municipality]);
-      // });
-      const airportsObject = airports.reduce((acc, airport) => {
-        // Get the municipality name (the only key in the object)
-        const municipality = Object.keys(airport)[0];
-        acc[municipality] = airport[municipality];
-        return acc;
-      }, {});
-      // airportsMap.set(airportsObject);
-      // const airportsObject = Array.isArray(airports)
-      //   ? airports.reduce((acc, airport) => {
-      //       acc[airport.municipality] = {
-      //         lat: airport.lat,
-      //         long: airport.long,
-      //       };
-      //       return acc;
-      //     }, {})
-      //   : airports;
-
-      airportsMap.set(airportsObject);
+      airportsMap.set("locations", airports);
     });
 
     const _this = this;
 
-    // createEffect(() => {
-    airportsMap.observe((event) => {
-      console.log(event.changes);
-      const entries = [...airportsMap.entries()];
-      setCities(entries[0][0]);
+    // update signals when ydoc detects a change and set ready to display
+    airportsMap.observe(() => {
+      const entries = [...airportsMap.values()][0];
+      setCities(entries);
       setIsInitialized(true);
     });
-    // });
 
-    // const { ProgressCircle } = await import("./progressCircle");
     const { FormCities } = await import("./formCities");
 
-    // const handleClick = () => {
-    //   console.log("clicked");
-    //   _this.pushEvent("download_evt", {});
-    // };
+    // save the stores:
+    // selection (depending on the inputType) in y-indexedDB
+    // local variable "selections"
+    // and signal MarkedSelections
+    function handleSelect({ city, latitude, longitude }, inputType) {
+      const selection = {
+        city,
+        latitude,
+        longitude,
+        inputType,
+        userID: sessionStorage.getItem("userID"),
+      };
 
-    function handleSelect(city, { latitude, longitude }) {
+      console.log(selection.userID);
+
+      _this.selections.set(inputType, selection);
+
       const selectionMap = ydoc.getMap("selection");
-      selectionMap.set({ [city]: { latitude, longitude } });
-      console.log(`Selected ${city} at ${latitude}, ${longitude}`);
+      selectionMap.set(inputType, selection);
+      console.log(
+        `User ${selection.userID} selected ${city} at ${latitude}, ${longitude}`
+      );
     }
+
+    // update the stores
+    function handleReset(inputType) {
+      const selectionMap = ydoc.getMap("selection");
+      selectionMap.delete(inputType);
+      _this.selections.delete(inputType);
+    }
+
+    // form is submitted with two inputs
+    function handleSubmit(e) {
+      e.preventDefault();
+      // Validate that both forms have selections
+      if (_this.selections.size !== 2) {
+        console.warn("Please select both departure and arrival cities");
+        return;
+      }
+
+      const [departure, arrival] = [..._this.selections.values()];
+      const flightMap = ydoc.getMap("flight");
+      flightMap.set("flight", {
+        departure: [departure.latitude, departure.longitude],
+        arrival: [arrival.latitude, arrival.longitude],
+      });
+      console.log("Flying from", departure.city, "to", arrival.city);
+
+      // You can emit an event to Phoenix LiveView here
+      // _this.pushEvent("flight_selected", { departure, arrival });
+    }
+
     render(
       () => (
         <>
           {isInitialized() ? (
-            <FormCities
-              cities={cities()}
-              onSelect={handleSelect}
-
-              // onDownload={handleClick}
-              // progress={progressCount()}
-            />
+            <form onSubmit={handleSubmit}>
+              <FormCities
+                cities={cities()}
+                onSelect={handleSelect}
+                onReset={handleReset}
+                inputType="departure"
+                label="departure City"
+              />
+              <FormCities
+                cities={cities()}
+                onSelect={handleSelect}
+                onReset={handleReset}
+                inputType="arrival"
+                label="arrival City"
+              />
+              <button
+                class="px-4 py-2 bg-blue-500 rounded-lg hover:bg-blue-600"
+                type="submit"
+              >
+                Fly!
+              </button>
+            </form>
           ) : (
             <div class="loading">Loading airports data...</div>
           )}

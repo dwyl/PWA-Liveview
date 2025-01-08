@@ -23,26 +23,40 @@ async function setupMap() {
   return { L, map };
 }
 
-async function animateRoute({ L, map, ydoc, userID }) {
-  let isHandlingServerUpdate = false;
+async function animateRoute({ L, map, departure, arrival }) {
+  // let isHandlingServerUpdate = false;
 
   try {
-    const lat1 = 48.88; // Paris
-    const lon1 = 2.3;
-    const lat2 = 40.7128; // New York
-    const lon2 = -74.006;
-    const cdg = L.latLng(lat1, lon1);
-    const ny = L.latLng(lat2, lon2);
+    // const lat1 = 48.88; // Paris
+    // const lon1 = 2.3;
+    // const lat2 = 40.7128; // New York
+    // const lon2 = -74.006;
+    // const cdg = L.latLng(lat1, lon1);
+    // const ny = L.latLng(lat2, lon2);
 
-    L.marker(cdg).addTo(map);
-    L.marker(ny).addTo(map);
+    const [latA, longA] = arrival;
+    const [latD, longD] = departure;
 
-    const bounds = L.latLngBounds(ny, cdg);
+    console.log(latA, longA, latD, longD);
+
+    const A = L.latLng(arrival);
+    const D = L.latLng(departure);
+    // L.marker(cdg).addTo(map);
+    // L.marker(ny).addTo(map);
+
+    const bounds = L.latLngBounds(A, D);
     map.fitBounds(bounds);
 
-    const latLngs = await computeGreatCircle(L, map, lat1, lon1, lat2, lon2);
+    const { gc, latLngs } = await computeGreatCircle(
+      L,
+      map,
+      latA,
+      longA,
+      latD,
+      longD
+    );
 
-    return animate(L, map, latLngs, 200);
+    return animate({ L, map, latLngs, gc }, 200);
   } catch (error) {
     console.error(`Unable to instantiate module`, error);
     throw error;
@@ -63,8 +77,8 @@ async function computeGreatCircle(L, map, lat1, lon1, lat2, lon2) {
       latLngs.push(L.latLng(greatCircle[i], greatCircle[i + 1]));
     }
     memfree(ptr, size);
-    L.polyline(latLngs, { renderer: L.canvas() }).addTo(map);
-    return latLngs;
+    const gc = L.polyline(latLngs, { renderer: L.canvas() }).addTo(map);
+    return { gc, latLngs };
   } catch (error) {
     console.error("GreatCircle module error", error);
     throw error;
@@ -76,12 +90,12 @@ async function loadWasm() {
     const importObject = {
       env: {
         memory: new WebAssembly.Memory({ initial: 20 }),
-        consoleLog: function (ptr, len) {
-          const memory = instance.exports.memory;
-          const bytes = new Uint8Array(memory.buffer, ptr, len);
-          const string = new TextDecoder().decode(bytes);
-          console.log(string);
-        },
+        // consoleLog: function (ptr, len) {
+        //   const memory = instance.exports.memory;
+        //   const bytes = new Uint8Array(memory.buffer, ptr, len);
+        //   const string = new TextDecoder().decode(bytes);
+        //   console.log(string);
+        // },
       },
     };
 
@@ -95,7 +109,7 @@ async function loadWasm() {
   }
 }
 
-function animate(L, map, latLngs, time) {
+function animate({ L, map, latLngs, gc }, time) {
   const marker = L.marker(latLngs[0], {
     icon: new L.Icon({
       iconUrl: "/images/airplane.svg",
@@ -111,73 +125,82 @@ function animate(L, map, latLngs, time) {
     if (idx >= latLngs.length - 1) {
       clearInterval(countID);
     }
-    move(marker, latLngs, idx);
+    marker.setLatLng(latLngs[idx]);
     idx++;
   }, time);
-  return countID;
+  return { gc, countID };
 }
 
-function move(marker, latLngs, idx) {
-  marker.setLatLng(latLngs[idx]);
-}
-
-function drawAirport(L, map, lat, long) {
-  L.marker(L.latLng(lat, long)).addTo(map);
-}
-
-function updateUserLocation(userId, lat, long) {
-  locationMap.set(userId, {
-    lat: lat,
-    long: long,
-    timestamp: Date.now(),
-  });
-}
-
-function getUserLocation(userId) {
-  return locationMap.get(userId);
-}
-
-function getAllLocations() {
-  const locations = {};
-  locationMap.forEach((value, key) => {
-    locations[key] = value;
-  });
-  return locations;
-}
-
-export async function RenderMap(ydoc, userID) {
+export async function RenderMap({ ydoc, userID }) {
   const { L, map } = await setupMap();
   await animateRoute({ L, map, ydoc, userID });
 }
 
-export const mapHook = ({ ydoc, userID }) => ({
+function observeMarkers({ L, map, ydoc, markersMap }) {
+  const selectionMap = ydoc.getMap("selection");
+
+  selectionMap.observe(({ changes }) => {
+    changes.keys.values().forEach((change) => {
+      if (change.action == "add") {
+        const [inputType] = [...changes.keys.keys()];
+        const { latitude, longitude } = selectionMap.get(inputType);
+        const marker = L.marker(L.latLng([latitude, longitude]));
+        marker.addTo(map);
+        markersMap.set(inputType, marker);
+      } else if (change.action === "delete") {
+        const { inputType } = change.oldValue;
+        const markerToRemove = markersMap.get(inputType);
+        map.removeLayer(markerToRemove);
+        markersMap.delete(inputType);
+      }
+    });
+  });
+
+  return markersMap;
+}
+
+async function observeFlight({ ydoc, L, map }) {
+  const flightMap = ydoc.getMap("flight");
+  flightMap.observe(() => {
+    const { arrival, departure } = [...flightMap.values()][0];
+    return animateRoute({ L, map, departure, arrival });
+  });
+}
+
+export const mapHook = (ydoc) => ({
   countId: null,
+  // gc: null,
+  // userID: null,
+  markersMap: new Map(),
   destroyed() {
+    console.warn("map destroyed");
     clearInterval(this.countId);
     this.countId = null;
-    console.warn("map destroyed");
+    // this.gc = null;
+    // this.userID = null;
   },
   async mounted() {
-    let isHandlingServerUpdate = false,
-      userID = null;
     try {
       const { L, map } = await setupMap();
-      this.countId = await animateRoute({ L, map, ydoc, userID });
+      // const userID = sessionStorage.getItem("userID");
 
-      const selectionMap = ydoc.getMap("selection");
-      selectionMap.observe(() => {
-        const selection = [...selectionMap.entries()][0][0];
-        const { latitude, longitude } = Object.values(selection)[0];
-        L.marker(L.latLng([latitude, longitude])).addTo(map);
+      // const { gc, countID } = await animateRoute({ L, map, ydoc, userID });
+      // this.countId = countID;
+      // this.gc = gc;
+      // this.userID = userID;
+
+      this.markersMap = observeMarkers({
+        L,
+        map,
+        ydoc,
+        markersMap: this.markersMap,
       });
+
+      observeFlight({ ydoc, L, map });
     } catch (error) {
       console.error(`Unable to run the map`, error);
       throw error;
     }
-  },
-  reconnected() {
-    console.warn("Reconnection detected");
-    this.mounted();
   },
 });
 

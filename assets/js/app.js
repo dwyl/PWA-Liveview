@@ -114,7 +114,7 @@ async function initApp(lineStatus) {
     const { mapHook } = await import("./mapHook.jsx");
     const { formHook } = await import("./formHook.jsx");
     const SolHook = solHook(ydoc); // setup SolidJS component
-    const MapHook = mapHook({ ydoc, userID: 1 });
+    const MapHook = mapHook(ydoc);
     const FormHook = formHook(ydoc);
 
     if (lineStatus) {
@@ -124,7 +124,8 @@ async function initApp(lineStatus) {
     const path = window.location.pathname;
 
     if (path === "/map") {
-      return displayMap();
+      displayMap();
+      displayForm();
     } else if (path === "/") {
       return displayStock();
     }
@@ -158,11 +159,17 @@ async function displayMap() {
   const { RenderMap } = await import("./mapHook.jsx");
   console.log("Render Map-----");
 
-  return RenderMap();
+  return RenderMap({
+    ydoc: window.ydoc,
+    userID: sessionStorage.getItem("userID"),
+  });
 }
 async function displayForm() {
   const { RenderForm } = await import("./formHook.jsx");
-  return RenderForm();
+  return RenderForm({
+    ydoc: window.ydoc,
+    userID: sessionStorage.getItem("userID"),
+  });
 }
 
 async function displayStock() {
