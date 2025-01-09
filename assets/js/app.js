@@ -142,7 +142,7 @@ async function initLiveSocket({ SolHook, MapHook, FormHook }) {
     .getAttribute("content");
 
   const liveSocket = new LiveSocket("/live", Socket, {
-    longPollFallbackMs: 100,
+    // longPollFallbackMs: 2000,
     params: { _csrf_token: csrfToken },
     hooks: { SolHook, MapHook, FormHook },
   });
@@ -162,8 +162,8 @@ async function displayMap() {
 }
 async function displayForm() {
   console.log("Render form-----");
-  const { formHook } = await import("./formHook.jsx");
-  return formHook(window.ydoc);
+  const { solForm } = await import("./formHook.jsx");
+  return solForm(window.ydoc);
 }
 
 async function displayStock() {

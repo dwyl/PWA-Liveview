@@ -26,13 +26,13 @@ export const solHook = (ydoc) => ({
     this.handleEvent("user", ({ user_id, global_stock, max }) => {
       userID = String(user_id);
 
-      const stateData = JSON.stringify({
-        userID,
-        max,
-        global_stock,
-      });
+      // const stateData = JSON.stringify({
+      //   userID,
+      //   max,
+      //   global_stock,
+      // });
 
-      sessionStorage.setItem("lv_stock_state", stateData);
+      // sessionStorage.setItem("lv_stock_state", stateData);
 
       sessionStorage.setItem("userID", userID);
       sessionStorage.setItem("max", max);
