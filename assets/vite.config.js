@@ -38,14 +38,16 @@ const buildOps = {
   rollupOptions: {
     input: [
       "js/app.js",
-      "js/solHook.jsx",
-      "js/counter.jsx",
-      "js/SolidComp.jsx",
-      "js/bins.jsx",
       "js/initYJS.js",
       "js/refreshSW.js",
-      "js/formCities.jsx",
+      "js/solHook.js",
+      "js/SolidComp.jsx",
+      "js/counter.jsx",
+      "js/bins.jsx",
+      "js/mapHookOrigin.js",
       "js/formHook.jsx",
+      "js/formCities.jsx",
+
       "js/progressCircle.jsx",
       "wasm/great_circle.wasm",
     ],

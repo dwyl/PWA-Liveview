@@ -4,26 +4,36 @@ import { createSignal } from "solid-js";
 export const formHook = (ydoc) => ({
   selections: new Map(),
   destroyed() {
-    console.warn("form destroyed");
+    this.selections.clear();
+    const selectionMap = ydoc.getMap("selection");
+    selectionMap.clear();
+    console.log("Form destroyed-----");
   },
   async mounted() {
+    console.log("Form mounted----");
     const [cities, setCities] = createSignal([]);
     const [isInitialized, setIsInitialized] = createSignal(false);
+    const [resetTrigger, setResetTrigger] = createSignal(false);
 
     const airportsMap = ydoc.getMap("airports");
-    // save airports list into y-indexeddb
+    // save airports list into y-indexeddb if needed
     this.handleEvent("airports", ({ airports }) => {
-      airportsMap.set("locations", airports);
+      if (!airportsMap.has("locations")) {
+        airportsMap.set("locations", airports);
+      } else {
+        setCities([...airportsMap.values()][0]);
+        setIsInitialized(true);
+      }
     });
 
-    const _this = this;
-
-    // update signals when ydoc detects a change and set ready to display
+    // on first load, y.js detects a change
     airportsMap.observe(() => {
       const entries = [...airportsMap.values()][0];
       setCities(entries);
       setIsInitialized(true);
     });
+
+    const _this = this;
 
     const { FormCities } = await import("./formCities");
 
@@ -31,37 +41,34 @@ export const formHook = (ydoc) => ({
     // selection (depending on the inputType) in y-indexedDB
     // local variable "selections"
     // and signal MarkedSelections
-    function handleSelect({ city, latitude, longitude }, inputType) {
+    function handleSelect({ city, country, lat, lng }, inputType) {
       const selection = {
         city,
-        latitude,
-        longitude,
+        country,
+        lat,
+        lng,
         inputType,
         userID: sessionStorage.getItem("userID"),
       };
 
-      console.log(selection.userID);
-
       _this.selections.set(inputType, selection);
-
       const selectionMap = ydoc.getMap("selection");
       selectionMap.set(inputType, selection);
-      console.log(
-        `User ${selection.userID} selected ${city} at ${latitude}, ${longitude}`
-      );
     }
 
     // update the stores
-    function handleReset(inputType) {
+    function handleReset() {
       const selectionMap = ydoc.getMap("selection");
-      selectionMap.delete(inputType);
-      _this.selections.delete(inputType);
+      selectionMap.clear();
+      _this.selections.clear();
+      setResetTrigger(true);
+      // Reset the trigger after a short delay
+      setTimeout(() => setResetTrigger(false), 100);
     }
 
     // form is submitted with two inputs
     function handleSubmit(e) {
       e.preventDefault();
-      // Validate that both forms have selections
       if (_this.selections.size !== 2) {
         console.warn("Please select both departure and arrival cities");
         return;
@@ -70,13 +77,9 @@ export const formHook = (ydoc) => ({
       const [departure, arrival] = [..._this.selections.values()];
       const flightMap = ydoc.getMap("flight");
       flightMap.set("flight", {
-        departure: [departure.latitude, departure.longitude],
-        arrival: [arrival.latitude, arrival.longitude],
+        departure: [departure.lat, departure.lng],
+        arrival: [arrival.lat, arrival.lng],
       });
-      console.log("Flying from", departure.city, "to", arrival.city);
-
-      // You can emit an event to Phoenix LiveView here
-      // _this.pushEvent("flight_selected", { departure, arrival });
     }
 
     render(
@@ -87,23 +90,32 @@ export const formHook = (ydoc) => ({
               <FormCities
                 cities={cities()}
                 onSelect={handleSelect}
-                onReset={handleReset}
+                resetTrigger={resetTrigger}
                 inputType="departure"
-                label="departure City"
+                label="Departure City"
               />
               <FormCities
                 cities={cities()}
                 onSelect={handleSelect}
-                onReset={handleReset}
+                resetTrigger={resetTrigger}
                 inputType="arrival"
-                label="arrival City"
+                label="Arrival City"
               />
-              <button
-                class="px-4 py-2 bg-blue-500 rounded-lg hover:bg-blue-600"
-                type="submit"
-              >
-                Fly!
-              </button>
+              <div class="flex gap-4 mt-4">
+                <button
+                  class="px-4 py-2 bg-blue-500  rounded-lg hover:bg-blue-600"
+                  type="submit"
+                >
+                  Fly!
+                </button>
+                <button
+                  class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+                  type="button"
+                  onClick={handleReset}
+                >
+                  Reset All
+                </button>
+              </div>
             </form>
           ) : (
             <div class="loading">Loading airports data...</div>

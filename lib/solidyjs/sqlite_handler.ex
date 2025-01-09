@@ -1,6 +1,7 @@
 defmodule SqliteHandler do
   use GenServer, restart: :transient
   alias Exqlite.Sqlite3
+  require Logger
 
   def start_link([db, name]) do
     GenServer.start_link(__MODULE__, [db, name], name: __MODULE__)
@@ -25,8 +26,6 @@ defmodule SqliteHandler do
   def handle_continue(:set_airports, {db, _name} = state) do
     csv_exists? =
       Path.join([:code.priv_dir(:solidyjs), "static", "airports.csv"]) |> File.exists?()
-
-    dbg(csv_exists?)
 
     if !csv_exists? do
       Airports.download()
@@ -53,7 +52,7 @@ defmodule SqliteHandler do
       Sqlite3.execute(
         conn,
         "CREATE TABLE IF NOT EXISTS #{table} (
-        id integer,
+        id integer primary key,
         name text,
         city text,
         country text,
@@ -71,6 +70,7 @@ defmodule SqliteHandler do
   end
 
   def reset_table(conn, table) do
+    Logger.info("Reset DB")
     :ok = Sqlite3.execute(conn, "DROP TABLE IF EXISTS #{table}")
     :ok = create_table(conn, table)
   end
@@ -146,13 +146,13 @@ defmodule SqliteHandler do
   def handle_call(:municipalities, _, {db, table} = state) do
     case Sqlite3.open(db, mode: :readonly) do
       {:ok, conn} ->
-        {:ok, stmt} = Sqlite3.prepare(conn, "SELECT city,latitude,longitude FROM #{table}")
+        {:ok, stmt} =
+          Sqlite3.prepare(conn, "SELECT city,country, latitude,longitude FROM #{table}")
 
         data =
           get_municipalities(conn, stmt)
-          |> Enum.map(fn [city, latitude, longitude] ->
-            %{city: city, latitude: latitude, longitude: longitude}
-            # Map.put(%{}, city, %{"latitude" => latitude, "longitude" => longitude})
+          |> Enum.map(fn [city, country, latitude, longitude] ->
+            %{city: city, country: country, lat: latitude, lng: longitude}
           end)
 
         :ok = Sqlite3.close(conn)

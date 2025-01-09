@@ -34,16 +34,8 @@ export function FormCities(props) {
     setInputValue(target.value);
   };
 
-  const handleReset = () => {
-    setInputValue("");
-    setSuggestions([]);
-    setIsOpen(false);
-    props.onReset?.(props.inputType);
-  };
-
-  // Reset input value when external reset occurs
   createEffect(() => {
-    if (props.isReset?.(props.inputType)) {
+    if (props.resetTrigger()) {
       setInputValue("");
       setSuggestions([]);
       setIsOpen(false);
@@ -67,21 +59,12 @@ export function FormCities(props) {
                 onClick={() => handleSelect(city)}
                 class="px-4 py-2 cursor-pointer hover:bg-gray-100"
               >
-                {city.city}
+                {city.city}, {city.country}
               </li>
             )}
           </For>
         </ul>
       </Show>
-      <button onClick={handleReset}>
-        <img src={imgUrl} alt="remove airport" />
-      </button>
-
-      {/* <Show when={props.progress > 0}>
-        <div class="progress">Download progress: {props.progress}%</div>
-      </Show> */}
-
-      {/* <button onClick={props.onDownload}>Download Data</button> */}
     </div>
   );
 }

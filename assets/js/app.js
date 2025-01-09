@@ -110,12 +110,12 @@ async function initApp(lineStatus) {
     const { default: initYdoc } = await import("./initYJS.js");
     const ydoc = await initYdoc();
     window.ydoc = ydoc; // Set this early so it's available for offline use
-    const { solHook } = await import("./solHook.jsx");
-    const { mapHook } = await import("./mapHook.jsx");
-    const { formHook } = await import("./formHook.jsx");
-    const SolHook = solHook(ydoc); // setup SolidJS component
-    const MapHook = mapHook(ydoc);
-    const FormHook = formHook(ydoc);
+    const { solHook } = await import("./solHook.js"),
+      { mapHook } = await import("./mapHookOrigin.js"),
+      { formHook } = await import("./formHook.jsx"),
+      SolHook = solHook(ydoc),
+      MapHook = mapHook(ydoc),
+      FormHook = formHook(ydoc);
 
     if (lineStatus) {
       return initLiveSocket({ SolHook, MapHook, FormHook });
@@ -152,24 +152,18 @@ async function initLiveSocket({ SolHook, MapHook, FormHook }) {
   liveSocket.getSocket().onOpen(() => {
     console.log("Socket connected", liveSocket?.isConnected());
   });
-  return true;
 }
 
 async function displayMap() {
-  const { RenderMap } = await import("./mapHook.jsx");
+  const { RenderMap } = await import("./mapHookOrigin.js");
   console.log("Render Map-----");
 
-  return RenderMap({
-    ydoc: window.ydoc,
-    userID: sessionStorage.getItem("userID"),
-  });
+  return RenderMap(window.ydoc);
 }
 async function displayForm() {
-  const { RenderForm } = await import("./formHook.jsx");
-  return RenderForm({
-    ydoc: window.ydoc,
-    userID: sessionStorage.getItem("userID"),
-  });
+  console.log("Render form-----");
+  const { formHook } = await import("./formHook.jsx");
+  return formHook(window.ydoc);
 }
 
 async function displayStock() {
@@ -195,7 +189,6 @@ async function displayStock() {
 (async () => {
   console.log("~~~~~ Init ~~~~~");
   appState.isOnline = await checkServer();
-  console.log(appState.isOnline);
   await initApp(appState.isOnline);
 
   if ("serviceWorker" in navigator && appState.isOnline) {
