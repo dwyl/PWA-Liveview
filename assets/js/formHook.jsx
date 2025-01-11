@@ -3,27 +3,51 @@ import { createSignal } from "solid-js";
 
 export const formHook = (ydoc) => ({
   selections: new Map(),
+  userID: null,
   destroyed() {
     this.selections.clear();
+    this.userID = null;
     const selectionMap = ydoc.getMap("selection");
     selectionMap.clear();
     console.log("Form destroyed-----");
   },
   async mounted() {
     console.log("Form mounted----");
+    console.log("liveSocket", window.liveSocket?.isConnected());
+    this.userID = sessionStorage.getItem("userID");
+    const _this = this;
+
     const [cities, setCities] = createSignal([]);
     const [isInitialized, setIsInitialized] = createSignal(false);
 
     const [resetTrigger, setResetTrigger] = createSignal(false);
 
     const airportsMap = ydoc.getMap("airports");
+    const selectionMap = ydoc.getMap("selection");
     // save airports list into y-indexeddb if needed
     this.handleEvent("airports", ({ airports }) => {
+      // prefer reading from y-indexeddb
       if (!airportsMap.has("locations")) {
         airportsMap.set("locations", airports);
       } else {
         setCities([...airportsMap.values()][0]);
         setIsInitialized(true);
+      }
+    });
+
+    this.handleEvent("deleted_airport", (airport) => {
+      if (airport.action === "delete") {
+        selectionMap.clear();
+      }
+    });
+
+    this.handleEvent("added_airport", (airport) => {
+      const selectionMap = ydoc.getMap("selection");
+      if (
+        airport.action === "add" ||
+        (airport.action === "update" && this.userID !== airport.userID)
+      ) {
+        selectionMap.set(airport.inputType, airport);
       }
     });
 
@@ -45,6 +69,7 @@ export const formHook = (ydoc) => ({
       setCities,
       selections: this.selections,
       el: this.el,
+      s: _this,
     });
 
     /*
@@ -144,6 +169,7 @@ export const formHook = (ydoc) => ({
 export async function FormComponent(props) {
   const { FormCities } = await import("./formCities");
   console.log("inside FormComponent-----");
+  const userID = sessionStorage.getItem("userID");
 
   function handleSelect({ city, country, lat, lng }, inputType) {
     const selection = {
@@ -152,11 +178,11 @@ export async function FormComponent(props) {
       lat,
       lng,
       inputType,
-      userID: sessionStorage.getItem("userID"),
+      userID,
     };
 
-    props.selections.set(inputType, selection);
     const selectionMap = props.ydoc.getMap("selection");
+    props.selections.set(inputType, selection);
     selectionMap.set(inputType, selection);
   }
 
@@ -173,17 +199,18 @@ export async function FormComponent(props) {
   // form is submitted with two inputs
   function handleSubmit(e) {
     e.preventDefault();
-    if (props.selections.size !== 2) {
-      console.warn("Please select both departure and arrival cities");
-      return;
-    }
+    const selectionMap = props.ydoc.getMap("selection");
 
-    const [departure, arrival] = [...props.selections.values()];
+    if (props.selections.size !== 2) return;
+
+    // console.log([...selectionMap.values()], [...props.selections.values()]);
+    const [departure, arrival] = [...selectionMap.values()];
     const flightMap = props.ydoc.getMap("flight");
     flightMap.set("flight", {
       departure: [departure.lat, departure.lng],
       arrival: [arrival.lat, arrival.lng],
     });
+    props.s.pushEvent("fly", { userID, departure, arrival });
   }
 
   render(

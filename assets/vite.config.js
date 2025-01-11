@@ -1,6 +1,7 @@
-import { VitePWA } from "vite-plugin-pwa";
+// import { VitePWA } from "vite-plugin-pwa";
 import { defineConfig, loadEnv } from "vite";
 import solidPlugin from "vite-plugin-solid";
+// import nodePolyfills from "rollup-plugin-polyfill-node";
 import tailwindcss from "tailwindcss";
 import autoprefixer from "autoprefixer";
 import wasm from "vite-plugin-wasm";
@@ -39,7 +40,7 @@ const buildOps = {
     input: [
       "js/app.js",
       "js/initYJS.js",
-      "js/refreshSW.js",
+      // "js/refreshSW.js",
       "js/solHook.js",
       "js/SolidComp.jsx",
       "js/counter.jsx",
@@ -47,7 +48,6 @@ const buildOps = {
       "js/mapHookOrigin.js",
       "js/formHook.jsx",
       "js/formCities.jsx",
-
       "js/progressCircle.jsx",
       "wasm/great_circle.wasm",
     ],
@@ -56,6 +56,7 @@ const buildOps = {
       chunkFileNames: "assets/[name].js",
       entryFileNames: "assets/[name].js",
     },
+    // plugins: [nodePolyfills()],
   },
   commonjsOptions: {
     exclude: [],
@@ -234,7 +235,7 @@ export default defineConfig(({ command, mode }) => {
 
   return {
     base: "/",
-    plugins: [wasm(), solidPlugin(), VitePWA(PWAOpts)],
+    plugins: [wasm(), solidPlugin()], //, VitePWA(PWAOpts)],
     resolve: {
       extensions: [".mjs", ".js", ".ts", ".jsx", ".tsx", ".json", "wasm"],
     },

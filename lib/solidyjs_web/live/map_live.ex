@@ -38,6 +38,9 @@ defmodule SolidyjsWeb.MapLive do
 
     if connected?(socket) do
       :ok = PubSub.subscribe(:pubsub, "download_progress")
+      :ok = PubSub.subscribe(:pubsub, "new_airport")
+      :ok = PubSub.subscribe(:pubsub, "remove_airport")
+      :ok = PubSub.subscribe(:pubsub, "do_fly")
     end
 
     {:ok,
@@ -90,18 +93,84 @@ defmodule SolidyjsWeb.MapLive do
     {:noreply, push_event(socket, "push_download", %{progress: p})}
   end
 
-  def handle_info(msg, socket) do
-    Logger.warning("unhandled: #{msg}")
-    {:noreply, socket}
+  def handle_info(%{"action" => "add"} = payload, socket) do
+    user_id = Integer.to_string(socket.assigns.user_id)
+    from = Map.get(payload, "userID")
+
+    case user_id != from do
+      true ->
+        {:noreply, push_event(socket, "added_airport", payload)}
+
+      false ->
+        {:noreply, socket}
+    end
+  end
+
+  def handle_info(%{"action" => "delete"} = payload, socket) do
+    user_id = Integer.to_string(socket.assigns.user_id)
+    from = Map.get(payload, "userID")
+
+    case user_id != from do
+      true ->
+        {:noreply, push_event(socket, "deleted_airport", payload)}
+
+      false ->
+        {:noreply, socket}
+    end
+  end
+
+  def handle_info(%{"action" => "do_fly", "from" => from} = payload, socket) do
+    user_id = Integer.to_string(socket.assigns.user_id)
+
+    case user_id != from do
+      true ->
+        Logger.info(inspect(payload))
+        {:noreply, push_event(socket, "do_fly", payload)}
+
+      false ->
+        {:noreply, socket}
+    end
   end
 
   @impl true
+  def handle_event("fly", %{"userID" => userID} = payload, socket) do
+    :ok =
+      PubSub.broadcast(
+        :pubsub,
+        "do_fly",
+        Map.merge(payload, %{"action" => "do_fly", "from" => userID})
+      )
+
+    {:noreply, socket}
+  end
+
   def handle_event("download-evt", %{"file" => _file}, socket) do
     socket.assigns |> dbg()
     # Airports.download()
-
     # Airports.parse_csv_file()
     # |> Airports.insert_airports_into_db()
+
+    {:noreply, socket}
+  end
+
+  def handle_event("add", new_airport, socket) do
+    :ok =
+      PubSub.broadcast(
+        :pubsub,
+        "new_airport",
+        Map.merge(new_airport, %{"action" => "add"})
+      )
+
+    {:noreply, socket}
+  end
+
+  def handle_event("delete", old_airport, socket) do
+    :ok =
+      PubSub.broadcast(
+        :pubsub,
+        "remove_airport",
+        Map.merge(old_airport, %{"action" => "delete"})
+      )
 
     {:noreply, socket}
   end

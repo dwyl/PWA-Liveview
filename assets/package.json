@@ -9,7 +9,6 @@
   "license": "ISC",
   "dependencies": {
     "leaflet": "^1.9.4",
-    "leaflet.animatedmarker": "^1.0.0",
     "phoenix": "file:../deps/phoenix",
     "phoenix_html": "file:../deps/phoenix_html",
     "phoenix_live_view": "file:../deps/phoenix_live_view",

@@ -5,9 +5,10 @@ An Elixir-LiveView webapp with a real-time collaborative system with offline sup
 Ingredients are:
 
 - Phoenix LiveView
-- Yjs
-- Vite-plugin-PWA
+- Y.js
+- Vite-plugin-PWA & Workbox
 - SolidJS
+- Leafletjs
 
 ## Guide
 
@@ -15,7 +16,7 @@ Ingredients are:
 
 ### Offline Support
 
-YJS's IndexedDB persistence handles offline support automatically.
+Y.js's `IndexedDB` persistence handles offline support automatically.
 
 When offline:
 
@@ -47,4 +48,22 @@ This approach ensures consistent synchronization of client and server states whi
 
 ### Airports list
 
-<https://openflights.org/data.php>
+Link: <https://openflights.org/data.php>
+
+URL: <https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat>
+
+#### Fields
+
+- Airport ID: Unique OpenFlights identifier for this airport.
+- Name: Name of airport. May or may not contain the City name.
+- City: Main city served by airport. May be spelled differently from Name.
+- Country: Country or territory where airport is located. See Countries to cross-reference to ISO 3166-1 codes.
+- IATA: 3-letter IATA code. Null if not assigned/unknown.
+- ICAO: 4-letter ICAO code.
+- Latitude: Decimal degrees, usually to six significant digits. Negative is South, positive is North.
+- Longitude: Decimal degrees, usually to six significant digits. Negative is West, positive is East.
+- Altitude: In feet.
+- DST: Daylight savings time. One of E (Europe), A (US/Canada), S (South America), O (Australia), Z (New Zealand), N (None) or U (Unknown). See also: Help: Time
+- Tz: database timezone Timezone in "tz" (Olson) format, eg. "America/Los_Angeles".
+- Type: Type of the airport. Value "airport" for air terminals, "station" for train stations, "port" for ferry terminals and "unknown" if not known. In airports.csv, only type=airport is included.
+- Source

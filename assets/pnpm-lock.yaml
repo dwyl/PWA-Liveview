@@ -11,9 +11,6 @@ importers:
       leaflet:
         specifier: ^1.9.4
         version: 1.9.4
-      leaflet.animatedmarker:
-        specifier: ^1.0.0
-        version: 1.0.0
       phoenix:
         specifier: file:../deps/phoenix
         version: file:../deps/phoenix
@@ -1752,9 +1749,6 @@ packages:
   jsonpointer@5.0.1:
     resolution: {integrity: sha512-p/nXbhSEcu3pZRdkW1OfJhpsVtW1gd4Wa1fnQc9YLiTfAjn0312eMKimbdIQzuZl9aa9xUGaRlP9T/CJE/ditQ==}
     engines: {node: '>=0.10.0'}
-
-  leaflet.animatedmarker@1.0.0:
-    resolution: {integrity: sha512-dURiGulr/wTf2/jY1b5JxETpPdNIvU5UGtmmz3FIjdImEfbYShgZHwRepeywjjE7m02kF8nLjD5juE1z+tnWkA==}
 
   leaflet@1.9.4:
     resolution: {integrity: sha512-nxS1ynzJOmOlHp+iL3FyWqK89GtNL8U8rvlMOsQdTTssxZwCXh8N2NB3GDQOL+YR3XnWyZAxwQixURb+FA74PA==}
@@ -4305,8 +4299,6 @@ snapshots:
       graceful-fs: 4.2.11
 
   jsonpointer@5.0.1: {}
-
-  leaflet.animatedmarker@1.0.0: {}
 
   leaflet@1.9.4: {}
 

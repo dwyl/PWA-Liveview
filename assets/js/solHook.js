@@ -5,6 +5,8 @@ export const solHook = (ydoc) => ({
     console.log("stock destroyed-----");
   },
   async mounted() {
+    console.log("liveSocket", window.liveSocket?.isConnected());
+
     let isHandlingServerUpdate = false,
       userID = null;
 

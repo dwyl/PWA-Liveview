@@ -2,6 +2,7 @@ import "leaflet/dist/leaflet.css";
 
 export async function initMap() {
   const { default: L } = await import("leaflet");
+
   const osmTiles = L.tileLayer(
     "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     {
@@ -9,7 +10,7 @@ export async function initMap() {
       crossOrigin: "anonymous",
       referrerPolicy: "no-referrer",
       minZoom: 1,
-      maxZoom: 10,
+      maxZoom: 11,
       attribution:
         '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }
@@ -25,7 +26,7 @@ export async function initMap() {
   return { L, map, group };
 }
 
-async function createFlightObserver({ L, map, group }) {
+async function createFlightObserver({ L, map, group, userID }) {
   let currentAnimationInterval = null;
   async function loadWasm() {
     try {
@@ -123,15 +124,20 @@ async function createFlightObserver({ L, map, group }) {
   }
 
   return {
+    animateNewRoute: ({ L, map, group, flightMap }) => {
+      const { arrival, departure } = [...flightMap.values()][0];
+      animateRoute({ L, map, group, departure, arrival });
+    },
     observeYjsFlight: (flightMap) => {
       flightMap.observe(() => {
-        const { arrival, departure } = [...flightMap.values()][0];
+        console.log("flight", flightMap.get("flight"));
+        const { arrival, departure } = flightMap.get("flight");
         animateRoute({ L, map, group, departure, arrival });
       });
     },
     // Offline version using direct calls
     handleFlight: (departure, arrival) =>
-      animateRoute({ L, map, departure, arrival }),
+      animateRoute({ L, map, group, departure, arrival }),
     clearRoute: () => {
       if (currentAnimationInterval) {
         clearInterval(currentAnimationInterval);
@@ -142,7 +148,7 @@ async function createFlightObserver({ L, map, group }) {
   };
 }
 
-function createSelectionObserver({ L, map, group }) {
+function createSelectionObserver({ L, map, group, s, userID }) {
   const markersMap = new Map();
 
   return {
@@ -150,40 +156,34 @@ function createSelectionObserver({ L, map, group }) {
     observeYjsSelections: (selectionMap) => {
       selectionMap.observe(({ changes }) => {
         changes.keys.values().forEach((change) => {
+          console.log("self", change);
           if (change.action === "add" || change.action === "update") {
             const [inputType] = [...changes.keys.keys()];
-            const { lat, lng } = selectionMap.get(inputType);
-            const marker = L.marker(L.latLng({ lat, lng }));
+            const newInput = selectionMap.get(inputType);
+            const { lat, lng } = newInput;
+            const marker = L.marker(L.latLng({ lat, lng }), {
+              type: inputType,
+            });
+            if (userID == newInput.userID) {
+              console.log("add", newInput.userID, userID);
+              s.pushEvent("add", newInput);
+            }
             marker.addTo(group);
             markersMap.set(inputType, marker);
           } else if (change.action === "delete") {
+            s.pushEvent("delete", change.oldValue);
             group.clearLayers();
             markersMap.clear();
           }
         });
       });
     },
-    // Offline version using callbacks
-    handleSelectionChange: (action, data) => {
-      if (action === "add") {
-        const { inputType, lat, lng } = data;
-        const marker = L.marker(L.latLng({ lat, lng }));
-        marker.addTo(group);
-        markersMap.set(inputType, marker);
-      } else if (action === "delete") {
-        group.clearLayers();
-        markersMap.clear();
-      }
-    },
-    clearMarkers: () => {
-      group.clearLayers();
-      markersMap.clear();
-    },
   };
 }
 
 export const mapHook = (ydoc) => ({
   map: null,
+  userID: null,
   destroyed() {
     console.log("Map destroyed-----");
     if (this.map) {
@@ -195,13 +195,27 @@ export const mapHook = (ydoc) => ({
   async mounted() {
     console.log("Map mounted----");
     try {
+      console.log("liveSocket", window.liveSocket?.isConnected());
+
       const { L, map, group } = await initMap();
       this.map = map;
-      const selectionObserver = createSelectionObserver({ L, map, group });
-      const flightObserver = await createFlightObserver({ L, map, group });
+      this.userID = sessionStorage.getItem("userID");
+      const _this = this;
+      const params = { L, map, group, s: _this, userID: this.userID };
+      const selectionObserver = createSelectionObserver(params);
+      const flightObserver = await createFlightObserver(params);
       // Y.js observers
       selectionObserver.observeYjsSelections(ydoc.getMap("selection"));
       flightObserver.observeYjsFlight(ydoc.getMap("flight"));
+
+      this.handleEvent("do_fly", ({ from, departure, arrival }) => {
+        if (from !== this.userID) {
+          const departure_latLng = [departure.lat, departure.lng];
+          const arrival_latLng = [arrival.lat, arrival.lng];
+          console.log("do_fly from", departure_latLng, arrival_latLng);
+          flightObserver.handleFlight(departure_latLng, arrival_latLng);
+        }
+      });
     } catch (error) {
       console.error(`Unable to run the map`, error);
       throw error;
