@@ -40,7 +40,6 @@ const buildOps = {
     input: [
       "js/app.js",
       "js/initYJS.js",
-      "js/refreshSW.js",
       "js/pwaHook.js",
       "js/solHook.js",
       "js/SolidComp.jsx",
