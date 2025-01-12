@@ -4,10 +4,20 @@ defmodule SolidyjsWeb.CounterLive do
   # import SolidyjsWeb.CoreComponents, only: [icon: 1]
   use Phoenix.Component
   alias SolidyjsWeb.Menu
+  require Logger
 
   def render(assigns) do
     ~H"""
     <div>
+      <div id="pwaHook" phx-hook="PwaHook">
+        <button
+          class="px-4 mb-4 py-2 border-2 rounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300"
+          id="refresh-btn"
+          phx-click="accept-refresh"
+        >
+          Refresh needed
+        </button>
+      </div>
       <Menu.display />
       <h1 class="mt-4 mb-4 text-2xl text-gray-600">LiveView</h1>
       <p class="text-sm text-gray-600 mt-4 mb-2">User ID: {@user_id}</p>
@@ -37,13 +47,11 @@ defmodule SolidyjsWeb.CounterLive do
 
   # see also on_mount {Module, :default}: https://hexdocs.pm/phoenix_live_view/Phoenix.LiveView.html#on_mount/1
 
-  def handle_params(_, uri, socket) do
-    IO.inspect(uri, label: "mount /")
+  def handle_params(_, _uri, socket) do
     {:noreply, socket}
   end
 
-  def handle_event("stock", %{"user_id" => nil} = map, socket) do
-    IO.inspect(Map.get(map, "c"))
+  def handle_event("stock", %{"user_id" => nil} = _map, socket) do
     {:noreply, socket}
   end
 
@@ -68,6 +76,16 @@ defmodule SolidyjsWeb.CounterLive do
 
   def handle_event("stock", %{}, socket) do
     {:noreply, socket}
+  end
+
+  def handle_event("offline ready", %{"msg" => msg}, socket) do
+    Logger.info(msg)
+    {:noreply, put_flash(socket, :info, msg)}
+  end
+
+  def handle_event("accept-refresh", _, socket) do
+    IO.puts("refreshed")
+    {:noreply, push_event(socket, "refreshed", %{})}
   end
 
   def handle_info({:new_stock, %{c: c, from_user_id: from_user_id}}, socket) do

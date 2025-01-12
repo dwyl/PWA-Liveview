@@ -1,4 +1,4 @@
-// import { VitePWA } from "vite-plugin-pwa";
+import { VitePWA } from "vite-plugin-pwa";
 import { defineConfig, loadEnv } from "vite";
 import solidPlugin from "vite-plugin-solid";
 // import nodePolyfills from "rollup-plugin-polyfill-node";
@@ -40,7 +40,8 @@ const buildOps = {
     input: [
       "js/app.js",
       "js/initYJS.js",
-      // "js/refreshSW.js",
+      "js/refreshSW.js",
+      "js/pwaHook.js",
       "js/solHook.js",
       "js/SolidComp.jsx",
       "js/counter.jsx",
@@ -235,7 +236,7 @@ export default defineConfig(({ command, mode }) => {
 
   return {
     base: "/",
-    plugins: [wasm(), solidPlugin()], //, VitePWA(PWAOpts)],
+    plugins: [wasm(), solidPlugin(), VitePWA(PWAOpts)],
     resolve: {
       extensions: [".mjs", ".js", ".ts", ".jsx", ".tsx", ".json", "wasm"],
     },

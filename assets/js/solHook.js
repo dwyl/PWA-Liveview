@@ -54,7 +54,6 @@ export const solHook = (ydoc) => ({
 
       SolidComp({ ydoc, userID, max, el: this.el });
 
-      console.log("live: ", window.liveSocket?.isConnected());
       if (window.liveSocket?.isConnected()) {
         this.pushEvent("stock", {
           user_id: sessionStorage.getItem("userID"),
@@ -88,7 +87,6 @@ export const solHook = (ydoc) => ({
       if (globalStock) {
         // Push to LiveView only if change originated from current user
         // This prevents broadcast loops
-        console.log("observe", window.liveSocket?.isConnected());
         if (window.liveSocket?.isConnected()) {
           this.pushEvent("stock", {
             user_id: sessionStorage.getItem("userID"),

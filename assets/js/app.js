@@ -1,20 +1,17 @@
 import "../css/app.css";
 // Include phoenix_html to handle method=PUT/DELETE in forms and buttons.
 import "phoenix_html";
-// import { updateSW } from "./refreshSW.js";
-
-// updateSW();
+import { updateSW } from "./refreshSW.js";
 
 const CONFIG = {
-  ROUTES: Object.freeze(["/", "/map"]),
-  POLL_INTERVAL: 5000,
-  CACHE_NAME: "lv-pages",
-};
-
-const appState = {
-  paths: new Set(),
-  isOnline: false,
-};
+    ROUTES: Object.freeze(["/", "/map"]),
+    POLL_INTERVAL: 5000,
+    CACHE_NAME: "lv-pages",
+  },
+  appState = {
+    paths: new Set(),
+    isOnline: false,
+  };
 
 async function addCurrentPageToCache({ current, routes }) {
   await navigator.serviceWorker.ready;
@@ -25,7 +22,6 @@ async function addCurrentPageToCache({ current, routes }) {
   if (appState.paths.has(newPath)) return;
 
   if (newPath === window.location.pathname) {
-    console.log("addCurrentPageToCache", newPath);
     appState.paths.add(newPath);
     const htmlContent = document.documentElement.outerHTML;
     const contentLength = new TextEncoder().encode(htmlContent).length;
@@ -96,7 +92,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   window.addEventListener("online", async () => window.location.reload());
 
   window.addEventListener("offline", () => {
-    console.log("Browser offline event fired");
     appState.isOnline = false;
     updateOnlineStatusUI(appState.isOnline);
     startPolling(); // Start polling when offline
@@ -113,12 +108,13 @@ async function initApp(lineStatus) {
     const { solHook } = await import("./solHook.js"),
       { mapHook } = await import("./mapHookOrigin.js"),
       { formHook } = await import("./formHook.jsx"),
+      { PwaHook } = await import("./pwaHook.js"),
       SolHook = solHook(ydoc),
       MapHook = mapHook(ydoc),
       FormHook = formHook(ydoc);
 
     if (lineStatus) {
-      return initLiveSocket({ SolHook, MapHook, FormHook });
+      return initLiveSocket({ SolHook, MapHook, FormHook, PwaHook });
     }
 
     const path = window.location.pathname;
@@ -134,7 +130,7 @@ async function initApp(lineStatus) {
   }
 }
 
-async function initLiveSocket({ SolHook, MapHook, FormHook }) {
+async function initLiveSocket(hooks) {
   const { LiveSocket } = await import("phoenix_live_view");
   const { Socket } = await import("phoenix");
   const csrfToken = document
@@ -144,7 +140,7 @@ async function initLiveSocket({ SolHook, MapHook, FormHook }) {
   const liveSocket = new LiveSocket("/live", Socket, {
     // longPollFallbackMs: 2000,
     params: { _csrf_token: csrfToken },
-    hooks: { SolHook, MapHook, FormHook },
+    hooks,
   });
 
   liveSocket.connect();
@@ -161,7 +157,7 @@ async function displayMap() {
   return RenderMap(window.ydoc);
 }
 async function displayForm() {
-  console.log("Render form-----");
+  console.log("Render Form-----");
   const { solForm } = await import("./formHook.jsx");
   return solForm(window.ydoc);
 }
@@ -187,7 +183,6 @@ async function displayStock() {
 
 // **************************************
 (async () => {
-  console.log("~~~~~ Init ~~~~~");
   appState.isOnline = await checkServer();
   await initApp(appState.isOnline);
 

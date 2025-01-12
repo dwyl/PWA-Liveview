@@ -116,7 +116,8 @@ async function createFlightObserver({ L, map, group, userID }) {
         arrival,
       });
 
-      return animate({ L, group, latLngs }, 200);
+      animate({ L, group, latLngs }, 200);
+      clearInterval(currentAnimationInterval);
     } catch (error) {
       console.error(`Unable to instantiate module`, error);
       throw error;
@@ -124,18 +125,12 @@ async function createFlightObserver({ L, map, group, userID }) {
   }
 
   return {
-    animateNewRoute: ({ L, map, group, flightMap }) => {
-      const { arrival, departure } = [...flightMap.values()][0];
-      animateRoute({ L, map, group, departure, arrival });
-    },
     observeYjsFlight: (flightMap) => {
       flightMap.observe(() => {
-        console.log("flight", flightMap.get("flight"));
         const { arrival, departure } = flightMap.get("flight");
         animateRoute({ L, map, group, departure, arrival });
       });
     },
-    // Offline version using direct calls
     handleFlight: (departure, arrival) =>
       animateRoute({ L, map, group, departure, arrival }),
     clearRoute: () => {
@@ -156,7 +151,6 @@ function createSelectionObserver({ L, map, group, s, userID }) {
     observeYjsSelections: (selectionMap) => {
       selectionMap.observe(({ changes }) => {
         changes.keys.values().forEach((change) => {
-          console.log("self", change);
           if (change.action === "add" || change.action === "update") {
             const [inputType] = [...changes.keys.keys()];
             const newInput = selectionMap.get(inputType);
@@ -165,7 +159,6 @@ function createSelectionObserver({ L, map, group, s, userID }) {
               type: inputType,
             });
             if (userID == newInput.userID) {
-              console.log("add", newInput.userID, userID);
               s.pushEvent("add", newInput);
             }
             marker.addTo(group);
@@ -212,7 +205,6 @@ export const mapHook = (ydoc) => ({
         if (from !== this.userID) {
           const departure_latLng = [departure.lat, departure.lng];
           const arrival_latLng = [arrival.lat, arrival.lng];
-          console.log("do_fly from", departure_latLng, arrival_latLng);
           flightObserver.handleFlight(departure_latLng, arrival_latLng);
         }
       });
