@@ -52,7 +52,7 @@ defmodule SolidyjsWeb.CounterLive do
   end
 
   def handle_event("stock", %{"user_id" => nil} = _map, socket) do
-    {:noreply, socket}
+    {:noreply, push_navigate(socket, to: "/", replace: true)}
   end
 
   def handle_event("stock", %{"user_id" => userid} = map, socket) do
@@ -84,7 +84,6 @@ defmodule SolidyjsWeb.CounterLive do
   end
 
   def handle_event("accept-refresh", _, socket) do
-    IO.puts("refreshed")
     {:noreply, push_event(socket, "refreshed", %{})}
   end
 

@@ -1,7 +1,6 @@
 import "../css/app.css";
 // Include phoenix_html to handle method=PUT/DELETE in forms and buttons.
 import "phoenix_html";
-import { updateSW } from "./refreshSW.js";
 
 const CONFIG = {
     ROUTES: Object.freeze(["/", "/map"]),

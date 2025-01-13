@@ -1,3 +1,4 @@
+import { createEffect } from "solid-js";
 import { SolidComp } from "./SolidComp";
 
 export const solHook = (ydoc) => ({
@@ -25,41 +26,22 @@ export const solHook = (ydoc) => ({
       sessionStorage.removeItem(key);
     });
 
+    const stockMap = ydoc.getMap("stock");
+
     this.handleEvent("user", ({ user_id, global_stock, max }) => {
       userID = String(user_id);
-
-      // const stateData = JSON.stringify({
-      //   userID,
-      //   max,
-      //   global_stock,
-      // });
-
-      // sessionStorage.setItem("lv_stock_state", stateData);
-
       sessionStorage.setItem("userID", userID);
       sessionStorage.setItem("max", max);
-
-      const stockMap = ydoc.getMap("stock");
       if (!stockMap.has("globalStock")) {
-        // Try to restore from LiveView state first
-        // const savedState = sessionStorage.getItem("lv_stock_state");
-        // if (savedState) {
-        //   const { global_stock: saved_stock } = JSON.parse(savedState);
-        //   stockMap.set("globalStock", { c: Number(saved_stock) });
-        // } else {
-        // Fall back to server-provided value
         stockMap.set("globalStock", { c: Number(global_stock) });
-        // }
       }
 
       SolidComp({ ydoc, userID, max, el: this.el });
+    });
 
-      if (window.liveSocket?.isConnected()) {
-        this.pushEvent("stock", {
-          user_id: sessionStorage.getItem("userID"),
-          c: stockMap.get("globalStock").c,
-        });
-      }
+    this.pushEvent("stock", {
+      user_id: sessionStorage.getItem("userID"),
+      c: stockMap.get("globalStock").c,
     });
 
     this.handleEvent("new_stock", async ({ c }) => {
@@ -69,31 +51,38 @@ export const solHook = (ydoc) => ({
 
         stockMap.set("globalStock", { c });
         // Update stored state
-        const stateData = JSON.stringify({
-          userID: sessionStorage.getItem("userID"),
-          max: sessionStorage.getItem("max"),
-          global_stock: c,
-        });
-        sessionStorage.setItem("lv_stock_state", stateData);
+        // const stateData = JSON.stringify({
+        //   userID: sessionStorage.getItem("userID"),
+        //   max: sessionStorage.getItem("max"),
+        //   global_stock: c,
+        // });
+        // sessionStorage.setItem("lv_stock_state", stateData);
       } finally {
         isHandlingServerUpdate = false;
       }
     });
 
-    const stockMap = ydoc.getMap("stock");
-    stockMap.observe((event) => {
-      if (isHandlingServerUpdate) return;
-      const globalStock = stockMap.get("globalStock");
-      if (globalStock) {
-        // Push to LiveView only if change originated from current user
-        // This prevents broadcast loops
-        if (window.liveSocket?.isConnected()) {
+    const _this = this;
+
+    createEffect(() => {
+      stockMap.observe((event) => {
+        console.log(event.changes);
+        if (isHandlingServerUpdate) return;
+        const globalStock = stockMap.get("globalStock");
+        if (globalStock) {
+          // window.liveSocket.getSocket().onOpen(() => {
           this.pushEvent("stock", {
             user_id: sessionStorage.getItem("userID"),
             c: globalStock.c,
+            // });
           });
+          // Push to LiveView only if change originated from current user
+          // This prevents broadcast loops
+
+          // if (window.liveSocket?.isConnected()) {
+          // }
         }
-      }
+      });
     });
   },
 });
