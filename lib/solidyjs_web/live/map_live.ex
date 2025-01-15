@@ -15,18 +15,6 @@ defmodule SolidyjsWeb.MapLive do
       <Menu.display />
       <div id="map" phx-hook="MapHook" phx-update="ignore" style="height: 300px"></div>
       <div id="select_form" phx-hook="FormHook" phx-update="ignore"></div>
-      <%!-- <.button phx-click="download-evt" phx-value-file="new.csv">Download airports</.button> --%>
-      <%!-- <.async_result :let={stream_key} assign={@airports}>
-        <:loading>Loading airports...</:loading>
-        <:failed :let={_failure}>
-          There was an error loading the airports. Please try again later.
-        </:failed>
-        <ul id="airports_stream" phx-update="stream">
-          <li :for={{id, municipality, lat, long} <- @streams[stream_key]} id={id}>
-            {municipality}, {lat}, {long}
-          </li>
-        </ul>
-      </.async_result> --%>
     </div>
     """
   end
@@ -34,10 +22,9 @@ defmodule SolidyjsWeb.MapLive do
   @impl true
   def mount(_params, session, socket) do
     %{"user_id" => user_id} = session
-    dbg(user_id)
 
     if connected?(socket) do
-      :ok = PubSub.subscribe(:pubsub, "download_progress")
+      # :ok = PubSub.subscribe(:pubsub, "download_progress")
       :ok = PubSub.subscribe(:pubsub, "new_airport")
       :ok = PubSub.subscribe(:pubsub, "remove_airport")
       :ok = PubSub.subscribe(:pubsub, "do_fly")
@@ -53,7 +40,7 @@ defmodule SolidyjsWeb.MapLive do
   def handle_params(_, uri, socket) do
     case URI.parse(uri).path do
       "/map" ->
-        IO.inspect(uri)
+        IO.inspect(uri, label: "uri")
 
         {:noreply,
          socket
@@ -64,10 +51,12 @@ defmodule SolidyjsWeb.MapLive do
          )}
 
       _ ->
+        dbg("no path from map")
         {:noreply, socket}
     end
   end
 
+  # airport list setup---------->
   @impl true
   def handle_async(:fetch_airports, {:ok, fetched_airports}, socket) do
     %{airports: airports} = socket.assigns
@@ -88,50 +77,9 @@ defmodule SolidyjsWeb.MapLive do
      |> assign(:airports, AsyncResult.failed(airports, {:exit, reason}))}
   end
 
-  @impl true
-  def handle_info({:downloading, %{progress: p}}, socket) do
-    {:noreply, push_event(socket, "push_download", %{progress: p})}
-  end
+  # <---------- airport list
 
-  def handle_info(%{"action" => "add"} = payload, socket) do
-    user_id = Integer.to_string(socket.assigns.user_id)
-    from = Map.get(payload, "userID")
-
-    case user_id != from do
-      true ->
-        {:noreply, push_event(socket, "added_airport", payload)}
-
-      false ->
-        {:noreply, socket}
-    end
-  end
-
-  def handle_info(%{"action" => "delete"} = payload, socket) do
-    user_id = Integer.to_string(socket.assigns.user_id)
-    from = Map.get(payload, "userID")
-
-    case user_id != from do
-      true ->
-        {:noreply, push_event(socket, "deleted_airport", payload)}
-
-      false ->
-        {:noreply, socket}
-    end
-  end
-
-  def handle_info(%{"action" => "do_fly", "from" => from} = payload, socket) do
-    user_id = Integer.to_string(socket.assigns.user_id)
-
-    case user_id != from do
-      true ->
-        Logger.info(inspect(payload))
-        {:noreply, push_event(socket, "do_fly", payload)}
-
-      false ->
-        {:noreply, socket}
-    end
-  end
-
+  # PubSub response on client action
   @impl true
   def handle_event("fly", %{"userID" => userID} = payload, socket) do
     :ok =
@@ -144,21 +92,12 @@ defmodule SolidyjsWeb.MapLive do
     {:noreply, socket}
   end
 
-  def handle_event("download-evt", %{"file" => _file}, socket) do
-    socket.assigns |> dbg()
-    # Airports.download()
-    # Airports.parse_csv_file()
-    # |> Airports.insert_airports_into_db()
-
-    {:noreply, socket}
-  end
-
   def handle_event("add", new_airport, socket) do
     :ok =
       PubSub.broadcast(
         :pubsub,
         "new_airport",
-        Map.merge(new_airport, %{"action" => "add"})
+        Map.merge(new_airport, %{"action" => "added_airport"})
       )
 
     {:noreply, socket}
@@ -169,15 +108,25 @@ defmodule SolidyjsWeb.MapLive do
       PubSub.broadcast(
         :pubsub,
         "remove_airport",
-        Map.merge(old_airport, %{"action" => "delete"})
+        Map.merge(old_airport, %{"action" => "deleted_airport"})
       )
 
     {:noreply, socket}
   end
 
-  def handle_event(msg, pay, socket) do
-    IO.inspect(msg, label: "unhandled event")
-    IO.inspect(pay, label: "unhandled event")
-    {:noreply, socket}
+  # push response on PubSub message to client
+  @impl true
+  def handle_info(%{"action" => action} = payload, socket) do
+    user_id = Integer.to_string(socket.assigns.user_id)
+    from = Map.get(payload, "userID")
+
+    case user_id != from do
+      true ->
+        Logger.info(inspect({action, payload}))
+        {:noreply, push_event(socket, action, payload)}
+
+      false ->
+        {:noreply, socket}
+    end
   end
 end

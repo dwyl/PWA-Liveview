@@ -6,6 +6,7 @@ defmodule SolidyjsWeb.CounterLive do
   alias SolidyjsWeb.Menu
   require Logger
 
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
@@ -29,6 +30,7 @@ defmodule SolidyjsWeb.CounterLive do
     """
   end
 
+  @impl true
   def mount(_params, session, socket) do
     %{"user_id" => user_id} = session
 
@@ -36,19 +38,21 @@ defmodule SolidyjsWeb.CounterLive do
       :ok = PubSub.subscribe(:pubsub, "bc_stock")
     end
 
-    init_stock = 20
+    global_stock = 20
     max = 20
 
     {:ok,
      socket
-     |> assign(%{global_stock: init_stock, user_id: user_id})
-     |> push_event("user", %{user_id: user_id, global_stock: init_stock, max: max})}
+     |> assign(%{global_stock: global_stock, user_id: user_id})
+     |> push_event("user", %{user_id: user_id, global_stock: global_stock, max: max})}
   end
 
   # see also on_mount {Module, :default}: https://hexdocs.pm/phoenix_live_view/Phoenix.LiveView.html#on_mount/1
 
-  def handle_params(_, _uri, socket) do
-    {:noreply, socket}
+  @impl true
+  def handle_event("yjs-stock", payload, socket) do
+    IO.inspect(payload, label: "yjs-stock")
+    {:noreply, assign(socket, :global_stock, Map.get(payload, "c"))}
   end
 
   def handle_event("stock", %{"user_id" => nil} = _map, socket) do
@@ -87,14 +91,16 @@ defmodule SolidyjsWeb.CounterLive do
     {:noreply, push_event(socket, "refreshed", %{})}
   end
 
+  @impl true
   def handle_info({:new_stock, %{c: c, from_user_id: from_user_id}}, socket) do
+    Logger.info("new stock")
+    # Ignore user's own broadcast
     if socket.assigns.user_id != String.to_integer(from_user_id) do
       {:noreply,
        socket
        |> assign(:global_stock, c)
        |> push_event("new_stock", %{c: c})}
     else
-      # Ignore user's own broadcast
       {:noreply, socket}
     end
   end

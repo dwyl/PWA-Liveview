@@ -6,10 +6,12 @@ export const solHook = (ydoc) => ({
     console.log("stock destroyed-----");
   },
   async mounted() {
+    console.log("Counter mounted---");
     console.log("liveSocket", window.liveSocket?.isConnected());
 
     let isHandlingServerUpdate = false,
       userID = null;
+    const stockMap = ydoc.getMap("stock");
 
     this.handleEvent("store", ({ key, data }) => {
       sessionStorage.setItem(key, data);
@@ -26,37 +28,26 @@ export const solHook = (ydoc) => ({
       sessionStorage.removeItem(key);
     });
 
-    const stockMap = ydoc.getMap("stock");
-
     this.handleEvent("user", ({ user_id, global_stock, max }) => {
       userID = String(user_id);
       sessionStorage.setItem("userID", userID);
       sessionStorage.setItem("max", max);
       if (!stockMap.has("globalStock")) {
         stockMap.set("globalStock", { c: Number(global_stock) });
+      } else {
+        this.pushEvent("yjs-stock", { c: stockMap.get("globalStock").c });
       }
 
       SolidComp({ ydoc, userID, max, el: this.el });
     });
 
-    this.pushEvent("stock", {
-      user_id: sessionStorage.getItem("userID"),
-      c: stockMap.get("globalStock").c,
-    });
-
     this.handleEvent("new_stock", async ({ c }) => {
       isHandlingServerUpdate = true;
+      console.log("new stock");
       try {
         const stockMap = ydoc.getMap("stock");
 
         stockMap.set("globalStock", { c });
-        // Update stored state
-        // const stateData = JSON.stringify({
-        //   userID: sessionStorage.getItem("userID"),
-        //   max: sessionStorage.getItem("max"),
-        //   global_stock: c,
-        // });
-        // sessionStorage.setItem("lv_stock_state", stateData);
       } finally {
         isHandlingServerUpdate = false;
       }
@@ -64,25 +55,19 @@ export const solHook = (ydoc) => ({
 
     const _this = this;
 
-    createEffect(() => {
-      stockMap.observe((event) => {
-        console.log(event.changes);
-        if (isHandlingServerUpdate) return;
-        const globalStock = stockMap.get("globalStock");
-        if (globalStock) {
-          // window.liveSocket.getSocket().onOpen(() => {
-          this.pushEvent("stock", {
-            user_id: sessionStorage.getItem("userID"),
-            c: globalStock.c,
-            // });
-          });
-          // Push to LiveView only if change originated from current user
-          // This prevents broadcast loops
-
-          // if (window.liveSocket?.isConnected()) {
-          // }
-        }
-      });
+    // external change
+    stockMap.observe((event) => {
+      console.log("hook", event.changes);
+      window.liveSocket.getSocket().onOpen(() => console.log("is open"));
+      if (isHandlingServerUpdate) return;
+      const globalStock = stockMap.get("globalStock");
+      console.log("observe hook", globalStock);
+      if (globalStock) {
+        this.pushEvent("stock", {
+          user_id: sessionStorage.getItem("userID"),
+          c: globalStock.c,
+        });
+      }
     });
   },
 });
