@@ -34,8 +34,8 @@ __TLTR__
 
 - run two strategies in "app.js": one "normal" where the LiveSocket is connected with JavaScript hooks or embedded Javascript, and one "offline" to run the JavaScript only,
 - put the landing page HTML content text in `Cache` on app start-up,
-- if not landing page, use `navigator.addEventListener("navigate")` to put the visited whole HTML (includes csrf) in `Cache`,
-- set `workbox.runtimeCaching` entries URL/handler-strategy in an ordely manner,
+- if not landing page, use `navigator.addEventListener("navigate")` to put the whole HTML of the visited page (including the csrf) in `Cache`,
+- set `workbox.runtimeCaching` entries URL/handler-strategy in an ordely manner because it works with Regex,
 - set `workbox.inlineWorkboxRuntime: true` to have a unique "sw.js" file, 
 - set the targeted URLs in `workbox.additionalManifestEntries` entries,
 - set `workbox.navigateFallback: null`,
@@ -52,12 +52,13 @@ It is broadcasted to every user. You need a CRDT strategy.
 <br/>
 <div align="center"><img width="1425" alt="Screenshot 2024-12-29 at 13 15 19" src="https://github.com/user-attachments/assets/f5e68b4d-6229-4736-a4b3-a60fc813b6bf" /></div>
 <br/>
-* a collaborative flight animation. Two users can enter their geolocation and share it.
-Once ready, a great circle joining these two points is computed using a `WebAssembly` compute container  - coded and compiled with `zig` - and drawn into a canvas rendered in a `Leafletjs` map. 
+* a collaborative flight animation with a map (`Leaflet`) using _vector tiles_ (for the cache weight). When a user sets the departure and arrival of a route, it appears on any other users' 
+ screen.
+Once ready, a great circle joining these two points is computed using a `WebAssembly` compute container  - coded and compiled with `zig` - and drawn into a canvas rendered in a `Leafletjs` map using vector tiles with `Maptiler`.
 
-The data is saved and sent to `Phoenix` which in turn saves into the backend database.
+> ❗️You need to add `topbar` as a package, and not bring in the hardcoded copy in the "/vendor" folder (to remove an installation error with `maptiler`).
 
-The fgreat circle computation works offline as we use a `WebAssembly` WASM module (CPU intensive task).
+The great circle computation works offline as we use a `WebAssembly` WASM module (CPU intensive task).
 
 The filght animation is a simple JavaScript loop.
 
