@@ -1,4 +1,3 @@
-import { createEffect } from "solid-js";
 import { SolidComp } from "./SolidComp";
 
 export const solHook = (ydoc) => ({
@@ -7,10 +6,10 @@ export const solHook = (ydoc) => ({
   },
   async mounted() {
     console.log("Counter mounted---");
-    console.log("liveSocket", window.liveSocket?.isConnected());
 
     let isHandlingServerUpdate = false,
       userID = null;
+
     const stockMap = ydoc.getMap("stock");
 
     this.handleEvent("store", ({ key, data }) => {
@@ -18,6 +17,7 @@ export const solHook = (ydoc) => ({
     });
 
     this.handleEvent("restore", ({ key, event }) => {
+      console.log("restore", key, event);
       const data = sessionStorage.getItem(key);
       if (data) {
         this.pushEvent(event, data);
@@ -28,19 +28,23 @@ export const solHook = (ydoc) => ({
       sessionStorage.removeItem(key);
     });
 
-    this.handleEvent("user", ({ user_id, global_stock, max }) => {
+    this.handleEvent("new user", ({ user_id, global_stock, max }) => {
       userID = String(user_id);
       sessionStorage.setItem("userID", userID);
       sessionStorage.setItem("max", max);
+
+      // new user
       if (!stockMap.has("globalStock")) {
         stockMap.set("globalStock", { c: Number(global_stock) });
       } else {
+        // pubsub own yjs state on connection
         this.pushEvent("yjs-stock", { c: stockMap.get("globalStock").c });
       }
 
       SolidComp({ ydoc, userID, max, el: this.el });
     });
 
+    // external stock update
     this.handleEvent("new_stock", async ({ c }) => {
       isHandlingServerUpdate = true;
       console.log("new stock");
@@ -53,12 +57,8 @@ export const solHook = (ydoc) => ({
       }
     });
 
-    const _this = this;
-
-    // external change
+    // observe stock changes from Component
     stockMap.observe((event) => {
-      console.log("hook", event.changes);
-      window.liveSocket.getSocket().onOpen(() => console.log("is open"));
       if (isHandlingServerUpdate) return;
       const globalStock = stockMap.get("globalStock");
       console.log("observe hook", globalStock);

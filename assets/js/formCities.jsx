@@ -1,9 +1,7 @@
-//
 import { For, Show, createSignal, createEffect } from "solid-js";
-import imgUrl from "/images/x-circle.svg";
 
-export function FormCities(props) {
-  console.log("render--------");
+export default function FormCities(props) {
+  console.log("render FormCities--------");
   const [inputValue, setInputValue] = createSignal("");
   const [suggestions, setSuggestions] = createSignal([]);
   const [isOpen, setIsOpen] = createSignal(false);

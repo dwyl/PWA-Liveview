@@ -2,23 +2,18 @@ import "leaflet/dist/leaflet.css";
 
 export async function initMap() {
   const { default: L } = await import("leaflet");
-
-  const osmTiles = L.tileLayer(
-    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-    {
-      detectRetina: true,
-      crossOrigin: "anonymous",
-      referrerPolicy: "no-referrer",
-      minZoom: 1,
-      maxZoom: 11,
-      attribution:
-        '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }
-  );
-
-  const map = L.map("map", { renderer: L.canvas() });
-  map.setView([0, 0], 1);
-  osmTiles.addTo(map);
+  const { MaptilerLayer } = await import("@maptiler/leaflet-maptilersdk");
+  const map = L.map("map", {
+    renderer: L.canvas(),
+    minZoom: 0,
+    maxZoom: 10,
+    detectRetina: true,
+  });
+  map.setView([0, 0], 0);
+  const mtLayer = new MaptilerLayer({
+    apiKey: import.meta.env.VITE_API_KEY,
+  });
+  mtLayer.addTo(map);
 
   const group = L.layerGroup().addTo(map);
 
@@ -151,19 +146,15 @@ function createSelectionObserver({ L, group, s, userID }) {
     observeYjsSelections: (selectionMap) => {
       selectionMap.observe(({ changes }) => {
         [...changes.keys.values()].forEach((change) => {
-          console.log("selection observe", change);
           if (change.action === "add" || change.action === "update") {
             const [inputType] = [...changes.keys.keys()];
             const newInput = selectionMap.get(inputType);
-            console.log(change.action, newInput);
             const { lat, lng } = newInput;
             const marker = L.marker(L.latLng({ lat, lng }), {
               type: inputType,
             });
 
-            console.log("livesocket", window.liveSocket.socket);
-
-            if (userID == newInput.userID) {
+            if (userID == newInput.userID && s) {
               s.pushEvent("add", newInput);
             }
             marker.addTo(group);
@@ -193,8 +184,6 @@ export const mapHook = (ydoc) => ({
   async mounted() {
     console.log("Map mounted----");
     try {
-      console.log("liveSocket", window.liveSocket?.isConnected());
-
       const { L, map, group } = await initMap();
       this.map = map;
       const userID = sessionStorage.getItem("userID");
@@ -235,7 +224,7 @@ export const mapHook = (ydoc) => ({
 export async function RenderMap(ydoc) {
   const { L, map, group } = await initMap();
   const userID = sessionStorage.getItem("userID");
-  const params = { L, map, group, s: nil, userID };
+  const params = { L, map, group, s: null, userID };
 
   const selectionObserver = createSelectionObserver(params);
   const flightObserver = await createFlightObserver(params);

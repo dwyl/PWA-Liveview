@@ -1,7 +1,6 @@
 import { VitePWA } from "vite-plugin-pwa";
 import { defineConfig, loadEnv } from "vite";
 import solidPlugin from "vite-plugin-solid";
-// import nodePolyfills from "rollup-plugin-polyfill-node";
 import tailwindcss from "tailwindcss";
 import autoprefixer from "autoprefixer";
 import wasm from "vite-plugin-wasm";
@@ -14,7 +13,7 @@ const manifestOpts = {
   short_name: "SolidYjs",
   display: "standalone",
   scope: "/",
-  // start_url: "/",
+  start_url: "/",
   description: "A demo LiveView webapp with offline enabled",
   theme_color: "#ffffff",
   icons: [
@@ -46,9 +45,9 @@ const buildOps = {
       "js/counter.jsx",
       "js/bins.jsx",
       "js/mapHookOrigin.js",
-      "js/formHook.jsx",
+      "js/formHook.js",
+      "js/formComp.jsx",
       "js/formCities.jsx",
-      "js/progressCircle.jsx",
       "wasm/great_circle.wasm",
     ],
     output: {
@@ -56,12 +55,11 @@ const buildOps = {
       chunkFileNames: "assets/[name].js",
       entryFileNames: "assets/[name].js",
     },
-    // plugins: [nodePolyfills()],
   },
-  commonjsOptions: {
-    exclude: [],
-    include: ["vendor/topbar.cjs"],
-  },
+  // commonjsOptions: {
+  //   exclude: [],
+  //   include: ["vendor/topbar.cjs"],
+  // },
 };
 
 const LVLongPoll = {
@@ -128,7 +126,8 @@ const Scripts = {
 };
 
 const Tiles = {
-  urlPattern: ({ url }) => url.origin === "https://tile.openstreetmap.org",
+  // urlPattern: ({ url }) => url.origin === "https://tile.openstreetmap.org",
+  urlPattern: ({ url }) => url.origin === "https://api.maptiler.com/",
   handler: "StaleWhileRevalidate",
   options: {
     cacheName: "tiles",
@@ -224,7 +223,7 @@ const CSSSOpts = {
 };
 
 export default defineConfig(({ command, mode }) => {
-  const env = loadEnv(mode, process.cwd(), "");
+  const env = loadEnv(mode, process.cwd(), "VITE_");
   if (command != "build") {
     process.stdin.on("close", () => {
       process.exit(0);
@@ -237,7 +236,17 @@ export default defineConfig(({ command, mode }) => {
     base: "/",
     plugins: [wasm(), solidPlugin(), VitePWA(PWAOpts)],
     resolve: {
-      extensions: [".mjs", ".js", ".ts", ".jsx", ".tsx", ".json", "wasm"],
+      extensions: [
+        ".mjs",
+        ".js",
+        ".ts",
+        ".jsx",
+        ".tsx",
+        ".json",
+        "wasm",
+        "svg",
+        "png",
+      ],
     },
     publicDir: false,
     build: buildOps,

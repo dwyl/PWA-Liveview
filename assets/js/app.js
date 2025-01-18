@@ -106,7 +106,7 @@ async function initApp(lineStatus) {
     window.ydoc = ydoc; // Set this early so it's available for offline use
     const { solHook } = await import("./solHook.js"),
       { mapHook } = await import("./mapHookOrigin.js"),
-      { formHook } = await import("./formHook.jsx"),
+      { formHook } = await import("./formHook.js"),
       { PwaHook } = await import("./pwaHook.js"),
       SolHook = solHook(ydoc),
       MapHook = mapHook(ydoc),
@@ -119,10 +119,10 @@ async function initApp(lineStatus) {
     const path = window.location.pathname;
 
     if (path === "/map") {
-      displayMap();
-      displayForm();
+      displayMap(ydoc);
+      displayForm(ydoc);
     } else if (path === "/") {
-      return displayStock();
+      displayStock(ydoc);
     }
   } catch (error) {
     console.error("Init failed:", error);
@@ -137,40 +137,41 @@ async function initLiveSocket(hooks) {
     .getAttribute("content");
 
   const liveSocket = new LiveSocket("/live", Socket, {
-    // longPollFallbackMs: 2000,
+    longPollFallbackMs: 1000,
     params: { _csrf_token: csrfToken },
     hooks,
   });
 
   liveSocket.connect();
   window.liveSocket = liveSocket;
+
   liveSocket.getSocket().onOpen(() => {
-    console.log("Socket connected", liveSocket?.isConnected());
+    console.log("app liveSocket connected", liveSocket?.socket.isConnected());
   });
+  configureTopbar();
 }
 
-async function displayMap() {
+async function displayMap(ydoc) {
   const { RenderMap } = await import("./mapHookOrigin.js");
   console.log("Render Map-----");
-
-  return RenderMap(window.ydoc);
+  return RenderMap(ydoc);
 }
-async function displayForm() {
-  console.log("Render Form-----");
-  const { solForm } = await import("./formHook.jsx");
-  return solForm(window.ydoc);
+async function displayForm(ydoc) {
+  const { RenderForm } = await import("./formHook.js");
+  console.log("App Render Form-----");
+  return RenderForm(ydoc);
 }
 
-async function displayStock() {
+async function displayStock(ydoc) {
   try {
-    if (!window.SolidComp || !window.ydoc) {
+    if (!window.SolidComp || !ydoc) {
       console.error("Components not available", window.SolidComp, window.ydoc);
       return;
     }
     console.log("Render Stock-----");
 
     return window.SolidComp({
-      ydoc: window.ydoc,
+      ydoc,
       userID: sessionStorage.getItem("userID"),
       max: sessionStorage.getItem("max"),
       el: document.getElementById("solid"),
@@ -195,9 +196,9 @@ async function displayStock() {
 
 //--------------
 // Show progress bar on live navigation and form submits
-await import("../vendor/topbar.cjs").then(configureTopbar);
 
-async function configureTopbar({ default: topbar }) {
+async function configureTopbar() {
+  const topbar = await import("topbar");
   topbar.config({ barColors: { 0: "#29d" }, shadowColor: "rgba(0, 0, 0, .3)" });
   window.addEventListener("phx:page-loading-start", (_info) => {
     topbar.show(300);

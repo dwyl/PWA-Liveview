@@ -39,7 +39,6 @@ defmodule Solidyjs.MixProject do
       {:req, "~> 0.5.8"},
       {:nimble_csv, "~> 1.2"},
       {:exqlite, "~> 0.27"},
-      # {:csv, "~> 3.2"},
       {:ecto_sqlite3, "~> 0.18.0"},
       {:ecto_sql, "~> 3.12"},
       {:phoenix_live_dashboard, "~> 0.8.3"},

@@ -38,21 +38,46 @@ defmodule SolidyjsWeb.CounterLive do
       :ok = PubSub.subscribe(:pubsub, "bc_stock")
     end
 
-    global_stock = 20
+    global_stock =
+      case :ets.lookup(:app_state, :global_stock) do
+        [{:global_stock, stock}] ->
+          stock
+
+        _ ->
+          :ets.insert(:app_state, {:global_stock, 20})
+          20
+      end
+
+    dbg(global_stock)
+
     max = 20
 
     {:ok,
      socket
      |> assign(%{global_stock: global_stock, user_id: user_id})
-     |> push_event("user", %{user_id: user_id, global_stock: global_stock, max: max})}
+     |> push_event("new user", %{user_id: user_id, global_stock: global_stock, max: max})}
   end
 
   # see also on_mount {Module, :default}: https://hexdocs.pm/phoenix_live_view/Phoenix.LiveView.html#on_mount/1
 
   @impl true
+  # receive stock state from new conntections
   def handle_event("yjs-stock", payload, socket) do
-    IO.inspect(payload, label: "yjs-stock")
-    {:noreply, assign(socket, :global_stock, Map.get(payload, "c"))}
+    c = Map.get(payload, "c")
+    [{:global_stock, stock}] = :ets.lookup(:app_state, :global_stock)
+    new_stock = min(c, stock)
+    if c < stock, do: :ets.insert(:app_state, {:global_stock, new_stock})
+
+    IO.inspect(new_stock, label: "sent yjs-stock and compare")
+
+    :ok =
+      PubSub.broadcast(
+        :pubsub,
+        "bc_stock",
+        {:new_stock, %{c: new_stock, from_user_id: Integer.to_string(socket.assigns.user_id)}}
+      )
+
+    {:noreply, assign(socket, :global_stock, new_stock)}
   end
 
   def handle_event("stock", %{"user_id" => nil} = _map, socket) do
@@ -63,6 +88,7 @@ defmodule SolidyjsWeb.CounterLive do
     case socket.assigns.user_id == String.to_integer(userid) do
       true ->
         c = Map.get(map, "c")
+        # new_stock = min(c, socket.assigns.global_stock)
 
         :ok =
           PubSub.broadcast(
@@ -96,6 +122,8 @@ defmodule SolidyjsWeb.CounterLive do
     Logger.info("new stock")
     # Ignore user's own broadcast
     if socket.assigns.user_id != String.to_integer(from_user_id) do
+      :ets.insert(:app_state, {:global_stock, c})
+
       {:noreply,
        socket
        |> assign(:global_stock, c)

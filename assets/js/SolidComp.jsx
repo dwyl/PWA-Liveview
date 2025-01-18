@@ -6,6 +6,9 @@ export const SolidComp = ({ ydoc, userID, max, el }) => {
   const initialStock = stockMap.get("globalStock")?.c ?? 20;
   const [stock, setStock] = createSignal(initialStock);
   const [range, setRange] = createSignal([]);
+  // const [offlineUpdates, setOfflineUpdates] = createSignal([]);
+
+  // const isOffline = () => !window.appState?.isOnline;
 
   if (stockMap.has(userID)) {
     setStock(stockMap.get(userID).c);
@@ -22,9 +25,7 @@ export const SolidComp = ({ ydoc, userID, max, el }) => {
 
   // external change update
   stockMap.observe((event) => {
-    console.log("solid", event.changes);
     const userData = stockMap.get("globalStock");
-    console.log("observe Solid", userData, stock());
     if (userData && userData.c !== stock()) {
       setStock(userData.c);
     }

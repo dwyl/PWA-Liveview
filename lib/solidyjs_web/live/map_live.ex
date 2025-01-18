@@ -23,6 +23,12 @@ defmodule SolidyjsWeb.MapLive do
   def mount(_params, session, socket) do
     %{"user_id" => user_id} = session
 
+    fetched_airports? =
+      case :ets.lookup(:app_state, :fetched_airports) do
+        [{:fetched, ^user_id}] -> true
+        _ -> false
+      end
+
     if connected?(socket) do
       # :ok = PubSub.subscribe(:pubsub, "download_progress")
       :ok = PubSub.subscribe(:pubsub, "new_airport")
@@ -33,6 +39,7 @@ defmodule SolidyjsWeb.MapLive do
     {:ok,
      socket
      |> assign(:user_id, user_id)
+     |> assign(:fetched_airports?, fetched_airports?)
      |> push_event("user", %{user_id: user_id})}
   end
 
@@ -40,26 +47,25 @@ defmodule SolidyjsWeb.MapLive do
   def handle_params(_, uri, socket) do
     case URI.parse(uri).path do
       "/map" ->
-        IO.inspect(uri, label: "uri")
-
-        {:noreply,
-         socket
-         |> assign(:airports, AsyncResult.loading())
-         |> start_async(
-           :fetch_airports,
-           &SqliteHandler.municipalities/0
-         )}
-
-      _ ->
-        dbg("no path from map")
-        {:noreply, socket}
+        if socket.assigns.fetched_airports? do
+          {:noreply, socket}
+        else
+          {:noreply,
+           socket
+           |> assign(:airports, AsyncResult.loading())
+           |> start_async(
+             :fetch_airports,
+             &SqliteHandler.municipalities/0
+           )}
+        end
     end
   end
 
-  # airport list setup---------->
+  # airport list setup on mount ---------->
   @impl true
   def handle_async(:fetch_airports, {:ok, fetched_airports}, socket) do
     %{airports: airports} = socket.assigns
+    :ets.insert(:app_state, {:fetched, socket.assigns.user_id})
 
     {:noreply,
      socket
@@ -79,7 +85,7 @@ defmodule SolidyjsWeb.MapLive do
 
   # <---------- airport list
 
-  # PubSub response on client action
+  # Clients events callbacks: broadcast to all subscribed clients
   @impl true
   def handle_event("fly", %{"userID" => userID} = payload, socket) do
     :ok =
@@ -114,7 +120,7 @@ defmodule SolidyjsWeb.MapLive do
     {:noreply, socket}
   end
 
-  # push response on PubSub message to client
+  # PubSub callback: pushes response to other clients
   @impl true
   def handle_info(%{"action" => action} = payload, socket) do
     user_id = Integer.to_string(socket.assigns.user_id)

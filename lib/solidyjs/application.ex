@@ -7,7 +7,7 @@ defmodule Solidyjs.Application do
 
   @impl true
   def start(_type, _args) do
-    :previous = :ets.new(:previous, [:named_table, :public])
+    :app_state = :ets.new(:app_state, [:named_table, :public])
 
     children = [
       SolidyjsWeb.Telemetry,
