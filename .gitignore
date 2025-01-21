@@ -40,7 +40,8 @@ npm-debug.log
 
 /zig-wasm/.zig-cache/
 /zig-wasm/zig-out/
-:memory
-:memory-*
+
 
 /assets/.env
+/db/
+.env

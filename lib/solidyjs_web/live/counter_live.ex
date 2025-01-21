@@ -32,25 +32,24 @@ defmodule SolidyjsWeb.CounterLive do
 
   @impl true
   def mount(_params, session, socket) do
+    # set by "set_user_id" plug
     %{"user_id" => user_id} = session
 
     if connected?(socket) do
       :ok = PubSub.subscribe(:pubsub, "bc_stock")
     end
 
+    max = 20
+    # get or set
     global_stock =
       case :ets.lookup(:app_state, :global_stock) do
         [{:global_stock, stock}] ->
           stock
 
         _ ->
-          :ets.insert(:app_state, {:global_stock, 20})
+          :ets.insert(:app_state, {:global_stock, max})
           20
       end
-
-    dbg(global_stock)
-
-    max = 20
 
     {:ok,
      socket
@@ -68,8 +67,6 @@ defmodule SolidyjsWeb.CounterLive do
     new_stock = min(c, stock)
     if c < stock, do: :ets.insert(:app_state, {:global_stock, new_stock})
 
-    IO.inspect(new_stock, label: "sent yjs-stock and compare")
-
     :ok =
       PubSub.broadcast(
         :pubsub,
@@ -80,15 +77,38 @@ defmodule SolidyjsWeb.CounterLive do
     {:noreply, assign(socket, :global_stock, new_stock)}
   end
 
+  def handle_event("stock-sync", %{"c" => client_stock}, socket) do
+    # Get current server stock
+    [{:global_stock, server_stock}] = :ets.lookup(:app_state, :global_stock)
+
+    # Take minimum of client and server stock
+    new_stock = min(client_stock, server_stock)
+
+    # Update server if client had lower value
+    if client_stock < server_stock do
+      :ets.insert(:app_state, {:global_stock, new_stock})
+    end
+
+    # Broadcast to all clients
+    :ok =
+      PubSub.broadcast(
+        :pubsub,
+        "bc_stock",
+        {:new_stock, %{c: new_stock, from_user_id: Integer.to_string(socket.assigns.user_id)}}
+      )
+
+    {:noreply, assign(socket, :global_stock, new_stock)}
+  end
+
+  # if user is not logged in, redirect to home
   def handle_event("stock", %{"user_id" => nil} = _map, socket) do
     {:noreply, push_navigate(socket, to: "/", replace: true)}
   end
 
-  def handle_event("stock", %{"user_id" => userid} = map, socket) do
+  def handle_event("stock", %{"user_id" => userid} = payload, socket) do
     case socket.assigns.user_id == String.to_integer(userid) do
       true ->
-        c = Map.get(map, "c")
-        # new_stock = min(c, socket.assigns.global_stock)
+        c = Map.get(payload, "c")
 
         :ok =
           PubSub.broadcast(
@@ -109,7 +129,6 @@ defmodule SolidyjsWeb.CounterLive do
   end
 
   def handle_event("offline ready", %{"msg" => msg}, socket) do
-    Logger.info(msg)
     {:noreply, put_flash(socket, :info, msg)}
   end
 
@@ -119,7 +138,6 @@ defmodule SolidyjsWeb.CounterLive do
 
   @impl true
   def handle_info({:new_stock, %{c: c, from_user_id: from_user_id}}, socket) do
-    Logger.info("new stock")
     # Ignore user's own broadcast
     if socket.assigns.user_id != String.to_integer(from_user_id) do
       :ets.insert(:app_state, {:global_stock, c})

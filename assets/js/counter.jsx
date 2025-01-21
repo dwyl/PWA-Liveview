@@ -1,7 +1,7 @@
-// import initYdoc from "./initYJS.js";
-import { Bins } from "./bins.jsx";
+import { lazy } from "solid-js";
 
 export default function Counter(props) {
+  const Bins = lazy(() => import("./bins.jsx"));
   const handleTake = () => {
     // keep a circular range for the demo
     const newStock = props.stock === 0 ? props.max : props.stock - 1;

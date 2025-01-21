@@ -18,7 +18,6 @@ export const formHook = (ydoc) => ({
     // save airports list into y-indexeddb on first mount
     this.handleEvent("airports", ({ airports }) => {
       if (!airportsMap.has("locations")) {
-        console.log("formHook set airports");
         airportsMap.set("locations", airports);
       }
     });
@@ -39,7 +38,6 @@ export const formHook = (ydoc) => ({
 
 export async function RenderForm(ydoc) {
   const { FormComponent } = await import("./formComp.jsx");
-  console.log("Render Form-----", ydoc);
   const el = document.getElementById("select_form");
   return FormComponent({ ydoc, el, s: null });
 }

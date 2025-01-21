@@ -10,6 +10,7 @@ const CONFIG = {
   appState = {
     paths: new Set(),
     isOnline: false,
+    interval: null,
   };
 
 async function addCurrentPageToCache({ current, routes }) {
@@ -99,23 +100,27 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 //--------------
 async function initApp(lineStatus) {
-  console.log("Init...");
   try {
     const { default: initYdoc } = await import("./initYJS.js");
     const ydoc = await initYdoc();
-    window.ydoc = ydoc; // Set this early so it's available for offline use
+    // window.ydoc = ydoc; // debug
     const { solHook } = await import("./solHook.js"),
       { mapHook } = await import("./mapHookOrigin.js"),
       { formHook } = await import("./formHook.js"),
       { PwaHook } = await import("./pwaHook.js"),
+      { configureTopbar } = await import("./configureTopbar.js"),
       SolHook = solHook(ydoc),
       MapHook = mapHook(ydoc),
       FormHook = formHook(ydoc);
 
+    configureTopbar();
+
+    // Online mode
     if (lineStatus) {
       return initLiveSocket({ SolHook, MapHook, FormHook, PwaHook });
     }
 
+    // Offline mode
     const path = window.location.pathname;
 
     if (path === "/map") {
@@ -148,37 +153,29 @@ async function initLiveSocket(hooks) {
   liveSocket.getSocket().onOpen(() => {
     console.log("app liveSocket connected", liveSocket?.socket.isConnected());
   });
-  configureTopbar();
 }
 
 async function displayMap(ydoc) {
-  const { RenderMap } = await import("./mapHookOrigin.js");
   console.log("Render Map-----");
+  const { RenderMap } = await import("./mapHookOrigin.js");
   return RenderMap(ydoc);
 }
 async function displayForm(ydoc) {
+  console.log("Render Form-----");
   const { RenderForm } = await import("./formHook.js");
-  console.log("App Render Form-----");
   return RenderForm(ydoc);
 }
 
 async function displayStock(ydoc) {
-  try {
-    if (!window.SolidComp || !ydoc) {
-      console.error("Components not available", window.SolidComp, window.ydoc);
-      return;
-    }
-    console.log("Render Stock-----");
+  console.log("Render Stock-----");
+  const { SolidComp } = await import("./SolidComp.jsx");
 
-    return window.SolidComp({
-      ydoc,
-      userID: sessionStorage.getItem("userID"),
-      max: sessionStorage.getItem("max"),
-      el: document.getElementById("solid"),
-    });
-  } catch (error) {
-    console.error("Error displaying component:", error);
-  }
+  return SolidComp({
+    ydoc,
+    userID: sessionStorage.getItem("userID"),
+    max: sessionStorage.getItem("max"),
+    el: document.getElementById("solid"),
+  });
 }
 
 // **************************************
@@ -196,19 +193,6 @@ async function displayStock(ydoc) {
 
 //--------------
 // Show progress bar on live navigation and form submits
-
-async function configureTopbar() {
-  const topbar = await import("topbar");
-  topbar.config({ barColors: { 0: "#29d" }, shadowColor: "rgba(0, 0, 0, .3)" });
-  window.addEventListener("phx:page-loading-start", (_info) => {
-    topbar.show(300);
-    document.body.style.cursor = "wait";
-  });
-  window.addEventListener("phx:page-loading-stop", (_info) => {
-    document.body.style.cursor = "default";
-    topbar.hide();
-  });
-}
 
 // Enable server log streaming to client. Disable with reloader.disableServerLogs()
 window.addEventListener("phx:live_reload:attached", ({ detail: reloader }) => {

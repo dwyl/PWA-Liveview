@@ -13,6 +13,11 @@ config :solidyjs,
 config :solidyjs,
   ecto_repos: [Solidyjs.Repo]
 
+config :solidyjs, Solidyjs.Repo,
+  database: Path.expand("../db/airports.db", Path.dirname(__ENV__.file)),
+  pool_size: String.to_integer(System.get_env("POOL_SIZE") || "5"),
+  show_sensitive_data_on_connection_error: true
+
 config :exqlite, force_build: false
 # Configures the endpoint
 config :solidyjs, SolidyjsWeb.Endpoint,

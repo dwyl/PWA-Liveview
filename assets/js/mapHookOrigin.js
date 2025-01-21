@@ -5,9 +5,10 @@ export async function initMap() {
   const { MaptilerLayer } = await import("@maptiler/leaflet-maptilersdk");
   const map = L.map("map", {
     renderer: L.canvas(),
-    minZoom: 0,
-    maxZoom: 10,
-    detectRetina: true,
+    minzoom: 0,
+    maxzoom: 10,
+    referrerPolicy: "origin",
+    errorTileUrl: "images/404.png",
   });
   map.setView([0, 0], 0);
   const mtLayer = new MaptilerLayer({
@@ -182,7 +183,6 @@ export const mapHook = (ydoc) => ({
     }
   },
   async mounted() {
-    console.log("Map mounted----");
     try {
       const { L, map, group } = await initMap();
       this.map = map;
@@ -190,8 +190,8 @@ export const mapHook = (ydoc) => ({
       if (!userID) {
         window.location.href = "/";
       }
-      const _this = this;
-      const params = { L, map, group, s: _this, userID };
+      // const _this = this;
+      const params = { L, map, group, s: this, userID };
       const selectionObserver = createSelectionObserver(params);
       const flightObserver = await createFlightObserver(params);
       // Y.js observers
@@ -200,7 +200,6 @@ export const mapHook = (ydoc) => ({
       flightObserver.observeYjsFlight(ydoc.getMap("flight"));
 
       this.handleEvent("do_fly", ({ from, departure, arrival }) => {
-        console.log("do_fly", from, userID);
         if (from !== userID) {
           const departure_latLng = [departure.lat, departure.lng];
           const arrival_latLng = [arrival.lat, arrival.lng];

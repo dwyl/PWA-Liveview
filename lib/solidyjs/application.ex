@@ -9,12 +9,14 @@ defmodule Solidyjs.Application do
   def start(_type, _args) do
     :app_state = :ets.new(:app_state, [:named_table, :public])
 
+    db = Application.fetch_env!(:solidyjs, Solidyjs.Repo)[:database] || ":memory"
+
     children = [
       SolidyjsWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:solidyjs, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: :pubsub},
       Solidyjs.Repo,
-      {SqliteHandler, [":memory", "airports"]},
+      {SqliteHandler, [db, "airports"]},
       SolidyjsWeb.Endpoint
     ]
 

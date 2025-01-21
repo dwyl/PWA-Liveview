@@ -4,7 +4,6 @@ defmodule SolidyjsWeb.MapLive do
   alias SolidyjsWeb.Menu
   alias Phoenix.LiveView.AsyncResult
   alias Phoenix.PubSub
-  # import SolidyjsWeb.CoreComponents, only: [button: 1]
 
   require Logger
 
@@ -21,6 +20,7 @@ defmodule SolidyjsWeb.MapLive do
 
   @impl true
   def mount(_params, session, socket) do
+    # set by "set_user_id" plug
     %{"user_id" => user_id} = session
 
     fetched_airports? =
@@ -30,7 +30,6 @@ defmodule SolidyjsWeb.MapLive do
       end
 
     if connected?(socket) do
-      # :ok = PubSub.subscribe(:pubsub, "download_progress")
       :ok = PubSub.subscribe(:pubsub, "new_airport")
       :ok = PubSub.subscribe(:pubsub, "remove_airport")
       :ok = PubSub.subscribe(:pubsub, "do_fly")
@@ -128,7 +127,6 @@ defmodule SolidyjsWeb.MapLive do
 
     case user_id != from do
       true ->
-        Logger.info(inspect({action, payload}))
         {:noreply, push_event(socket, action, payload)}
 
       false ->

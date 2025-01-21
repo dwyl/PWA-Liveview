@@ -6,9 +6,6 @@ export const SolidComp = ({ ydoc, userID, max, el }) => {
   const initialStock = stockMap.get("globalStock")?.c ?? 20;
   const [stock, setStock] = createSignal(initialStock);
   const [range, setRange] = createSignal([]);
-  // const [offlineUpdates, setOfflineUpdates] = createSignal([]);
-
-  // const isOffline = () => !window.appState?.isOnline;
 
   if (stockMap.has(userID)) {
     setStock(stockMap.get(userID).c);

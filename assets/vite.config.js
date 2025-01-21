@@ -38,17 +38,19 @@ const buildOps = {
   rollupOptions: {
     input: [
       "js/app.js",
-      "js/initYJS.js",
       "js/pwaHook.js",
+      "js/configureTopbar.js",
+      "js/initYJS.js",
+      // "js/vStore.js",
       "js/solHook.js",
       "js/SolidComp.jsx",
       "js/counter.jsx",
       "js/bins.jsx",
       "js/mapHookOrigin.js",
+      "wasm/great_circle.wasm",
       "js/formHook.js",
       "js/formComp.jsx",
       "js/formCities.jsx",
-      "wasm/great_circle.wasm",
     ],
     output: {
       assetFileNames: "assets/[name][extname]",

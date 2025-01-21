@@ -1,4 +1,4 @@
-import { createEffect, createSignal, lazy } from "solid-js";
+import { createSignal, lazy } from "solid-js";
 import { render } from "solid-js/web";
 
 export const FormComponent = (props) => {
@@ -9,17 +9,14 @@ export const FormComponent = (props) => {
   const selections = new Map();
   const userID = sessionStorage.getItem("userID");
   const FormCities = lazy(() => import("./formCities.jsx"));
-  console.log("inside FormComponent-----");
 
   const airportsMap = props.ydoc.getMap("airports");
   if (airportsMap.has("locations")) {
-    console.log("has locations");
     setCities(airportsMap.get("locations", props.airports));
     setIsInitialized(true);
   }
   // on first load, y.js detects a change
   airportsMap.observe(() => {
-    console.log("FormComponent airports.observe");
     setCities(airportsMap.get("locations"));
     setIsInitialized(true);
   });
@@ -67,8 +64,6 @@ export const FormComponent = (props) => {
       props.s.pushEvent("fly", { userID, departure, arrival });
     }
   }
-
-  createEffect(() => console.log("FormComponent", isInitialized()));
 
   render(
     () => (

@@ -22,7 +22,7 @@ defmodule SolidyjsWeb.Endpoint do
   plug Plug.Static,
     at: "/",
     from: :solidyjs,
-    gzip: false,
+    gzip: true,
     only: SolidyjsWeb.static_paths(),
     headers: %{"cache-control" => "public, max-age=31536000"}
 

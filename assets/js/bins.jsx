@@ -9,7 +9,7 @@ const BlackBin = (props) => (
   <div style={"color: black; font-weight: normal"}>{props.value}</div>
 );
 
-export function Bins(props) {
+export default function Bins(props) {
   return (
     <Index each={props.range}>
       {(i) => (

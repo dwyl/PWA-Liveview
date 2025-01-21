@@ -8,7 +8,7 @@ defmodule SolidyjsWeb.Router do
     plug :put_root_layout, html: {SolidyjsWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
-    plug :set_user_id
+    plug :set_current_user
   end
 
   pipeline :api do
@@ -24,7 +24,7 @@ defmodule SolidyjsWeb.Router do
     end
   end
 
-  def set_user_id(conn, _opts) do
+  def set_current_user(conn, _opts) do
     conn
     |> get_session(:user_id)
     |> case do

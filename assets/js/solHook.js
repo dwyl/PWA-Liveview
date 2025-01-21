@@ -5,8 +5,6 @@ export const solHook = (ydoc) => ({
     console.log("stock destroyed-----");
   },
   async mounted() {
-    console.log("Counter mounted---");
-
     let isHandlingServerUpdate = false,
       userID = null;
 
@@ -14,14 +12,6 @@ export const solHook = (ydoc) => ({
 
     this.handleEvent("store", ({ key, data }) => {
       sessionStorage.setItem(key, data);
-    });
-
-    this.handleEvent("restore", ({ key, event }) => {
-      console.log("restore", key, event);
-      const data = sessionStorage.getItem(key);
-      if (data) {
-        this.pushEvent(event, data);
-      }
     });
 
     this.handleEvent("clear", ({ key }) => {
@@ -47,7 +37,6 @@ export const solHook = (ydoc) => ({
     // external stock update
     this.handleEvent("new_stock", async ({ c }) => {
       isHandlingServerUpdate = true;
-      console.log("new stock");
       try {
         const stockMap = ydoc.getMap("stock");
 
@@ -61,7 +50,6 @@ export const solHook = (ydoc) => ({
     stockMap.observe((event) => {
       if (isHandlingServerUpdate) return;
       const globalStock = stockMap.get("globalStock");
-      console.log("observe hook", globalStock);
       if (globalStock) {
         this.pushEvent("stock", {
           user_id: sessionStorage.getItem("userID"),
