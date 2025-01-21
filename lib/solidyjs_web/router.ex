@@ -1,13 +1,22 @@
 defmodule SolidyjsWeb.Router do
   use SolidyjsWeb, :router
 
+  @csp (case MIX_ENV do
+          :prod ->
+            "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src http://localhost:* ws://localhost:* https://api.maptiler.com/; img-src 'self' data: https://api.maptiler.com/; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' "
+
+          _ ->
+            "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src http://localhost:* ws://localhost:* https://api.maptiler.com/; img-src 'self' data: https://api.maptiler.com/; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' "
+        end)
+
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
     plug :fetch_live_flash
     plug :put_root_layout, html: {SolidyjsWeb.Layouts, :root}
     plug :protect_from_forgery
-    plug :put_secure_browser_headers
+    plug :put_secure_browser_headers, %{"content-security-policy" => @csp}
+
     plug :set_current_user
   end
 
@@ -34,6 +43,9 @@ defmodule SolidyjsWeb.Router do
       _user_id ->
         conn
     end
+  end
+
+  def csp do
   end
 
   # Other scopes may use custom stacks.

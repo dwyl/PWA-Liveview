@@ -10,7 +10,7 @@ defmodule SolidyjsWeb.CounterLive do
   def render(assigns) do
     ~H"""
     <div>
-      <div id="pwaHook" phx-hook="PwaHook">
+      <%!-- <div id="pwaHook" phx-hook="PwaHook">
         <button
           class="px-4 mb-4 py-2 border-2 rounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300"
           id="refresh-btn"
@@ -18,7 +18,7 @@ defmodule SolidyjsWeb.CounterLive do
         >
           Refresh needed
         </button>
-      </div>
+      </div> --%>
       <Menu.display />
       <h1 class="mt-4 mb-4 text-2xl text-gray-600">LiveView</h1>
       <p class="text-sm text-gray-600 mt-4 mb-2">User ID: {@user_id}</p>

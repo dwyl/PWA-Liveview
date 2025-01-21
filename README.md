@@ -4,11 +4,15 @@ An Elixir-LiveView webapp with a real-time collaborative system with offline sup
 
 Ingredients are:
 
-- Phoenix LiveView
-- Y.js
-- Vite-plugin-PWA & Workbox
-- SolidJS
-- Leafletjs
+- `Phoenix LiveView`
+- [`Y.js` & `y-indexeddb`] or [`Valtio` & `localStorage`]
+- `Vite`-plugin-PWA & `Workbox`
+- `SolidJS`
+- `Leafletjs`& MapTiler (for vector tiles)
+
+## CSP evaluator
+
+<https://csp-evaluator.withgoogle.com/>
 
 ## Guide
 

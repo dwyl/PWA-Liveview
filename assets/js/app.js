@@ -107,7 +107,7 @@ async function initApp(lineStatus) {
     const { solHook } = await import("./solHook.js"),
       { mapHook } = await import("./mapHookOrigin.js"),
       { formHook } = await import("./formHook.js"),
-      { PwaHook } = await import("./pwaHook.js"),
+      // { PwaHook } = await import("./pwaHook.js"),
       { configureTopbar } = await import("./configureTopbar.js"),
       SolHook = solHook(ydoc),
       MapHook = mapHook(ydoc),
@@ -117,7 +117,7 @@ async function initApp(lineStatus) {
 
     // Online mode
     if (lineStatus) {
-      return initLiveSocket({ SolHook, MapHook, FormHook, PwaHook });
+      return initLiveSocket({ SolHook, MapHook, FormHook });
     }
 
     // Offline mode
