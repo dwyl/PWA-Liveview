@@ -28,7 +28,8 @@ defmodule SolidyjsWeb.Router do
     scope "/", SolidyjsWeb do
       pipe_through :browser
       get "/connectivity", ConnectivityController, :check
-      live "/", CounterLive, :index
+      # live "/", CounterCRDTLive, :index
+      live "/", StockLive, :index
       live "/map", MapLive, :index
     end
   end

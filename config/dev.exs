@@ -27,12 +27,6 @@ config :solidyjs, SolidyjsWeb.Endpoint,
       "vite.config.js",
       cd: Path.expand("../assets", __DIR__)
     ],
-
-    # node: [
-    #   "node_modules/vite/bin/vite.js",
-
-    #   cd: Path.expand("../assets", __DIR__)
-    # ],
     # node: ["build.js", "--watch", cd: Path.expand("../assets", __DIR__)]
     tailwind: {Tailwind, :install_and_run, [:solidyjs, ~w(--watch)]}
     # esbuild: {Esbuild, :install_and_run, [:solidyjs, ~w(--sourcemap=inline --watch)]}

@@ -4,8 +4,8 @@ export default function Counter(props) {
   const Bins = lazy(() => import("./bins.jsx"));
   const handleTake = () => {
     // keep a circular range for the demo
-    const newStock = props.stock === 0 ? props.max : props.stock - 1;
-    props.onStockChange(newStock);
+    const newValue = props.stock === 0 ? props.max : props.stock - 1;
+    props.onStockChange(newValue);
   };
 
   return (

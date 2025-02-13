@@ -6,14 +6,15 @@ defmodule SolidyjsWeb.MapLive do
   alias Phoenix.PubSub
 
   require Logger
+  @table_name :app_state
 
   @impl true
   def render(assigns) do
     ~H"""
-    <div>
+    <div data-userId={@user_id}>
       <Menu.display />
-      <div id="map" phx-hook="MapHook" phx-update="ignore" style="height: 300px"></div>
-      <div id="select_form" phx-hook="FormHook" phx-update="ignore"></div>
+      <div id="map" phx-hook="MapVHook" phx-update="ignore" style="height: 300px"></div>
+      <div id="select_form" phx-hook="FormVHook" phx-update="ignore"></div>
     </div>
     """
   end
@@ -24,7 +25,7 @@ defmodule SolidyjsWeb.MapLive do
     %{"user_id" => user_id} = session
 
     fetched_airports? =
-      case :ets.lookup(:app_state, :fetched_airports) do
+      case :ets.lookup(@table_name, :fetched_airports) do
         [{:fetched, ^user_id}] -> true
         _ -> false
       end
@@ -97,23 +98,26 @@ defmodule SolidyjsWeb.MapLive do
     {:noreply, socket}
   end
 
-  def handle_event("add", new_airport, socket) do
-    :ok =
-      PubSub.broadcast(
-        :pubsub,
-        "new_airport",
-        Map.merge(new_airport, %{"action" => "added_airport"})
-      )
-
-    {:noreply, socket}
-  end
-
   def handle_event("delete", old_airport, socket) do
     :ok =
       PubSub.broadcast(
         :pubsub,
         "remove_airport",
-        Map.merge(old_airport, %{"action" => "deleted_airport"})
+        Map.merge(old_airport, %{"action" => "delete_airports"})
+      )
+
+    {:noreply, socket}
+  end
+
+  def handle_event("add", new_airport, socket) do
+    :ok =
+      PubSub.broadcast(
+        :pubsub,
+        "new_airport",
+        Map.merge(new_airport, %{
+          "action" => "added_airport",
+          "origin_user_id" => socket.assigns.user_id
+        })
       )
 
     {:noreply, socket}
@@ -123,7 +127,8 @@ defmodule SolidyjsWeb.MapLive do
   @impl true
   def handle_info(%{"action" => action} = payload, socket) do
     user_id = Integer.to_string(socket.assigns.user_id)
-    from = Map.get(payload, "userID")
+    # from = Map.get(payload, "userID")
+    from = Map.get(payload, "origin_user_id")
 
     case user_id != from do
       true ->

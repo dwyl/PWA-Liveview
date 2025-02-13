@@ -21,9 +21,13 @@ ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"
 FROM ${BUILDER_IMAGE} AS builder
 
 # install build dependencies
-RUN apt-get update -y && apt-get install -y build-essential git curl \
+RUN apt-get update -y && apt-get install -y \
+  build-essential \
+  git \
+  curl \
   && curl -sL https://deb.nodesource.com/setup_22.x | bash - && \
-  apt-get install -y nodejs && \
+  apt-get install -y \
+  nodejs && \
   apt-get clean && rm -f /var/lib/apt/lists/*_* && \
   node --version && \
   npm --version
@@ -58,10 +62,9 @@ COPY lib lib
 
 COPY assets assets
 
-# compile assets using pnpm
+################ compile assets using pnpm & Vite
 WORKDIR /app/assets
-# COPY assets/package.json assets/pnpm-lock.yaml ./
-RUN pnpm install --prod=false   # Install JavaScript dependencies using pnpm
+RUN pnpm install --prod=false   # Install Vite as JavaScript dependencies using pnpm
 RUN node node_modules/vite/bin/vite.js build
 
 WORKDIR /app
@@ -77,8 +80,7 @@ COPY config/runtime.exs config/
 COPY rel rel
 RUN mix release
 
-# start a new build stage so that the final image will only contain
-# the compiled release and other runtime necessities
+##################################################################
 FROM ${RUNNER_IMAGE}
 
 RUN apt-get update -y && \

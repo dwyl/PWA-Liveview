@@ -20,6 +20,10 @@ Ingredients are:
 
 ### Offline Support
 
+A service worker acts like a proxy that persists your HTML/JS/CSS in the web browser.
+When all data is persisted using service workers,
+you can even load your website without internet access.
+
 Y.js's `IndexedDB` persistence handles offline support automatically.
 
 When offline:
@@ -28,13 +32,62 @@ When offline:
 - Changes are stored in IndexedDB
 - When back online, YJS will sync changes
 
-### Synchronization Flow
+#### Flows
 
-- User A changes stock → YJS update → Hook observes → LiveView broadcast
-- LiveView broadcasts to all users → Hook receives "new_stock" → YJS update
-- YJS update → All components observe change → UI updates
+```mermaid
+sequenceDiagram
+    participant Client
+    participant LiveView
+    participant YStore
 
-### GET HEAD
+    Client->>LiveView: Mount
+    LiveView->>YStore: get_snapshot("stock")
+    LiveView->>YStore: get_deltas("stock", 0)
+    YStore-->>LiveView: snapshot + deltas
+    LiveView->>Client: "y_init" event
+    Client->>Client: Apply snapshot + deltas
+    Client->>LiveView: Send queued deltas (if any)
+    LiveView->>YStore: Store with user_id
+    LiveView->>PubSub: Broadcast delta
+```
+
+```mermaid
+sequenceDiagram
+    participant ClientA
+    participant ServerYDoc
+    participant ClientB
+
+    ClientA->>ServerYDoc: Send Y.js Update (Delta)
+    ServerYDoc->>ServerYDoc: CRDT Merge
+    ServerYDoc->>PersistentStorage: Save State
+    ServerYDoc->>ClientA: Acknowledge
+    ServerYDoc->>ClientB: Broadcast Update
+    ClientB->>ClientB: Apply Update
+```
+
+```mermaid
+graph TD
+    A[LiveView] --> B[Update Log]
+    A --> C[State Snapshot]
+    B --> D[(ETS/SQLite)]
+    C --> D
+    D --> E[Delta Broadcast]
+    E --> F[Connected Clients]
+```
+
+```mermaid
+flowchart TD
+    A[Client] --> B{First Connection?}
+    B -->|Yes| C[Get Full Snapshot]
+    B -->|No| D[Get Last Sequence]
+    C --> E[Apply Snapshot]
+    D --> F[Get Missing Deltas]
+    E --> G[Apply Queued Deltas]
+    F --> G
+    G --> H[Subscribe Live]
+```
+
+### GET `HEAD`connection check request
 
 Avoids downloading the body, The server returns the HTTP headers, so no headers, no connection.
 

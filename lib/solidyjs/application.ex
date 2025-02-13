@@ -7,9 +7,18 @@ defmodule Solidyjs.Application do
 
   @impl true
   def start(_type, _args) do
+    # :yjs_crdt_store =
+    #   :ets.new(:yjs_crdt_store, [:named_table, :public, :set, {:read_concurrency, true}])
+
     :app_state = :ets.new(:app_state, [:named_table, :public])
 
-    db = Application.fetch_env!(:solidyjs, Solidyjs.Repo)[:database] || ":memory"
+    :stock =
+      :ets.new(:stock, [:named_table, :public, :set, {:read_concurrency, true}])
+
+    # :ets.insert(:stock, {:stock, 20, nil})
+
+    # || ":memory"
+    db = Application.fetch_env!(:solidyjs, Solidyjs.Repo)[:database]
 
     children = [
       SolidyjsWeb.Telemetry,

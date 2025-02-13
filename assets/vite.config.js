@@ -37,19 +37,29 @@ const buildOps = {
   manifest: false,
   rollupOptions: {
     input: [
-      "js/app.js",
+      "js/appV.js",
       "js/pwaHook.js",
       "js/configureTopbar.js",
       "js/initYJS.js",
-      // "js/vStore.js",
-      "js/solHook.js",
-      "js/SolidComp.jsx",
+      // "js/solHook.js",
+      "js/solYHook.js",
+      "js/yHook.js",
+      // "js/SolidComp.jsx",
+      "js/SolidYComp.jsx",
       "js/counter.jsx",
       "js/bins.jsx",
-      "js/mapHookOrigin.js",
+      "js/vStore.js",
+      "js/renderVForm.js",
+      "js/renderVMap.js",
+      "js/valtioObservers.js",
+      "js/initMap.js",
+      "js/mapVHook.js",
+      // "js/mapHookOrigin.js",
       "wasm/great_circle.wasm",
-      "js/formHook.js",
-      "js/formComp.jsx",
+      "js/formVHook.js",
+      "js/formVComp.jsx",
+      // "js/formHook.js",
+      // "js/formComp.jsx",
       "js/formCities.jsx",
     ],
     output: {
@@ -134,8 +144,9 @@ const Tiles = {
   options: {
     cacheName: "tiles",
     expiration: {
-      maxEntries: 1000, // Adjust based on your needs
-      maxAgeSeconds: 60 * 60, // 1 hours
+      maxEntries: 200, // Adjust based on your needs
+      maxAgeSeconds: 60 * 60 * 24, // 1 day
+      purgeOnQuotaError: true,
     },
     plugins: [
       {
@@ -164,23 +175,27 @@ const Pages = {
         },
       },
     ],
+    cacheName: "pages",
+    expiration: {
+      maxEntries: 10, // Only keep 10 page versions
+      maxAgeSeconds: 60 * 60 * 2, // 2 hours
+    },
   },
 };
 
-const devOps = {
-  enabled: true,
-  type: "module",
-};
-
-const PWAOpts = {
-  devOptions: devOps,
+const createPWAConfig = (mode) => ({
+  // const PWAOpts = {
+  devOptions: {
+    enabled: mode === "development",
+    type: "module",
+  },
   registerType: "autoUpdate",
   filename: "sw.js",
   strategies: "generateSW",
   // srcDir: "./js",
   includeAssets: ["favicon.ico", "robots.txt"],
   manifest: manifestOpts,
-  outDir: "../priv/static/",
+  outDir: path.resolve(__dirname, "../priv/static/"),
   manifestFilename: "manifest.webmanifest",
   injectRegister: "auto", // Automatically inject the SW registration script
   injectManifest: {
@@ -193,8 +208,9 @@ const PWAOpts = {
       "assets/**/*.{js,jsx,css,ico, wasm}",
       "images/**/*.{png,jpg,svg,webp}",
     ],
-    swDest: "../priv/static/sw.js",
+    swDest: path.resolve(__dirname, "../priv/static/sw.js"),
     navigateFallback: null, // Do not fallback to index.html !!!!!!!!!
+    cleanupOutdatedCaches: true,
     inlineWorkboxRuntime: true, // Inline the Workbox runtime into the service worker. You can't serve timestamped URLs with Phoenix
     additionalManifestEntries: [
       { url: "/", revision: null },
@@ -215,12 +231,21 @@ const PWAOpts = {
     skipWaiting: true, // New service worker versions activate immediately
     // Without these settings, you might have some pages using old service worker versions
     // while others use new ones, which could lead to inconsistent behavior in your offline capabilities.
+    mode: mode === "development" ? "development" : "production", // workbox own mode
   },
-};
+});
 
 const CSSSOpts = {
   postcss: {
     plugins: [tailwindcss, autoprefixer],
+  },
+};
+
+const resolveConfig = {
+  alias: {
+    "@": path.resolve(__dirname, "./js"),
+    "@components": path.resolve(__dirname, "./js/components"),
+    "@assets": path.resolve(__dirname, "./assets"),
   },
 };
 
@@ -236,8 +261,9 @@ export default defineConfig(({ command, mode }) => {
 
   return {
     base: "/",
-    plugins: [wasm(), solidPlugin(), VitePWA(PWAOpts)],
+    plugins: [wasm(), solidPlugin(), VitePWA(createPWAConfig(mode))],
     resolve: {
+      ...resolveConfig,
       extensions: [
         ".mjs",
         ".js",
@@ -251,10 +277,21 @@ export default defineConfig(({ command, mode }) => {
       ],
     },
     publicDir: false,
-    build: buildOps,
+    build: {
+      ...buildOps,
+      sourceMap: mode === "development",
+      minify: mode === "production" ? "terser" : false,
+      cssCodeSplit: true,
+      reportCompressedSize: mode === "production",
+    },
     css: CSSSOpts,
     define: {
-      __APP_ENV__: env.APP_ENV,
+      __APP_ENV__: JSON.stringify(env.APP_ENV),
+    },
+    server: {
+      watch: {
+        usePolling: true,
+      },
     },
   };
 });
