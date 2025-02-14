@@ -28,7 +28,7 @@ export const FormVComponent = async (props) => {
   function handleReset() {
     // state.selection.clear();
     state.selection.set("deleted", true);
-    if (window.liveSocket.isConnected() && props._this) {
+    if (window.liveSocket?.isConnected() && props._this) {
       props._this.pushEvent("delete", { userID, ...state.flight });
     }
     // setResetTrigger(true);

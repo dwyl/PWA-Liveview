@@ -64,8 +64,9 @@ COPY assets assets
 
 ################ compile assets using pnpm & Vite
 WORKDIR /app/assets
+RUN pnpm self-update
 RUN pnpm install --prod=false   # Install Vite as JavaScript dependencies using pnpm
-RUN node node_modules/vite/bin/vite.js build
+RUN node node_modules/vite/bin/vite.js build --config vite.config.js
 
 WORKDIR /app
 RUN mix tailwind solidyjs --minify

@@ -42,7 +42,7 @@ const buildOps = {
       "js/configureTopbar.js",
       "js/initYJS.js",
       // "js/solHook.js",
-      "js/solYHook.js",
+      // "js/solYHook.js",
       "js/yHook.js",
       // "js/SolidComp.jsx",
       "js/SolidYComp.jsx",

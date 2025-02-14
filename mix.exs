@@ -77,7 +77,7 @@ defmodule Solidyjs.MixProject do
       # "assets.build": ["tailwind solidyjs", "esbuild solidyjs"],
       "assets.deploy": [
         "tailwind solidyjs --minify",
-        "cmd --cd assets vite build ",
+        "cmd --cd assets vite build --config vite.config.js",
         "phx.digest"
       ]
     ]

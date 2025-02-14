@@ -44,9 +44,6 @@ importers:
       workbox-strategies:
         specifier: ^7.3.0
         version: 7.3.0
-      workbox-window:
-        specifier: ^7.3.0
-        version: 7.3.0
       y-indexeddb:
         specifier: ^9.0.12
         version: 9.0.12(yjs@13.6.23)
@@ -85,6 +82,9 @@ importers:
         specifier: ^3.4.1
         version: 3.4.1(vite@6.1.0(@types/node@22.10.2)(jiti@1.21.7)(lightningcss@1.28.2)(terser@5.39.0)(yaml@2.7.0))
       workbox-precaching:
+        specifier: ^7.3.0
+        version: 7.3.0
+      workbox-window:
         specifier: ^7.3.0
         version: 7.3.0
 

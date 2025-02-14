@@ -206,6 +206,7 @@ export const MapVHook = {
       const { initMap } = await import("./initMap.js");
       const { L, map, group } = await initMap();
       this.map = map;
+
       // const userID = sessionStorage.getItem("userID");
       this.userID = this.el.dataset.userid;
 
