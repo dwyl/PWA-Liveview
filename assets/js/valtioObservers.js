@@ -30,7 +30,6 @@ export async function createFlightObserver({ L, map, group }) {
     }
   }
   async function computeGreatCircle({ L, group, departure, arrival }) {
-    console.log("computeGreatCircle");
     const { lat: latA, lng: lngA } = arrival;
     const { lat: latD, lng: lngD } = departure;
     try {
@@ -160,7 +159,6 @@ export function createSelectionObserver({ L, group, userID, _this }) {
           if (processedInputs.has(inputKey)) return;
 
           if (userID === selectionUserID && _this) {
-            console.log("pushEvent add");
             isProcessingBroadcast = true;
             _this.pushEvent("add", selection);
             processedInputs.add(inputKey);
