@@ -11,9 +11,17 @@ defmodule SolidyjsWeb.MapLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div data-userId={@user_id}>
+    <div>
+      <p>{@user_id}</p>
       <Menu.display />
-      <div id="map" phx-hook="MapVHook" phx-update="ignore" style="height: 300px"></div>
+      <div
+        id="map"
+        phx-hook="MapVHook"
+        phx-update="ignore"
+        style="height: 300px"
+        data-userid={@user_id}
+      >
+      </div>
       <div id="select_form" phx-hook="FormVHook" phx-update="ignore"></div>
     </div>
     """
@@ -38,7 +46,6 @@ defmodule SolidyjsWeb.MapLive do
 
     {:ok,
      socket
-     |> assign(:user_id, user_id)
      |> assign(:fetched_airports?, fetched_airports?)
      |> push_event("user", %{user_id: user_id})}
   end

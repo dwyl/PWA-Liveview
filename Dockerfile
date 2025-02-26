@@ -14,6 +14,7 @@
 ARG ELIXIR_VERSION=1.18.1
 ARG OTP_VERSION=27.2
 ARG DEBIAN_VERSION=bullseye-20250113-slim
+ARG PNPM_VERSION=10.5.0
 
 ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
 ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"
@@ -32,7 +33,7 @@ RUN apt-get update -y && apt-get install -y \
   node --version && \
   npm --version
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm${PNPM_VERSNIO}
 
 # prepare build dir
 WORKDIR /app
@@ -60,13 +61,19 @@ COPY priv priv
 
 COPY lib lib
 
-COPY assets assets
+# COPY assets assets
 
 ################ compile assets using pnpm & Vite
 WORKDIR /app/assets
-RUN pnpm self-update
-RUN pnpm install --prod=false   # Install Vite as JavaScript dependencies using pnpm
-RUN node node_modules/vite/bin/vite.js build --config vite.config.js
+COPY assets/package.json assets/pnpm-lock.yaml* ./
+# Setup pnpm store for better caching
+RUN pnpm config set store-dir /app/.pnpm-store
+RUN pnpm install
+# RUN pnpm install --prod=false   # Install Vite as JavaScript dependencies using pnpm
+# RUN node node_modules/vite/bin/vite.js build --config vite.config.js
+
+COPY assets/ ./
+RUN pnpm exec vite build --config vite.config.js
 
 WORKDIR /app
 RUN mix tailwind solidyjs --minify
@@ -91,9 +98,9 @@ RUN apt-get update -y && \
 # Set the locale
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
 
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
 
 WORKDIR "/app"
 RUN chown nobody /app

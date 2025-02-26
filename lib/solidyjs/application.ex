@@ -7,25 +7,15 @@ defmodule Solidyjs.Application do
 
   @impl true
   def start(_type, _args) do
-    # :yjs_crdt_store =
-    #   :ets.new(:yjs_crdt_store, [:named_table, :public, :set, {:read_concurrency, true}])
-
-    :app_state = :ets.new(:app_state, [:named_table, :public])
-
-    :stock =
-      :ets.new(:stock, [:named_table, :public, :set, {:read_concurrency, true}])
-
-    # :ets.insert(:stock, {:stock, 20, nil})
-
-    # || ":memory"
-    db = Application.fetch_env!(:solidyjs, Solidyjs.Repo)[:database]
+    start_ets_tables()
+    Solidyjs.Release.migrate()
 
     children = [
       SolidyjsWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:solidyjs, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: :pubsub},
       Solidyjs.Repo,
-      {SqliteHandler, [db, "airports"]},
+      {SqliteHandler, [Application.fetch_env!(:solidyjs, Solidyjs.Repo)[:database], "airports"]},
       SolidyjsWeb.Endpoint
     ]
 
@@ -41,5 +31,12 @@ defmodule Solidyjs.Application do
   def config_change(changed, _new, removed) do
     SolidyjsWeb.Endpoint.config_change(changed, removed)
     :ok
+  end
+
+  defp start_ets_tables do
+    :app_state = :ets.new(:app_state, [:named_table, :public])
+
+    :stock =
+      :ets.new(:stock, [:named_table, :public, :set, {:read_concurrency, true}])
   end
 end

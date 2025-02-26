@@ -9,6 +9,8 @@ defmodule SqliteHandler do
 
   @impl true
   def init([db, name]) do
+    Logger.info("Starting DB #{inspect(db)}")
+
     case Sqlite3.open(db, mode: :readwrite) do
       {:ok, conn} ->
         Sqlite3.execute(conn, "PRAGMA journal_mode = WAL;")
@@ -18,6 +20,7 @@ defmodule SqliteHandler do
         {:ok, {db, name}, {:continue, :set_airports}}
 
       {:error, reason} ->
+        Logger.warning("Failed to open db: #{inspect(reason)}")
         {:stop, reason}
     end
   end
@@ -42,6 +45,10 @@ defmodule SqliteHandler do
           {:error, reason} ->
             {:stop, reason}
         end
+
+      {:error, reason} ->
+        Logger.warning("Failed to open db: #{inspect(reason)}")
+        {:stop, reason}
     end
   end
 

@@ -34,7 +34,7 @@ defmodule Solidyjs.MixProject do
     [
       {:phoenix, "~> 1.7.18"},
       {:phoenix_html, "~> 4.1"},
-      {:phoenix_live_view, "~> 1.0.0"},
+      {:phoenix_live_view, "~> 1.0"},
       {:bandit, "~> 1.5"},
       {:req, "~> 0.5.8"},
       {:nimble_csv, "~> 1.2"},

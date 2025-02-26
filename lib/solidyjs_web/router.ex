@@ -24,7 +24,7 @@ defmodule SolidyjsWeb.Router do
     plug :accepts, ["json"]
   end
 
-  live_session :default do
+  live_session :default, on_mount: SolidyjsWeb.MountUserId do
     scope "/", SolidyjsWeb do
       pipe_through :browser
       get "/connectivity", ConnectivityController, :check

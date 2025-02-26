@@ -26,18 +26,20 @@ export const FormVComponent = async (props) => {
 
   // update the stores
   function handleReset() {
-    // state.selection.clear();
-    state.selection.set("deleted", true);
+    state.deletionState.isDeleted = true;
+    state.deletionState.timestamp = Date.now();
+    state.deletionState.deletedBy = userID;
     if (window.liveSocket?.isConnected() && props._this) {
-      props._this.pushEvent("delete", { userID, ...state.flight });
+      props._this.pushEvent("delete", {
+        userID,
+        ...state.flight,
+        timestamp: state.deletionState.timestamp,
+      });
     }
-    // setResetTrigger(true);
-    // setTimeout(() => setResetTrigger(false), 100);
   }
 
   // form is submitted with two inputs
   function handleSubmit(e) {
-    console.log("submit");
     e.preventDefault();
     if (state.selection.size !== 2) return;
 

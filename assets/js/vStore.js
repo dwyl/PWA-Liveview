@@ -5,7 +5,6 @@ import { proxyMap } from "valtio/utils";
 const initialAirports = () => {
   try {
     const stored = localStorage.getItem("flight_app_airports");
-    console.log("init airports", stored?.length);
     return stored ? JSON.parse(stored) : [];
   } catch (e) {
     console.error("Error reading airports from localStorage:", e);
@@ -17,6 +16,11 @@ const state = proxy({
   selection: proxyMap(),
   flight: {},
   airports: initialAirports(),
+  deletionState: {
+    isDeleted: false,
+    timestamp: null,
+    deletedBy: null,
+  },
 });
 
 export default state;

@@ -8,9 +8,9 @@ export const FormVHook = {
     console.log("Form destroyed-----");
   },
   async mounted() {
-    console.log("Form mounted----");
     const { FormVComponent } = await import("./formVComp.jsx");
     this.userID = sessionStorage.getItem("userID");
+    console.log("Form mounted----");
 
     // Only fetch airports if we don't have them in state/localStorage
     this.handleEvent("airports", ({ airports }) => {

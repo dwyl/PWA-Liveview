@@ -30,6 +30,7 @@ export async function createFlightObserver({ L, map, group }) {
     }
   }
   async function computeGreatCircle({ L, group, departure, arrival }) {
+    console.log("computeGreatCircle");
     const { lat: latA, lng: lngA } = arrival;
     const { lat: latD, lng: lngD } = departure;
     try {
@@ -55,6 +56,7 @@ export async function createFlightObserver({ L, map, group }) {
     }
   }
   function animate({ L, group, latLngs }, animationTime = 200) {
+    console.log("animate");
     if (currentAnimationInterval) {
       clearInterval(currentAnimationInterval);
       currentAnimationInterval = null;
@@ -82,6 +84,7 @@ export async function createFlightObserver({ L, map, group }) {
     });
   }
   async function animateRoute({ L, map, group, departure, arrival }) {
+    console.log("animateRoute");
     try {
       const A = L.latLng(arrival);
       const D = L.latLng(departure);
@@ -130,42 +133,47 @@ export function createSelectionObserver({ L, group, userID, _this }) {
   const markersMap = new Map();
   const processedInputs = new Set(); // Track processed inputs
   let isProcessingBroadcast = false;
+
+  subscribe(state.deletionState, () => {
+    if (state.deletionState.isDeleted) {
+      // Clear all map layers
+      group.clearLayers();
+      markersMap.clear();
+      state.selection.clear();
+      processedInputs.clear();
+      state.flight.departure = null;
+      state.flight.arrival = null;
+
+      // Reset deletion state after handling
+      state.deletionState.isDeleted = false;
+    }
+  });
+
   return {
     observeVSelections: () => {
       subscribe(state.selection, () => {
         if (isProcessingBroadcast) return; // prevent race condition & infinite loop
-        if (state.selection.get("deleted")) {
-          console.log("subscribe get deleted", group);
-          group.clearLayers();
-          markersMap.clear();
-          state.selection.clear();
-          processedInputs.clear();
-          state.flight.departure = null;
-          state.flight.arrival = null;
-        } else {
-          state.selection.forEach((selection) => {
-            const { lat, lng, inputType, userID: selectionUserID } = selection;
-            // Prevent duplicate processing
-            const inputKey = `${selectionUserID}-${inputType}`;
-            if (processedInputs.has(inputKey)) return;
+        state.selection.forEach((selection) => {
+          const { lat, lng, inputType, userID: selectionUserID } = selection;
+          // Prevent duplicate processing
+          const inputKey = `${selectionUserID}-${inputType}`;
+          if (processedInputs.has(inputKey)) return;
 
-            if (userID === selectionUserID && _this) {
-              console.log("pushEvent add");
-              isProcessingBroadcast = true;
-              _this.pushEvent("add", selection);
-              processedInputs.add(inputKey);
-              isProcessingBroadcast = false;
-            }
+          if (userID === selectionUserID && _this) {
+            console.log("pushEvent add");
+            isProcessingBroadcast = true;
+            _this.pushEvent("add", selection);
+            processedInputs.add(inputKey);
+            isProcessingBroadcast = false;
+          }
 
-            const marker = L.marker(L.latLng({ lat, lng }), {
-              type: inputType,
-            });
-
-            marker.addTo(group);
-            console.log(group);
-            markersMap.set(inputType, marker);
+          const marker = L.marker(L.latLng({ lat, lng }), {
+            type: inputType,
           });
-        }
+
+          marker.addTo(group);
+          markersMap.set(inputType, marker);
+        });
       });
     },
   };

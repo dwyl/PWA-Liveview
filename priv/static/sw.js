@@ -4680,9 +4680,6 @@ precacheAndRoute([{
   "url": "assets/app.css",
   "revision": null
 }, {
-  "url": "assets/app.js",
-  "revision": null
-}, {
   "url": "assets/appV.css",
   "revision": null
 }, {
@@ -4699,12 +4696,6 @@ precacheAndRoute([{
   "revision": null
 }, {
   "url": "assets/formCities.js",
-  "revision": null
-}, {
-  "url": "assets/formComp.js",
-  "revision": null
-}, {
-  "url": "assets/formHook.js",
   "revision": null
 }, {
   "url": "assets/formVComp.js",
@@ -4731,22 +4722,7 @@ precacheAndRoute([{
   "url": "assets/leaflet-src.js",
   "revision": null
 }, {
-  "url": "assets/leaflet.css",
-  "revision": null
-}, {
-  "url": "assets/mapHookOrigin.css",
-  "revision": null
-}, {
-  "url": "assets/mapHookOrigin.js",
-  "revision": null
-}, {
-  "url": "assets/mapVHook.css",
-  "revision": null
-}, {
   "url": "assets/mapVHook.js",
-  "revision": null
-}, {
-  "url": "assets/observers.js",
   "revision": null
 }, {
   "url": "assets/phoenix_live_view.esm.js",
@@ -4767,25 +4743,13 @@ precacheAndRoute([{
   "url": "assets/renderVMap.js",
   "revision": null
 }, {
-  "url": "assets/solHook.js",
-  "revision": null
-}, {
-  "url": "assets/SolidComp.js",
-  "revision": null
-}, {
   "url": "assets/SolidYComp.js",
-  "revision": null
-}, {
-  "url": "assets/solYHook.js",
   "revision": null
 }, {
   "url": "assets/topbar.min.js",
   "revision": null
 }, {
   "url": "assets/valtioObservers.js",
-  "revision": null
-}, {
-  "url": "assets/vanilla.js",
   "revision": null
 }, {
   "url": "assets/virtual_pwa-register.js",

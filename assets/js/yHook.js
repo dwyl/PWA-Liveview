@@ -7,13 +7,8 @@ export const yHook = (ydoc) => ({
   },
   mounted() {
     this.currentUser = this.el.dataset.userid;
-    // this.isReconnecting = false;
+    sessionStorage.setItem("userID", this.currentUser);
     this.ymap = ydoc.getMap("stock");
-
-    // window.addEventListener("online", () => {
-    //   console.log("hook online listener");
-    //   this.handleReconnection();
-    // });
 
     //  Handle initial state from server
     this.handleEvent("init_stock", ({ value, state, max }) => {
@@ -78,21 +73,10 @@ export const yHook = (ydoc) => ({
     });
   },
   syncStateToServer() {
-    console.log("syncStateToServer");
     const encodedState = Array.from(Y.encodeStateAsUpdate(ydoc));
     this.pushEvent("sync_state", {
       value: this.ymap.get("stock-value"),
       state: encodedState,
     });
   },
-  // async handleReconnection() {
-  //   console.log("handleReconnection");
-  //   this.isReconnecting = true;
-  //   try {
-  //     // Get current server state
-  //     await this.pushEvent("get_current_state", {});
-  //   } finally {
-  //     this.isReconnecting = false;
-  //   }
-  // },
 });
