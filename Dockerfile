@@ -33,7 +33,7 @@ RUN apt-get update -y && apt-get install -y \
   node --version && \
   npm --version
 
-RUN npm install -g pnpm${PNPM_VERSNIO}
+RUN npm install -g pnpm${PNPM_VERSION}
 
 # prepare build dir
 WORKDIR /app

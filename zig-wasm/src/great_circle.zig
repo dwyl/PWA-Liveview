@@ -45,7 +45,7 @@ export fn calculateHaversine(
     const haversine =
         math.pow(f64, math.sin((end_lat_rad - start_lat_rad) / 2), 2) +
         math.cos(start_lat_rad) * math.cos(end_lat_rad) *
-        math.pow(f64, math.sin((end_lon_rad - start_lon_rad) / 2), 2);
+            math.pow(f64, math.sin((end_lon_rad - start_lon_rad) / 2), 2);
 
     return 2 * math.atan2(math.sqrt(haversine), math.sqrt(1 - haversine));
 }
@@ -133,15 +133,15 @@ export fn computeGreatCirclePoints(
         // Calculate interpolation coefficients
         const coeff_start =
             if (sin_angular_distance == 0)
-            1 - fraction
-        else
-            math.sin((1 - fraction) * angular_distance) / sin_angular_distance;
+                1 - fraction
+            else
+                math.sin((1 - fraction) * angular_distance) / sin_angular_distance;
 
         const coeff_end =
             if (sin_angular_distance == 0)
-            fraction
-        else
-            math.sin(fraction * angular_distance) / sin_angular_distance;
+                fraction
+            else
+                math.sin(fraction * angular_distance) / sin_angular_distance;
 
         // Calculate 3D cartesian coordinates
         const x =

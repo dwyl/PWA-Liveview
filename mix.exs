@@ -32,10 +32,10 @@ defmodule Solidyjs.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:phoenix, "~> 1.7.18"},
+      {:phoenix, "~> 1.7.20"},
       {:phoenix_html, "~> 4.1"},
       {:phoenix_live_view, "~> 1.0"},
-      {:bandit, "~> 1.5"},
+      {:bandit, "~> 1.6"},
       {:req, "~> 0.5.8"},
       {:nimble_csv, "~> 1.2"},
       {:exqlite, "~> 0.27"},
