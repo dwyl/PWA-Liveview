@@ -1,4 +1,5 @@
 import "../css/app.css";
+
 // Include phoenix_html to handle method=PUT/DELETE in forms and buttons.
 import "phoenix_html";
 
@@ -7,10 +8,9 @@ const CONFIG = {
     POLL_INTERVAL: 10_000,
     CACHE_NAME: "lv-pages",
   },
-  appState = {
+  AppState = {
     paths: new Set(),
     status: "checking",
-
     isOnline: true,
     interval: null,
   };
@@ -19,12 +19,12 @@ async function addCurrentPageToCache({ current, routes }) {
   await navigator.serviceWorker.ready;
   const newPath = new URL(current).pathname;
 
+  // we cache the two pages "/" and "/map", and only once.
   if (!routes.includes(newPath)) return;
-  // we cache the two pages "/"" and "/map" only once.
-  if (appState.paths.has(newPath)) return;
+  if (AppState.paths.has(newPath)) return;
 
   if (newPath === window.location.pathname) {
-    appState.paths.add(newPath);
+    AppState.paths.add(newPath);
     const htmlContent = document.documentElement.outerHTML;
     const contentLength = new TextEncoder().encode(htmlContent).length;
     const headers = new Headers({
@@ -53,9 +53,11 @@ navigation.addEventListener("navigate", async ({ destination: { url } }) => {
 async function checkServer() {
   try {
     const response = await fetch("/connectivity", { method: "HEAD" });
-    return response.ok;
+    const isOk = response.ok;
+    console.log("Server check result:", isOk);
+    return isOk;
   } catch (error) {
-    // console.error("Error checking server reachability:", error);
+    console.log("Server unreachable:", error);
     return false;
   }
 }
@@ -65,37 +67,49 @@ function updateConnectionStatusUI(status) {
     status === "online" ? "/images/online.svg" : "/images/offline.svg";
 }
 
-function startPolling(status, interval = CONFIG.POLL_INTERVAL) {
-  clearInterval(appState.interval);
-  appState.interval = setInterval(async () => {
-    appState.isOnline = await checkServer();
-    if (appState.isOnline && status === "offline") {
+async function startPolling(status, interval = CONFIG.POLL_INTERVAL) {
+  clearInterval(AppState.interval);
+  AppState.interval = setInterval(async () => {
+    const wasOnline = AppState.isOnline;
+    AppState.isOnline = await checkServer();
+
+    if (AppState.isOnline !== wasOnline) {
+      console.log(
+        `Connection status changed: ${
+          wasOnline ? "online->offline" : "offline->online"
+        }`
+      );
+      updateConnectionStatusUI(AppState.isOnline ? "online" : "offline");
+    }
+
+    if (AppState.isOnline && status === "offline") {
       window.location.reload();
     }
   }, interval);
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  appState.status = (await checkServer()) ? "online" : "offline";
-  updateConnectionStatusUI(appState.status);
-  // Start polling only if offline
-  if (appState.status === "offline") {
-    startPolling(appState.status);
-  }
+  AppState.status = (await checkServer()) ? "online" : "offline";
+  console.log("DOMContentLoaded", AppState.status);
+  updateConnectionStatusUI(AppState.status);
+  // Always start polling to detect status changes
+  startPolling(AppState.status);
 
   // Monitor online and offline events
   window.addEventListener("online", () => {
-    appState.isOnline = true;
-    appState.status = "online";
+    console.log("to online");
+    AppState.isOnline = true;
+    AppState.status = "online";
     updateConnectionStatusUI("online");
     // window.location.reload();
   });
 
-  window.addEventListener("offline", () => {
-    appState.isOnline = false;
-    appState.status = "offline";
+  window.addEventListener("offline", async () => {
+    console.log("to offline");
+    AppState.isOnline = false;
+    AppState.status = "offline";
     updateConnectionStatusUI("offline");
-    startPolling(appState.status); // Start polling when offline
+    return startPolling(AppState.status); // Start polling when offline
   });
 });
 
@@ -177,8 +191,8 @@ async function displayStock(ydoc) {
 
 // **************************************
 (async () => {
-  appState.isOnline = await checkServer();
-  await initApp(appState.isOnline);
+  AppState.isOnline = await checkServer();
+  await initApp(AppState.isOnline);
   window.addEventListener("phx:page-loading-stop", () => {
     if (!window.liveSocket?.isConnected()) {
       console.log("liveSocket not connected");
@@ -186,7 +200,7 @@ async function displayStock(ydoc) {
     }
   });
 
-  if ("serviceWorker" in navigator && appState.isOnline) {
+  if ("serviceWorker" in navigator && AppState.isOnline) {
     await addCurrentPageToCache({
       current: window.location.href,
       routes: CONFIG.ROUTES,

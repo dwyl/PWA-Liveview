@@ -1,31 +1,39 @@
+// Track offline notification state at module level
+let hasNotifiedOfflineReady = false;
+
 export const PwaHook = {
   async mounted() {
     const _this = this;
     const { registerSW } = await import("virtual:pwa-register");
 
+    this.updateAvailable = false;
     let updateSWFunction;
-    const refreshBtn = document.getElementById("refresh-btn");
-    refreshBtn.style.display = "none";
-
-    refreshBtn.onclick = () => {
-      if (updateSWFunction) {
-        updateSWFunction(true);
-      } else {
-        console.log("No update available");
-      }
-    };
-
     const updateSW = registerSW({
       onNeedRefresh() {
-        console.log("on refresh needed");
-        updateAvailable = true;
-        refreshBtn.disabled = false;
-        refreshBtn.style.display = "block";
+        console.log("New version available");
+        this.updateAvailable = true;
         updateSWFunction = updateSW;
+
+        // Let LiveView handle the button visibility
+        _this.pushEvent("pwa-update-available", {
+          updateAvailable: true,
+        });
       },
       onOfflineReady() {
-        console.log("App ready to work offline");
-        _this.pushEvent("offline ready", { msg: "App ready to work offline" });
+        // Only notify once when service worker is first installed
+        if (!hasNotifiedOfflineReady) {
+          console.log("Service Worker installed - App ready for offline use");
+          _this.pushEvent("pwa-offline-ready", {
+            msg: "App ready for offline use",
+          });
+          hasNotifiedOfflineReady = true;
+        }
+      },
+      onRegisterError(error) {
+        console.error("SW registration error", error);
+        _this.pushEvent("pwa-registration-error", {
+          error: error.toString(),
+        });
       },
     });
 

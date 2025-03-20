@@ -13,14 +13,22 @@ export const FormVComponent = async (props) => {
   // Subscribe to changes in the airports state on first hook mount
   subscribe(state.airports, () => {
     if (state.airports.length > 0) {
-      setCities(state.airports);
+      // Filter out airports with missing names
+      const validAirports = state.airports.filter(
+        (a) => a.airport_id && a.airport_id.trim() !== ""
+      );
+      setCities(validAirports);
       setIsInitialized(true);
     }
   });
 
   // Initialize cities from state on each component mount
   if (state.airports.length > 0) {
-    setCities(state.airports);
+    // Filter out airports with missing names
+    const validAirports = state.airports.filter(
+      (a) => a.airport_id && a.airport_id.trim() !== ""
+    );
+    setCities(validAirports);
     setIsInitialized(true);
   }
 
@@ -29,13 +37,13 @@ export const FormVComponent = async (props) => {
     state.deletionState.isDeleted = true;
     state.deletionState.timestamp = Date.now();
     state.deletionState.deletedBy = userID;
-    if (window.liveSocket?.isConnected() && props._this) {
-      props._this.pushEvent("delete", {
-        userID,
-        ...state.flight,
-        timestamp: state.deletionState.timestamp,
-      });
-    }
+    // if (window.liveSocket?.isConnected() && props._this) {
+    props._this.pushEvent("delete", {
+      userID,
+      ...state.flight,
+      timestamp: state.deletionState.timestamp,
+    });
+    // }
   }
 
   // form is submitted with two inputs

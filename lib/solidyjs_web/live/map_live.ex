@@ -62,7 +62,7 @@ defmodule SolidyjsWeb.MapLive do
            |> assign(:airports, AsyncResult.loading())
            |> start_async(
              :fetch_airports,
-             &SqliteHandler.municipalities/0
+             fn -> SqliteHandler.municipalities() end
            )}
         end
     end

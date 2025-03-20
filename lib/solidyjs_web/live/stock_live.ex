@@ -12,6 +12,7 @@ defmodule SolidyjsWeb.StockLive do
     <div>
       <div id="pwaHook" phx-hook="PwaHook">
         <button
+          :if={@update_available}
           class="px-4 mb-4 py-2 border-2 rounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300"
           id="refresh-btn"
           phx-click="accept-refresh"
@@ -37,13 +38,15 @@ defmodule SolidyjsWeb.StockLive do
       {value, state} = Solidyjs.Stock.get_stock()
 
       {:ok,
-       push_event(socket, "init_stock", %{
+       socket
+       |> assign(:update_available, false)
+       |> push_event("init_stock", %{
          value: value,
          state: state,
          max: @max
        })}
     else
-      {:ok, socket}
+      {:ok, assign(socket, :update_available, false)}
     end
   end
 
@@ -62,11 +65,29 @@ defmodule SolidyjsWeb.StockLive do
     {:noreply, socket}
   end
 
-  def handle_event("offline ready", %{"msg" => msg}, socket) do
+  # def handle_event("offline ready", %{"msg" => msg}, socket) do
+  #   IO.puts("off line ready")
+  #   {:noreply, put_flash(socket, :info, msg)}
+  # end
+
+  def handle_event("pwa-offline-ready", %{"msg" => msg}, socket) do
+    IO.puts("pwa off line ready")
     {:noreply, put_flash(socket, :info, msg)}
   end
 
+  def handle_event("pwa-update-available", %{"updateAvailable" => true}, socket) do
+    # Optionally, you can do additional logging or state management
+    # For example, you might want to set a flag in the socket assigns
+    {:noreply, assign(socket, :update_available, true)}
+  end
+
+  def handle_event("pwa-registration-error", %{"error" => error}, socket) do
+    # Optional: Log or handle registration errors
+    {:noreply, put_flash(socket, :error, error)}
+  end
+
   def handle_event("accept-refresh", _, socket) do
-    {:noreply, push_event(socket, "refreshed", %{})}
+    # {:noreply, push_event(socket, "refreshed", %{})}
+    {:noreply, push_navigate(socket, to: "/", replace: true)}
   end
 end

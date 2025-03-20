@@ -11,10 +11,9 @@
 #   - https://pkgs.org/ - resource for finding needed packages
 #   - Ex: hexpm/elixir:1.18.1-erlang-27.2-debian-bullseye-20250113-slim
 #
-ARG ELIXIR_VERSION=1.18.1
+ARG ELIXIR_VERSION=1.18.2
 ARG OTP_VERSION=27.2
 ARG DEBIAN_VERSION=bullseye-20250113-slim
-ARG PNPM_VERSION=10.5.0
 
 ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
 ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"
@@ -33,7 +32,7 @@ RUN apt-get update -y && apt-get install -y \
   node --version && \
   npm --version
 
-RUN npm install -g pnpm${PNPM_VERSION}
+RUN npm install -g pnpm && pnpm self-update
 
 # prepare build dir
 WORKDIR /app
@@ -57,8 +56,11 @@ RUN mkdir config
 COPY config/config.exs config/${MIX_ENV}.exs config/
 RUN mix deps.compile
 
-COPY priv priv
+# Create directories for persistent data
+RUN mkdir -p /app/priv/static /app/data
 
+# Copy application code
+COPY priv priv
 COPY lib lib
 
 # COPY assets assets
@@ -69,8 +71,6 @@ COPY assets/package.json assets/pnpm-lock.yaml* ./
 # Setup pnpm store for better caching
 RUN pnpm config set store-dir /app/.pnpm-store
 RUN pnpm install
-# RUN pnpm install --prod=false   # Install Vite as JavaScript dependencies using pnpm
-# RUN node node_modules/vite/bin/vite.js build --config vite.config.js
 
 COPY assets/ ./
 RUN pnpm exec vite build --config vite.config.js
@@ -103,7 +103,6 @@ ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 
 WORKDIR "/app"
-RUN chown nobody /app
 
 # set runner ENV
 ENV MIX_ENV="prod"
@@ -111,11 +110,20 @@ ENV MIX_ENV="prod"
 # Only copy the final release from the build stage
 COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/solidyjs ./
 
+# Create data directory with proper permissions
+RUN mkdir -p /app/data && \
+  chown -R nobody:nogroup /app/data && \
+  chmod -R 777 /app/data && \
+  chown nobody /app
+
 USER nobody
+
+# Use JSON format for CMD to properly handle signals
+CMD ["/bin/sh", "-c", "mkdir -p /app/data && chown -R nobody:nogroup /app/data && chmod -R 777 /app/data && /app/bin/server"]
 
 # If using an environment that doesn't automatically reap zombie processes, it is
 # advised to add an init process such as tini via `apt-get install`
 # above and adding an entrypoint. See https://github.com/krallin/tini for details
 # ENTRYPOINT ["/tini", "--"]
 
-CMD ["/app/bin/server"]
+

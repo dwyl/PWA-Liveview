@@ -1,0 +1,19 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./priv/static:/app/priv/static
+      - solidyjs_db:/app/data
+    user: nobody
+    env_file:
+      - .env
+
+volumes:
+  solidyjs_db:
+    name: db # This ensures a consistent name without project prefix
+
+# configs:

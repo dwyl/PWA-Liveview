@@ -1,6 +1,6 @@
 import Config
 
-config :solidyjs, Solidyjs.Repo, database: "./db", default_transaction_mode: :immediate
+config :solidyjs, Solidyjs.Repo, default_transaction_mode: :immediate
 
 # Note we also include the path to a cache manifest
 # containing the digested version of static files. This
