@@ -32,7 +32,8 @@ RUN apt-get update -y && apt-get install -y \
   node --version && \
   npm --version
 
-RUN npm install -g pnpm && pnpm self-update
+RUN npm install -g pnpm 
+RUN pnpm self-update
 
 # prepare build dir
 WORKDIR /app
@@ -119,8 +120,8 @@ RUN mkdir -p /app/data && \
 USER nobody
 
 # Use JSON format for CMD to properly handle signals
-CMD ["/bin/sh", "-c", "mkdir -p /app/data && chown -R nobody:nogroup /app/data && chmod -R 777 /app/data && /app/bin/server"]
-
+# CMD ["/bin/sh", "-c", "mkdir -p /app/data && chown -R nobody:nogroup /app/data && chmod -R 777 /app/data && /app/bin/server"]
+CMD ["/bin/sh", "-c", "mkdir -p /app/data && /app/bin/server"]
 # If using an environment that doesn't automatically reap zombie processes, it is
 # advised to add an init process such as tini via `apt-get install`
 # above and adding an entrypoint. See https://github.com/krallin/tini for details

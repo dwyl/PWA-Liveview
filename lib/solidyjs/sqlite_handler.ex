@@ -30,9 +30,10 @@ defmodule SqliteHandler do
 
   @impl true
   def init([db, name]) do
-    Logger.info("Starting DB #{inspect(db)}")
     db_dir = Path.dirname(db)
     File.mkdir_p!(db_dir)
+
+    Logger.info("Starting DB #{inspect(db)}")
 
     # Ensure the database file exists and has correct permissions
     if !File.exists?(db) do
@@ -42,7 +43,7 @@ defmodule SqliteHandler do
 
     # Ensure no existing connections
 
-    case Sqlite3.open(db) do
+    case Sqlite3.open(db, mode: :readwrite) do
       {:ok, conn} ->
         # Set pragmas for better performance and reliability
         # Set busy timeout to 5000ms

@@ -164,7 +164,7 @@ export default function FormCities(props) {
         autocomplete="off"
       />
       <Show when={isOpen() && suggestions().length > 0}>
-        <ul class="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-auto">
+        <ul class="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-auto">
           <For each={suggestions()}>
             {(city) => (
               <li

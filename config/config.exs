@@ -1,10 +1,3 @@
-# This file is responsible for configuring your application
-# and its dependencies with the aid of the Config module.
-#
-# This configuration file is loaded before any dependency and
-# is restricted to this project.
-
-# General application configuration
 import Config
 
 config :solidyjs,
@@ -14,8 +7,9 @@ config :solidyjs,
   ecto_repos: [Solidyjs.Repo]
 
 config :solidyjs, Solidyjs.Repo,
-  database: Path.expand("../data/airports.db", Path.dirname(__ENV__.file)),
-  pool_size: String.to_integer(System.get_env("POOL_SIZE") || "5"),
+  adapter: Ecto.Adapters.SQLite3,
+  database: Path.expand("../db/airports.db", Path.dirname(__ENV__.file)),
+  pool_size: 5,
   show_sensitive_data_on_connection_error: true
 
 config :exqlite, force_build: false
@@ -29,15 +23,6 @@ config :solidyjs, SolidyjsWeb.Endpoint,
   ],
   pubsub_server: :pubsub,
   live_view: [signing_salt: "zhtHGb8Q"]
-
-# Configure esbuild (the version is required)
-# config :esbuild, :version, "0.24.2"
-#   solidyjs: [
-#     args:
-#       ~w(js/app.js --bundle --target=es2017 --outdir=../priv/static/assets --external:/fonts/* --external:/images/*),
-#     cd: Path.expand("../assets", __DIR__),
-#     env: %{"NODE_PATH" => Path.expand("../deps", __DIR__)}
-#   ]
 
 # Configure tailwind (the version is required)
 config :tailwind,

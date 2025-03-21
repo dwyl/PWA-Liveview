@@ -8,7 +8,7 @@ defmodule Solidyjs.Application do
   @impl true
   def start(_type, _args) do
     start_ets_tables()
-    Solidyjs.Release.migrate()
+    # Solidyjs.Release.migrate()
 
     children = [
       SolidyjsWeb.Telemetry,

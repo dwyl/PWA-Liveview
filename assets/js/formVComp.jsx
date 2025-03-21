@@ -63,19 +63,23 @@ export const FormVComponent = async (props) => {
     () => (
       <>
         {isInitialized() ? (
-          <form onSubmit={handleSubmit}>
-            <FormCities
-              cities={cities()}
-              inputType="departure"
-              label="Departure City"
-              userID={userID}
-            />
-            <FormCities
-              cities={cities()}
-              inputType="arrival"
-              label="Arrival City"
-              userID={userID}
-            />
+          <form onSubmit={handleSubmit} class="relative">
+            <div class="relative z-20">
+              <FormCities
+                cities={cities()}
+                inputType="departure"
+                label="Departure City"
+                userID={userID}
+              />
+            </div>
+            <div class="relative z-10">
+              <FormCities
+                cities={cities()}
+                inputType="arrival"
+                label="Arrival City"
+                userID={userID}
+              />
+            </div>
             <div class="flex gap-4 mt-4 justify-center">
               <button
                 class="w-32 px-4 py-2 bg-bisque text-midnightblue rounded-lg shadow-md hover:bg-midnightblue hover:text-bisque focus:outline-none active:bg-bisque active:text-midnightblue"
