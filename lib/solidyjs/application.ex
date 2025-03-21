@@ -14,9 +14,9 @@ defmodule Solidyjs.Application do
       SolidyjsWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:solidyjs, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: :pubsub},
+      SolidyjsWeb.Endpoint,
       Solidyjs.Repo,
-      {SqliteHandler, [Application.fetch_env!(:solidyjs, Solidyjs.Repo)[:database], "airports"]},
-      SolidyjsWeb.Endpoint
+      {SqliteHandler, [Application.fetch_env!(:solidyjs, Solidyjs.Repo)[:database], "airports"]}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

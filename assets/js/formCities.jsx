@@ -22,17 +22,17 @@ export default function FormCities(props) {
 
   // Initialize input from store on mount
   onMount(() => {
-    console.log(`FormCities mounted for ${props.inputType}`);
+    // console.log(`FormCities mounted for ${props.inputType}`);
 
     // Check if there's an existing value in the store for the input type
     if (state.selection.has(props.inputType)) {
       const airport = snapshot(state.selection.get(props.inputType));
       if (airport && (airport.displayText || airport.name)) {
         setInputValue(airport.displayText || airport.name);
-        console.log(
-          `Initialized ${props.inputType} from store:`,
-          airport.displayText || airport.name
-        );
+        // console.log(
+        //   `Initialized ${props.inputType} from store:`,
+        //   airport.displayText || airport.name
+        // );
       }
     }
   });
@@ -54,7 +54,7 @@ export default function FormCities(props) {
 
   // Clean up the subscription on unmount
   onCleanup(() => {
-    console.log(`Cleaning up FormCities for ${props.inputType}`);
+    // console.log(`Cleaning up FormCities for ${props.inputType}`);
     unsubscribe();
   });
 
@@ -74,7 +74,7 @@ export default function FormCities(props) {
   // Effect to update suggestions based on input value
   createEffect(() => {
     const value = inputValue();
-    console.log("createEffect", value);
+    // console.log("createEffect", value);
 
     if (value.length >= 2) {
       const filteredSuggestions = filterCities(value);
@@ -88,7 +88,7 @@ export default function FormCities(props) {
 
   // Handle city selection from the dropdown
   const handleSelect = (city) => {
-    console.log(`Selected city for ${props.inputType}:`, city);
+    // console.log(`Selected city for ${props.inputType}:`, city);
 
     // Format display text
     const airportName = city.name || "Unknown Airport";
@@ -130,21 +130,21 @@ export default function FormCities(props) {
     setSuggestions([]);
 
     // Update global state with the selected marker data
-    console.log(`Updating state.selection for ${props.inputType}:`, markerData);
+    // console.log(`Updating state.selection for ${props.inputType}:`, markerData);
     state.selection.set(props.inputType, markerData);
   };
 
   // Handle input change and clear selection if input is empty
   const handleInputChange = (event) => {
     const newValue = event.target.value;
-    console.log(`Input changed for ${props.inputType}:`, newValue);
+    // console.log(`Input changed for ${props.inputType}:`, newValue);
     setInputValue(newValue);
 
     // Clear selection from store if input is emptied
     if (!newValue && state.selection.has(props.inputType)) {
-      console.log(
-        `Clearing selection for ${props.inputType} because input is empty`
-      );
+      // console.log(
+      //   `Clearing selection for ${props.inputType} because input is empty`
+      // );
       state.selection.delete(props.inputType);
     }
   };

@@ -71,6 +71,7 @@ defmodule SqliteHandler do
 
     if !File.exists?(csv_path) do
       Logger.info("CSV file not found, downloading...")
+
       Airports.download()
     end
 

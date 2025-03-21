@@ -11,9 +11,9 @@
 #   - https://pkgs.org/ - resource for finding needed packages
 #   - Ex: hexpm/elixir:1.18.1-erlang-27.2-debian-bullseye-20250113-slim
 #
-ARG ELIXIR_VERSION=1.18.2
-ARG OTP_VERSION=27.2
-ARG DEBIAN_VERSION=bullseye-20250113-slim
+ARG ELIXIR_VERSION=1.18.3
+ARG OTP_VERSION=27.3
+ARG DEBIAN_VERSION=bullseye-20250317-slim
 
 ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
 ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"
@@ -119,12 +119,7 @@ RUN mkdir -p /app/data && \
 
 USER nobody
 
-# Use JSON format for CMD to properly handle signals
-# CMD ["/bin/sh", "-c", "mkdir -p /app/data && chown -R nobody:nogroup /app/data && chmod -R 777 /app/data && /app/bin/server"]
+EXPOSE 4000
 CMD ["/bin/sh", "-c", "mkdir -p /app/data && /app/bin/server"]
-# If using an environment that doesn't automatically reap zombie processes, it is
-# advised to add an init process such as tini via `apt-get install`
-# above and adding an entrypoint. See https://github.com/krallin/tini for details
-# ENTRYPOINT ["/tini", "--"]
 
 
