@@ -41,7 +41,7 @@ npm-debug.log
 /zig-wasm/.zig-cache/
 /zig-wasm/zig-out/
 
-
+/lib/old_files/
 /assets/.env
 /db/
 .env
