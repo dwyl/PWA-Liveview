@@ -45,3 +45,4 @@ npm-debug.log
 /assets/.env
 /db/
 .env
+/.vscode/

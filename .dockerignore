@@ -30,6 +30,7 @@
 /test/
 /tmp/
 .elixir_ls
+.vscode
 
 # Mix artifacts
 /_build/
@@ -44,3 +45,4 @@ erl_crash.dump
 /assets/oldjs/
 /priv/static/assets/
 /priv/static/cache_manifest.json
+/lib/old_files/
