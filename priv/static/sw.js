@@ -4864,13 +4864,17 @@ precacheAndRoute([{
   "revision": null
 }, {
   "url": "manifest.webmanifest",
-  "revision": "eeebd8da55eaab73f22eb1afe6b4e81d"
+  "revision": "2d68e4811266de768b3f96aa2382c040"
 }], {});
 cleanupOutdatedCaches();
 registerRoute(({
   url
 }) => url.origin === "https://api.maptiler.com/", new StaleWhileRevalidate({
   "cacheName": "tiles",
+  "fetchOptions": {
+    "mode": "cors",
+    "credentials": "omit"
+  },
   plugins: [new ExpirationPlugin({
     maxEntries: 200,
     maxAgeSeconds: 86400,

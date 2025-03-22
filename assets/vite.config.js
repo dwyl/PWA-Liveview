@@ -41,10 +41,7 @@ const buildOps = {
       "js/pwaHook.js",
       "js/configureTopbar.js",
       "js/initYJS.js",
-      // "js/solHook.js",
-      // "js/solYHook.js",
       "js/yHook.js",
-      // "js/SolidComp.jsx",
       "js/SolidYComp.jsx",
       "js/counter.jsx",
       "js/bins.jsx",
@@ -54,12 +51,9 @@ const buildOps = {
       "js/valtioObservers.js",
       "js/initMap.js",
       "js/mapVHook.js",
-      // "js/mapHookOrigin.js",
       "wasm/great_circle.wasm",
       "js/formVHook.js",
       "js/formVComp.jsx",
-      // "js/formHook.js",
-      // "js/formComp.jsx",
       "js/formCities.jsx",
     ],
     output: {
@@ -138,15 +132,18 @@ const Scripts = {
 };
 
 const Tiles = {
-  // urlPattern: ({ url }) => url.origin === "https://tile.openstreetmap.org",
   urlPattern: ({ url }) => url.origin === "https://api.maptiler.com/",
   handler: "StaleWhileRevalidate",
   options: {
     cacheName: "tiles",
     expiration: {
-      maxEntries: 200, // Adjust based on your needs
+      maxEntries: 200,
       maxAgeSeconds: 60 * 60 * 24, // 1 day
       purgeOnQuotaError: true,
+    },
+    fetchOptions: {
+      mode: "cors",
+      credentials: "omit",
     },
     plugins: [
       {

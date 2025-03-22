@@ -1,133 +1,1226 @@
-# Solidyjs
+# Phoenix LiveView PWA with SolidJS
 
-An Elixir-LiveView webapp with a real-time collaborative system with offline support (PWA).
+## Table of Contents
 
-Ingredients are:
+- [What](#what)
+  - [Page-Specific State](#page-specific-state)
+  - [Scope](#scope)
+  - [Performance](#performance)
+  - [Why](#why)
+- [How](#how)
+  - [Technical Cutover Overview](#technical-cutover-overview)
+  - [Quick Implementation Guide](#quick-implementation-guide)
+  - [Build Tool Evolution](#build-tool-evolution)
+  - [Offline Support](#offline-support)
+  - [Content Security Policy](#content-security-policy)
+    - [Cross-Origin Isolation](#cross-origin-isolation)
+  - [Component Integration](#component-integration)
+  - [State Management](#state-management)
+  - [State Synchronization Flow](#state-synchronization-flow)
+- [Development](#development)
+  - [Prerequisites](#prerequisites)
+  - [Docker Support](#docker-support)
+  - [Installation](#installation)
+  - [Environment Configuration](#environment-configuration)
+  - [Development Environment](#development-environment)
+  - [Network Resilience](#network-resilience)
+  - [Future Improvements](#future-improvements)
 
-- `Phoenix LiveView`
-- [`Y.js` & `y-indexeddb`] or [`Valtio` & `localStorage`]
-- `Vite`-plugin-PWA & `Workbox`
-- `SolidJS`
-- `Leafletjs`& MapTiler (for vector tiles)
+## What
 
-## CSP evaluator
+A modern Progressive Web App (PWA) that combines Phoenix LiveView's real-time capabilities with SolidJS's reactive UI, featuring:
 
-<https://csp-evaluator.withgoogle.com/>
+- Real-time collaboration through WebSocket
+- Full offline support and navigation
+- Seamless state synchronization
+- Cached page navigation
 
-## Guide
+## Page-Specific State
 
-<https://vite-pwa-org.netlify.app/guide/>
+This application demonstrates two different approaches to state management:
+
+**Stock Counter Page (path `/`)**: Uses Yjs (CRDT)
+
+- Handles concurrent edits from multiple offline clients
+- Automatically resolves conflicts using CRDT (Conflict-free Replicated Data Type)
+- Persists state in IndexedDB for offline availability
+- Synchronizes state across tabs and with server when reconnecting
+
+**Map Page (path `/map`)**: Uses Valtio
+
+- Simple browser-only state management for geographical points
+- No need for CRDT as map interactions are single-user and browser-local
+- Lighter weight solution when complex conflict resolution isn't needed
+- Perfect for ephemeral UI state that doesn't need cross-client sync
+
+## Scope
+
+A two-page collaborative real-time webapp with offline navigation capabilities (for previously visited pages):
+
+1. **Stock Manager** (`/`)
+   - Real-time collaborative stock level visualization
+   - Animated read-only `<input type="range"/>` interface
+   - CRDT-based state synchronization across users
+   - Offline-first with IndexedDB persistence
+   <br/>
+   <div align="center"><img width="1425" alt="Screenshot 2024-12-29 at 13 15 19" src="https://github.com/user-attachments/assets/f5e68b4d-6229-4736-a4b3-a60fc813b6bf" /></div>
+   <br/>
+2. **Flight Map** (`/map`)
+
+   - Interactive route planning with departure and arrival points
+   - Real-time route sharing across users
+   - High-performance great circle path computation:
+     - Implemented in Zig, compiled to WebAssembly
+     - Works offline for CPU-intensive calculations
+     - Rendered on Leaflet canvas with vector tiles
+   - Efficient map rendering:
+     - Vector tiles via MapTiler for minimal cache size
+     - Smooth flight animation using JavaScript
+
+   > 💡 **Note**: Install `topbar` as an npm package instead of using the vendor copy to avoid MapTiler integration issues
+
+<br/>
+<div align="center"><img width="635" alt="Screenshot 2024-12-30 at 07 39 51" src="https://github.com/user-attachments/assets/2eb459e6-29fb-4dbb-a101-841cbad5af95" /></div>
+<br/>
+
+## Performance
+
+Through aggressive caching and intelligent code splitting strategies:
+
+- First Contentful Paint (FCP): **0.4s**
+- Full Page Render (with map and WASM): **1.0s**
+
+These impressive metrics are achieved through:
+
+- Efficient WASM module loading
+- Vector tiles for map rendering
+- Strategic asset caching
+- Smart code splitting
+
+<div align="center"><img width="619" alt="Screenshot 2024-12-28 at 04 45 26" src="https://github.com/user-attachments/assets/e6244e79-2d31-47df-9bce-a2d2a4984a33" /></div>
+
+## Why
+
+Traditional Phoenix LiveView applications face several challenges in offline scenarios:
+
+1. **Offline Interactivity**: Some applications need to maintain interactivity even when offline, preventing a degraded user experience.
+
+2. **WebSocket Limitations**: LiveView's WebSocket architecture isn't naturally suited for PWAs, as it requires constant connection for functionality.
+
+3. **Page Caching**: While static pages can be cached, WebSocket-rendered pages require special handling for offline access.
+
+4. **State Management**: We use different approaches based on the page requirements (see [Page-Specific State](#page-specific-state) for details)
+
+This project demonstrates how to overcome these challenges by combining LiveView with a reactive JavaScript framework (SolidJS).
+
+> **Note**: This implementation focuses on two static routes: "/" and "/map".
+
+## How
+
+### Technical Cutover Overview
+
+1. **Security Hardening**
+
+   - Enhanced CSP with Trusted Types enforcement in production
+   - Strict CORS and WebSocket origin validation
+   - Improved service worker security boundaries
+
+2. **Performance Optimization**
+
+   - Intelligent caching strategies per resource type
+   - Y.js CRDT for conflict-free state sync
+   - Optimized asset bundling with Vite
+
+3. **Developer Experience**
+
+   - Streamlined LiveView-SolidJS integration
+   - Enhanced type safety across the stack
+   - Improved error handling and debugging
+
+4. **User Experience**
+   - Faster initial page loads
+   - Seamless offline functionality
+   - Smoother real-time updates
+
+Follow the implementation guide below to apply these improvements.
+
+### Quick Implementation Guide
+
+1. **Application State Management** (`appV.js`)
+
+   ```javascript
+   // Configuration for routes and polling
+   const CONFIG = {
+     ROUTES: Object.freeze(["/", "/map"]),
+     POLL_INTERVAL: 10_000,
+     CACHE_NAME: "lv-pages",
+   };
+
+   const AppState = {
+     paths: new Set(),
+     status: "checking",
+     isOnline: true,
+     interval: null,
+   };
+
+   // Initialize application with online/offline handling
+   document.addEventListener("DOMContentLoaded", async () => {
+     AppState.status = (await checkServer()) ? "online" : "offline";
+     updateConnectionStatusUI(AppState.status);
+     startPolling(AppState.status);
+   });
+   ```
+
+2. **Intelligent Page Caching**
+
+   > **Important**: For proper caching to work, we must calculate and include the `Content-Length` header using `TextEncoder`. This ensures the cached response is handled correctly by the browser.
+   > **Note**: We use a `Set` to track which pages have been cached (`AppState.paths`). This prevents redundant caching of the same page and ensures each route is only cached once, improving performance and reducing unnecessary storage usage.
+   > **Implementation**: Pages are cached using the browser's Cache API (`caches.open()`), which is part of Service Workers and provides a programmatic way to store network requests and responses. This is more powerful than localStorage or IndexedDB for storing complete HTML pages with headers.
+
+   ```javascript
+   // Cache current page if it's in the configured routes
+   async function addCurrentPageToCache({ current, routes }) {
+     await navigator.serviceWorker.ready;
+     const newPath = new URL(current).pathname;
+
+     // Only cache configured routes once
+     if (!routes.includes(newPath) || AppState.paths.has(newPath)) return;
+
+     if (newPath === window.location.pathname) {
+       AppState.paths.add(newPath);
+       const htmlContent = document.documentElement.outerHTML;
+       const contentLength = new TextEncoder().encode(htmlContent).length;
+
+       const response = new Response(htmlContent, {
+         headers: {
+           "Content-Type": "text/html",
+           "Content-Length": contentLength,
+         },
+         status: 200,
+       });
+
+       const cache = await caches.open(CONFIG.CACHE_NAME);
+       return cache.put(current, response);
+     }
+   }
+
+   // Monitor navigation events
+   navigation.addEventListener("navigate", async ({ destination: { url } }) => {
+     return addCurrentPageToCache({ current: url, routes: CONFIG.ROUTES });
+   });
+   ```
+
+## Build Tool Evolution
+
+For standard Phoenix development, `Esbuild` is comfortable and perfect. It's fast, well integrated with Phoenix, and handles most use cases elegantly.
+
+<br/><details>
+
+  <summary>Your `build.js` looks like this</summary>
+
+```js
+import { context, build } from "esbuild";
+import { solidPlugin } from "esbuild-plugin-solid";
+
+const args = process.argv.slice(2);
+const watch = args.includes("--watch");
+const deploy = args.includes("--deploy");
+console.log(args);
+
+let opts = {
+  entryPoints: [
+    "./js/app.js",
+    "./js/bins",
+    "./js/counter",
+    "./js/SolidComp",
+    "./js/initYJS",
+    "./js/solHook",
+    "./wasm/great_circle.wasm",
+  ],
+  bundle: true,
+  logLevel: "info",
+  target: "esnext",
+  outdir: "../priv/static/assets",
+  external: ["*.css", "fonts/*", "images/*"],
+  loader: {
+    ".js": "jsx",
+    ".svg": "file",
+    ".png": "file",
+    ".jpg": "file",
+    ".wasm": "file",
+  },
+  plugins: [solidPlugin()],
+  nodePaths: ["../deps"],
+  format: "esm",
+};
+
+if (deploy) {
+  opts = {
+    ...opts,
+    minify: true,
+    splitting: true,
+    metafile: true,
+  };
+  await build(opts);
+  // fs.writeFileSync("meta.json", JSON.stringify(result.metafile, null, 2));
+  process.exit(0);
+}
+
+if (watch) {
+  context(opts)
+    .then(async (ctx) => {
+      await ctx.watch();
+
+      process.stdin.on("close", () => {
+        process.exit(0);
+      });
+
+      process.stdin.resume();
+    })
+    .catch((error) => {
+      console.log(`Build error: ${error}`);
+      process.exit(1);
+    });
+}
+```
+
+with a watcher run as a command in `Elixir`:
+
+```elixir
+# config.dev.exs
+wtachers: {
+  node: ["build.js", "--watch", cd: Path.expand("../assets", __DIR__)]
+]
+```
+
+</details>
+<br/>
+
+### The Case for Vite
+
+While Esbuild excels at basic bundling, certain advanced features pushed us toward Vite:
+
+1. **PWA Requirements**:
+
+   - Service Worker generation and management
+   - Offline caching strategies
+   - Web manifest handling
+
+2. **Advanced Asset Handling**:
+   - Sophisticated code splitting with dynamic imports
+   - Better WASM integration
+   - Improved HMR for complex apps
+
+> **Why Vite?** While Phoenix traditionally uses Esbuild, Vite provides a more comprehensive development experience for modern web apps:
+>
+> - Seamless PWA setup through `vite-plugin-pwa` with automatic Workbox configuration (vs manual service worker setup with Esbuild)
+> - First-class SolidJS support via `vite-plugin-solid` with proper JSX handling and HMR
+> - Dynamic imports for code splitting
+> - Excellent WASM integration through `vite-plugin-wasm` for our Zig-compiled great circle calculations module
+> - Development-friendly features like instant HMR and proper source maps
+> - All of this integrates cleanly with Phoenix's asset pipeline, making it a superior choice over Esbuild's more basic asset handling
+
+```javascript
+// vite.config.js
+import { VitePWA } from "vite-plugin-pwa";
+import solidPlugin from "vite-plugin-solid";
+import wasm from "vite-plugin-wasm";
+
+// PWA manifest configuration
+const manifestOpts = {
+  name: "SolidYjs",
+  short_name: "SolidYjs",
+  display: "standalone",
+  scope: "/",
+  start_url: "/",
+  description: "A demo LiveView webapp with offline enabled",
+  theme_color: "#ffffff",
+  icons: [...]
+};
+
+// Caching strategies
+const cacheRules = [
+  {
+    urlPattern: ({ url }) => url.pathname.startsWith("/live/longpoll"),
+    handler: "NetworkOnly"
+  },
+  {
+    urlPattern: ({ url }) => url.pathname.startsWith("/live/websocket"),
+    handler: "NetworkOnly"
+  },
+  {
+    urlPattern: ({ url }) => ["/assets/", "/images/"].some(path => url.pathname.startsWith(path)),
+    handler: "CacheFirst",
+    options: {
+      cacheName: "static",
+      expiration: { maxAgeSeconds: 60 * 60 * 24 * 365 } // 1 year
+    }
+  },
+  {
+    urlPattern: ({ url }) => !url.pathname.startsWith("/live"),
+    handler: "NetworkFirst",
+    options: {
+      cacheName: "pages",
+      expiration: { maxEntries: 10 } // Only keep 10 page versions
+    }
+  }
+];
+```
+
+### Important Configuration Notes
+
+1. **SolidJS Configuration**
+
+   > ❗️ For the `solidPlugin`, pass JSX extensions to `resolver.extension` to enable JSX compilation:
+
+   ```js
+   resolve: {
+     extensions: [".mjs", ".js", ".ts", ".jsx", ".tsx", ".json"],
+   }
+   ```
+
+   This allows SolidJS to identify and parse component files correctly. Without these extensions:
+
+   - Components won't be recognized as JSX
+   - Hot Module Replacement may fail for components
+   - TypeScript support will be limited
+
+2. **VitePWA Setup**
+
+   > ❗️ Set `workbox.inlineWorkboxRuntime: true` in the VitePWA configuration to generate a single `sw.js` file.
+
+   This is crucial because:
+
+   - Without this setting, Vite/Workbox creates timestamped files in `priv/static`
+   - Phoenix cannot serve these timestamped files (conflicts with asset pipeline)
+   - With `inlineWorkboxRuntime: true`, only `sw.js` is generated, which Phoenix can serve properly
+
+   > 💡 **Tip**: For service worker debugging:
+   >
+   > - Check Chrome's DevTools > Application > Service Workers
+   > - Look for `sw.js` in `priv/static`
+   > - Verify MIME type is `application/javascript`
+   > - Monitor console for registration errors
+
+3. **Additional Phoenix Configuration**
+
+   > ❗️ Since Phoenix LiveView doesn't use a traditional `index.html`, configure Vite accordingly:
+
+   ```js
+   // vite.config.js
+   export default {
+     plugins: [
+       VitePWA({
+         // Disable index.html fallback since we use LiveView
+         navigateFallback: null,
+         // ... other options
+       }),
+     ],
+   };
+   ```
+
+   > ✅ Add PWA files to Phoenix's static paths. These files are generated by Vite:
+
+   ```elixir
+   # endpoint.ex
+   def static_paths do
+     ~w(assets fonts images favicon.ico robots.txt sw.js manifest.webmanifest)
+   end
+   ```
+
+   This ensures Phoenix can serve the service worker and manifest files generated by Vite.
+
+   ### Workbox Routes Strategy
+
+   Here's how we implement caching strategies in our PWA:
+
+   ```js
+   // vite.config.js
+   VitePWA({
+     workbox: {
+       runtimeCaching: [
+         {
+           urlPattern: /\.(?:png|jpg|jpeg|svg|gif)$/,
+           handler: "CacheFirst",
+           options: {
+             cacheName: "images",
+             expiration: {
+               maxEntries: 50,
+               maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+             },
+           },
+         },
+         {
+           urlPattern: /\/api\/.*$/,
+           handler: "NetworkFirst",
+           options: {
+             cacheName: "api-cache",
+             networkTimeoutSeconds: 5,
+           },
+         },
+       ],
+     },
+   });
+   ```
+
+#### Pattern Matching Order
+
+Workbox evaluates patterns in the order they appear in `runtimeCaching`. This means:
+
+- More specific patterns should come first
+- Generic patterns should come last
+- Overlapping patterns will use the first match
+
+Here's how we configure different caching strategies for various resources:
+
+```js
+// Static assets (images, etc)
+const StaticAssets = {
+  urlPattern: ({ url }) => url.pathname.startsWith("/assets/"),
+  handler: "CacheFirst",
+  options: {
+    cacheName: "static",
+    expiration: {
+      maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+    },
+  },
+};
+
+// LiveView specific routes
+const LVLongPoll = {
+  urlPattern: ({ url }) => url.pathname.startsWith("/live/longpoll"),
+  handler: "NetworkOnly",
+};
+
+const LVWebSocket = {
+  urlPattern: ({ url }) => url.pathname.startsWith("/live/websocket"),
+  handler: "NetworkOnly", // WebSockets must use network
+};
+
+// Map tiles with optimized caching
+const Tiles = {
+  urlPattern: ({ url }) => url.hostname === "tile.openstreetmap.org",
+  handler: "StaleWhileRevalidate",
+  options: {
+    cacheName: "tiles",
+    expiration: {
+      maxEntries: 200, // Limit cache size
+    },
+  },
+};
+
+// Dynamic pages
+const Pages = {
+  urlPattern: ({ url }) => !url.pathname.startsWith("/assets/"),
+  handler: "NetworkFirst",
+  options: {
+    cacheName: "pages",
+    expiration: {
+      maxEntries: 10, // Keep last 10 pages
+    },
+  },
+};
+```
+
+> ℹ️ **Note**: The order matters! More specific patterns (like `/live/websocket`) should come before generic ones (like `/assets/`).
+
+#### Available Strategies
+
+1.  **CacheFirst** 💾 For Static Assets
+
+    ```js
+    const StaticAssets = {
+      urlPattern: ({ url }) => url.pathname.startsWith("/assets/"),
+      handler: "CacheFirst",
+      options: {
+        cacheName: "static",
+        expiration: { maxAgeSeconds: 60 * 60 * 24 * 365 }, // 1 year
+      },
+    };
+    ```
+
+2.  **NetworkFirst** 🌐 For Dynamic Pages
+
+    ```js
+    const Pages = {
+      urlPattern: ({ url }) => !url.pathname.startsWith("/assets/"),
+      handler: "NetworkFirst",
+      options: {
+        cacheName: "pages",
+        expiration: { maxEntries: 10 }, // Keep last 10 pages
+      },
+    };
+    ```
+
+3.  **StaleWhileRevalidate** ⚡️ For Map Tiles
+
+    ```js
+    const Tiles = {
+      urlPattern: ({ url }) => url.hostname === "tile.openstreetmap.org",
+      handler: "StaleWhileRevalidate",
+      options: {
+        cacheName: "tiles",
+        expiration: { maxEntries: 200 }, // Limit cache size
+      },
+    };
+    ```
+
+4.  **NetworkOnly** 🔄 For LiveView
+
+    ```js
+    const LVWebSocket = {
+      urlPattern: ({ url }) => url.pathname.startsWith("/live/websocket"),
+      handler: "NetworkOnly", // WebSockets must use network
+    };
+
+    const LVLongPoll = {
+      urlPattern: ({ url }) => url.pathname.startsWith("/live/longpoll"),
+      handler: "NetworkOnly",
+    };
+    ```
+
+5.  **CacheOnly** 💾
+    - Perfect for: Offline-first content
+    - Process: Serve only from cache
+    - Best for: App shell, critical assets
+
+#### Configuration Options Example
+
+```js
+{
+  cacheName: 'app-v1',           // Cache identifier
+  expiration: {
+    maxEntries: 50,              // Max items
+    maxAgeSeconds: 86400         // 24h lifetime
+  },
+  networkTimeoutSeconds: 3,      // Network timeout
+  plugins: []                    // Custom behaviors
+}
+```
+
+> 💡 **Tip**: Choose strategies based on your data's freshness requirements and network conditions.
+
+4. **Connection Management**
+
+   ```javascript
+   // Server reachability check
+   async function checkServer() {
+     try {
+       const response = await fetch("/connectivity", { method: "HEAD" });
+       return response.ok;
+     } catch (error) {
+       console.log("Server unreachable:", error);
+       return false;
+     }
+   }
+
+   // Start polling for connection status
+   async function startPolling(status, interval = CONFIG.POLL_INTERVAL) {
+     clearInterval(AppState.interval);
+     AppState.interval = setInterval(async () => {
+       const wasOnline = AppState.isOnline;
+       AppState.isOnline = await checkServer();
+
+       if (AppState.isOnline !== wasOnline) {
+         updateConnectionStatusUI(AppState.isOnline ? "online" : "offline");
+       }
+
+       // Reload page when coming back online
+       if (AppState.isOnline && status === "offline") {
+         window.location.reload();
+       }
+     }, interval);
+   }
+   ```
+
+## Tech Stack
+
+- **Backend**: Phoenix LiveView (real-time server)
+- **Frontend**: SolidJS (reactive UI framework)
+- **Build Tool**: Vite with PWA plugin
+- **State Management**: Choice of:
+  - Y.js with IndexedDB (CRDT-based)
+  - Valtio with localStorage (Proxy-based)
+- **Maps**: Leaflet.js with MapTiler
+
+## Setup Guide
+
+### 1. Phoenix Setup
+
+```bash
+# Create new Phoenix project with LiveView
+mix phx.new my_app --live
+cd my_app
+
+# Install dependencies
+mix deps.get
+```
+
+### 2. SolidJS Integration
+
+```bash
+# Install Node.js dependencies
+pnpm install solid-js vite @vitejs/plugin-solid vite-plugin-pwa workbox-window
+```
+
+Update `assets/vite.config.js`:
+
+```javascript
+import { defineConfig } from "vite";
+import solidPlugin from "@vitejs/plugin-solid";
+import { VitePWA } from "vite-plugin-pwa";
+
+export default defineConfig({
+  plugins: [
+    solidPlugin(),
+    VitePWA({
+      registerType: "autoUpdate",
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/api\.mapbox\.com\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "mapbox-cache",
+            },
+          },
+        ],
+      },
+      manifest: {
+        name: "My PWA App",
+        short_name: "PWA App",
+        theme_color: "#ffffff",
+        icons: [
+          // Add your icons here
+        ],
+      },
+    }),
+  ],
+  build: {
+    target: "esnext",
+  },
+});
+```
+
+### 3. LiveView Hook Setup
+
+Create `assets/js/hooks/solid-hook.js`:
+
+```javascript
+import { createRoot } from "solid-js";
+
+export const SolidComponent = {
+  mounted() {
+    const props = this.el.dataset;
+    createRoot(() => {
+      // Your SolidJS component here
+    });
+  },
+};
+```
+
+### 4. PWA Registration
+
+The PWA is registered in `assets/js/app.js` with proper update and offline handling:
+
+```javascript
+import { registerSW } from "virtual:pwa-register";
+
+const updateSW = registerSW({
+  onNeedRefresh() {
+    if (confirm("New version available! Update?")) {
+      updateSW();
+    }
+  },
+  onOfflineReady() {
+    console.log("App ready to work offline");
+  },
+  immediate: true,
+  periodicSyncForUpdates: 3600, // Check for updates every hour
+});
+```
+
+> 💡 **PWA Features**:
+>
+> - Automatic update detection and prompting
+> - Graceful offline mode transition
+> - Periodic background updates
+> - Immediate service worker registration
+
+The service worker is configured with:
+
+```js
+// vite.config.js
+VitePWA({
+  registerType: "autoUpdate",
+  manifest: manifestOpts,
+  workbox: {
+    globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+    cleanupOutdatedCaches: true,
+    sourcemap: true,
+  },
+});
+```
+
+## Content Security Policy
+
+Directive source: <https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy>
+
+Our CSP is configured to balance security with PWA functionality in "Router.ex" via a `plug`:
+
+```elixir
+@csp (case MIX_ENV do
+    :prod ->
+      "require-trusted-types-for 'script';script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src http://localhost:* ws://localhost:* https://api.maptiler.com/; img-src 'self' data: https://api.maptiler.com/; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' "
+
+    _ ->
+      "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src http://localhost:* ws://localhost:* https://api.maptiler.com/; img-src 'self' data: https://api.maptiler.com/; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' "
+  end)
+
+plug :put_secure_browser_headers, %{"content-security-policy" => @csp}
+```
+
+> 💡 **CSP Implementation Notes**:
+>
+> **Security Directives**
+>
+> - `require-trusted-types-for 'script'` - Enforces DOM XSS protection in production
+> - `script-src 'self' 'wasm-unsafe-eval'` - Allows only verified scripts and WASM
+> - `object-src 'none'` - Prevents plugin-based attacks
+>
+> **Resource Access**
+>
+> - `connect-src` - Enables WebSocket and map API connections
+> - `img-src` - Permits local and map tile images
+> - `worker-src` - Controls service worker scope
+>
+> **Framework Requirements**
+>
+> - `style-src 'unsafe-inline'` - Required for SolidJS reactivity
+> - `wasm-unsafe-eval` - Needed for WebAssembly features
+>
+> **Environment Differences**
+>
+> - Production enforces Trusted Types
+> - Development allows more permissive settings
+
+Validate your CSP using Google's evaluator: <https://csp-evaluator.withgoogle.com/>
+
+### Cross-Origin Isolation
+
+We implement strict origin isolation using Cross-Origin Opener Policy (COOP) and Cross-Origin Embedder Policy (COEP). This is configured in `Router.ex`:
+
+```elixir
+@security_headers %{
+  "content-security-policy" => @csp,
+  "cross-origin-opener-policy" => "same-origin",
+  "cross-origin-embedder-policy" => "require-corp"
+}
+
+plug :put_secure_browser_headers, @security_headers
+```
+
+> 💡 **COOP/COEP Benefits**:
+>
+> - Prevents cross-window attacks
+> - Enables use of `SharedArrayBuffer`
+> - Protects against Spectre-style attacks
+> - Isolates browsing context groups
+
+To ensure proper isolation:
+
+1. Set appropriate CORS headers for external resources
+2. Add `crossorigin` attribute to external scripts/styles
+3. Configure third-party services to support CORP/COEP
+4. Test cross-origin interactions in development
+
+## Development
+
+For development guide, see: <https://vite-pwa-org.netlify.app/guide/>
 
 ### Offline Support
 
-A service worker acts like a proxy that persists your HTML/JS/CSS in the web browser.
-When all data is persisted using service workers,
-you can even load your website without internet access.
+This PWA implements a comprehensive offline strategy using multiple technologies:
 
-Y.js's `IndexedDB` persistence handles offline support automatically.
+1. **Service Worker Cache**
 
-When offline:
+   ```js
+   // vite.config.js
+   workbox: {
+     globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+     runtimeCaching: [/* strategies defined above */]
+   }
+   ```
 
-- Users can still modify the stock locally
-- Changes are stored in IndexedDB
-- When back online, YJS will sync changes
+   - Caches static assets, HTML, and API responses
+   - Implements different strategies per resource type
+   - Handles cache cleanup and updates
 
-#### Flows
+2. **IndexedDB State Persistence**
+
+   ```js
+   // assets/js/state/index.js
+   export function createSyncedStore(name) {
+     const ydoc = new Y.Doc();
+     const persistence = new IndexeddbPersistence(name, ydoc);
+     const ymap = ydoc.getMap("data");
+     // ... state sync logic
+   }
+   ```
+
+   - Automatically persists Y.js document state
+   - Handles conflict resolution
+   - Syncs changes when back online
+
+3. **Connection Management**
+
+   ```js
+   export class ConnectionManager {
+     constructor(checkUrl = "/health", interval = 5000) {
+       this.checkUrl = checkUrl;
+       this.interval = interval;
+       this.isOnline = navigator.onLine;
+       this.startPolling();
+     }
+   }
+   ```
+
+   - Monitors connection status
+   - Gracefully handles offline transitions
+   - Automatically retries failed requests
+
+> 💡 **Offline Capabilities**:
+>
+> - Full app shell available offline
+> - Local data modifications preserved
+> - Automatic background sync
+> - Graceful degradation of features
+> - Clear offline status indicators
+
+## System Architecture
+
+### Data Flow Overview
+
+The application uses a hybrid architecture combining Phoenix LiveView with SolidJS:
 
 ```mermaid
-sequenceDiagram
-    participant Client
-    participant LiveView
-    participant YStore
+flowchart TB
+    subgraph Client["Client (Browser)"]
+        SW["Service Worker\nCache + Offline"]
+        SC["SolidJS Components\nUI + Reactivity"]
+        LVH["LiveView Hooks\nBridge Layer"]
+        Store["Y.js Store\nState Management"]
+        IDB[("IndexedDB\nPersistence")]
+    end
 
-    Client->>LiveView: Mount
-    LiveView->>YStore: get_snapshot("stock")
-    LiveView->>YStore: get_deltas("stock", 0)
-    YStore-->>LiveView: snapshot + deltas
-    LiveView->>Client: "y_init" event
-    Client->>Client: Apply snapshot + deltas
-    Client->>LiveView: Send queued deltas (if any)
-    LiveView->>YStore: Store with user_id
-    LiveView->>PubSub: Broadcast delta
+    subgraph Server["Server (Phoenix)"]
+        LV["LiveView\nServer Components"]
+        PS["PubSub\nReal-time Events"]
+        DB[("PostgreSQL\nData Store")]
+    end
+
+    SW -->|"Cache First"| SC
+    SC <-->|"Props/Events"| LVH
+    LVH <-->|"State Updates"| Store
+    Store <-->|"Persist"| IDB
+    LVH <-->|"WebSocket"| LV
+    LV <-->|"Broadcast"| PS
+    PS <-->|"CRUD"| DB
 ```
 
-```mermaid
-sequenceDiagram
-    participant ClientA
-    participant ServerYDoc
-    participant ClientB
+### Component Responsibilities
 
-    ClientA->>ServerYDoc: Send Y.js Update (Delta)
-    ServerYDoc->>ServerYDoc: CRDT Merge
-    ServerYDoc->>PersistentStorage: Save State
-    ServerYDoc->>ClientA: Acknowledge
-    ServerYDoc->>ClientB: Broadcast Update
-    ClientB->>ClientB: Apply Update
+1. **Client Side**
+
+   - Service Worker: Caching, offline support, PWA features
+   - SolidJS: UI components, reactivity, client-side state
+   - LiveView Hooks: Bridge between Phoenix and SolidJS
+   - Y.js Store: Conflict-free state management
+   - IndexedDB: Local data persistence
+
+2. **Server Side**
+
+   - LiveView: Server-rendered components, real-time updates
+   - PubSub: Event broadcasting, real-time messaging
+   - PostgreSQL: Persistent data storage
+
+### Key Interactions
+
+1. **UI Updates**
+
+   ```javascript
+   // assets/js/hooks/counter.js
+   export const Counter = {
+     mounted() {
+       createRoot(() => {
+         const [count, setCount] = createSignal(this.el.dataset.value);
+         // Component logic
+       });
+     },
+   };
+   ```
+
+2. **State Synchronization**
+
+   ```javascript
+   // assets/js/state/index.js
+   export function createSyncedStore(name) {
+     const ydoc = new Y.Doc();
+     new IndexeddbPersistence(name, ydoc);
+     return ydoc.getMap("data");
+   }
+   ```
+
+3. **State Initialization**
+
+   ```javascript
+   // lib/solidyjs_web/live/page_live.ex
+   def mount(_params, _session, socket) do
+     {:ok, assign(socket,
+       initial_state: get_initial_state(),
+       y_state: encode_yjs_state()
+     )}
+   end
+   ```
+
+> 💡 **Integration Notes**:
+>
+> - LiveView sends initial state and Y.js binary state
+> - Client merges server state with local IndexedDB data
+> - Conflicts are automatically resolved by Y.js CRDT
+> - Changes sync bidirectionally when online
+
+````mermaid
+
+### Component Integration
+
+The integration between Phoenix LiveView and SolidJS happens through hooks:
+
+1. **LiveView Template**
+
+   ```elixir
+   # lib/solidyjs_web/live/page_live.ex
+   defmodule SolidYjsWeb.PageLive do
+     use SolidYjsWeb, :live_view
+
+     def mount(_params, _session, socket) do
+       {:ok, assign(socket,
+         stocks: get_stocks(),
+         y_state: encode_yjs_state()
+       )}
+     end
+
+     def render(assigns) do
+       ~H"""
+       <div class="stock-manager"
+           id="stock-component"
+           phx-hook="StockManager"
+           data-stocks={Jason.encode!(@stocks)}
+           data-y-state={@y_state}>
+       </div>
+       """
+     end
+   end
+````
+
+1. **Hook Definition**
+
+   ```javascript
+   // assets/js/hooks/stock_manager.js
+   import { StockManager } from "../components/StockManager";
+   import { createSyncedStore } from "../state";
+
+   export const StockManagerHook = {
+     mounted() {
+       const store = createSyncedStore("stocks");
+       const props = {
+         stocks: JSON.parse(this.el.dataset.stocks),
+         yState: this.el.dataset.yState,
+         onUpdate: (changes) => this.pushEvent("update", changes),
+       };
+
+       createRoot(() => StockManager(props));
+     },
+   };
+   ```
+
+1. **SolidJS Component**
+
+   ```javascript
+   // assets/js/components/StockManager.jsx
+   import { createSignal, onMount } from "solid-js";
+   import { createStore } from "solid-js/store";
+
+   export function StockManager(props) {
+     const [stocks, setStocks] = createStore(props.stocks);
+
+     onMount(() => {
+       // Initialize Y.js state from server
+       if (props.yState) {
+         initializeState(props.yState);
+       }
+     });
+
+     return (
+       <div class="stock-grid">
+         {Object.entries(stocks).map(([id, stock]) => (
+           <StockCard
+             key={id}
+             stock={stock}
+             onUpdate={(changes) => {
+               setStocks(changes);
+               props.onUpdate(changes);
+             }}
+           />
+         ))}
+       </div>
+     );
+   }
+   ```
+
+1. **Hook Integration**
+
+   ```javascript
+   // assets/js/hooks/index.js
+   import { Counter } from "../components/Counter";
+
+   export const Hooks = {
+     SolidComponent: {
+       mounted() {
+         createRoot(() => {
+           const count = parseInt(this.el.dataset.count);
+           Counter({ initial: count });
+         });
+       },
+     },
+   };
+   ```
+
+#### Connection Status Detection
+
+Implement robust connection status detection using HEAD requests:
+
+```javascript
+// assets/js/connection.js
+export class ConnectionManager {
+  constructor(checkUrl = "/health", interval = 5000) {
+    this.checkUrl = checkUrl;
+    this.interval = interval;
+    this.isOnline = navigator.onLine;
+    this.listeners = new Set();
+  }
+
+  start() {
+    window.addEventListener("online", () => this.checkConnection());
+    window.addEventListener("offline", () => this.updateStatus(false));
+    this.pollId = setInterval(() => this.checkConnection(), this.interval);
+  }
+
+  async checkConnection() {
+    try {
+      const response = await fetch(this.checkUrl, {
+        method: "HEAD",
+        cache: "no-store",
+      });
+      this.updateStatus(response.ok);
+    } catch {
+      this.updateStatus(false);
+    }
+  }
+
+  updateStatus(isOnline) {
+    if (this.isOnline !== isOnline) {
+      this.isOnline = isOnline;
+      this.listeners.forEach((listener) => listener(isOnline));
+    }
+  }
+
+  onStatusChange(callback) {
+    this.listeners.add(callback);
+    return () => this.listeners.delete(callback);
+  }
+
+  stop() {
+    if (this.pollId) clearInterval(this.pollId);
+  }
+}
 ```
 
-```mermaid
-graph TD
-    A[LiveView] --> B[Update Log]
-    A --> C[State Snapshot]
-    B --> D[(ETS/SQLite)]
-    C --> D
-    D --> E[Delta Broadcast]
-    E --> F[Connected Clients]
+Usage in SolidJS component:
+
+```javascript
+import { createSignal, onMount, onCleanup } from "solid-js";
+import { ConnectionManager } from "../connection";
+
+export function App() {
+  const [isOnline, setIsOnline] = createSignal(true);
+  const connection = new ConnectionManager();
+
+  onMount(() => {
+    connection.start();
+    const cleanup = connection.onStatusChange(setIsOnline);
+    onCleanup(() => {
+      cleanup();
+      connection.stop();
+    });
+  });
+
+  return (
+    <div class={isOnline() ? "online" : "offline"}>
+      {isOnline() ? "Connected" : "Offline Mode"}
+    </div>
+  );
+}
 ```
 
-```mermaid
-flowchart TD
-    A[Client] --> B{First Connection?}
-    B -->|Yes| C[Get Full Snapshot]
-    B -->|No| D[Get Last Sequence]
-    C --> E[Apply Snapshot]
-    D --> F[Get Missing Deltas]
-    E --> G[Apply Queued Deltas]
-    F --> G
-    G --> H[Subscribe Live]
-```
+This implementation:
 
-### GET `HEAD`connection check request
+- Uses HEAD requests to minimize bandwidth
+- Handles browser online/offline events
+- Implements polling for reliable status checks
+- Provides clean event subscription API
+- Integrates smoothly with SolidJS reactivity
 
-Avoids downloading the body, The server returns the HTTP headers, so no headers, no connection.
+## Data Integration
 
-- `navigator.onLine` has limitations. After navigating offline, the browser incorrectly reports `navigator.onLine = true`. This prevents the online event from firing on reconnection.
+### External Data Sources
 
-For a reliable State Detection: The online and offline events alone cannot always determine connectivity, especially when the server is unreachable.
+The application integrates with the OpenFlights database for airport information:
 
-For a reliable State Detection:, one can implement a custom Polling: a server reachability check (via HEAD requests) ensures accurate detection of reconnection, independent of browser state.
+- Source: [OpenFlights.org](https://openflights.org/data.php)
+- Raw Data: [airports.dat](https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat)
 
-This is done by running `setInterval`
+### Data Schema
 
-Efficient Reloads: Using a reloaded flag in the polling logic allows the app to reload once on reconnection, avoiding redundant reloads or unnecessary complexity.
+The airport data follows this schema:
 
-This approach ensures consistent synchronization of client and server states while maintaining accurate offline/online indicators.
+| Field      | Description                     | Type        |
+| ---------- | ------------------------------- | ----------- |
+| Airport ID | Unique OpenFlights identifier   | Integer     |
+| Name       | Airport name (may include city) | String      |
+| City       | Main city served                | String      |
+| Country    | Location country/territory      | String      |
+| IATA       | 3-letter IATA code              | String/Null |
+| ICAO       | 4-letter ICAO code              | String/Null |
+| Latitude   | Decimal degrees (N+/S-)         | Float       |
+| Longitude  | Decimal degrees (E+/W-)         | Float       |
+| Altitude   | Height in feet                  | Integer     |
+| DST        | Daylight savings code           | Char        |
+| Timezone   | Olson format timezone           | String      |
+| Type       | Facility type                   | String      |
 
-### Airports list
+### Data Processing
 
-Link: <https://openflights.org/data.php>
+The application handles this data with:
 
-URL: <https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat>
+1. CSV parsing with proper quote handling
+2. Null value conversion (`\N` to null)
+3. Type casting (strings, floats, integers)
+4. Timezone normalization
+5. Spatial indexing for map display
 
-#### Fields
-
-- Airport ID: Unique OpenFlights identifier for this airport.
-- Name: Name of airport. May or may not contain the City name.
-- City: Main city served by airport. May be spelled differently from Name.
-- Country: Country or territory where airport is located. See Countries to cross-reference to ISO 3166-1 codes.
-- IATA: 3-letter IATA code. Null if not assigned/unknown.
-- ICAO: 4-letter ICAO code.
-- Latitude: Decimal degrees, usually to six significant digits. Negative is South, positive is North.
-- Longitude: Decimal degrees, usually to six significant digits. Negative is West, positive is East.
-- Altitude: In feet.
-- DST: Daylight savings time. One of E (Europe), A (US/Canada), S (South America), O (Australia), Z (New Zealand), N (None) or U (Unknown). See also: Help: Time
-- Tz: database timezone Timezone in "tz" (Olson) format, eg. "America/Los_Angeles".
-- Type: Type of the airport. Value "airport" for air terminals, "station" for train stations, "port" for ferry terminals and "unknown" if not known. In airports.csv, only type=airport is included.
-- Source
-
-## Next
-
-# Phoenix LiveView Collaborative App with offline first SolidJS components
+## Application Overview
 
 A real-time collaborative web application demonstrating offline-first capabilities using Phoenix LiveView, SolidJS, and state managers, `Y.js` with CRDT, and `Valtio`.
 
@@ -135,49 +1228,126 @@ The state manager bridges between the LiveView "hook" and the standalone SolidJS
 
 The app features a shared counter (stock value) that can be modified by multiple users simultaneously while maintaining state consistency both online and offline.
 
-## Architecture Overview - Stock counter with `Y.js`
+## State Management
+
+### Architecture Overview
 
 ```mermaid
 flowchart TB
-
-    subgraph Frontend
-        A[app.js] --> B[LiveSocket]
-        A --> C[Y.js Doc]
-        B --> D[YHook]
-        C --> D
-        D --> E[SolidJS Component]
-        E --> F[Counter]
-        C --> G[IndexedDB Provider]
+    subgraph Client
+        SW[Service Worker]
+        SC[SolidJS State]
+        YD[Y.js Document]
+        IDB[(IndexedDB)]
+        LVH[LiveView Hook]
     end
 
-    subgraph Backend
-        H[LiveView] --> I[PubSub]
-        I --> J[Stock Module <br> ETS Storage]
+    subgraph Server
+        PS[PubSub]
+        ETS[(ETS Cache)]
+        DB[(Database)]
     end
 
-    B <-- WS --> H
+    SC <--> YD
+    YD <--> IDB
+    YD <--> LVH
+    LVH <--> PS
+    PS <--> ETS
+    ETS <--> DB
+    SW --> SC
 ```
 
-### Online Mode
+### Implementation Details
 
-- `Phoenix LiveView` handles real-time communication via WebSocket
-- `SolidJS` components render through LiveView hooks
-- Y.js manages state synchronization with server-side persistence in ETS
-- `Workbox` caches specific routes (`/` and `/map`) for offline availability
-- Real-time updates broadcast via `Phoenix PubSub` to all connected clients
+#### Client-Side Implementation
 
-### Offline Mode
+```javascript
+// assets/js/state/index.js
+import * as Y from "yjs";
+import { IndexeddbPersistence } from "y-indexeddb";
+import { createStore } from "solid-js/store";
 
-- Service Worker serves cached pages
-- `SolidJS` component operates independently
-- `Y.js` with `IndexedDB` maintains local state
-- Automatic state reconciliation on reconnection
+export function createSyncedStore(name) {
+  const ydoc = new Y.Doc();
+  const persistence = new IndexeddbPersistence(name, ydoc);
+  const ymap = ydoc.getMap("data");
 
-## Key Components
+  const [state, setState] = createStore({
+    data: ymap.toJSON(),
+    status: "synced",
+  });
 
-### Server-Side (Phoenix LiveView)
+  ymap.observe(() => {
+    setState("data", ymap.toJSON());
+  });
 
-The `StockLive` module manages the real-time aspects:
+  return {
+    state,
+    update: (changes) => {
+      ymap.forEach((value, key) => {
+        if (changes[key] !== undefined) {
+          ymap.set(key, changes[key]);
+        }
+      });
+    },
+  };
+}
+```
+
+#### Server-Side Implementation
+
+```elixir
+# lib/solidyjs/state/store.ex
+defmodule Solidyjs.State.Store do
+  use GenServer
+  alias Phoenix.PubSub
+
+  def start_link(name) do
+    GenServer.start_link(__MODULE__, name, name: via_tuple(name))
+  end
+
+  def init(name) do
+    :ets.new(table_name(name), [:named_table, :set, :public])
+    {:ok, %{name: name}}
+  end
+
+  def handle_cast({:update, changes}, state) do
+    :ets.insert(table_name(state.name), changes)
+    PubSub.broadcast(Solidyjs.PubSub, topic(state.name), {:state_updated, changes})
+    {:noreply, state}
+  end
+
+  defp via_tuple(name), do: {:via, Registry, {Solidyjs.StateRegistry, name}}
+  defp table_name(name), do: :#{name}_store
+  defp topic(name), do: "state:#{name}"
+end
+```
+
+### Resilience Features
+
+#### Service Worker Cache
+
+- Static assets and routes cached
+- Configurable caching strategies
+- Automatic cache updates
+
+#### Local Storage
+
+- Y.js documents in IndexedDB
+- Automatic conflict resolution
+- Background sync support
+
+#### Recovery Mechanisms
+
+- Automatic reconnection handling
+- Delta-based updates
+- CRDT conflict resolution
+
+## System Components
+
+### Phoenix LiveView Integration
+
+The application's real-time features are managed through LiveView modules:
 
 ```elixir
 defmodule SolidyjsWeb.StockLive do
@@ -400,13 +1570,99 @@ async function initApp(lineStatus) {
      - State synchronization
      - Conflict resolution
 
-## Setup and Configuration
-
 ### Prerequisites
 
 - Elixir/Phoenix
 - Node.js and Vite
 - Browser with Service Worker support
+- Docker (optional)
+
+### Docker Support
+
+The application can be containerized for consistent development and deployment:
+
+```dockerfile
+# Dockerfile
+FROM elixir:1.15-alpine as builder
+
+# Install build dependencies
+RUN apk add --no-cache build-base npm git python3
+
+# Prepare build directory
+WORKDIR /app
+
+# Install hex + rebar
+RUN mix local.hex --force && \
+    mix local.rebar --force
+
+# Install mix dependencies
+COPY mix.exs mix.lock ./
+RUN mix deps.get --only prod
+
+# Install npm dependencies
+COPY assets/package.json assets/pnpm-lock.yaml ./assets/
+RUN cd assets && npm install
+
+# Copy application code
+COPY . .
+
+# Compile assets
+RUN cd assets && npm run build
+
+# Compile the release
+RUN mix compile
+RUN mix assets.deploy
+
+# Build release
+RUN mix release
+
+# Start a new build stage
+FROM alpine:3.18
+RUN apk add --no-cache libstdc++ openssl ncurses-libs
+
+WORKDIR /app
+
+# Copy the release from builder
+COPY --from=builder /app/_build/prod/rel/solidyjs ./
+
+# Start the application
+CMD ["bin/solidyjs", "start"]
+```
+
+To run the application using Docker:
+
+```bash
+# Build the image
+docker build -t solidyjs .
+
+# Run the container
+docker run -p 4000:4000 solidyjs
+```
+
+For development with Docker Compose:
+
+```yaml
+# docker-compose.yml
+version: "3.8"
+services:
+  web:
+    build:
+      context: .
+      target: builder
+    ports:
+      - "4000:4000"
+    volumes:
+      - .:/app
+    command: mix phx.server
+    environment:
+      - MIX_ENV=dev
+```
+
+This setup provides:
+
+- Multi-stage builds for smaller production images
+- Development environment with hot-reload
+- Consistent runtime environment across platforms
 
 ### Installation
 
@@ -425,7 +1681,7 @@ mix phx.server
 - Set up Vite and PWA plugin
 - Configure Workbox caching strategies
 
-## Development
+### Development Environment
 
 The application uses Vite for frontend builds with several plugins:
 

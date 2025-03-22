@@ -3,11 +3,26 @@ defmodule SolidyjsWeb.Router do
 
   @csp (case MIX_ENV do
           :prod ->
-            "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src http://localhost:* ws://localhost:* https://api.maptiler.com/; img-src 'self' data: https://api.maptiler.com/; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' "
+            "require-trusted-types-for 'script'; script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src http://localhost:* ws://localhost:* https://api.maptiler.com/; img-src 'self' data: https://api.maptiler.com/; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; default-src 'self'; frame-ancestors 'none'; base-uri 'self'"
 
           _ ->
-            "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src http://localhost:* ws://localhost:* https://api.maptiler.com/; img-src 'self' data: https://api.maptiler.com/; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' "
+            "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src http://localhost:* ws://localhost:* https://api.maptiler.com/; img-src 'self' data: https://api.maptiler.com/; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; default-src 'self'; frame-ancestors 'none'; base-uri 'self'"
         end)
+
+  # Two years in seconds (recommended for preload)
+  @hsts_max_age 63_072_000
+
+  @security_headers %{
+    "content-security-policy" => @csp,
+    "cross-origin-opener-policy" => "same-origin",
+    "cross-origin-embedder-policy" => "require-corp",
+    "cross-origin-resource-policy" => "same-origin",
+    "strict-transport-security" => "max-age=#{@hsts_max_age}; includeSubDomains; preload"
+  }
+
+  # Note: After adding 'preload', submit your domain to https://hstspreload.org/
+  # Ensure you can maintain HTTPS for the entire domain and all subdomains
+  # indefinitely before submitting
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -15,7 +30,7 @@ defmodule SolidyjsWeb.Router do
     plug :fetch_live_flash
     plug :put_root_layout, html: {SolidyjsWeb.Layouts, :root}
     plug :protect_from_forgery
-    plug :put_secure_browser_headers, %{"content-security-policy" => @csp}
+    plug :put_secure_browser_headers, @security_headers
 
     plug :set_current_user
   end
