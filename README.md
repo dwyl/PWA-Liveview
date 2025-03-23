@@ -2,27 +2,71 @@
 
 ## Table of Contents
 
-- [What](#what)
-  - [Page-Specific State](#page-specific-state)
+- [Phoenix LiveView PWA with SolidJS](#phoenix-liveview-pwa-with-solidjs)
+  - [Table of Contents](#table-of-contents)
+  - [What](#what)
   - [Scope](#scope)
+  - [Page-Specific State](#page-specific-state)
   - [Performance](#performance)
   - [Why](#why)
-- [How](#how)
-  - [Technical Cutover Overview](#technical-cutover-overview)
-  - [Quick Implementation Guide](#quick-implementation-guide)
+  - [How](#how)
+    - [TL;DR - Implementation Overview](#tldr---implementation-overview)
+      - [1. Dual Runtime Strategy](#1-dual-runtime-strategy)
+      - [2. Page Caching Strategy](#2-page-caching-strategy)
+      - [3. Service Worker and Workbox Configuration](#3-service-worker-and-workbox-configuration)
+      - [4. Connection Monitoring](#4-connection-monitoring)
+      - [5. Navigation Strategy](#5-navigation-strategy)
+      - [6. SolidJS](#6-solidjs)
+    - [Technical Cutover Overview](#technical-cutover-overview)
+    - [Quick Implementation Guide](#quick-implementation-guide)
   - [Build Tool Evolution](#build-tool-evolution)
-  - [Offline Support](#offline-support)
+    - [The Case for Vite](#the-case-for-vite)
+    - [Important Configuration Notes](#important-configuration-notes)
+    - [Workbox Routes Strategy](#workbox-routes-strategy)
+      - [Pattern Matching Order](#pattern-matching-order)
+      - [Available Strategies](#available-strategies)
+      - [Configuration Options Example](#configuration-options-example)
+  - [Tech Stack](#tech-stack)
+  - [Setup Guide](#setup-guide)
+    - [1. Phoenix Setup](#1-phoenix-setup)
+    - [2. SolidJS Integration](#2-solidjs-integration)
+    - [3. LiveView Hook Setup](#3-liveview-hook-setup)
+    - [4. PWA Registration](#4-pwa-registration)
   - [Content Security Policy](#content-security-policy)
     - [Cross-Origin Isolation](#cross-origin-isolation)
-  - [Component Integration](#component-integration)
+  - [Development](#development)
+    - [Offline Support](#offline-support)
+  - [System Architecture](#system-architecture)
+    - [Data Flow Overview](#data-flow-overview)
+    - [Component Responsibilities](#component-responsibilities)
+    - [Key Interactions](#key-interactions)
+      - [Connection Status Detection](#connection-status-detection)
+  - [Data Integration](#data-integration)
+    - [External Data Sources](#external-data-sources)
+    - [Data Schema](#data-schema)
+    - [Data Processing](#data-processing)
+  - [Application Overview](#application-overview)
   - [State Management](#state-management)
+    - [Architecture Overview](#architecture-overview)
+    - [Implementation Details](#implementation-details)
+      - [Client-Side Implementation](#client-side-implementation)
+      - [Server-Side Implementation](#server-side-implementation)
+    - [Resilience Features](#resilience-features)
+      - [Service Worker Cache](#service-worker-cache)
+      - [Local Storage](#local-storage)
+      - [Recovery Mechanisms](#recovery-mechanisms)
+  - [System Components](#system-components)
+    - [Phoenix LiveView Integration](#phoenix-liveview-integration)
+    - [Frontend Components](#frontend-components)
+      - [Counter Component](#counter-component)
+      - [Y.js Integration (`yHook.js`)](#yjs-integration-yhookjs)
+      - [App Initialization (`app.js`)](#app-initialization-appjs)
   - [State Synchronization Flow](#state-synchronization-flow)
-- [Development](#development)
-  - [Prerequisites](#prerequisites)
-  - [Docker Support](#docker-support)
-  - [Installation](#installation)
-  - [Environment Configuration](#environment-configuration)
-  - [Development Environment](#development-environment)
+    - [Prerequisites](#prerequisites)
+    - [Docker Support](#docker-support)
+    - [Installation](#installation)
+    - [Environment Configuration](#environment-configuration)
+    - [Development Environment](#development-environment)
   - [Network Resilience](#network-resilience)
   - [Future Improvements](#future-improvements)
 
@@ -34,6 +78,38 @@ A modern Progressive Web App (PWA) that combines Phoenix LiveView's real-time ca
 - Full offline support and navigation
 - Seamless state synchronization
 - Cached page navigation
+
+## Scope
+
+A two-page collaborative real-time webapp with offline navigation capabilities (for previously visited pages):
+
+1. **Stock Manager** (`/`)
+
+   - Real-time collaborative stock level visualization
+   - Animated read-only `<input type="range"/>` interface
+   - CRDT-based state synchronization across users
+   - Offline-first with IndexedDB persistence
+   <br/>
+   <div align="center"><img width="1425" alt="Screenshot 2024-12-29 at 13 15 19" src="https://github.com/user-attachments/assets/f5e68b4d-6229-4736-a4b3-a60fc813b6bf" /></div>
+   <br/>
+
+2. **Flight Map** (`/map`)
+
+   - Interactive route planning with departure and arrival points
+   - Real-time route sharing across users
+   - High-performance great circle path computation:
+     - Implemented in Zig, compiled to WebAssembly
+     - Works offline for CPU-intensive calculations
+     - Rendered on Leaflet canvas with vector tiles
+   - Efficient map rendering:
+     - Vector tiles via MapTiler for minimal cache size
+     - Smooth flight animation using JavaScript
+
+   > 💡 **Note**: Install `topbar` as an npm package instead of using the vendor copy to avoid MapTiler integration issues
+
+<br/>
+<div align="center"><img width="635" alt="Screenshot 2024-12-30 at 07 39 51" src="https://github.com/user-attachments/assets/2eb459e6-29fb-4dbb-a101-841cbad5af95" /></div>
+<br/>
 
 ## Page-Specific State
 
@@ -53,36 +129,6 @@ This application demonstrates two different approaches to state management:
 - Lighter weight solution when complex conflict resolution isn't needed
 - Perfect for ephemeral UI state that doesn't need cross-client sync
 
-## Scope
-
-A two-page collaborative real-time webapp with offline navigation capabilities (for previously visited pages):
-
-1. **Stock Manager** (`/`)
-   - Real-time collaborative stock level visualization
-   - Animated read-only `<input type="range"/>` interface
-   - CRDT-based state synchronization across users
-   - Offline-first with IndexedDB persistence
-   <br/>
-   <div align="center"><img width="1425" alt="Screenshot 2024-12-29 at 13 15 19" src="https://github.com/user-attachments/assets/f5e68b4d-6229-4736-a4b3-a60fc813b6bf" /></div>
-   <br/>
-2. **Flight Map** (`/map`)
-
-   - Interactive route planning with departure and arrival points
-   - Real-time route sharing across users
-   - High-performance great circle path computation:
-     - Implemented in Zig, compiled to WebAssembly
-     - Works offline for CPU-intensive calculations
-     - Rendered on Leaflet canvas with vector tiles
-   - Efficient map rendering:
-     - Vector tiles via MapTiler for minimal cache size
-     - Smooth flight animation using JavaScript
-
-   > 💡 **Note**: Install `topbar` as an npm package instead of using the vendor copy to avoid MapTiler integration issues
-
-<br/>
-<div align="center"><img width="635" alt="Screenshot 2024-12-30 at 07 39 51" src="https://github.com/user-attachments/assets/2eb459e6-29fb-4dbb-a101-841cbad5af95" /></div>
-<br/>
-
 ## Performance
 
 Through aggressive caching and intelligent code splitting strategies:
@@ -92,10 +138,12 @@ Through aggressive caching and intelligent code splitting strategies:
 
 These impressive metrics are achieved through:
 
-- Efficient WASM module loading
-- Vector tiles for map rendering
-- Strategic asset caching
-- Smart code splitting
+- Efficient WASM module loading and integration via Vite
+- Vector tiles for minimal map cache size
+- Y.js CRDT for conflict-free state sync
+- Strategic asset caching with workbox
+- Smart code splitting with dynamic imports
+- Optimized bundling with Vite
 
 <div align="center"><img width="619" alt="Screenshot 2024-12-28 at 04 45 26" src="https://github.com/user-attachments/assets/e6244e79-2d31-47df-9bce-a2d2a4984a33" /></div>
 
@@ -117,6 +165,49 @@ This project demonstrates how to overcome these challenges by combining LiveView
 
 ## How
 
+### TL;DR - Implementation Overview
+
+Key implementation details for combining Phoenix LiveView with SolidJS and offline support:
+
+#### 1. Dual Runtime Strategy
+
+- Run two strategies in "appV.js": one "normal" where LiveSocket connects with hooks, and one "offline" for SolidJS-only mode
+- Each page has its own offline component initialization (map or stock counter)
+- Lazy-load components and hooks to optimize initial bundle size with Vite and dynamic imports
+
+#### 2. Page Caching Strategy
+
+- Cache only specific routes ("/" and "/map") using a Set to track cached paths
+- Cache the landing page HTML content on app startup
+- Use `navigator.addEventListener("navigate")` to cache visited pages with proper headers
+- Include Content-Length header using TextEncoder for proper cache handling (because Javascript uses UTF-16, you need to `encode` the text to compute the length)
+
+#### 3. Service Worker and Workbox Configuration
+
+- Configure `workbox.runtimeCaching` entries in order (uses regex matching)
+- Enable `inlineWorkboxRuntime` for a single sw.js file
+- Set `navigateFallback` to null for custom offline handling
+
+#### 4. Connection Monitoring
+
+- Implement a polling heartbeat (every 10s) since `navigator.onLine` is unreliable
+- Check server connectivity using HEAD requests
+- Auto-reload when connection is restored from offline state
+
+#### 5. Navigation Strategy
+
+- Handle two distinct pages with different state management:
+  - Stock Counter (`/`): Uses Y.js CRDT for collaborative state
+  - Map Page (`/map`): Uses Valtio for local state only
+- Use `window.location.pathname` to determine current page
+- Initialize appropriate offline components per route
+- Cache complete HTML responses with headers for offline navigation
+
+#### 6. SolidJS
+
+- Configure SolidJS file extensions properly: `resolve: { extensions: [".mjs", ".js", ".json", "wasm"]}`
+- Use `lazy` import for components
+
 ### Technical Cutover Overview
 
 1. **Security Hardening**
@@ -125,22 +216,23 @@ This project demonstrates how to overcome these challenges by combining LiveView
    - Strict CORS and WebSocket origin validation
    - Improved service worker security boundaries
 
-2. **Performance Optimization**
+2. **WebAssembly Great Circle**
 
-   - Intelligent caching strategies per resource type
-   - Y.js CRDT for conflict-free state sync
-   - Optimized asset bundling with Vite
+   - Implemented in Zig, compiled to WASM with `.ReleaseSmall` (13kB)
+   - Uses [Haversine formula](https://en.wikipedia.org/wiki/Haversine_formula) to compute lat/long every 1° along great circle
+   - Rendered as polyline with Leaflet (43kB)
+   - Cached as static asset by service worker
+   - Integrated via `vite-plugin-wasm` alongside other plugins:
+
+     ```javascript
+     plugins: [wasm(), solidPlugin(), VitePWA(PWAOpts)];
+     ```
 
 3. **Developer Experience**
 
    - Streamlined LiveView-SolidJS integration
    - Enhanced type safety across the stack
    - Improved error handling and debugging
-
-4. **User Experience**
-   - Faster initial page loads
-   - Seamless offline functionality
-   - Smoother real-time updates
 
 Follow the implementation guide below to apply these improvements.
 

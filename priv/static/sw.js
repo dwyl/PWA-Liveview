@@ -4755,6 +4755,9 @@ precacheAndRoute([{
   "url": "assets/valtioObservers.js",
   "revision": null
 }, {
+  "url": "assets/vanilla.js",
+  "revision": null
+}, {
   "url": "assets/virtual_pwa-register.js",
   "revision": null
 }, {

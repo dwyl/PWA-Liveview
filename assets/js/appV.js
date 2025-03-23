@@ -133,15 +133,19 @@ async function initApp(lineStatus) {
     }
 
     // Offline mode
-    const path = window.location.pathname;
-    if (path === "/map") {
-      displayVMap();
-      displayVForm();
-    } else if (path === "/") {
-      displayStock(ydoc);
-    }
+    initOfflineComponents();
   } catch (error) {
     console.error("Init failed:", error);
+  }
+}
+
+function initOfflineComponents() {
+  const path = window.location.pathname;
+  if (path === "/map") {
+    displayVMap();
+    displayVForm();
+  } else if (path === "/") {
+    displayStock(ydoc);
   }
 }
 
