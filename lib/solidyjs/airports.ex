@@ -16,24 +16,23 @@ defmodule Airports do
   # Parse CSV fields recursively
   defp parse_csv_fields("", fields, current, _in_quotes) do
     # Convert \N and empty strings to nil, trim quotes, and reverse the fields
-    fields =
-      [current | fields]
-      |> Enum.reverse()
-      |> Enum.map(fn field ->
-        case field do
-          "\\N" ->
-            nil
-
-          "" ->
-            nil
-
-          field ->
-            field = String.trim(field, "\"")
-            if field == "", do: nil, else: field
-        end
-      end)
-
+    fields = [current | fields]
+    # [current | fields]
     fields
+    |> Enum.reverse()
+    |> Enum.map(fn field ->
+      case field do
+        "\\N" ->
+          nil
+
+        "" ->
+          nil
+
+        field ->
+          field = String.trim(field, "\"")
+          if field == "", do: nil, else: field
+      end
+    end)
   end
 
   # Handle escaped quotes inside quoted fields

@@ -65,7 +65,7 @@ defmodule SqliteHandler do
   end
 
   @impl true
-  def handle_continue(:check_data, {db, name, conn} = state) do
+  def handle_continue(:check_data, {_db, name, conn} = state) do
     # Always ensure CSV file exists first
     csv_path = Path.join([:code.priv_dir(:solidyjs), "static", "airports.csv"])
 
@@ -78,28 +78,32 @@ defmodule SqliteHandler do
     # Check if we have data in the table
     case Sqlite3.prepare(conn, "SELECT COUNT(*) FROM #{name}") do
       {:ok, stmt} ->
-        case Sqlite3.step(conn, stmt) do
-          {:row, [count]} when count > 0 ->
-            Logger.info("Found #{count} existing rows in database")
-            {:noreply, state}
-
-          _ ->
-            Logger.info("No data found, initializing database")
-
-            case Airports.parse_csv_file()
-                 |> insert({db, name, conn}) do
-              :ok ->
-                {:noreply, state}
-
-              {:error, reason} ->
-                Sqlite3.close(conn)
-                {:stop, reason}
-            end
-        end
+        run_step(state, stmt)
 
       {:error, reason} ->
         Logger.error("Failed to check table data: #{inspect(reason)}")
         {:stop, reason}
+    end
+  end
+
+  def run_step({_db, _name, conn} = state, stmt) do
+    case Sqlite3.step(conn, stmt) do
+      {:row, [count]} when count > 0 ->
+        Logger.info("Found #{count} existing rows in database")
+        {:noreply, state}
+
+      _ ->
+        Logger.info("No data found, initializing database")
+
+        case Airports.parse_csv_file()
+             |> insert(state) do
+          :ok ->
+            {:noreply, state}
+
+          {:error, reason} ->
+            Sqlite3.close(conn)
+            {:stop, reason}
+        end
     end
   end
 
@@ -145,73 +149,92 @@ defmodule SqliteHandler do
     Sqlite3.close(conn)
   end
 
+  defp create_value_placeholders(num_rows) do
+    Enum.map_join(1..num_rows, ",", fn i ->
+      offset = (i - 1) * 14
+      params = Enum.map(1..14, fn j -> "?#{offset + j}" end)
+      "(#{Enum.join(params, ", ")})"
+    end)
+  end
+
+  defp build_insert_query(table_name, values_placeholder) do
+    columns = [
+      "airport_id",
+      "name",
+      "city",
+      "country",
+      "iata",
+      "icao",
+      "latitude",
+      "longitude",
+      "altitude",
+      "timezone",
+      "dst",
+      "tz",
+      "type",
+      "source"
+    ]
+
+    "INSERT INTO #{table_name} (#{Enum.join(columns, ",")}) VALUES #{values_placeholder}"
+  end
+
+  defp get_text_field(row, field, default \\ ""), do: row[field] || default
+  defp get_float_field(row, field), do: row[field] || "0.0"
+  defp get_integer_field(row, field), do: row[field] || "0"
+
+  defp extract_row_values(row) do
+    [
+      get_integer_field(row, :airport_id),
+      get_text_field(row, :name),
+      get_text_field(row, :city),
+      get_text_field(row, :country),
+      get_text_field(row, :iata),
+      get_text_field(row, :icao),
+      get_float_field(row, :latitude),
+      get_float_field(row, :longitude),
+      get_integer_field(row, :altitude),
+      get_integer_field(row, :timezone),
+      get_text_field(row, :dst),
+      get_text_field(row, :tz),
+      get_text_field(row, :type),
+      get_text_field(row, :source)
+    ]
+  end
+
+  defp execute_batch_insert(conn, query, values) do
+    with {:ok, stmt} <- Sqlite3.prepare(conn, query),
+         :ok <- Sqlite3.bind(stmt, values),
+         :ok <- Sqlite3.execute(conn, "BEGIN IMMEDIATE"),
+         :done <- Sqlite3.step(conn, stmt),
+         :ok <- Sqlite3.release(conn, stmt),
+         :ok <- Sqlite3.execute(conn, "COMMIT") do
+      :ok
+    else
+      {:error, reason} -> handle_insert_error(conn, {:sqlite_error, reason})
+      error -> handle_insert_error(conn, error)
+    end
+  end
+
   def insert(rows_stream, {_db, name, conn}) do
     try do
       # Process in chunks of 2000 rows and track total
-      # SQLite has 32,766 capacity / 12 parameters => 2700 rows max per chunk
+      # SQLite has 32,766 capacity / 14 parameters => ~2300 rows max per chunk
       total =
         rows_stream
         |> Stream.chunk_every(2000)
         |> Stream.map(fn rows ->
-          # Create the bulk insert query with placeholders for all rows
-          values_placeholder =
-            Enum.map_join(1..length(rows), ",", fn i ->
-              offset = (i - 1) * 14
+          values_placeholder = create_value_placeholders(length(rows))
+          query = build_insert_query(name, values_placeholder)
+          values = Enum.flat_map(rows, &extract_row_values/1)
 
-              "(?#{offset + 1}, ?#{offset + 2}, ?#{offset + 3}, ?#{offset + 4}, ?#{offset + 5}, " <>
-                "?#{offset + 6}, ?#{offset + 7}, ?#{offset + 8}, ?#{offset + 9}, ?#{offset + 10}, " <>
-                "?#{offset + 11}, ?#{offset + 12}, ?#{offset + 13}, ?#{offset + 14})"
-            end)
-
-          query =
-            "INSERT INTO #{name} (" <>
-              "airport_id,name,city,country,iata,icao,latitude,longitude," <>
-              "altitude,timezone,dst,tz,type,source) VALUES #{values_placeholder}"
-
-          # Flatten all values into a single list according to CSV format memory
-          values =
-            Enum.flat_map(rows, fn row ->
-              [
-                # ID from source data
-                row[:airport_id] || "0",
-                # Text fields
-                row[:name] || "",
-                row[:city] || "",
-                row[:country] || "",
-                row[:iata] || "",
-                row[:icao] || "",
-                # Numeric fields
-                row[:latitude] || "0.0",
-                row[:longitude] || "0.0",
-                row[:altitude] || "0",
-                row[:timezone] || "0",
-                # Text fields
-                row[:dst] || "",
-                row[:tz] || "",
-                row[:type] || "",
-                row[:source] || ""
-              ]
-            end)
-
-          with {:ok, stmt} <- Sqlite3.prepare(conn, query),
-               :ok <- Sqlite3.bind(stmt, values),
-               :ok <- Sqlite3.execute(conn, "BEGIN IMMEDIATE"),
-               :done <- Sqlite3.step(conn, stmt),
-               :ok <- Sqlite3.release(conn, stmt),
-               :ok <- Sqlite3.execute(conn, "COMMIT") do
-            count = length(rows)
-            Logger.info("Bulk inserted #{count} rows")
-            count
-          else
-            {:error, reason} ->
-              Logger.error("SQLite error during bulk insert: #{inspect(reason)}")
-              Sqlite3.execute(conn, "ROLLBACK")
-              throw({:sqlite_error, reason})
+          case execute_batch_insert(conn, query, values) do
+            :ok ->
+              count = length(rows)
+              Logger.info("Bulk inserted #{count} rows")
+              count
 
             error ->
-              Logger.error("Unexpected error during bulk insert: #{inspect(error)}")
-              Sqlite3.execute(conn, "ROLLBACK")
-              throw(error)
+              error
           end
         end)
         |> Enum.sum()
@@ -223,6 +246,18 @@ defmodule SqliteHandler do
         Logger.error("Bulk insert failed: #{inspect(error)}")
         {:error, error}
     end
+  end
+
+  defp handle_insert_error(conn, error) do
+    error_msg =
+      case error do
+        {:sqlite_error, reason} -> "SQLite error during bulk insert: #{inspect(reason)}"
+        other -> "Unexpected error during bulk insert: #{inspect(other)}"
+      end
+
+    Logger.error(error_msg)
+    Sqlite3.execute(conn, "ROLLBACK")
+    throw(error)
   end
 
   def get_municipalities(conn, stmt, data \\ []) do
