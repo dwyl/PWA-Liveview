@@ -30,10 +30,10 @@ RUN apt-get update -y && apt-get install -y \
   nodejs && \
   apt-get clean && rm -f /var/lib/apt/lists/*_*
 
-# ARG LITESTREAM_VERSION=0.3.13
+ARG LITESTREAM_VERSION=0.3.13
 # Install litestream
-# RUN wget https://github.com/benbjohnson/litestream/releases/download/v${LITESTREAM_VERSION}/litestream-v${LITESTREAM_VERSION}-linux-amd64.deb \
-# && dpkg -i litestream-v${LITESTREAM_VERSION}-linux-amd64.deb
+RUN wget https://github.com/benbjohnson/litestream/releases/download/v${LITESTREAM_VERSION}/litestream-v${LITESTREAM_VERSION}-linux-amd64.deb \
+  && dpkg -i litestream-v${LITESTREAM_VERSION}-linux-amd64.deb
 
 RUN npm install -g pnpm 
 RUN pnpm self-update
