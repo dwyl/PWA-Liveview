@@ -10,14 +10,14 @@ kill_signal = 'SIGTERM'
 [build]
 
 [env]
-DATABASE_PATH = '/mnt/db/airports.db'
+DATABASE_PATH = '/db/db/airports.db'
 PHX_HOST = 'solidyjs-lively-pine-4375.fly.dev'
 PORT = '8080'
 MIX_ENV = 'prod'
 
 [[mounts]]
 source = 'db'
-destination = '/mnt/db'
+destination = '/db'
 auto_extend_size_threshold = 80
 auto_extend_size_increment = '1GB'
 auto_extend_size_limit = '10GB'
