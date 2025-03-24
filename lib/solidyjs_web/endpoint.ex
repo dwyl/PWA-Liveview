@@ -20,9 +20,11 @@ defmodule SolidyjsWeb.Endpoint do
   # You should set gzip to true if you are running phx.digest
   # when deploying your static files in production.
   plug Plug.Static,
+    brotli: true,
     at: "/",
     from: :solidyjs,
-    gzip: true,
+    # gzip: true,
+    encoding: :brotli,
     only: SolidyjsWeb.static_paths(),
     headers: %{"cache-control" => "public, max-age=31536000"}
 

@@ -210,15 +210,16 @@ defmodule SqliteHandler do
          :ok <- Sqlite3.execute(conn, "COMMIT") do
       :ok
     else
-      {:error, reason} -> handle_insert_error(conn, {:sqlite_error, reason})
-      error -> handle_insert_error(conn, error)
+      {:error, reason} ->
+        handle_insert_error(conn, {:sqlite_error, reason})
+        # error -> handle_insert_error(conn, error)
     end
   end
 
   def insert(rows_stream, {_db, name, conn}) do
     try do
       # Process in chunks of 2000 rows and track total
-      # SQLite has 32,766 capacity / 14 parameters => ~2300 rows max per chunk
+      # SQLite has 32,766 capacity / 14 parameters => ~2300 rows max per chunk so 2000 is safe
       total =
         rows_stream
         |> Stream.chunk_every(2000)
@@ -228,13 +229,13 @@ defmodule SqliteHandler do
           values = Enum.flat_map(rows, &extract_row_values/1)
 
           case execute_batch_insert(conn, query, values) do
+            :error ->
+              :error
+
             :ok ->
               count = length(rows)
               Logger.info("Bulk inserted #{count} rows")
               count
-
-            error ->
-              error
           end
         end)
         |> Enum.sum()
@@ -249,15 +250,9 @@ defmodule SqliteHandler do
   end
 
   defp handle_insert_error(conn, error) do
-    error_msg =
-      case error do
-        {:sqlite_error, reason} -> "SQLite error during bulk insert: #{inspect(reason)}"
-        other -> "Unexpected error during bulk insert: #{inspect(other)}"
-      end
-
-    Logger.error(error_msg)
+    Logger.error(inspect(error))
     Sqlite3.execute(conn, "ROLLBACK")
-    throw(error)
+    :error
   end
 
   def get_municipalities(conn, stmt, data \\ []) do
@@ -304,56 +299,68 @@ defmodule SqliteHandler do
 
     data =
       get_municipalities(conn, stmt)
-      |> Enum.map(fn [
-                       airport_id,
-                       name,
-                       city,
-                       country,
-                       iata,
-                       icao,
-                       latitude,
-                       longitude,
-                       altitude,
-                       timezone,
-                       dst,
-                       tz,
-                       type,
-                       source
-                     ] ->
-        # Map fields according to CSV format:
-        # 1|Goroka Airport|Goroka|Papua New Guinea|GKA|AYGA|-6.08168983459|145.391998291|5282.0|10|U|Pacific/Port_Moresby|airport|OurAirports
-        %{
-          # ID from source data (preserve as string)
-          airport_id: if(is_nil(airport_id), do: "", else: airport_id),
-          # Full airport name
-          name: if(is_nil(name), do: "", else: name),
-          # Main city served
-          city: if(is_nil(city), do: "", else: city),
-          # Country or territory
-          country: if(is_nil(country), do: "", else: country),
-          # 3-letter IATA code
-          iata: if(is_nil(iata), do: "", else: iata),
-          # 4-letter ICAO code
-          icao: if(is_nil(icao), do: "", else: icao),
-          # Decimal degrees, usually 6 significant digits
-          latitude: if(is_nil(latitude), do: 0.0, else: parse_float(latitude)),
-          # Decimal degrees, usually 6 significant digits
-          longitude: if(is_nil(longitude), do: 0.0, else: parse_float(longitude)),
-          # In feet (integer)
-          altitude: if(is_nil(altitude), do: 0, else: parse_integer(altitude)),
-          # Hours offset from UTC
-          timezone: if(is_nil(timezone), do: 0.0, else: parse_float(timezone)),
-          # Daylight savings time
-          dst: if(is_nil(dst), do: "", else: dst),
-          # Timezone in Olson format
-          tz: if(is_nil(tz), do: "", else: tz),
-          # Type of airport
-          type: if(is_nil(type), do: "", else: type),
-          # Source of this data
-          source: if(is_nil(source), do: "", else: source)
-        }
-      end)
+      |> Enum.map(&format_line/1)
 
     {:reply, data, state}
+  end
+
+  defp format_line(line) do
+    [
+      airport_id,
+      name,
+      city,
+      country,
+      iata,
+      icao,
+      latitude,
+      longitude,
+      altitude,
+      timezone,
+      dst,
+      tz,
+      type,
+      source
+    ] = line
+
+    # Map fields according to CSV format:
+    # 1|Goroka Airport|Goroka|Papua New Guinea|GKA|AYGA|-6.08168983459|145.391998291|5282.0|10|U|Pacific/Port_Moresby|airport|OurAirports
+    %{
+      # ID from source data (preserve as string)
+      airport_id: parse_string(airport_id),
+      # Full airport name
+      name: parse_string(name),
+      # Main city served
+      city: parse_string(city),
+      # Country or territory
+      country: parse_string(country),
+      # 3-letter IATA code
+      iata: parse_string(iata),
+      # 4-letter ICAO code
+      icao: parse_string(icao),
+      # Decimal degrees, usually 6 significant digits
+      latitude: if(is_nil(latitude), do: 0.0, else: parse_float(latitude)),
+      # Decimal degrees, usually 6 significant digits
+      longitude: if(is_nil(longitude), do: 0.0, else: parse_float(longitude)),
+      # In feet (integer)
+      altitude: if(is_nil(altitude), do: 0, else: parse_integer(altitude)),
+      # Hours offset from UTC
+      timezone: if(is_nil(timezone), do: 0.0, else: parse_float(timezone)),
+      # Daylight savings time
+      dst: parse_string(dst),
+      # Timezone in Olson format
+      tz: parse_string(tz),
+      # Type of airport
+      type: parse_string(type),
+      # Source of this data
+      source: parse_string(source)
+    }
+  end
+
+  defp parse_string(value) do
+    if is_nil(value) do
+      ""
+    else
+      value
+    end
   end
 end

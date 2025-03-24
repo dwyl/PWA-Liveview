@@ -46,3 +46,4 @@ npm-debug.log
 /db/
 .env
 /.vscode/
+/old/

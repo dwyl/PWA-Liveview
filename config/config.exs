@@ -36,6 +36,12 @@ config :tailwind,
     cd: Path.expand("../assets", __DIR__)
   ]
 
+config :phoenix,
+  static_compressors: [
+    Phoenix.Digester.Gzip,
+    ExBrotli.DigesterCompressor
+  ]
+
 # Configures Elixir's Logger
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",

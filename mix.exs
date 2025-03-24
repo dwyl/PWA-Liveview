@@ -38,6 +38,7 @@ defmodule Solidyjs.MixProject do
       {:bandit, "~> 1.6"},
       {:req, "~> 0.5.8"},
       {:nimble_csv, "~> 1.2"},
+      {:ex_brotli, "~> 0.6.0"},
       {:exqlite, "~> 0.27"},
       {:ecto_sqlite3, "~> 0.19.0"},
       {:phoenix_live_dashboard, "~> 0.8.3"},

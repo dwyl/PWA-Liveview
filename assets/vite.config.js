@@ -3,6 +3,7 @@ import { defineConfig, loadEnv } from "vite";
 import solidPlugin from "vite-plugin-solid";
 import tailwindcss from "tailwindcss";
 import autoprefixer from "autoprefixer";
+import viteCompression from "vite-plugin-compression";
 import wasm from "vite-plugin-wasm";
 import path from "path";
 // import tailwindcss from "@tailwindcss/vite";
@@ -258,7 +259,12 @@ export default defineConfig(({ command, mode }) => {
 
   return {
     base: "/",
-    plugins: [wasm(), solidPlugin(), VitePWA(createPWAConfig(mode))],
+    plugins: [
+      wasm(),
+      viteCompression(),
+      solidPlugin(),
+      VitePWA(createPWAConfig(mode)),
+    ],
     resolve: {
       ...resolveConfig,
       extensions: [

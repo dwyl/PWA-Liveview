@@ -3,10 +3,10 @@ defmodule SolidyjsWeb.Router do
 
   @csp (case MIX_ENV do
           :prod ->
-            "require-trusted-types-for 'script'; script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src http://localhost:* ws://localhost:* https://api.maptiler.com/; img-src 'self' data: https://api.maptiler.com/; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; default-src 'self'; frame-ancestors 'none'; base-uri 'self'"
+            "require-trusted-types-for 'script'; script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src http://localhost:* ws://localhost:* https://api.maptiler.com/; img-src 'self' data: https://*.maptiler.com/ https://api.maptiler.com/; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; default-src 'self'; frame-ancestors 'none'; base-uri 'self'"
 
           _ ->
-            "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src http://localhost:* ws://localhost:* https://api.maptiler.com/; img-src 'self' data: https://api.maptiler.com/; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; default-src 'self'; frame-ancestors 'none'; base-uri 'self'"
+            "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src http://localhost:* ws://localhost:* https://api.maptiler.com/; img-src 'self' data: https://*.maptiler.com/ https://api.maptiler.com/; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; default-src 'self'; frame-ancestors 'none'; base-uri 'self'"
         end)
 
   # Two years in seconds (recommended for preload)
@@ -15,8 +15,6 @@ defmodule SolidyjsWeb.Router do
   @security_headers %{
     "content-security-policy" => @csp,
     "cross-origin-opener-policy" => "same-origin",
-    "cross-origin-embedder-policy" => "require-corp",
-    "cross-origin-resource-policy" => "same-origin",
     "strict-transport-security" => "max-age=#{@hsts_max_age}; includeSubDomains; preload"
   }
 
@@ -39,11 +37,12 @@ defmodule SolidyjsWeb.Router do
     plug :accepts, ["json"]
   end
 
-  live_session :default, on_mount: SolidyjsWeb.MountUserId do
-    scope "/", SolidyjsWeb do
-      pipe_through :browser
+  scope "/", SolidyjsWeb do
+    pipe_through :browser
+
+    live_session :pretend_authenticated,
+      on_mount: {SolidyjsWeb.MountUserId, :ensure_authenticated} do
       get "/connectivity", ConnectivityController, :check
-      # live "/", CounterCRDTLive, :index
       live "/", StockLive, :index
       live "/map", MapLive, :index
     end

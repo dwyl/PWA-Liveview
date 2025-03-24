@@ -55,7 +55,6 @@ export async function createFlightObserver({ L, map, group }) {
     }
   }
   function animate({ L, group, latLngs }, animationTime = 200) {
-    console.log("animate");
     if (currentAnimationInterval) {
       clearInterval(currentAnimationInterval);
       currentAnimationInterval = null;
@@ -83,7 +82,6 @@ export async function createFlightObserver({ L, map, group }) {
     });
   }
   async function animateRoute({ L, map, group, departure, arrival }) {
-    console.log("animateRoute");
     try {
       const A = L.latLng(arrival);
       const D = L.latLng(departure);
