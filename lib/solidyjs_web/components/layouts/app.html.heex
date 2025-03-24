@@ -1,0 +1,62 @@
+<header class="px-4 sm:px-6 lg:px-8">
+  <div class="flex items-center justify-between border-b border-zinc-100 py-3 text-sm">
+    <div class="flex items-center gap-4">
+      <p>
+        <img class="aspect-auto" width="20px" alt="phoenix" src={~p"/images/logo.svg"} />
+      </p>
+      <p>
+        <img class="aspect-auto" width="20px" alt="elixir" src={~p"/images/Elixir.svg"} />
+      </p>
+      <p>
+        <img class="aspect-auto" width="20px" alt="sqlite" src={~p"/images/sqlite.svg"} />
+      </p>
+      <p>
+        <img class="aspect-auto" width="20px" alt="yjs" src={~p"/images/yjs.webp"} />
+      </p>
+      <p>
+        <img class="aspect-auto" width="20px" alt="solid" src={~p"/images/solidjs.svg"} />
+      </p>
+      <p>
+        <img class="aspect-auto" width="20px" alt="zig" src={~p"/images/zig.svg"} />
+      </p>
+      <p>
+        <img class="aspect-auto" width="20px" alt="wasm" src={~p"/images/webassembly.svg"} />
+      </p>
+      <p>
+        <img class="aspect-auto" width="20px" alt="workbox" src={~p"/images/workbox.svg"} />
+      </p>
+      <p>
+        <img class="aspect-auto" width="20px" alt="vite" src={~p"/images/vitejs.svg"} />
+      </p>
+      <p>
+        <img class="aspect-auto" width="20px" alt="leaflet" src={~p"/images/leafletjs.svg"} />
+      </p>
+      <p>
+        <img
+          class="aspect-auto w-5 h-auto"
+          width="60"
+          height="67"
+          alt="maptiler"
+          src={~p"/images/maptiler.webp"}
+        />
+      </p>
+    </div>
+    <div class="flex items-center gap-4 font-semibold leading-6 text-zinc-900">
+      <p>
+        <img
+          class="aspect-square"
+          width="30px"
+          alt="status"
+          id="online-status"
+          src={~p"/images/online.svg"}
+        />
+      </p>
+    </div>
+  </div>
+</header>
+<main class="px-4 py-20 sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-2xl">
+    <.flash_group flash={@flash} />
+    {@inner_content}
+  </div>
+</main>
