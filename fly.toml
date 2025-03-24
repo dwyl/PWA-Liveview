@@ -13,6 +13,7 @@ kill_signal = 'SIGTERM'
   DATABASE_PATH = '/mnt/name/name.db'
   PHX_HOST = 'solidyjs-lively-pine-4375.fly.dev'
   PORT = '8080'
+  MIX_ENV = 'prod'
 
 [[mounts]]
   source = 'name'
