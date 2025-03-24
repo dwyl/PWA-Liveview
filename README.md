@@ -91,7 +91,9 @@ Interactive route planning with vector tiles (available at `/map`).
 - Efficient map rendering with MapTiler and vector tiles
 - Works offline for CPU-intensive calculations
 
+<div align="center">
 <img width="531" alt="Screenshot 2025-03-24 at 14 08 43" src="https://github.com/user-attachments/assets/5dd71acc-3cce-41a5-a865-bca8aec643db" />
+</div>
 
 ![Flight Map Screenshot](https://github.com/user-attachments/assets/2eb459e6-29fb-4dbb-a101-841cbad5af95)
 
