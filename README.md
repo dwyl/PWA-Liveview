@@ -33,7 +33,7 @@ An example of a Progressive Web App (PWA) combining Phoenix LiveView's real-time
   - [Manifest](#manifest)
   - [Performance](#performance)
   - [Resources](#resources)
-  - [Kown bug](#kown-bug)
+  - [Known bug](#known-bug)
   - [License](#license)
 
 ## Key Features
@@ -611,7 +611,7 @@ These metrics are achieved through:
 - [CSP Evaluator](https://csp-evaluator.withgoogle.com/)
 - [Haversine formula](https://en.wikipedia.org/wiki/Haversine_formula)
 
-## Kown bug
+## Known bug
 
 There is one persisting bug that appears once you navigate away from a page and return to it.
 
