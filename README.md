@@ -2,6 +2,7 @@
 
 An example of a Progressive Web App (PWA) combining Phoenix LiveView's real-time capabilities with SolidJS's reactive UI for offline-first collaboration.
 
+Ephemeral app deployed: <https://solidyjs-lively-pine-4375.fly.dev/>
 ## Table of Contents
 
 - [Phoenix LiveView + SolidJS PWA](#phoenix-liveview--solidjs-pwa)
