@@ -45,5 +45,7 @@ erl_crash.dump
 /assets/oldjs/
 /priv/static/assets/
 /priv/static/cache_manifest.json
+/priv.static/sw.js*
 /lib/old_files/
+/old/
 README.md

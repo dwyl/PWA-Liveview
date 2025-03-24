@@ -282,7 +282,7 @@ export default defineConfig(({ command, mode }) => {
     publicDir: false,
     build: {
       ...buildOps,
-      sourceMap: mode === "development",
+      // sourceMap: true, // Enable source maps in all modes
       minify: mode === "production" ? "terser" : false,
       cssCodeSplit: true,
       reportCompressedSize: mode === "production",

@@ -158,17 +158,24 @@ export default function FormCities(props) {
         onInput={handleInputChange}
         placeholder={`Search for ${props.label || "an airport"}...`}
         class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        role="combobox"
         aria-label={`Search for ${props.label || "an airport"}`}
-        aria-autocomplete="list"
+        aria-controls="airport-listbox"
         aria-expanded={isOpen()}
+        aria-autocomplete="list"
         autocomplete="off"
       />
       <Show when={isOpen() && suggestions().length > 0}>
-        <ul class="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-auto">
+        <ul
+          id="airport-listbox"
+          role="listbox"
+          class="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-auto"
+        >
           <For each={suggestions()}>
             {(city) => (
               <li
                 onClick={() => handleSelect(city)}
+                role="option"
                 class="px-4 py-2 cursor-pointer hover:bg-gray-100"
               >
                 {city.name || "Unknown Airport"}
