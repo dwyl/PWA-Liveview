@@ -75,8 +75,11 @@ defmodule SqliteHandler do
       Airports.download()
     end
 
+    db_name = Path.join(Application.app_dir(:solidyjs), System.fetch_env!("DATABASE_PATH"))
+    Logger.info(inspect(db_name))
+
     # Check if we have data in the table
-    case Sqlite3.prepare(conn, "SELECT COUNT(*) FROM #{name}") do
+    case Sqlite3.prepare(conn, "SELECT COUNT(*) FROM #{db_name}") do
       {:ok, stmt} ->
         run_step(state, stmt)
 

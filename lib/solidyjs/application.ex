@@ -8,7 +8,7 @@ defmodule Solidyjs.Application do
   @impl true
   def start(_type, _args) do
     start_ets_tables()
-    # Solidyjs.Release.migrate()
+    Solidyjs.Release.migrate()
 
     children = [
       SolidyjsWeb.Telemetry,
@@ -16,7 +16,10 @@ defmodule Solidyjs.Application do
       {Phoenix.PubSub, name: :pubsub},
       SolidyjsWeb.Endpoint,
       Solidyjs.Repo,
-      {SqliteHandler, [Application.fetch_env!(:solidyjs, Solidyjs.Repo)[:database], "airports"]}
+      {SqliteHandler, [
+        Application.get_env(:solidyjs, :sqlite_handler)[:database_path],
+        "airports"
+      ]}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
