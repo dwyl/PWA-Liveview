@@ -14,6 +14,7 @@
 ARG ELIXIR_VERSION=1.18.3
 ARG OTP_VERSION=27.3
 ARG DEBIAN_VERSION=bullseye-20250317-slim
+ARG MIX_ENV=prod
 
 ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
 ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"
@@ -46,7 +47,7 @@ RUN mix local.hex --force && \
   mix local.rebar --force
 
 # set build ENV
-ENV MIX_ENV="prod"
+ENV MIX_ENV=${MIX_ENV}
 ENV NODE_ENV="production"
 
 # install mix dependencies

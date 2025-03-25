@@ -1,4 +1,4 @@
-# fly.toml app configuration file generated for solidyjs-lively-pine-4375 on 2025-03-24T15:51:50-05:00
+# fly.toml app configuration file generated for solidyjs-lively-pine-4375 on 2025-03-25T06:21:19-05:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
@@ -10,14 +10,14 @@ kill_signal = 'SIGTERM'
 [build]
 
 [env]
-DATABASE_PATH = '/db/db/airports.db'
+DATABASE_PATH = '/mnt/db/airports.db'
+MIX_ENV = 'prod'
 PHX_HOST = 'solidyjs-lively-pine-4375.fly.dev'
 PORT = '8080'
-MIX_ENV = 'prod'
 
 [[mounts]]
-source = 'db'
-destination = '/db'
+source = 'name'
+destination = '/mnt/db'
 auto_extend_size_threshold = 80
 auto_extend_size_increment = '1GB'
 auto_extend_size_limit = '10GB'

@@ -13,6 +13,7 @@ const CONFIG = {
     status: "checking",
     isOnline: true,
     interval: null,
+    globalYdoc: null,
   };
 
 async function addCurrentPageToCache({ current, routes }) {
@@ -117,19 +118,23 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function initApp(lineStatus) {
   try {
     const { default: initYdoc } = await import("./initYJS.js");
-    const ydoc = await initYdoc();
+    AppState.globalYdoc = await initYdoc();
     const { yHook } = await import("./yHook.js"),
       { MapVHook } = await import("./mapVHook.js"),
       { FormVHook } = await import("./formVHook.js"),
       { configureTopbar } = await import("./configureTopbar.js"),
       { PwaHook } = await import("./pwaHook.js");
 
-    const YHook = yHook(ydoc);
     configureTopbar();
 
     // Online mode
     if (lineStatus) {
-      return initLiveSocket({ MapVHook, FormVHook, PwaHook, YHook });
+      return initLiveSocket({
+        MapVHook,
+        FormVHook,
+        PwaHook,
+        YHook: yHook(AppState.globalYdoc),
+      });
     }
 
     // Offline mode
@@ -145,7 +150,7 @@ function initOfflineComponents() {
     displayVMap();
     displayVForm();
   } else if (path === "/") {
-    displayStock(ydoc);
+    displayStock(AppState.globalYdoc);
   }
 }
 

@@ -132,19 +132,44 @@ const Scripts = {
   },
 };
 
-const Tiles = {
-  urlPattern: ({ url }) => url.origin === "https://api.maptiler.com/",
-  handler: "StaleWhileRevalidate",
+const MapTilerSDK = {
+  urlPattern: ({ url }) => {
+    return (
+      url.hostname === "api.maptiler.com" && url.pathname.startsWith("/maps/")
+    );
+  },
+  // handler: "StaleWhileRevalidate",
+  handler: "CacheFirst",
   options: {
-    cacheName: "tiles",
+    cacheName: "maptiler-sdk",
     expiration: {
-      maxEntries: 200,
-      maxAgeSeconds: 60 * 60 * 24, // 1 day
+      maxEntries: 10,
+      maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
       purgeOnQuotaError: true,
     },
-    fetchOptions: {
-      mode: "cors",
-      credentials: "omit",
+    plugins: [
+      {
+        fetchDidFail: async ({ request }) => {
+          console.warn("MapTiler SDK request failed:", request.url);
+        },
+      },
+    ],
+  },
+};
+
+const Tiles = {
+  urlPattern: ({ url }) => {
+    return (
+      url.hostname === "api.maptiler.com" && !url.pathname.startsWith("/maps/")
+    );
+  },
+  handler: "CacheFirst",
+  options: {
+    cacheName: "maptiler-tiles",
+    expiration: {
+      maxEntries: 500,
+      maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+      purgeOnQuotaError: true,
     },
     plugins: [
       {
@@ -215,6 +240,7 @@ const createPWAConfig = (mode) => ({
       { url: "/map", revision: null },
     ],
     runtimeCaching: [
+      MapTilerSDK, // Add the SDK route before Tiles
       Tiles,
       StaticAssets,
       Scripts,

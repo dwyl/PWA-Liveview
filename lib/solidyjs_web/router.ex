@@ -3,7 +3,7 @@ defmodule SolidyjsWeb.Router do
 
   @csp (case MIX_ENV do
           :prod ->
-            "require-trusted-types-for 'script'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline'; object-src 'none'; connect-src 'self' https://solidyjs-lively-pine-4375.fly.dev wss://solidyjs-lively-pine-4375.fly.dev ws://solidyjs-lively-pine-4375.fly.dev https://api.maptiler.com/ https://*.maptiler.com/; img-src 'self' data: https://*.maptiler.com/ https://api.maptiler.com/; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; default-src 'self' https://solidyjs-lively-pine-4375.fly.dev; frame-ancestors 'none'; base-uri 'self'"
+            "require-trusted-types-for 'script'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline'; object-src 'none'; connect-src 'self' http://localhost:4000 https://solidyjs-lively-pine-4375.fly.dev wss://solidyjs-lively-pine-4375.fly.dev ws://solidyjs-lively-pine-4375.fly.dev ws://localhost:4000 https://api.maptiler.com/ https://*.maptiler.com/; img-src 'self' data: https://*.maptiler.com/ https://api.maptiler.com/ http://localhost:4000 ; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; default-src 'self' https://solidyjs-lively-pine-4375.fly.dev; frame-ancestors 'none'; base-uri 'self'"
 
           _ ->
             "script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline'; object-src 'none'; connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:* https://api.maptiler.com/ https://*.maptiler.com/; img-src 'self' data: https://*.maptiler.com/ https://api.maptiler.com/; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; default-src 'self'; frame-ancestors 'none'; base-uri 'self'"
