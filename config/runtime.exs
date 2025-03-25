@@ -40,6 +40,9 @@ if config_env() == :prod do
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "5"),
     show_sensitive_data_on_connection_error: true
 
+  config :solidyjs, SqliteHandler,
+      database_path: database_path
+
   secret_key_base =
     System.get_env("SECRET_KEY_BASE") ||
       raise """
