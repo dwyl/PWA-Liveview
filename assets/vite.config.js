@@ -101,12 +101,22 @@ const StaticAssets = {
       maxEntries: 200,
     },
     matchOptions: {
-      ignoreVary: true, // Important for Phoenix static asset handling
+      // ignoreVary: true, // Important for Phoenix static asset handling
       ignoreSearch: true, // Crucial for handling ?vsn= parameters
     },
     fetchOptions: {
       credentials: "same-origin",
     },
+    plugins: [
+      {
+        cacheKeyWillBeUsed: async ({ request }) => {
+          // Strip out vsn query parameter
+          const url = new URL(request.url);
+          url.search = ""; // Remove query string
+          return url.toString();
+        },
+      },
+    ],
   },
 };
 
@@ -137,6 +147,22 @@ const Scripts = {
       maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
       maxEntries: 50,
     },
+    matchOptions: {
+      ignoreSearch: true, // Ignore query parameters
+    },
+    fetchOptions: {
+      credentials: "same-origin",
+    },
+    plugins: [
+      {
+        cacheKeyWillBeUsed: async ({ request }) => {
+          // Strip out vsn query parameter
+          const url = new URL(request.url);
+          url.search = ""; // Remove query string
+          return url.toString();
+        },
+      },
+    ],
   },
 };
 

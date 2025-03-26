@@ -5119,7 +5119,10 @@ registerRoute(({
 }, new CacheFirst({
   "cacheName": "static",
   "matchOptions": {
-    "ignoreVary": true
+    "ignoreSearch": true
+  },
+  "fetchOptions": {
+    "credentials": "same-origin"
   },
   plugins: [new ExpirationPlugin({
     maxAgeSeconds: 31536000,
@@ -5130,10 +5133,24 @@ registerRoute(({
   request
 }) => request.destination === "script", new CacheFirst({
   "cacheName": "scripts",
+  "matchOptions": {
+    "ignoreSearch": true
+  },
+  "fetchOptions": {
+    "credentials": "same-origin"
+  },
   plugins: [new ExpirationPlugin({
     maxAgeSeconds: 604800,
     maxEntries: 50
-  })]
+  }), {
+    cacheKeyWillBeUsed: async ({
+      request
+    }) => {
+      const url = new URL(request.url);
+      url.search = "";
+      return url.toString();
+    }
+  }]
 }), 'GET');
 registerRoute(({
   url
