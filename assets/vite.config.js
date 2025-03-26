@@ -102,6 +102,10 @@ const StaticAssets = {
     },
     matchOptions: {
       ignoreVary: true, // Important for Phoenix static asset handling
+      ignoreSearch: true, // Crucial for handling ?vsn= parameters
+    },
+    fetchOptions: {
+      credentials: "same-origin",
     },
   },
 };
