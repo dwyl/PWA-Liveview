@@ -5,6 +5,7 @@ export const PwaHook = {
   async mounted() {
     const _this = this;
     const { registerSW } = await import("virtual:pwa-register");
+    console.log("LiveView mounted, current path:", window.location.pathname);
 
     this.updateAvailable = false;
     let updateSWFunction;

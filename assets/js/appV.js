@@ -5,7 +5,7 @@ import "phoenix_html";
 
 const CONFIG = {
     ROUTES: Object.freeze(["/", "/map"]),
-    POLL_INTERVAL: 10_000,
+    POLL_INTERVAL: 2_000,
     CACHE_NAME: "lv-pages",
   },
   AppState = {
@@ -200,20 +200,34 @@ async function displayStock(ydoc) {
 
 // **************************************
 (async () => {
-  AppState.isOnline = await checkServer();
-  await initApp(AppState.isOnline);
-  window.addEventListener("phx:page-loading-stop", () => {
-    if (!window.liveSocket?.isConnected()) {
-      console.log("liveSocket not connected");
-      window.liveSocket.connect();
-    }
-  });
+  try {
+    AppState.isOnline = await checkServer();
 
-  if ("serviceWorker" in navigator && AppState.isOnline) {
-    await addCurrentPageToCache({
-      current: window.location.href,
-      routes: CONFIG.ROUTES,
+    // await registerServiceWorker();
+    await initApp(AppState.isOnline);
+    window.addEventListener("phx:page-loading-stop", () => {
+      if (!window.liveSocket?.isConnected()) {
+        console.log("liveSocket not connected");
+        window.liveSocket.connect();
+      }
     });
+
+    if ("serviceWorker" in navigator && AppState.isOnline) {
+      await addCurrentPageToCache({
+        current: window.location.href,
+        routes: CONFIG.ROUTES,
+      });
+    }
+
+    window.addEventListener("offline", () => {
+      console.warn("Application going offline");
+    });
+
+    window.addEventListener("online", () => {
+      console.log("Application back online");
+    });
+  } catch (error) {
+    console.error("Initialization error:", error);
   }
 })();
 

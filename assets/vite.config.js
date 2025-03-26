@@ -87,7 +87,11 @@ const LVWebSocket = {
 const StaticAssets = {
   urlPattern: ({ url }) => {
     const staticPaths = ["/assets/", "/images/"];
-    return staticPaths.some((path) => url.pathname.startsWith(path));
+    return staticPaths.some(
+      (path) =>
+        url.pathname.startsWith(path) ||
+        url.pathname.match(/\/assets\/.*\.[a-z]+(\?vsn=\w+)?$/)
+    );
   },
   handler: "CacheFirst",
   options: {
@@ -138,8 +142,8 @@ const MapTilerSDK = {
       url.hostname === "api.maptiler.com" && url.pathname.startsWith("/maps/")
     );
   },
-  // handler: "StaleWhileRevalidate",
-  handler: "CacheFirst",
+  handler: "StaleWhileRevalidate",
+  // handler: "CacheFirst",
   options: {
     cacheName: "maptiler-sdk",
     expiration: {
@@ -187,8 +191,8 @@ const LiveReload = {
 };
 
 const Pages = {
-  urlPattern: ({ url }) =>
-    url.pathname.startsWith("/map") || url.pathname.startsWith("/"),
+  urlPattern: ({ url }) => url.pathname === "/" || url.pathname === "/map",
+  // || url.pathname.startsWith("/"),
   handler: "NetworkFirst",
   options: {
     plugins: [
@@ -203,6 +207,12 @@ const Pages = {
       maxEntries: 10, // Only keep 10 page versions
       maxAgeSeconds: 60 * 60 * 2, // 2 hours
     },
+    matchOptions: {
+      ignoreSearch: true, // Ignore query parameters
+    },
+    fetchOptions: {
+      credentials: "same-origin",
+    },
   },
 };
 
@@ -211,6 +221,7 @@ const createPWAConfig = (mode) => ({
   devOptions: {
     enabled: mode === "development",
     type: "module",
+    suppressWarnings: false,
   },
   registerType: "autoUpdate",
   filename: "sw.js",
@@ -225,21 +236,59 @@ const createPWAConfig = (mode) => ({
     injectionPoint: undefined,
   },
   workbox: {
-    //   navigationPreload: true, // <----???
+    navigationPreload: true, // <----???
+    // navigateFallback: null, // Do not fallback to index.html !!!!!!!!!
+    navigateFallback: "/",
+    navigateFallbackDenylist: [
+      /^\/live/, // Exclude LiveView websocket paths
+      /^\/phoenix/, // Exclude Phoenix-specific paths
+    ],
     globDirectory: path.resolve(__dirname, "../priv/static/"),
     globPatterns: [
       "assets/**/*.{js,jsx,css,ico, wasm}",
       "images/**/*.{png,jpg,svg,webp}",
     ],
     swDest: path.resolve(__dirname, "../priv/static/sw.js"),
-    navigateFallback: null, // Do not fallback to index.html !!!!!!!!!
     cleanupOutdatedCaches: true,
     inlineWorkboxRuntime: true, // Inline the Workbox runtime into the service worker. You can't serve timestamped URLs with Phoenix
+    ignoreURLParametersMatching: [/^vsn$/],
     additionalManifestEntries: [
       { url: "/", revision: null },
       { url: "/map", revision: null },
     ],
+    // manifestTransforms: [
+    //   (entries) => {
+    //     // Remove query parameters from entries
+    //     const transformedEntries = entries.map((entry) => ({
+    //       url: entry.url.split("?")[0],
+    //       revision: null,
+    //     }));
+    //     return { manifest: transformedEntries };
+    //   },
+    // ],
     runtimeCaching: [
+      // {
+      //   urlPattern: ({ request, url }) => {
+      //     console.log("Caching attempt:", {
+      //       url: url.pathname,
+      //       destination: request.destination,
+      //     });
+      //     return url.pathname === "/" || url.pathname === "/map";
+      //   },
+      //   handler: "NetworkFirst", // Try network first
+      //   options: {
+      //     cacheName: "liveview-pages",
+      //     networkTimeoutSeconds: 10,
+      //     expiration: {
+      //       maxEntries: 10,
+      //       maxAgeSeconds: 24 * 60 * 60, // 24 hours
+      //     },
+      //     fetchOptions: {
+      //       mode: "cors",
+      //       credentials: "same-origin",
+      //     },
+      //   },
+      // },
       MapTilerSDK, // Add the SDK route before Tiles
       Tiles,
       StaticAssets,

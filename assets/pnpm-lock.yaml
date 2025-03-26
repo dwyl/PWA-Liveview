@@ -1011,8 +1011,8 @@ packages:
   '@types/babel__template@7.4.4':
     resolution: {integrity: sha512-h/NUaSyG5EyxBIp8YRxo4RMe2/qQgvyowRwVMzhYhBCONbW8PUsg4lkFMrhgZhUe5z3L3MiLDuvyJ/CaPa2A8A==}
 
-  '@types/babel__traverse@7.20.6':
-    resolution: {integrity: sha512-r1bzfrm0tomOI8g1SzvCaQHo6Lcv6zu0EA+W2kHrt8dyrHQxGzBBL4kdkzIS+jBMV+EYcMAEAqXqYaLJq5rOZg==}
+  '@types/babel__traverse@7.20.7':
+    resolution: {integrity: sha512-dkO5fhS7+/oos4ciWxyEyjWe48zmG6wbCheo/G2ZnHx4fs3EU6YC6UM8rk56gAjNJ9P3MTH2jo5jb92/K6wbng==}
 
   '@types/estree@0.0.39':
     resolution: {integrity: sha512-EYNwp3bU+98cpU4lAWYYL7Zz+2gryWH1qbdDTidVd6hkiR6weksdbMadyXKXNPEkQFhXM+hVO9ZygomHXp+AIw==}
@@ -1296,8 +1296,8 @@ packages:
     engines: {node: '>=0.10.0'}
     hasBin: true
 
-  electron-to-chromium@1.5.123:
-    resolution: {integrity: sha512-refir3NlutEZqlKaBLK0tzlVLe5P2wDKS7UQt/3SpibizgsRAPOsqQC3ffw1nlv3ze5gjRQZYHoPymgVZkplFA==}
+  electron-to-chromium@1.5.124:
+    resolution: {integrity: sha512-riELkpDUqBi00gqreV3RIGoowxGrfueEKBd6zPdOk/I8lvuFpBGNkYoHof3zUHbiTBsIU8oxdIIL/WNrAG1/7A==}
 
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
@@ -1744,8 +1744,8 @@ packages:
     resolution: {integrity: sha512-qsda+H8jTaUaN/x5vzW2rzc+8Rw4TAQ/4KjB46IwK5VH+IlVeeeje/EoZRpiXvIqjFgK84QffqPztGI3VBLG1A==}
     engines: {node: '>=6'}
 
-  lib0@0.2.100:
-    resolution: {integrity: sha512-ACQmtZ8cRD7/SpBEzBP88KrgrjOnhfcOANhhk8ASv+HFEvBSHOprxur3vuhmNw4YLq29y4Yen4jU0jHpIqVYWw==}
+  lib0@0.2.101:
+    resolution: {integrity: sha512-LljA6+Ehf0Z7YnxhgSAvspzWALjW4wlWdN/W4iGiqYc1KvXQgOVXWI0xwlwqozIL5WRdKeUW2gq0DLhFsY+Xlw==}
     engines: {node: '>=16'}
     hasBin: true
 
@@ -3609,7 +3609,7 @@ snapshots:
       '@babel/types': 7.27.0
       '@types/babel__generator': 7.6.8
       '@types/babel__template': 7.4.4
-      '@types/babel__traverse': 7.20.6
+      '@types/babel__traverse': 7.20.7
 
   '@types/babel__generator@7.6.8':
     dependencies:
@@ -3620,7 +3620,7 @@ snapshots:
       '@babel/parser': 7.27.0
       '@babel/types': 7.27.0
 
-  '@types/babel__traverse@7.20.6':
+  '@types/babel__traverse@7.20.7':
     dependencies:
       '@babel/types': 7.27.0
 
@@ -3785,7 +3785,7 @@ snapshots:
   browserslist@4.24.4:
     dependencies:
       caniuse-lite: 1.0.30001707
-      electron-to-chromium: 1.5.123
+      electron-to-chromium: 1.5.124
       node-releases: 2.0.19
       update-browserslist-db: 1.1.3(browserslist@4.24.4)
 
@@ -3918,7 +3918,7 @@ snapshots:
     dependencies:
       jake: 10.9.2
 
-  electron-to-chromium@1.5.123: {}
+  electron-to-chromium@1.5.124: {}
 
   emoji-regex@8.0.0: {}
 
@@ -4417,7 +4417,7 @@ snapshots:
 
   leven@3.1.0: {}
 
-  lib0@0.2.100:
+  lib0@0.2.101:
     dependencies:
       isomorphic.js: 0.2.5
 
@@ -5411,7 +5411,7 @@ snapshots:
 
   y-indexeddb@9.0.12(yjs@13.6.24):
     dependencies:
-      lib0: 0.2.100
+      lib0: 0.2.101
       yjs: 13.6.24
 
   yallist@3.1.1: {}
@@ -5420,4 +5420,4 @@ snapshots:
 
   yjs@13.6.24:
     dependencies:
-      lib0: 0.2.100
+      lib0: 0.2.101

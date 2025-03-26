@@ -2132,6 +2132,39 @@ class ExpirationPlugin {
   }
 }
 
+// @ts-ignore
+try {
+  self['workbox:strategies:7.2.0'] && _();
+} catch (e) {}
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+const cacheOkAndOpaquePlugin = {
+  /**
+   * Returns a valid response (to allow caching) if the status is 200 (OK) or
+   * 0 (opaque).
+   *
+   * @param {Object} options
+   * @param {Response} options.response
+   * @return {Response|null}
+   *
+   * @private
+   */
+  cacheWillUpdate: async ({
+    response
+  }) => {
+    if (response.status === 200 || response.status === 0) {
+      return response;
+    }
+    return null;
+  }
+};
+
 /*
   Copyright 2020 Google LLC
   Use of this source code is governed by an MIT-style
@@ -2250,11 +2283,6 @@ async function executeQuotaErrorCallbacks() {
 function timeout(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
-
-// @ts-ignore
-try {
-  self['workbox:strategies:7.2.0'] && _();
-} catch (e) {}
 
 /*
   Copyright 2020 Google LLC
@@ -3009,6 +3037,116 @@ const messages = {
   https://opensource.org/licenses/MIT.
 */
 /**
+ * An implementation of a
+ * [stale-while-revalidate](https://developer.chrome.com/docs/workbox/caching-strategies-overview/#stale-while-revalidate)
+ * request strategy.
+ *
+ * Resources are requested from both the cache and the network in parallel.
+ * The strategy will respond with the cached version if available, otherwise
+ * wait for the network response. The cache is updated with the network response
+ * with each successful request.
+ *
+ * By default, this strategy will cache responses with a 200 status code as
+ * well as [opaque responses](https://developer.chrome.com/docs/workbox/caching-resources-during-runtime/#opaque-responses).
+ * Opaque responses are cross-origin requests where the response doesn't
+ * support [CORS](https://enable-cors.org/).
+ *
+ * If the network request fails, and there is no cache match, this will throw
+ * a `WorkboxError` exception.
+ *
+ * @extends workbox-strategies.Strategy
+ * @memberof workbox-strategies
+ */
+class StaleWhileRevalidate extends Strategy {
+  /**
+   * @param {Object} [options]
+   * @param {string} [options.cacheName] Cache name to store and retrieve
+   * requests. Defaults to cache names provided by
+   * {@link workbox-core.cacheNames}.
+   * @param {Array<Object>} [options.plugins] [Plugins]{@link https://developers.google.com/web/tools/workbox/guides/using-plugins}
+   * to use in conjunction with this caching strategy.
+   * @param {Object} [options.fetchOptions] Values passed along to the
+   * [`init`](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch#Parameters)
+   * of [non-navigation](https://github.com/GoogleChrome/workbox/issues/1796)
+   * `fetch()` requests made by this strategy.
+   * @param {Object} [options.matchOptions] [`CacheQueryOptions`](https://w3c.github.io/ServiceWorker/#dictdef-cachequeryoptions)
+   */
+  constructor(options = {}) {
+    super(options);
+    // If this instance contains no plugins with a 'cacheWillUpdate' callback,
+    // prepend the `cacheOkAndOpaquePlugin` plugin to the plugins list.
+    if (!this.plugins.some(p => 'cacheWillUpdate' in p)) {
+      this.plugins.unshift(cacheOkAndOpaquePlugin);
+    }
+  }
+  /**
+   * @private
+   * @param {Request|string} request A request to run this strategy for.
+   * @param {workbox-strategies.StrategyHandler} handler The event that
+   *     triggered the request.
+   * @return {Promise<Response>}
+   */
+  async _handle(request, handler) {
+    const logs = [];
+    {
+      finalAssertExports.isInstance(request, Request, {
+        moduleName: 'workbox-strategies',
+        className: this.constructor.name,
+        funcName: 'handle',
+        paramName: 'request'
+      });
+    }
+    const fetchAndCachePromise = handler.fetchAndCachePut(request).catch(() => {
+      // Swallow this error because a 'no-response' error will be thrown in
+      // main handler return flow. This will be in the `waitUntil()` flow.
+    });
+    void handler.waitUntil(fetchAndCachePromise);
+    let response = await handler.cacheMatch(request);
+    let error;
+    if (response) {
+      {
+        logs.push(`Found a cached response in the '${this.cacheName}'` + ` cache. Will update with the network response in the background.`);
+      }
+    } else {
+      {
+        logs.push(`No response found in the '${this.cacheName}' cache. ` + `Will wait for the network response.`);
+      }
+      try {
+        // NOTE(philipwalton): Really annoying that we have to type cast here.
+        // https://github.com/microsoft/TypeScript/issues/20006
+        response = await fetchAndCachePromise;
+      } catch (err) {
+        if (err instanceof Error) {
+          error = err;
+        }
+      }
+    }
+    {
+      logger.groupCollapsed(messages.strategyStart(this.constructor.name, request));
+      for (const log of logs) {
+        logger.log(log);
+      }
+      messages.printFinalResponse(response);
+      logger.groupEnd();
+    }
+    if (!response) {
+      throw new WorkboxError('no-response', {
+        url: request.url,
+        error
+      });
+    }
+    return response;
+  }
+}
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
  * An implementation of a [cache-first](https://developer.chrome.com/docs/workbox/caching-strategies-overview/#cache-first-falling-back-to-network)
  * request strategy.
  *
@@ -3171,34 +3309,6 @@ class NetworkOnly extends Strategy {
     return response;
   }
 }
-
-/*
-  Copyright 2018 Google LLC
-
-  Use of this source code is governed by an MIT-style
-  license that can be found in the LICENSE file or at
-  https://opensource.org/licenses/MIT.
-*/
-const cacheOkAndOpaquePlugin = {
-  /**
-   * Returns a valid response (to allow caching) if the status is 200 (OK) or
-   * 0 (opaque).
-   *
-   * @param {Object} options
-   * @param {Response} options.response
-   * @return {Response|null}
-   *
-   * @private
-   */
-  cacheWillUpdate: async ({
-    response
-  }) => {
-    if (response.status === 200 || response.status === 0) {
-      return response;
-    }
-    return null;
-  }
-};
 
 /*
   Copyright 2018 Google LLC
@@ -3400,6 +3510,65 @@ class NetworkFirst extends Strategy {
       }
     }
     return response;
+  }
+}
+
+// @ts-ignore
+try {
+  self['workbox:navigation-preload:7.2.0'] && _();
+} catch (e) {}
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * @return {boolean} Whether or not the current browser supports enabling
+ * navigation preload.
+ *
+ * @memberof workbox-navigation-preload
+ */
+function isSupported() {
+  return Boolean(self.registration && self.registration.navigationPreload);
+}
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * If the browser supports Navigation Preload, then this will enable it.
+ *
+ * @param {string} [headerValue] Optionally, allows developers to
+ * [override](https://developers.google.com/web/updates/2017/02/navigation-preload#changing_the_header)
+ * the value of the `Service-Worker-Navigation-Preload` header which will be
+ * sent to the server when making the navigation request.
+ *
+ * @memberof workbox-navigation-preload
+ */
+function enable(headerValue) {
+  if (isSupported()) {
+    self.addEventListener('activate', event => {
+      event.waitUntil(self.registration.navigationPreload.enable().then(() => {
+        // Defaults to Service-Worker-Navigation-Preload: true if not set.
+        if (headerValue) {
+          void self.registration.navigationPreload.setHeaderValue(headerValue);
+        }
+        {
+          logger.log(`Navigation preload is enabled.`);
+        }
+      }));
+    });
+  } else {
+    {
+      logger.log(`Navigation preload is not supported in this browser.`);
+    }
   }
 }
 
@@ -4555,6 +4724,144 @@ function cleanupOutdatedCaches() {
   });
 }
 
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * NavigationRoute makes it easy to create a
+ * {@link workbox-routing.Route} that matches for browser
+ * [navigation requests]{@link https://developers.google.com/web/fundamentals/primers/service-workers/high-performance-loading#first_what_are_navigation_requests}.
+ *
+ * It will only match incoming Requests whose
+ * {@link https://fetch.spec.whatwg.org/#concept-request-mode|mode}
+ * is set to `navigate`.
+ *
+ * You can optionally only apply this route to a subset of navigation requests
+ * by using one or both of the `denylist` and `allowlist` parameters.
+ *
+ * @memberof workbox-routing
+ * @extends workbox-routing.Route
+ */
+class NavigationRoute extends Route {
+  /**
+   * If both `denylist` and `allowlist` are provided, the `denylist` will
+   * take precedence and the request will not match this route.
+   *
+   * The regular expressions in `allowlist` and `denylist`
+   * are matched against the concatenated
+   * [`pathname`]{@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLHyperlinkElementUtils/pathname}
+   * and [`search`]{@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLHyperlinkElementUtils/search}
+   * portions of the requested URL.
+   *
+   * *Note*: These RegExps may be evaluated against every destination URL during
+   * a navigation. Avoid using
+   * [complex RegExps](https://github.com/GoogleChrome/workbox/issues/3077),
+   * or else your users may see delays when navigating your site.
+   *
+   * @param {workbox-routing~handlerCallback} handler A callback
+   * function that returns a Promise resulting in a Response.
+   * @param {Object} options
+   * @param {Array<RegExp>} [options.denylist] If any of these patterns match,
+   * the route will not handle the request (even if a allowlist RegExp matches).
+   * @param {Array<RegExp>} [options.allowlist=[/./]] If any of these patterns
+   * match the URL's pathname and search parameter, the route will handle the
+   * request (assuming the denylist doesn't match).
+   */
+  constructor(handler, {
+    allowlist = [/./],
+    denylist = []
+  } = {}) {
+    {
+      finalAssertExports.isArrayOfClass(allowlist, RegExp, {
+        moduleName: 'workbox-routing',
+        className: 'NavigationRoute',
+        funcName: 'constructor',
+        paramName: 'options.allowlist'
+      });
+      finalAssertExports.isArrayOfClass(denylist, RegExp, {
+        moduleName: 'workbox-routing',
+        className: 'NavigationRoute',
+        funcName: 'constructor',
+        paramName: 'options.denylist'
+      });
+    }
+    super(options => this._match(options), handler);
+    this._allowlist = allowlist;
+    this._denylist = denylist;
+  }
+  /**
+   * Routes match handler.
+   *
+   * @param {Object} options
+   * @param {URL} options.url
+   * @param {Request} options.request
+   * @return {boolean}
+   *
+   * @private
+   */
+  _match({
+    url,
+    request
+  }) {
+    if (request && request.mode !== 'navigate') {
+      return false;
+    }
+    const pathnameAndSearch = url.pathname + url.search;
+    for (const regExp of this._denylist) {
+      if (regExp.test(pathnameAndSearch)) {
+        {
+          logger.log(`The navigation route ${pathnameAndSearch} is not ` + `being used, since the URL matches this denylist pattern: ` + `${regExp.toString()}`);
+        }
+        return false;
+      }
+    }
+    if (this._allowlist.some(regExp => regExp.test(pathnameAndSearch))) {
+      {
+        logger.debug(`The navigation route ${pathnameAndSearch} ` + `is being used.`);
+      }
+      return true;
+    }
+    {
+      logger.log(`The navigation route ${pathnameAndSearch} is not ` + `being used, since the URL being navigated to doesn't ` + `match the allowlist.`);
+    }
+    return false;
+  }
+}
+
+/*
+  Copyright 2019 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * Helper function that calls
+ * {@link PrecacheController#createHandlerBoundToURL} on the default
+ * {@link PrecacheController} instance.
+ *
+ * If you are creating your own {@link PrecacheController}, then call the
+ * {@link PrecacheController#createHandlerBoundToURL} on that instance,
+ * instead of using this function.
+ *
+ * @param {string} url The precached URL which will be used to lookup the
+ * `Response`.
+ * @param {boolean} [fallbackToNetwork=true] Whether to attempt to get the
+ * response from the network if there's a precache miss.
+ * @return {workbox-routing~handlerCallback}
+ *
+ * @memberof workbox-precaching
+ */
+function createHandlerBoundToURL(url) {
+  const precacheController = getOrCreatePrecacheController();
+  return precacheController.createHandlerBoundToURL(url);
+}
+
+enable();
 self.skipWaiting();
 clientsClaim();
 
@@ -4628,6 +4935,9 @@ precacheAndRoute([{
   "revision": null
 }, {
   "url": "assets/pwaHook.js",
+  "revision": null
+}, {
+  "url": "assets/registerServiceWorker.js",
   "revision": null
 }, {
   "url": "assets/renderVForm.js",
@@ -4758,13 +5068,18 @@ precacheAndRoute([{
 }, {
   "url": "manifest.webmanifest",
   "revision": "2d68e4811266de768b3f96aa2382c040"
-}], {});
+}], {
+  "ignoreURLParametersMatching": [/^vsn$/]
+});
 cleanupOutdatedCaches();
+registerRoute(new NavigationRoute(createHandlerBoundToURL("/"), {
+  denylist: [/^\/live/, /^\/phoenix/]
+}));
 registerRoute(({
   url
 }) => {
   return url.hostname === "api.maptiler.com" && url.pathname.startsWith("/maps/");
-}, new CacheFirst({
+}, new StaleWhileRevalidate({
   "cacheName": "maptiler-sdk",
   plugins: [new ExpirationPlugin({
     maxEntries: 10,
@@ -4800,7 +5115,7 @@ registerRoute(({
   url
 }) => {
   const staticPaths = ["/assets/", "/images/"];
-  return staticPaths.some(path2 => url.pathname.startsWith(path2));
+  return staticPaths.some(path2 => url.pathname.startsWith(path2) || url.pathname.match(/\/assets\/.*\.[a-z]+(\?vsn=\w+)?$/));
 }, new CacheFirst({
   "cacheName": "static",
   "matchOptions": {
@@ -4849,8 +5164,14 @@ registerRoute(({
 }) => url.pathname.startsWith("/phoenix"), new NetworkOnly(), 'GET');
 registerRoute(({
   url
-}) => url.pathname.startsWith("/map") || url.pathname.startsWith("/"), new NetworkFirst({
+}) => url.pathname === "/" || url.pathname === "/map", new NetworkFirst({
   "cacheName": "pages",
+  "matchOptions": {
+    "ignoreSearch": true
+  },
+  "fetchOptions": {
+    "credentials": "same-origin"
+  },
   plugins: [{
     fetchDidFail: async ({
       request
