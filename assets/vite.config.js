@@ -134,7 +134,25 @@ const Fonts = {
     },
     matchOptions: {
       ignoreVary: true, // Important for some external resources
+      ignoreSearch: true, // Ignore query parameters
     },
+    fetchOptions: {
+      mode: "cors",
+      credentials: "same-origin",
+    },
+    plugins: [
+      {
+        cacheKeyWillBeUsed: async ({ request }) => {
+          // Strip out dynamic query parameters
+          const url = new URL(request.url);
+          const baseUrl = `${url.origin}${url.pathname}`;
+          return baseUrl;
+        },
+        fetchDidFail: async ({ request }) => {
+          console.warn("MapTiler SDK request failed:", request.url);
+        },
+      },
+    ],
   },
 };
 
@@ -181,8 +199,20 @@ const MapTilerSDK = {
       maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
       purgeOnQuotaError: true,
     },
+    matchOptions: {
+      ignoreSearch: true, // Ignore query parameters
+    },
+    fetchOptions: {
+      credentials: "same-origin",
+    },
     plugins: [
       {
+        cacheKeyWillBeUsed: async ({ request }) => {
+          // Strip out dynamic query parameters
+          const url = new URL(request.url);
+          const baseUrl = `${url.origin}${url.pathname}`;
+          return baseUrl;
+        },
         fetchDidFail: async ({ request }) => {
           console.warn("MapTiler SDK request failed:", request.url);
         },
@@ -205,8 +235,20 @@ const Tiles = {
       maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
       purgeOnQuotaError: true,
     },
+    matchOptions: {
+      ignoreSearch: true, // Ignore query parameters
+    },
+    fetchOptions: {
+      credentials: "same-origin",
+    },
     plugins: [
       {
+        cacheKeyWillBeUsed: async ({ request }) => {
+          // Strip out dynamic query parameters
+          const url = new URL(request.url);
+          const baseUrl = `${url.origin}${url.pathname}`;
+          return baseUrl;
+        },
         fetchDidFail: async ({ request }) => {
           console.warn("Tile request failed:", request.url);
         },
