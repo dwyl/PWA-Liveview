@@ -12,8 +12,8 @@ importers:
         specifier: ^4.0.3
         version: 4.0.3
       '@maptiler/sdk':
-        specifier: ^3.0.1
-        version: 3.0.1
+        specifier: ^3.0.2
+        version: 3.0.2
       leaflet:
         specifier: ^1.9.4
         version: 1.9.4
@@ -826,8 +826,8 @@ packages:
   '@maptiler/leaflet-maptilersdk@4.0.3':
     resolution: {integrity: sha512-ycywYa6HFRtKOtLjkT4zm0jJMtwig4SgWVlHtYmXbubzUmEdvXsIEkKMqHkWJDSmW28Wm1dYnn6PRCR8aemEVA==}
 
-  '@maptiler/sdk@3.0.1':
-    resolution: {integrity: sha512-81CeL/brKTY0Qp1SPd6aexaXUpFAmsoLaPFi62zugdG/hUYuavBupLirF+qnOJOW6j+MWFWLdsUFRaORtRrKzQ==}
+  '@maptiler/sdk@3.0.2':
+    resolution: {integrity: sha512-+IgobgHjngq1PMT8EoEr1RnaiULs1BIf4tTNLNNRF9uiWfnOWmIDKlqIqSzM49Qo+SbonQwNrbf4bf02YLa7sQ==}
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -1296,8 +1296,8 @@ packages:
     engines: {node: '>=0.10.0'}
     hasBin: true
 
-  electron-to-chromium@1.5.124:
-    resolution: {integrity: sha512-riELkpDUqBi00gqreV3RIGoowxGrfueEKBd6zPdOk/I8lvuFpBGNkYoHof3zUHbiTBsIU8oxdIIL/WNrAG1/7A==}
+  electron-to-chromium@1.5.128:
+    resolution: {integrity: sha512-bo1A4HH/NS522Ws0QNFIzyPcyUUNV/yyy70Ho1xqfGYzPUme2F/xr4tlEOuM6/A538U1vDA7a4XfCd1CKRegKQ==}
 
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
@@ -1838,8 +1838,8 @@ packages:
   magic-string@0.25.9:
     resolution: {integrity: sha512-RmF0AsMzgt25qzqqLc1+MbHmhdx0ojF2Fvs4XnOqz2ZOBXzzkEwc/dJQZCYHAn7v1jbVOjAZfK8msRn4BxO4VQ==}
 
-  maplibre-gl@5.2.0:
-    resolution: {integrity: sha512-9zZKD0M80qtDsqBet+EDuAhoCeA/cnAuZAA0p3hcGKGbyjM/SH+R6wQvnBEgvJz9UhDynnkoKdUwhI+fUkHoXQ==}
+  maplibre-gl@5.3.0:
+    resolution: {integrity: sha512-qru6B6jHlDPR4Q9/P4W1zEPbPofR4wwYbrrjiHKWI7yLtyXmpJ1/G1KaIYDr5uNdFbPZ7uiZAWdqtfdNLmIhGg==}
     engines: {node: '>=16.14.0', npm: '>=8.1.0'}
 
   math-intrinsics@1.1.0:
@@ -1984,8 +1984,8 @@ packages:
     resolution: {integrity: sha512-udgsAY+fTnvv7kI7aaxbqwWNb0AHiB0qBO89PZKPkoTmGOgdbrHDKD+0B2X4uTfJ/FT1R09r9gTsjUjNJotuog==}
     engines: {node: '>=0.10.0'}
 
-  pirates@4.0.6:
-    resolution: {integrity: sha512-saLsH7WeYYPiD25LDuLRRY/i+6HaPYr6G1OUlN39otzkSTxKnubR9RTxS3/Kk50s1g2JTgFwWQDQyplC5/SHZg==}
+  pirates@4.0.7:
+    resolution: {integrity: sha512-TfySrs/5nm8fQJDcBDuUng3VOUKsd7S+zqvbOTiGXHfxX4wK31ard+hoNuvkicM/2YFzlpDgABOevKSsB4G/FA==}
     engines: {node: '>= 6'}
 
   possible-typed-array-names@1.1.0:
@@ -3453,17 +3453,17 @@ snapshots:
 
   '@maptiler/leaflet-maptilersdk@4.0.3':
     dependencies:
-      '@maptiler/sdk': 3.0.1
+      '@maptiler/sdk': 3.0.2
       '@types/leaflet': 1.9.17
       leaflet: 1.9.4
 
-  '@maptiler/sdk@3.0.1':
+  '@maptiler/sdk@3.0.2':
     dependencies:
       '@maplibre/maplibre-gl-style-spec': 23.1.0
       '@maptiler/client': 2.2.0
       events: 3.3.0
       js-base64: 3.7.7
-      maplibre-gl: 5.2.0
+      maplibre-gl: 5.3.0
       uuid: 11.1.0
 
   '@nodelib/fs.scandir@2.1.5':
@@ -3785,7 +3785,7 @@ snapshots:
   browserslist@4.24.4:
     dependencies:
       caniuse-lite: 1.0.30001707
-      electron-to-chromium: 1.5.124
+      electron-to-chromium: 1.5.128
       node-releases: 2.0.19
       update-browserslist-db: 1.1.3(browserslist@4.24.4)
 
@@ -3918,7 +3918,7 @@ snapshots:
     dependencies:
       jake: 10.9.2
 
-  electron-to-chromium@1.5.124: {}
+  electron-to-chromium@1.5.128: {}
 
   emoji-regex@8.0.0: {}
 
@@ -4487,7 +4487,7 @@ snapshots:
     dependencies:
       sourcemap-codec: 1.4.8
 
-  maplibre-gl@5.2.0:
+  maplibre-gl@5.3.0:
     dependencies:
       '@mapbox/geojson-rewind': 0.5.2
       '@mapbox/jsonlint-lines-primitives': 2.0.2
@@ -4632,7 +4632,7 @@ snapshots:
 
   pify@2.3.0: {}
 
-  pirates@4.0.6: {}
+  pirates@4.0.7: {}
 
   possible-typed-array-names@1.1.0: {}
 
@@ -5000,7 +5000,7 @@ snapshots:
       glob: 10.4.5
       lines-and-columns: 1.2.4
       mz: 2.7.0
-      pirates: 4.0.6
+      pirates: 4.0.7
       ts-interface-checker: 0.1.13
 
   supercluster@8.0.1:

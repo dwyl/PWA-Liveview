@@ -13,10 +13,10 @@ export async function initMap() {
   const mtLayer = new MaptilerLayer({
     apiKey: import.meta.env.VITE_API_KEY,
     crossOrigin: "anonymous",
-    // fetchOptions: {
-    //   mode: 'cors',
-    //   credentials: 'omit'
-    // }
+    fetchOptions: {
+      mode: "cors",
+      credentials: "omit",
+    },
   });
   mtLayer.addTo(map);
 

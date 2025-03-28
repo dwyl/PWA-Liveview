@@ -3,7 +3,7 @@ import { defineConfig, loadEnv } from "vite";
 import solidPlugin from "vite-plugin-solid";
 import tailwindcss from "tailwindcss";
 import autoprefixer from "autoprefixer";
-import viteCompression from "vite-plugin-compression";
+// import viteCompression from "vite-plugin-compression";
 import wasm from "vite-plugin-wasm";
 import path from "path";
 // import tailwindcss from "@tailwindcss/vite";
@@ -16,7 +16,7 @@ const manifestOpts = {
   scope: "/",
   start_url: "/",
   description: "A demo LiveView webapp with offline enabled",
-  theme_color: "#ffffff",
+  theme_color: "#000000",
   icons: [
     {
       src: "/images/icon-192.png",
@@ -34,8 +34,9 @@ const manifestOpts = {
 const buildOps = {
   outDir: "../priv/static/",
   emptyOutDir: false,
+  sourcemap: true,
   target: ["esnext"],
-  manifest: false,
+  manifest: true,
   rollupOptions: {
     input: [
       "js/appV.js",
@@ -140,19 +141,19 @@ const Fonts = {
       mode: "cors",
       credentials: "same-origin",
     },
-    plugins: [
-      {
-        cacheKeyWillBeUsed: async ({ request }) => {
-          // Strip out dynamic query parameters
-          const url = new URL(request.url);
-          const baseUrl = `${url.origin}${url.pathname}`;
-          return baseUrl;
-        },
-        fetchDidFail: async ({ request }) => {
-          console.warn("MapTiler SDK request failed:", request.url);
-        },
-      },
-    ],
+    // plugins: [
+    //   {
+    //     cacheKeyWillBeUsed: async ({ request }) => {
+    //       // Strip out dynamic query parameters
+    //       const url = new URL(request.url);
+    //       const baseUrl = `${url.origin}${url.pathname}`;
+    //       return baseUrl;
+    //     },
+    //     fetchDidFail: async ({ request }) => {
+    //       console.warn("MapTiler SDK request failed:", request.url);
+    //     },
+    //   },
+    // ],
   },
 };
 
@@ -171,16 +172,16 @@ const Scripts = {
     fetchOptions: {
       credentials: "same-origin",
     },
-    plugins: [
-      {
-        cacheKeyWillBeUsed: async ({ request }) => {
-          // Strip out vsn query parameter
-          const url = new URL(request.url);
-          url.search = ""; // Remove query string
-          return url.toString();
-        },
-      },
-    ],
+    // plugins: [
+    //   {
+    //     cacheKeyWillBeUsed: async ({ request }) => {
+    //       // Strip out vsn query parameter
+    //       const url = new URL(request.url);
+    //       url.search = ""; // Remove query string
+    //       return url.toString();
+    //     },
+    //   },
+    // ],
   },
 };
 
@@ -205,19 +206,19 @@ const MapTilerSDK = {
     fetchOptions: {
       credentials: "same-origin",
     },
-    plugins: [
-      {
-        cacheKeyWillBeUsed: async ({ request }) => {
-          // Strip out dynamic query parameters
-          const url = new URL(request.url);
-          const baseUrl = `${url.origin}${url.pathname}`;
-          return baseUrl;
-        },
-        fetchDidFail: async ({ request }) => {
-          console.warn("MapTiler SDK request failed:", request.url);
-        },
-      },
-    ],
+    // plugins: [
+    //   {
+    //     cacheKeyWillBeUsed: async ({ request }) => {
+    //       // Strip out dynamic query parameters
+    //       const url = new URL(request.url);
+    //       const baseUrl = `${url.origin}${url.pathname}`;
+    //       return baseUrl;
+    //     },
+    //     fetchDidFail: async ({ request }) => {
+    //       console.warn("MapTiler SDK request failed:", request.url);
+    //     },
+    //   },
+    // ],
   },
 };
 
@@ -241,19 +242,19 @@ const Tiles = {
     fetchOptions: {
       credentials: "same-origin",
     },
-    plugins: [
-      {
-        cacheKeyWillBeUsed: async ({ request }) => {
-          // Strip out dynamic query parameters
-          const url = new URL(request.url);
-          const baseUrl = `${url.origin}${url.pathname}`;
-          return baseUrl;
-        },
-        fetchDidFail: async ({ request }) => {
-          console.warn("Tile request failed:", request.url);
-        },
-      },
-    ],
+    // plugins: [
+    //   {
+    //     cacheKeyWillBeUsed: async ({ request }) => {
+    //       // Strip out dynamic query parameters
+    //       const url = new URL(request.url);
+    //       const baseUrl = `${url.origin}${url.pathname}`;
+    //       return baseUrl;
+    //     },
+    //     fetchDidFail: async ({ request }) => {
+    //       console.warn("Tile request failed:", request.url);
+    //     },
+    //   },
+    // ],
   },
 };
 
@@ -267,13 +268,6 @@ const Pages = {
   // || url.pathname.startsWith("/"),
   handler: "NetworkFirst",
   options: {
-    plugins: [
-      {
-        fetchDidFail: async ({ request }) => {
-          console.warn("Online status request failed:", request.url);
-        },
-      },
-    ],
     cacheName: "pages",
     expiration: {
       maxEntries: 10, // Only keep 10 page versions
@@ -285,6 +279,19 @@ const Pages = {
     fetchOptions: {
       credentials: "same-origin",
     },
+    // plugins: [
+    //   {
+    //     cacheKeyWillBeUsed: async ({ request }) => {
+    //       // Strip out dynamic query parameters
+    //       const url = new URL(request.url);
+    //       const baseUrl = `${url.origin}${url.pathname}`;
+    //       return baseUrl;
+    //     },
+    //     fetchDidFail: async ({ request }) => {
+    //       console.warn("Tile request failed:", request.url);
+    //     },
+    //   },
+    // ],
   },
 };
 
@@ -314,6 +321,7 @@ const createPWAConfig = (mode) => ({
     navigateFallbackDenylist: [
       /^\/live/, // Exclude LiveView websocket paths
       /^\/phoenix/, // Exclude Phoenix-specific paths
+      /^\/websocket/,
     ],
     globDirectory: path.resolve(__dirname, "../priv/static/"),
     globPatterns: [
@@ -339,28 +347,33 @@ const createPWAConfig = (mode) => ({
     //   },
     // ],
     runtimeCaching: [
-      // {
-      //   urlPattern: ({ request, url }) => {
-      //     console.log("Caching attempt:", {
-      //       url: url.pathname,
-      //       destination: request.destination,
-      //     });
-      //     return url.pathname === "/" || url.pathname === "/map";
-      //   },
-      //   handler: "NetworkFirst", // Try network first
-      //   options: {
-      //     cacheName: "liveview-pages",
-      //     networkTimeoutSeconds: 10,
-      //     expiration: {
-      //       maxEntries: 10,
-      //       maxAgeSeconds: 24 * 60 * 60, // 24 hours
-      //     },
-      //     fetchOptions: {
-      //       mode: "cors",
-      //       credentials: "same-origin",
-      //     },
-      //   },
-      // },
+      {
+        urlPattern: ({ url }) => url.pathname.startsWith("/assets/"),
+        handler: "CacheFirst",
+        options: {
+          cacheName: "static-assets",
+          expiration: {
+            maxEntries: 60,
+            maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+          },
+          matchOptions: {
+            ignoreSearch: true, // Crucial for handling ?vsn= parameters
+          },
+          fetchOptions: {
+            credentials: "same-origin",
+          },
+          plugins: [
+            {
+              cacheKeyWillBeUsed: async ({ request }) => {
+                // Preserve base URL without VSN parameter
+                const url = new URL(request.url);
+                const baseUrl = `${url.origin}${url.pathname}`;
+                return baseUrl;
+              },
+            },
+          ],
+        },
+      },
       MapTilerSDK, // Add the SDK route before Tiles
       Tiles,
       StaticAssets,
@@ -408,7 +421,7 @@ export default defineConfig(({ command, mode }) => {
     base: "/",
     plugins: [
       wasm(),
-      viteCompression(),
+      // viteCompression(),
       solidPlugin(),
       VitePWA(createPWAConfig(mode)),
     ],
@@ -424,6 +437,8 @@ export default defineConfig(({ command, mode }) => {
         "wasm",
         "svg",
         "png",
+        "webp",
+        "jpg",
       ],
     },
     publicDir: false,

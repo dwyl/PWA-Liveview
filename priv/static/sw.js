@@ -2132,39 +2132,6 @@ class ExpirationPlugin {
   }
 }
 
-// @ts-ignore
-try {
-  self['workbox:strategies:7.2.0'] && _();
-} catch (e) {}
-
-/*
-  Copyright 2018 Google LLC
-
-  Use of this source code is governed by an MIT-style
-  license that can be found in the LICENSE file or at
-  https://opensource.org/licenses/MIT.
-*/
-const cacheOkAndOpaquePlugin = {
-  /**
-   * Returns a valid response (to allow caching) if the status is 200 (OK) or
-   * 0 (opaque).
-   *
-   * @param {Object} options
-   * @param {Response} options.response
-   * @return {Response|null}
-   *
-   * @private
-   */
-  cacheWillUpdate: async ({
-    response
-  }) => {
-    if (response.status === 200 || response.status === 0) {
-      return response;
-    }
-    return null;
-  }
-};
-
 /*
   Copyright 2020 Google LLC
   Use of this source code is governed by an MIT-style
@@ -2283,6 +2250,11 @@ async function executeQuotaErrorCallbacks() {
 function timeout(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+// @ts-ignore
+try {
+  self['workbox:strategies:7.2.0'] && _();
+} catch (e) {}
 
 /*
   Copyright 2020 Google LLC
@@ -3037,6 +3009,116 @@ const messages = {
   https://opensource.org/licenses/MIT.
 */
 /**
+ * An implementation of a [cache-first](https://developer.chrome.com/docs/workbox/caching-strategies-overview/#cache-first-falling-back-to-network)
+ * request strategy.
+ *
+ * A cache first strategy is useful for assets that have been revisioned,
+ * such as URLs like `/styles/example.a8f5f1.css`, since they
+ * can be cached for long periods of time.
+ *
+ * If the network request fails, and there is no cache match, this will throw
+ * a `WorkboxError` exception.
+ *
+ * @extends workbox-strategies.Strategy
+ * @memberof workbox-strategies
+ */
+class CacheFirst extends Strategy {
+  /**
+   * @private
+   * @param {Request|string} request A request to run this strategy for.
+   * @param {workbox-strategies.StrategyHandler} handler The event that
+   *     triggered the request.
+   * @return {Promise<Response>}
+   */
+  async _handle(request, handler) {
+    const logs = [];
+    {
+      finalAssertExports.isInstance(request, Request, {
+        moduleName: 'workbox-strategies',
+        className: this.constructor.name,
+        funcName: 'makeRequest',
+        paramName: 'request'
+      });
+    }
+    let response = await handler.cacheMatch(request);
+    let error = undefined;
+    if (!response) {
+      {
+        logs.push(`No response found in the '${this.cacheName}' cache. ` + `Will respond with a network request.`);
+      }
+      try {
+        response = await handler.fetchAndCachePut(request);
+      } catch (err) {
+        if (err instanceof Error) {
+          error = err;
+        }
+      }
+      {
+        if (response) {
+          logs.push(`Got response from network.`);
+        } else {
+          logs.push(`Unable to get a response from the network.`);
+        }
+      }
+    } else {
+      {
+        logs.push(`Found a cached response in the '${this.cacheName}' cache.`);
+      }
+    }
+    {
+      logger.groupCollapsed(messages.strategyStart(this.constructor.name, request));
+      for (const log of logs) {
+        logger.log(log);
+      }
+      messages.printFinalResponse(response);
+      logger.groupEnd();
+    }
+    if (!response) {
+      throw new WorkboxError('no-response', {
+        url: request.url,
+        error
+      });
+    }
+    return response;
+  }
+}
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+const cacheOkAndOpaquePlugin = {
+  /**
+   * Returns a valid response (to allow caching) if the status is 200 (OK) or
+   * 0 (opaque).
+   *
+   * @param {Object} options
+   * @param {Response} options.response
+   * @return {Response|null}
+   *
+   * @private
+   */
+  cacheWillUpdate: async ({
+    response
+  }) => {
+    if (response.status === 200 || response.status === 0) {
+      return response;
+    }
+    return null;
+  }
+};
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
  * An implementation of a
  * [stale-while-revalidate](https://developer.chrome.com/docs/workbox/caching-strategies-overview/#stale-while-revalidate)
  * request strategy.
@@ -3119,88 +3201,6 @@ class StaleWhileRevalidate extends Strategy {
         if (err instanceof Error) {
           error = err;
         }
-      }
-    }
-    {
-      logger.groupCollapsed(messages.strategyStart(this.constructor.name, request));
-      for (const log of logs) {
-        logger.log(log);
-      }
-      messages.printFinalResponse(response);
-      logger.groupEnd();
-    }
-    if (!response) {
-      throw new WorkboxError('no-response', {
-        url: request.url,
-        error
-      });
-    }
-    return response;
-  }
-}
-
-/*
-  Copyright 2018 Google LLC
-
-  Use of this source code is governed by an MIT-style
-  license that can be found in the LICENSE file or at
-  https://opensource.org/licenses/MIT.
-*/
-/**
- * An implementation of a [cache-first](https://developer.chrome.com/docs/workbox/caching-strategies-overview/#cache-first-falling-back-to-network)
- * request strategy.
- *
- * A cache first strategy is useful for assets that have been revisioned,
- * such as URLs like `/styles/example.a8f5f1.css`, since they
- * can be cached for long periods of time.
- *
- * If the network request fails, and there is no cache match, this will throw
- * a `WorkboxError` exception.
- *
- * @extends workbox-strategies.Strategy
- * @memberof workbox-strategies
- */
-class CacheFirst extends Strategy {
-  /**
-   * @private
-   * @param {Request|string} request A request to run this strategy for.
-   * @param {workbox-strategies.StrategyHandler} handler The event that
-   *     triggered the request.
-   * @return {Promise<Response>}
-   */
-  async _handle(request, handler) {
-    const logs = [];
-    {
-      finalAssertExports.isInstance(request, Request, {
-        moduleName: 'workbox-strategies',
-        className: this.constructor.name,
-        funcName: 'makeRequest',
-        paramName: 'request'
-      });
-    }
-    let response = await handler.cacheMatch(request);
-    let error = undefined;
-    if (!response) {
-      {
-        logs.push(`No response found in the '${this.cacheName}' cache. ` + `Will respond with a network request.`);
-      }
-      try {
-        response = await handler.fetchAndCachePut(request);
-      } catch (err) {
-        if (err instanceof Error) {
-          error = err;
-        }
-      }
-      {
-        if (response) {
-          logs.push(`Got response from network.`);
-        } else {
-          logs.push(`Unable to get a response from the network.`);
-        }
-      }
-    } else {
-      {
-        logs.push(`Found a cached response in the '${this.cacheName}' cache.`);
       }
     }
     {
@@ -4871,10 +4871,31 @@ clientsClaim();
  * See https://goo.gl/S9QRab
  */
 precacheAndRoute([{
+  "url": "assets/_commonjsHelpers-CUmg6egw.js",
+  "revision": null
+}, {
   "url": "assets/_commonjsHelpers.js",
   "revision": null
 }, {
   "url": "assets/app.css",
+  "revision": null
+}, {
+  "url": "assets/appV-B_ayXYJu.js",
+  "revision": null
+}, {
+  "url": "assets/appV-B0LlS47V.js",
+  "revision": null
+}, {
+  "url": "assets/appV-Dgj5QGHH.css",
+  "revision": null
+}, {
+  "url": "assets/appV-DO2bDAH5.js",
+  "revision": null
+}, {
+  "url": "assets/appV-Dqlt2XpF.js",
+  "revision": null
+}, {
+  "url": "assets/appV-Ds_0WhpQ.js",
   "revision": null
 }, {
   "url": "assets/appV.css",
@@ -4883,25 +4904,73 @@ precacheAndRoute([{
   "url": "assets/appV.js",
   "revision": null
 }, {
+  "url": "assets/bins-BsEwaF3p.js",
+  "revision": null
+}, {
   "url": "assets/bins.js",
+  "revision": null
+}, {
+  "url": "assets/configureTopbar-meE1j55d.js",
   "revision": null
 }, {
   "url": "assets/configureTopbar.js",
   "revision": null
 }, {
+  "url": "assets/counter-BR05Gifn.js",
+  "revision": null
+}, {
   "url": "assets/counter.js",
+  "revision": null
+}, {
+  "url": "assets/formCities-CoSgGYwp.js",
+  "revision": null
+}, {
+  "url": "assets/formCities-CzgzbcYT.js",
+  "revision": null
+}, {
+  "url": "assets/formCities-ITzGJLyf.js",
   "revision": null
 }, {
   "url": "assets/formCities.js",
   "revision": null
 }, {
+  "url": "assets/formVComp-BZpzU5yQ.js",
+  "revision": null
+}, {
+  "url": "assets/formVComp-C1C9fdut.js",
+  "revision": null
+}, {
+  "url": "assets/formVComp-U1QeG-MC.js",
+  "revision": null
+}, {
   "url": "assets/formVComp.js",
+  "revision": null
+}, {
+  "url": "assets/formVHook-CqjyPHwq.js",
+  "revision": null
+}, {
+  "url": "assets/formVHook-DvAMHL7s.js",
+  "revision": null
+}, {
+  "url": "assets/formVHook-NA0MbPJs.js",
   "revision": null
 }, {
   "url": "assets/formVHook.js",
   "revision": null
 }, {
+  "url": "assets/great_circle-Ccl76Ny3.js",
+  "revision": null
+}, {
   "url": "assets/great_circle.js",
+  "revision": null
+}, {
+  "url": "assets/initMap-Bvr-Ab8i.css",
+  "revision": null
+}, {
+  "url": "assets/initMap-D1k255Ha.js",
+  "revision": null
+}, {
+  "url": "assets/initMap-Jqj90iiJ.js",
   "revision": null
 }, {
   "url": "assets/initMap.css",
@@ -4910,13 +4979,40 @@ precacheAndRoute([{
   "url": "assets/initMap.js",
   "revision": null
 }, {
+  "url": "assets/initYJS-D6N2mUUh.js",
+  "revision": null
+}, {
   "url": "assets/initYJS.js",
+  "revision": null
+}, {
+  "url": "assets/leaflet-maptilersdk-C2qNkppx.js",
+  "revision": null
+}, {
+  "url": "assets/leaflet-maptilersdk-CFLkDOEG.js",
   "revision": null
 }, {
   "url": "assets/leaflet-maptilersdk.js",
   "revision": null
 }, {
+  "url": "assets/leaflet-src-wS-Ip0dR.js",
+  "revision": null
+}, {
   "url": "assets/leaflet-src.js",
+  "revision": null
+}, {
+  "url": "assets/mapVHook-B8C9axYc.js",
+  "revision": null
+}, {
+  "url": "assets/mapVHook-ClimNERe.js",
+  "revision": null
+}, {
+  "url": "assets/mapVHook-CY9q5zXr.js",
+  "revision": null
+}, {
+  "url": "assets/mapVHook-D0TqG-ba.js",
+  "revision": null
+}, {
+  "url": "assets/mapVHook-D8GCArtF.js",
   "revision": null
 }, {
   "url": "assets/mapVHook.js",
@@ -4925,13 +5021,25 @@ precacheAndRoute([{
   "url": "assets/old-formCities.js",
   "revision": null
 }, {
+  "url": "assets/phoenix_live_view.esm-B1-omhOW.js",
+  "revision": null
+}, {
   "url": "assets/phoenix_live_view.esm.js",
+  "revision": null
+}, {
+  "url": "assets/phoenix-BpePxqG5.js",
   "revision": null
 }, {
   "url": "assets/phoenix.js",
   "revision": null
 }, {
+  "url": "assets/preload-helper-BkSzTOHT.js",
+  "revision": null
+}, {
   "url": "assets/preload-helper.js",
+  "revision": null
+}, {
+  "url": "assets/pwaHook-aa4gKNby.js",
   "revision": null
 }, {
   "url": "assets/pwaHook.js",
@@ -4940,16 +5048,55 @@ precacheAndRoute([{
   "url": "assets/registerServiceWorker.js",
   "revision": null
 }, {
+  "url": "assets/renderVForm-BgGN_1VW.js",
+  "revision": null
+}, {
+  "url": "assets/renderVForm-BrEJ3JXD.js",
+  "revision": null
+}, {
+  "url": "assets/renderVForm-uyIMn39R.js",
+  "revision": null
+}, {
   "url": "assets/renderVForm.js",
+  "revision": null
+}, {
+  "url": "assets/renderVMap-BOOj8H2E.js",
+  "revision": null
+}, {
+  "url": "assets/renderVMap-BYM3DnIL.js",
+  "revision": null
+}, {
+  "url": "assets/renderVMap-Df0fO7v1.js",
+  "revision": null
+}, {
+  "url": "assets/renderVMap-DOWZnaHD.js",
+  "revision": null
+}, {
+  "url": "assets/renderVMap-et6q0cJe.js",
   "revision": null
 }, {
   "url": "assets/renderVMap.js",
   "revision": null
 }, {
+  "url": "assets/SolidYComp-DCEGMUM5.js",
+  "revision": null
+}, {
   "url": "assets/SolidYComp.js",
   "revision": null
 }, {
+  "url": "assets/topbar.min-DYPmkus3.js",
+  "revision": null
+}, {
   "url": "assets/topbar.min.js",
+  "revision": null
+}, {
+  "url": "assets/valtioObservers-CD0WHu7I.js",
+  "revision": null
+}, {
+  "url": "assets/valtioObservers-CeyJJ09y.js",
+  "revision": null
+}, {
+  "url": "assets/valtioObservers-Dbqua_Wd.js",
   "revision": null
 }, {
   "url": "assets/valtioObservers.js",
@@ -4958,22 +5105,49 @@ precacheAndRoute([{
   "url": "assets/vanilla.js",
   "revision": null
 }, {
+  "url": "assets/virtual_pwa-register-Den6JMZ6.js",
+  "revision": null
+}, {
   "url": "assets/virtual_pwa-register.js",
+  "revision": null
+}, {
+  "url": "assets/vStore-CIiVKcVX.js",
+  "revision": null
+}, {
+  "url": "assets/vStore-CSzc6wQU.js",
+  "revision": null
+}, {
+  "url": "assets/vStore-DS28gPMp.js",
   "revision": null
 }, {
   "url": "assets/vStore.js",
   "revision": null
 }, {
+  "url": "assets/web-x0MjdlV8.js",
+  "revision": null
+}, {
   "url": "assets/web.js",
+  "revision": null
+}, {
+  "url": "assets/workbox-window.prod.es5-BJ8mGsQ1.js",
   "revision": null
 }, {
   "url": "assets/workbox-window.prod.es5.js",
   "revision": null
 }, {
+  "url": "assets/y-indexeddb-BgXDzyvi.js",
+  "revision": null
+}, {
   "url": "assets/y-indexeddb.js",
   "revision": null
 }, {
+  "url": "assets/yHook-N6dm8Ymm.js",
+  "revision": null
+}, {
   "url": "assets/yHook.js",
+  "revision": null
+}, {
+  "url": "assets/yjs-CjKCrWVX.js",
   "revision": null
 }, {
   "url": "assets/yjs.js",
@@ -5077,15 +5251,51 @@ registerRoute(new NavigationRoute(createHandlerBoundToURL("/"), {
 }));
 registerRoute(({
   url
+}) => url.pathname.startsWith("/assets/"), new CacheFirst({
+  "cacheName": "static-assets",
+  "matchOptions": {
+    "ignoreSearch": true
+  },
+  "fetchOptions": {
+    "credentials": "same-origin"
+  },
+  plugins: [new ExpirationPlugin({
+    maxEntries: 60,
+    maxAgeSeconds: 2592000
+  }), {
+    cacheKeyWillBeUsed: async ({
+      request
+    }) => {
+      const url = new URL(request.url);
+      const baseUrl = `${url.origin}${url.pathname}`;
+      return baseUrl;
+    }
+  }]
+}), 'GET');
+registerRoute(({
+  url
 }) => {
   return url.hostname === "api.maptiler.com" && url.pathname.startsWith("/maps/");
 }, new StaleWhileRevalidate({
   "cacheName": "maptiler-sdk",
+  "matchOptions": {
+    "ignoreSearch": true
+  },
+  "fetchOptions": {
+    "credentials": "same-origin"
+  },
   plugins: [new ExpirationPlugin({
     maxEntries: 10,
     maxAgeSeconds: 604800,
     purgeOnQuotaError: true
   }), {
+    cacheKeyWillBeUsed: async ({
+      request
+    }) => {
+      const url = new URL(request.url);
+      const baseUrl = `${url.origin}${url.pathname}`;
+      return baseUrl;
+    },
     fetchDidFail: async ({
       request
     }) => {
@@ -5099,11 +5309,24 @@ registerRoute(({
   return url.hostname === "api.maptiler.com" && !url.pathname.startsWith("/maps/");
 }, new CacheFirst({
   "cacheName": "maptiler-tiles",
+  "matchOptions": {
+    "ignoreSearch": true
+  },
+  "fetchOptions": {
+    "credentials": "same-origin"
+  },
   plugins: [new ExpirationPlugin({
     maxEntries: 500,
     maxAgeSeconds: 604800,
     purgeOnQuotaError: true
   }), {
+    cacheKeyWillBeUsed: async ({
+      request
+    }) => {
+      const url = new URL(request.url);
+      const baseUrl = `${url.origin}${url.pathname}`;
+      return baseUrl;
+    },
     fetchDidFail: async ({
       request
     }) => {
@@ -5127,7 +5350,15 @@ registerRoute(({
   plugins: [new ExpirationPlugin({
     maxAgeSeconds: 31536000,
     maxEntries: 200
-  })]
+  }), {
+    cacheKeyWillBeUsed: async ({
+      request
+    }) => {
+      const url = new URL(request.url);
+      url.search = "";
+      return url.toString();
+    }
+  }]
 }), 'GET');
 registerRoute(({
   request
@@ -5160,12 +5391,30 @@ registerRoute(({
 }, new CacheFirst({
   "cacheName": "external",
   "matchOptions": {
-    "ignoreVary": true
+    "ignoreVary": true,
+    "ignoreSearch": true
+  },
+  "fetchOptions": {
+    "mode": "cors",
+    "credentials": "same-origin"
   },
   plugins: [new ExpirationPlugin({
     maxAgeSeconds: 31536000,
     maxEntries: 500
-  })]
+  }), {
+    cacheKeyWillBeUsed: async ({
+      request
+    }) => {
+      const url = new URL(request.url);
+      const baseUrl = `${url.origin}${url.pathname}`;
+      return baseUrl;
+    },
+    fetchDidFail: async ({
+      request
+    }) => {
+      console.warn("MapTiler SDK request failed:", request.url);
+    }
+  }]
 }), 'GET');
 registerRoute(({
   url
@@ -5189,14 +5438,21 @@ registerRoute(({
   "fetchOptions": {
     "credentials": "same-origin"
   },
-  plugins: [{
+  plugins: [new ExpirationPlugin({
+    maxEntries: 10,
+    maxAgeSeconds: 7200
+  }), {
+    cacheKeyWillBeUsed: async ({
+      request
+    }) => {
+      const url = new URL(request.url);
+      const baseUrl = `${url.origin}${url.pathname}`;
+      return baseUrl;
+    },
     fetchDidFail: async ({
       request
     }) => {
-      console.warn("Online status request failed:", request.url);
+      console.warn("Tile request failed:", request.url);
     }
-  }, new ExpirationPlugin({
-    maxEntries: 10,
-    maxAgeSeconds: 7200
-  })]
+  }]
 }), 'GET');

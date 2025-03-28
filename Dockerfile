@@ -1,16 +1,3 @@
-# Find eligible builder and runner images on Docker Hub. We use Ubuntu/Debian
-# instead of Alpine to avoid DNS resolution issues in production.
-#
-# https://hub.docker.com/r/hexpm/elixir/tags?page=1&name=ubuntu
-# https://hub.docker.com/_/ubuntu?tab=tags
-#
-# This file is based on these images:
-#
-#   - https://hub.docker.com/r/hexpm/elixir/tags - for the build image
-#   - https://hub.docker.com/_/debian?tab=tags&page=1&name=bullseye-20250113-slim - for the release image
-#   - https://pkgs.org/ - resource for finding needed packages
-#   - Ex: hexpm/elixir:1.18.1-erlang-27.2-debian-bullseye-20250113-slim
-#
 ARG ELIXIR_VERSION=1.18.3
 ARG OTP_VERSION=27.3
 ARG DEBIAN_VERSION=bullseye-20250317-slim
@@ -36,8 +23,6 @@ RUN apt-get update -y && apt-get install -y \
 #   && dpkg -i litestream-v${LITESTREAM_VERSION}-linux-amd64.deb
 
 RUN npm install -g pnpm 
-RUN pnpm self-update
-
 # prepare build dir
 WORKDIR /app
 
@@ -77,7 +62,7 @@ RUN pnpm config set store-dir /app/.pnpm-store
 RUN pnpm install
 
 COPY assets/ ./
-RUN pnpm exec vite build --config vite.config.js
+RUN pnpm exec vite build --mode production --config vite.config.js
 
 WORKDIR /app
 RUN mix tailwind solidyjs --minify
