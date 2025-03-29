@@ -279,6 +279,9 @@ const Pages = {
     fetchOptions: {
       credentials: "same-origin",
     },
+    cacheableResponse: {
+      statuses: [200],
+    },
     // plugins: [
     //   {
     //     cacheKeyWillBeUsed: async ({ request }) => {
@@ -322,6 +325,7 @@ const createPWAConfig = (mode) => ({
       /^\/live/, // Exclude LiveView websocket paths
       /^\/phoenix/, // Exclude Phoenix-specific paths
       /^\/websocket/,
+      /\.(js|css|png|jpg|jpeg|gif|svg)$/,
     ],
     globDirectory: path.resolve(__dirname, "../priv/static/"),
     globPatterns: [
