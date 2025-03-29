@@ -85,6 +85,37 @@ const LVWebSocket = {
   handler: "NetworkOnly", // Websockets must always go to network
 };
 
+const VersionedAssets = {
+  urlPattern: ({ url }) => {
+    // Match versioned assets (with hash in filename)
+    return url.pathname.match(/\/assets\/.*-[a-f0-9]+\.(js|css)/);
+  },
+  handler: "CacheFirst",
+  options: {
+    cacheName: "versioned-assets",
+    expiration: {
+      maxEntries: 50,
+      maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year (versioned assets rarely change)
+    },
+    matchOptions: {
+      ignoreSearch: true, // Ignore vsn parameter
+    },
+    cacheableResponse: {
+      statuses: [0, 200],
+    },
+    plugins: [
+      {
+        cacheKeyWillBeUsed: async ({ request }) => {
+          // Strip query parameters
+          const url = new URL(request.url);
+          url.search = "";
+          return url.toString();
+        },
+      },
+    ],
+  },
+};
+
 const StaticAssets = {
   urlPattern: ({ url }) => {
     const staticPaths = ["/assets/", "/images/"];
@@ -378,6 +409,7 @@ const createPWAConfig = (mode) => ({
           ],
         },
       },
+      VersionedAssets,
       MapTilerSDK, // Add the SDK route before Tiles
       Tiles,
       StaticAssets,
