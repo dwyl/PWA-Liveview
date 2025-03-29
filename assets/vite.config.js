@@ -64,10 +64,6 @@ const buildOps = {
       entryFileNames: "assets/[name].js",
     },
   },
-  // commonjsOptions: {
-  //   exclude: [],
-  //   include: ["vendor/topbar.cjs"],
-  // },
 };
 
 const LVLongPoll = {

@@ -29,11 +29,11 @@ async function addCurrentPageToCache({ current, routes }) {
 
   // let Workbox know this page should be cached
   // by triggering a "pageshow" event which Workbox can listen for
-  if (window.__WB_MANIFEST) {
-    console.log("Letting Workbox handle page caching for:", newPath);
-    AppState.paths.add(newPath);
-    return;
-  }
+  // if (window.__WB_MANIFEST) {
+  //   console.log("Letting Workbox handle page caching for:", newPath);
+  //   AppState.paths.add(newPath);
+  //   return;
+  // }
 
   // Fall back to manual caching only if Workbox isn't available
   const cache = await caches.open(CONFIG.CACHE_NAME);
