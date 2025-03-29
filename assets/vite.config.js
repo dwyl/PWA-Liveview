@@ -421,8 +421,8 @@ const createPWAConfig = (mode) => ({
       LiveReload,
       Pages,
     ],
-    clientsClaim: true, // take control of all open pages as soon as the service worker activates
-    skipWaiting: true, // New service worker versions activate immediately
+    clientsClaim: false, // take control of all open pages as soon as the service worker activates
+    skipWaiting: false, // New service worker versions activate immediately
     // Without these settings, you might have some pages using old service worker versions
     // while others use new ones, which could lead to inconsistent behavior in your offline capabilities.
     mode: mode === "development" ? "development" : "production", // workbox own mode

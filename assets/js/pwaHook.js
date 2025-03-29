@@ -20,6 +20,7 @@ export const PwaHook = {
           updateAvailable: true,
         });
       },
+      immediate: false, // Prevents immediate registration on page load
       onOfflineReady() {
         // Only notify once when service worker is first installed
         if (!hasNotifiedOfflineReady) {
@@ -36,6 +37,13 @@ export const PwaHook = {
           error: error.toString(),
         });
       },
+    });
+
+    this.handleEvent("confirm-update", () => {
+      if (updateSWFunction) {
+        // This will trigger the update
+        updateSWFunction(true);
+      }
     });
 
     updateSW();

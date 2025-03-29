@@ -28,7 +28,7 @@ An example of a Progressive Web App (PWA) combining Phoenix LiveView's real-time
     - [Server-Side Implementation](#server-side-implementation)
     - [State Synchronization Flow](#state-synchronization-flow)
   - [Misc](#misc)
-    - [Other `Workbox` settings](#other-workbox-settings)
+    - ["Important" `Workbox` settings](#important-workbox-settings)
     - [Icons](#icons)
   - [Manifest](#manifest)
   - [Performance](#performance)
@@ -296,6 +296,13 @@ Benefits: Fresh content with offline fallback
    - Use for: Offline-first content
    - Benefits: Guaranteed offline access
 
+We used several caching strategies for different types of assets:
+
+- Versioned Assets: Using a "CacheFirst" strategy for assets with hash identifiers in their filenames, which is excellent for long-term caching.
+- Static Assets: Properly configured to handle Phoenix's versioning query parameters (?vsn=) by stripping them from cache keys.
+- Map Tiles and SDK: Separate caching strategies for MapTiler SDK (using "StaleWhileRevalidate") and map tiles (using "CacheFirst").
+- LiveView-specific Routes: Correctly configured to always go through the network for LiveView's longpoll and websocket connections.
+
 ## Advanced Configuration
 
 1. PWA Settings
@@ -519,9 +526,9 @@ sequenceDiagram
 
 ## Misc
 
-### Other `Workbox` settings
+### "Important" `Workbox` settings
 
-As per `Vite-PWA` documentation, set:
+`navigateFallbackDenylist` excludes LiveView critical path
 
 ```js
 injectManifest: {

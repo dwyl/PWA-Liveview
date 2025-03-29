@@ -17,8 +17,8 @@ const CONFIG = {
   };
 
 async function addCurrentPageToCache({ current, routes }) {
-  if (!("caches" in window)) return;
   await navigator.serviceWorker.ready;
+  if (!("caches" in window)) return;
 
   const newPath = new URL(current).pathname;
 
@@ -27,6 +27,15 @@ async function addCurrentPageToCache({ current, routes }) {
   if (AppState.paths.has(newPath)) return;
   if (newPath !== window.location.pathname) return;
 
+  // let Workbox know this page should be cached
+  // by triggering a "pageshow" event which Workbox can listen for
+  if (window.__WB_MANIFEST) {
+    console.log("Letting Workbox handle page caching for:", newPath);
+    AppState.paths.add(newPath);
+    return;
+  }
+
+  // Fall back to manual caching only if Workbox isn't available
   const cache = await caches.open(CONFIG.CACHE_NAME);
   const htmlContent = document.documentElement.outerHTML;
   const contentLength = new TextEncoder().encode(htmlContent).length;
@@ -41,10 +50,14 @@ async function addCurrentPageToCache({ current, routes }) {
     statusText: "OK",
   });
 
-  await cache.put(current, response);
-  AppState.paths.add(newPath);
-  console.log("Page cached successfully:", newPath);
-  // return cache.put(current, response);
+  try {
+    await cache.put(current, response);
+    AppState.paths.add(newPath);
+    console.log("Page cached successfully:", newPath);
+  } catch (error) {
+    console.error("Error caching page:", error);
+    return;
+  }
 }
 
 // Monitor navigation events and cache the current page if in declared routes
