@@ -306,9 +306,17 @@ const Pages = {
     fetchOptions: {
       credentials: "same-origin",
     },
-    cacheableResponse: {
-      statuses: [200],
-    },
+    // cacheableResponse: {
+    //   statuses: [200],
+    // },
+    plugins: [
+      {
+        cacheKeyWillBeUsed: async ({ request }) => {
+          const url = new URL(request.url);
+          return `${url.origin}${url.pathname}`;
+        },
+      },
+    ],
     // plugins: [
     //   {
     //     cacheKeyWillBeUsed: async ({ request }) => {
