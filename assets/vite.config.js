@@ -34,7 +34,7 @@ const manifestOpts = {
 const buildOps = {
   outDir: "../priv/static/",
   emptyOutDir: false,
-  sourcemap: true,
+  // sourcemap: true,
   target: ["esnext"],
   manifest: true,
   rollupOptions: {

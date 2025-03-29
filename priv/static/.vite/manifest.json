@@ -67,6 +67,9 @@
       "_preload-helper.js"
     ],
     "dynamicImports": [
+      "js/renderVMap.js",
+      "js/renderVForm.js",
+      "js/SolidYComp.jsx",
       "js/initYJS.js",
       "js/yHook.js",
       "js/mapVHook.js",
@@ -74,10 +77,7 @@
       "js/configureTopbar.js",
       "js/pwaHook.js",
       "node_modules/.pnpm/phoenix_live_view@file+..+deps+phoenix_live_view/node_modules/phoenix_live_view/priv/static/phoenix_live_view.esm.js",
-      "node_modules/.pnpm/phoenix@file+..+deps+phoenix/node_modules/phoenix/priv/static/phoenix.mjs",
-      "js/renderVMap.js",
-      "js/renderVForm.js",
-      "js/SolidYComp.jsx"
+      "node_modules/.pnpm/phoenix@file+..+deps+phoenix/node_modules/phoenix/priv/static/phoenix.mjs"
     ],
     "css": [
       "assets/appV.css"

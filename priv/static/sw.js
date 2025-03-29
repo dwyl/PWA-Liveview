@@ -3083,6 +3083,171 @@ class CacheFirst extends Strategy {
   }
 }
 
+// @ts-ignore
+try {
+  self['workbox:cacheable-response:7.2.0'] && _();
+} catch (e) {}
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * This class allows you to set up rules determining what
+ * status codes and/or headers need to be present in order for a
+ * [`Response`](https://developer.mozilla.org/en-US/docs/Web/API/Response)
+ * to be considered cacheable.
+ *
+ * @memberof workbox-cacheable-response
+ */
+class CacheableResponse {
+  /**
+   * To construct a new CacheableResponse instance you must provide at least
+   * one of the `config` properties.
+   *
+   * If both `statuses` and `headers` are specified, then both conditions must
+   * be met for the `Response` to be considered cacheable.
+   *
+   * @param {Object} config
+   * @param {Array<number>} [config.statuses] One or more status codes that a
+   * `Response` can have and be considered cacheable.
+   * @param {Object<string,string>} [config.headers] A mapping of header names
+   * and expected values that a `Response` can have and be considered cacheable.
+   * If multiple headers are provided, only one needs to be present.
+   */
+  constructor(config = {}) {
+    {
+      if (!(config.statuses || config.headers)) {
+        throw new WorkboxError('statuses-or-headers-required', {
+          moduleName: 'workbox-cacheable-response',
+          className: 'CacheableResponse',
+          funcName: 'constructor'
+        });
+      }
+      if (config.statuses) {
+        finalAssertExports.isArray(config.statuses, {
+          moduleName: 'workbox-cacheable-response',
+          className: 'CacheableResponse',
+          funcName: 'constructor',
+          paramName: 'config.statuses'
+        });
+      }
+      if (config.headers) {
+        finalAssertExports.isType(config.headers, 'object', {
+          moduleName: 'workbox-cacheable-response',
+          className: 'CacheableResponse',
+          funcName: 'constructor',
+          paramName: 'config.headers'
+        });
+      }
+    }
+    this._statuses = config.statuses;
+    this._headers = config.headers;
+  }
+  /**
+   * Checks a response to see whether it's cacheable or not, based on this
+   * object's configuration.
+   *
+   * @param {Response} response The response whose cacheability is being
+   * checked.
+   * @return {boolean} `true` if the `Response` is cacheable, and `false`
+   * otherwise.
+   */
+  isResponseCacheable(response) {
+    {
+      finalAssertExports.isInstance(response, Response, {
+        moduleName: 'workbox-cacheable-response',
+        className: 'CacheableResponse',
+        funcName: 'isResponseCacheable',
+        paramName: 'response'
+      });
+    }
+    let cacheable = true;
+    if (this._statuses) {
+      cacheable = this._statuses.includes(response.status);
+    }
+    if (this._headers && cacheable) {
+      cacheable = Object.keys(this._headers).some(headerName => {
+        return response.headers.get(headerName) === this._headers[headerName];
+      });
+    }
+    {
+      if (!cacheable) {
+        logger.groupCollapsed(`The request for ` + `'${getFriendlyURL(response.url)}' returned a response that does ` + `not meet the criteria for being cached.`);
+        logger.groupCollapsed(`View cacheability criteria here.`);
+        logger.log(`Cacheable statuses: ` + JSON.stringify(this._statuses));
+        logger.log(`Cacheable headers: ` + JSON.stringify(this._headers, null, 2));
+        logger.groupEnd();
+        const logFriendlyHeaders = {};
+        response.headers.forEach((value, key) => {
+          logFriendlyHeaders[key] = value;
+        });
+        logger.groupCollapsed(`View response status and headers here.`);
+        logger.log(`Response status: ${response.status}`);
+        logger.log(`Response headers: ` + JSON.stringify(logFriendlyHeaders, null, 2));
+        logger.groupEnd();
+        logger.groupCollapsed(`View full response details here.`);
+        logger.log(response.headers);
+        logger.log(response);
+        logger.groupEnd();
+        logger.groupEnd();
+      }
+    }
+    return cacheable;
+  }
+}
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * A class implementing the `cacheWillUpdate` lifecycle callback. This makes it
+ * easier to add in cacheability checks to requests made via Workbox's built-in
+ * strategies.
+ *
+ * @memberof workbox-cacheable-response
+ */
+class CacheableResponsePlugin {
+  /**
+   * To construct a new CacheableResponsePlugin instance you must provide at
+   * least one of the `config` properties.
+   *
+   * If both `statuses` and `headers` are specified, then both conditions must
+   * be met for the `Response` to be considered cacheable.
+   *
+   * @param {Object} config
+   * @param {Array<number>} [config.statuses] One or more status codes that a
+   * `Response` can have and be considered cacheable.
+   * @param {Object<string,string>} [config.headers] A mapping of header names
+   * and expected values that a `Response` can have and be considered cacheable.
+   * If multiple headers are provided, only one needs to be present.
+   */
+  constructor(config) {
+    /**
+     * @param {Object} options
+     * @param {Response} options.response
+     * @return {Response|null}
+     * @private
+     */
+    this.cacheWillUpdate = async ({
+      response
+    }) => {
+      if (this._cacheableResponse.isResponseCacheable(response)) {
+        return response;
+      }
+      return null;
+    };
+    this._cacheableResponse = new CacheableResponse(config);
+  }
+}
+
 /*
   Copyright 2018 Google LLC
 
@@ -5241,13 +5406,13 @@ precacheAndRoute([{
   "revision": null
 }, {
   "url": "manifest.webmanifest",
-  "revision": "2d68e4811266de768b3f96aa2382c040"
+  "revision": "f6298ddfcdb78ffea0928906654eacf5"
 }], {
   "ignoreURLParametersMatching": [/^vsn$/]
 });
 cleanupOutdatedCaches();
 registerRoute(new NavigationRoute(createHandlerBoundToURL("/"), {
-  denylist: [/^\/live/, /^\/phoenix/]
+  denylist: [/^\/live/, /^\/phoenix/, /^\/websocket/, /\.(js|css|png|jpg|jpeg|gif|svg)$/]
 }));
 registerRoute(({
   url
@@ -5275,6 +5440,30 @@ registerRoute(({
 registerRoute(({
   url
 }) => {
+  return url.pathname.match(/\/assets\/.*-[a-f0-9]+\.(js|css)/);
+}, new CacheFirst({
+  "cacheName": "versioned-assets",
+  "matchOptions": {
+    "ignoreSearch": true
+  },
+  plugins: [new ExpirationPlugin({
+    maxEntries: 50,
+    maxAgeSeconds: 31536000
+  }), new CacheableResponsePlugin({
+    statuses: [0, 200]
+  }), {
+    cacheKeyWillBeUsed: async ({
+      request
+    }) => {
+      const url = new URL(request.url);
+      url.search = "";
+      return url.toString();
+    }
+  }]
+}), 'GET');
+registerRoute(({
+  url
+}) => {
   return url.hostname === "api.maptiler.com" && url.pathname.startsWith("/maps/");
 }, new StaleWhileRevalidate({
   "cacheName": "maptiler-sdk",
@@ -5288,20 +5477,7 @@ registerRoute(({
     maxEntries: 10,
     maxAgeSeconds: 604800,
     purgeOnQuotaError: true
-  }), {
-    cacheKeyWillBeUsed: async ({
-      request
-    }) => {
-      const url = new URL(request.url);
-      const baseUrl = `${url.origin}${url.pathname}`;
-      return baseUrl;
-    },
-    fetchDidFail: async ({
-      request
-    }) => {
-      console.warn("MapTiler SDK request failed:", request.url);
-    }
-  }]
+  })]
 }), 'GET');
 registerRoute(({
   url
@@ -5319,20 +5495,7 @@ registerRoute(({
     maxEntries: 500,
     maxAgeSeconds: 604800,
     purgeOnQuotaError: true
-  }), {
-    cacheKeyWillBeUsed: async ({
-      request
-    }) => {
-      const url = new URL(request.url);
-      const baseUrl = `${url.origin}${url.pathname}`;
-      return baseUrl;
-    },
-    fetchDidFail: async ({
-      request
-    }) => {
-      console.warn("Tile request failed:", request.url);
-    }
-  }]
+  })]
 }), 'GET');
 registerRoute(({
   url
@@ -5373,15 +5536,7 @@ registerRoute(({
   plugins: [new ExpirationPlugin({
     maxAgeSeconds: 604800,
     maxEntries: 50
-  }), {
-    cacheKeyWillBeUsed: async ({
-      request
-    }) => {
-      const url = new URL(request.url);
-      url.search = "";
-      return url.toString();
-    }
-  }]
+  })]
 }), 'GET');
 registerRoute(({
   url
@@ -5401,20 +5556,7 @@ registerRoute(({
   plugins: [new ExpirationPlugin({
     maxAgeSeconds: 31536000,
     maxEntries: 500
-  }), {
-    cacheKeyWillBeUsed: async ({
-      request
-    }) => {
-      const url = new URL(request.url);
-      const baseUrl = `${url.origin}${url.pathname}`;
-      return baseUrl;
-    },
-    fetchDidFail: async ({
-      request
-    }) => {
-      console.warn("MapTiler SDK request failed:", request.url);
-    }
-  }]
+  })]
 }), 'GET');
 registerRoute(({
   url
@@ -5441,18 +5583,7 @@ registerRoute(({
   plugins: [new ExpirationPlugin({
     maxEntries: 10,
     maxAgeSeconds: 7200
-  }), {
-    cacheKeyWillBeUsed: async ({
-      request
-    }) => {
-      const url = new URL(request.url);
-      const baseUrl = `${url.origin}${url.pathname}`;
-      return baseUrl;
-    },
-    fetchDidFail: async ({
-      request
-    }) => {
-      console.warn("Tile request failed:", request.url);
-    }
-  }]
+  }), new CacheableResponsePlugin({
+    statuses: [200]
+  })]
 }), 'GET');
