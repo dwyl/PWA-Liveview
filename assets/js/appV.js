@@ -17,31 +17,34 @@ const CONFIG = {
   };
 
 async function addCurrentPageToCache({ current, routes }) {
+  if (!("caches" in window)) return;
   await navigator.serviceWorker.ready;
+
   const newPath = new URL(current).pathname;
 
   // we cache the two pages "/" and "/map", and only once.
   if (!routes.includes(newPath)) return;
   if (AppState.paths.has(newPath)) return;
+  if (newPath !== window.location.pathname) return;
 
-  if (newPath === window.location.pathname) {
-    AppState.paths.add(newPath);
-    const htmlContent = document.documentElement.outerHTML;
-    const contentLength = new TextEncoder().encode(htmlContent).length;
-    const headers = new Headers({
-      "Content-Type": "text/html",
-      "Content-Length": contentLength,
-    });
+  const cache = await caches.open(CONFIG.CACHE_NAME);
+  const htmlContent = document.documentElement.outerHTML;
+  const contentLength = new TextEncoder().encode(htmlContent).length;
+  const headers = new Headers({
+    "Content-Type": "text/html",
+    "Content-Length": contentLength,
+  });
 
-    const response = new Response(htmlContent, {
-      headers: headers,
-      status: 200,
-      statusText: "OK",
-    });
+  const response = new Response(htmlContent, {
+    headers: headers,
+    status: 200,
+    statusText: "OK",
+  });
 
-    const cache = await caches.open(CONFIG.CACHE_NAME);
-    return cache.put(current, response);
-  } else return;
+  await cache.put(current, response);
+  AppState.paths.add(newPath);
+  console.log("Page cached successfully:", newPath);
+  // return cache.put(current, response);
 }
 
 // Monitor navigation events and cache the current page if in declared routes
@@ -115,6 +118,32 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 //--------------
+
+async function displayVMap() {
+  console.log("Render Map-----");
+  const { RenderVMap } = await import("./renderVMap.js");
+  return RenderVMap();
+}
+
+async function displayVForm() {
+  console.log("Render Form-----");
+  const { RenderVForm } = await import("./renderVForm.js");
+  return RenderVForm();
+}
+
+async function displayStock(ydoc) {
+  console.log("Render Stock-----");
+  const { SolidYComp } = await import("./SolidYComp.jsx");
+  return SolidYComp({
+    ydoc,
+    userID: sessionStorage.getItem("userID"),
+    max: sessionStorage.getItem("max"),
+    el: document.getElementById("stock"),
+  });
+}
+
+//---------------
+// Initialize the app
 async function initApp(lineStatus) {
   try {
     const { default: initYdoc } = await import("./initYJS.js");
@@ -146,6 +175,7 @@ async function initApp(lineStatus) {
 
 function initOfflineComponents() {
   const path = window.location.pathname;
+
   if (path === "/map") {
     displayVMap();
     displayVForm();
@@ -175,36 +205,13 @@ async function initLiveSocket(hooks) {
   });
 }
 
-async function displayVMap() {
-  console.log("Render Map-----");
-  const { RenderVMap } = await import("./renderVMap.js");
-  return RenderVMap();
-}
-
-async function displayVForm() {
-  console.log("Render Form-----");
-  const { RenderVForm } = await import("./renderVForm.js");
-  return RenderVForm();
-}
-
-async function displayStock(ydoc) {
-  console.log("Render Stock-----");
-  const { SolidYComp } = await import("./SolidYComp.jsx");
-  return SolidYComp({
-    ydoc,
-    userID: sessionStorage.getItem("userID"),
-    max: sessionStorage.getItem("max"),
-    el: document.getElementById("stock"),
-  });
-}
-
 // **************************************
 (async () => {
   try {
     AppState.isOnline = await checkServer();
 
-    // await registerServiceWorker();
     await initApp(AppState.isOnline);
+
     window.addEventListener("phx:page-loading-stop", () => {
       if (!window.liveSocket?.isConnected()) {
         console.log("liveSocket not connected");
@@ -225,6 +232,7 @@ async function displayStock(ydoc) {
 
     window.addEventListener("online", () => {
       console.log("Application back online");
+      window.location.reload();
     });
   } catch (error) {
     console.error("Initialization error:", error);
