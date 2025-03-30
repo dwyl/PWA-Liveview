@@ -29,11 +29,15 @@ async function addCurrentPageToCache({ current, routes }) {
 
   // let Workbox know this page should be cached
   // by triggering a "pageshow" event which Workbox can listen for
-  // if (window.__WB_MANIFEST) {
-  //   console.log("Letting Workbox handle page caching for:", newPath);
-  //   AppState.paths.add(newPath);
-  //   return;
-  // }
+  if (navigator.serviceWorker.controller) {
+    console.log(
+      "Service worker is active - letting it handle page caching for:",
+      newPath
+    );
+    AppState.paths.add(newPath);
+    // Let workbox handle it by not manually caching
+    return;
+  }
 
   // Fall back to manual caching only if Workbox isn't available
   const cache = await caches.open(CONFIG.CACHE_NAME);

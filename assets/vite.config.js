@@ -309,27 +309,6 @@ const Pages = {
     // cacheableResponse: {
     //   statuses: [200],
     // },
-    plugins: [
-      {
-        cacheKeyWillBeUsed: async ({ request }) => {
-          const url = new URL(request.url);
-          return `${url.origin}${url.pathname}`;
-        },
-      },
-    ],
-    // plugins: [
-    //   {
-    //     cacheKeyWillBeUsed: async ({ request }) => {
-    //       // Strip out dynamic query parameters
-    //       const url = new URL(request.url);
-    //       const baseUrl = `${url.origin}${url.pathname}`;
-    //       return baseUrl;
-    //     },
-    //     fetchDidFail: async ({ request }) => {
-    //       console.warn("Tile request failed:", request.url);
-    //     },
-    //   },
-    // ],
   },
 };
 
@@ -353,7 +332,7 @@ const createPWAConfig = (mode) => ({
     injectionPoint: undefined,
   },
   workbox: {
-    navigationPreload: true, // <----???
+    navigationPreload: false, // <----???
     // navigateFallback: null, // Do not fallback to index.html !!!!!!!!!
     navigateFallback: "/",
     navigateFallbackDenylist: [
