@@ -199,16 +199,6 @@ const Scripts = {
     fetchOptions: {
       credentials: "same-origin",
     },
-    // plugins: [
-    //   {
-    //     cacheKeyWillBeUsed: async ({ request }) => {
-    //       // Strip out vsn query parameter
-    //       const url = new URL(request.url);
-    //       url.search = ""; // Remove query string
-    //       return url.toString();
-    //     },
-    //   },
-    // ],
   },
 };
 
@@ -233,19 +223,6 @@ const MapTilerSDK = {
     fetchOptions: {
       credentials: "same-origin",
     },
-    // plugins: [
-    //   {
-    //     cacheKeyWillBeUsed: async ({ request }) => {
-    //       // Strip out dynamic query parameters
-    //       const url = new URL(request.url);
-    //       const baseUrl = `${url.origin}${url.pathname}`;
-    //       return baseUrl;
-    //     },
-    //     fetchDidFail: async ({ request }) => {
-    //       console.warn("MapTiler SDK request failed:", request.url);
-    //     },
-    //   },
-    // ],
   },
 };
 
@@ -354,16 +331,6 @@ const createPWAConfig = (mode) => ({
       { url: "/", revision: null },
       { url: "/map", revision: null },
     ],
-    // manifestTransforms: [
-    //   (entries) => {
-    //     // Remove query parameters from entries
-    //     const transformedEntries = entries.map((entry) => ({
-    //       url: entry.url.split("?")[0],
-    //       revision: null,
-    //     }));
-    //     return { manifest: transformedEntries };
-    //   },
-    // ],
     runtimeCaching: [
       {
         urlPattern: ({ url }) => url.pathname.startsWith("/assets/"),
