@@ -3,7 +3,7 @@ import { defineConfig, loadEnv } from "vite";
 import solidPlugin from "vite-plugin-solid";
 import tailwindcss from "tailwindcss";
 import autoprefixer from "autoprefixer";
-// import viteCompression from "vite-plugin-compression";
+import viteCompression from "vite-plugin-compression";
 import wasm from "vite-plugin-wasm";
 import path from "path";
 // import tailwindcss from "@tailwindcss/vite";
@@ -161,7 +161,7 @@ const Fonts = {
       maxEntries: 500,
     },
     matchOptions: {
-      ignoreVary: true, // Important for some external resources
+      // ignoreVary: true, // Important for some external resources
       ignoreSearch: true, // Ignore query parameters
     },
     fetchOptions: {
@@ -407,7 +407,7 @@ export default defineConfig(({ command, mode }) => {
     base: "/",
     plugins: [
       wasm(),
-      // viteCompression(),
+      viteCompression(),
       solidPlugin(),
       VitePWA(createPWAConfig(mode)),
     ],
