@@ -68,13 +68,13 @@ defmodule SqliteHandler do
   @impl true
   def handle_continue(:check_data, {db, name, conn} = state) do
     # Always ensure CSV file exists first
-    csv_path = Path.join([:code.priv_dir(:solidyjs), "static", "airports.csv"])
+    # csv_path = Path.join([:code.priv_dir(:solidyjs), "static", "airports.csv"])
 
-    if !File.exists?(db) and !File.exists?(csv_path) do
-      Logger.info("CSV file not found, downloading...")
+    # if !File.exists?(db) and !File.exists?(csv_path) do
+    #   Logger.info("CSV file not found, downloading...")
 
-      Airports.download()
-    end
+    #   Airports.download()
+    # end
 
     # db_name = Path.join(Application.app_dir(:solidyjs), System.fetch_env!("DATABASE_PATH"))
     # Logger.info(inspect(db_name))
