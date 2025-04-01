@@ -4,19 +4,8 @@ import { solidPlugin } from "esbuild-plugin-solid";
 const args = process.argv.slice(2);
 const watch = args.includes("--watch");
 const deploy = args.includes("--deploy");
-console.log(args);
 
 let opts = {
-  entryPoints: [
-    "./js/app.js",
-    "./js/bins",
-    "./js/counter",
-    "./js/SolidComp",
-    "./js/initYJS",
-    "./js/onlineStatus",
-    "./js/solHook",
-    "./wasm/great_circle.wasm",
-  ],
   bundle: true,
   logLevel: "info",
   target: "esnext",

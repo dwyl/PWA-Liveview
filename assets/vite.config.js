@@ -40,23 +40,23 @@ const buildOps = {
   rollupOptions: {
     input: [
       "js/appV.js",
-      "js/pwaHook.js",
-      "js/configureTopbar.js",
-      "js/initYJS.js",
-      "js/yHook.js",
-      "js/SolidYComp.jsx",
-      "js/counter.jsx",
       "js/bins.jsx",
-      "js/vStore.js",
+      "js/configureTopbar.js",
+      "js/counter.jsx",
+      "js/formCities.jsx",
+      "js/formVComp.jsx",
+      "js/formVHook.js",
+      "js/initMap.js",
+      "js/initYJS.js",
+      "js/mapVHook.js",
+      "js/pwaHook.js",
       "js/renderVForm.js",
       "js/renderVMap.js",
+      "js/SolidYComp.jsx",
       "js/valtioObservers.js",
-      "js/initMap.js",
-      "js/mapVHook.js",
+      "js/vStore.js",
+      "js/yHook.js",
       "wasm/great_circle.wasm",
-      "js/formVHook.js",
-      "js/formVComp.jsx",
-      "js/formCities.jsx",
     ],
     output: {
       assetFileNames: "assets/[name][extname]",
@@ -283,9 +283,6 @@ const Pages = {
     fetchOptions: {
       credentials: "same-origin",
     },
-    // cacheableResponse: {
-    //   statuses: [200],
-    // },
   },
 };
 
