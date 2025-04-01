@@ -33,12 +33,13 @@ defmodule SqliteHandler do
     db_dir = Path.dirname(db)
     File.mkdir_p!(db_dir)
 
-    Logger.info("Starting DB #{inspect(db)}")
-
     # Ensure the database file exists and has correct permissions
     if !File.exists?(db) do
+      Logger.info("Creating DB file #{inspect(db)}")
       File.touch!(db)
       File.chmod!(db, 0o666)
+    else
+      Logger.info("Starting DB #{inspect(db)}")
     end
 
     # Ensure no existing connections
@@ -65,11 +66,11 @@ defmodule SqliteHandler do
   end
 
   @impl true
-  def handle_continue(:check_data, {_db, name, conn} = state) do
+  def handle_continue(:check_data, {db, name, conn} = state) do
     # Always ensure CSV file exists first
     csv_path = Path.join([:code.priv_dir(:solidyjs), "static", "airports.csv"])
 
-    if !File.exists?(csv_path) do
+    if !File.exists?(db) and !File.exists?(csv_path) do
       Logger.info("CSV file not found, downloading...")
 
       Airports.download()
@@ -97,6 +98,7 @@ defmodule SqliteHandler do
 
       _ ->
         Logger.info("No data found, initializing database")
+        Airports.download()
 
         case Airports.parse_csv_file()
              |> insert(state) do
