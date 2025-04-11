@@ -22,12 +22,12 @@ if System.get_env("PHX_SERVER") do
   config :solidyjs, SolidyjsWeb.Endpoint, server: true
 end
 
+# The secret key base is used to sign/encrypt cookies and other secrets.
+# A default value is used in config/dev.exs and config/test.exs but you
+# want to use a different value for prod and you most likely don't want
+# to check this value into version control, so we use an environment
+# variable instead.
 if config_env() == :prod do
-  # The secret key base is used to sign/encrypt cookies and other secrets.
-  # A default value is used in config/dev.exs and config/test.exs but you
-  # want to use a different value for prod and you most likely don't want
-  # to check this value into version control, so we use an environment
-  # variable instead.
   database_path =
     System.get_env("DATABASE_PATH") ||
       raise """

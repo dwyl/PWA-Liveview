@@ -10,27 +10,18 @@ export const FormVComponent = async (props) => {
   const userID = sessionStorage.getItem("userID");
   const FormCities = lazy(() => import("./formCities.jsx"));
 
-  // Subscribe to changes in the airports state on first hook mount
-  subscribe(state.airports, () => {
+  const setCitiesFromState = () => {
     if (state.airports.length > 0) {
-      // Filter out airports with missing names
-      const validAirports = state.airports.filter(
-        (a) => a.airport_id && a.airport_id.trim() !== ""
-      );
-      setCities(validAirports);
+      setCities(state.airports);
       setIsInitialized(true);
     }
-  });
+  };
+
+  // Subscribe to changes in the airports state on first hook mount
+  subscribe(state.airports, setCitiesFromState);
 
   // Initialize cities from state on each component mount
-  if (state.airports.length > 0) {
-    // Filter out airports with missing names
-    const validAirports = state.airports.filter(
-      (a) => a.airport_id && a.airport_id.trim() !== ""
-    );
-    setCities(validAirports);
-    setIsInitialized(true);
-  }
+  setCitiesFromState();
 
   // update the stores
   function handleReset() {

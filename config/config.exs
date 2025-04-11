@@ -8,7 +8,7 @@ config :solidyjs,
 
 config :solidyjs, Solidyjs.Repo,
   adapter: Ecto.Adapters.SQLite3,
-  database: Path.expand("../db/airports.db", Path.dirname(__ENV__.file)),
+  database: Path.expand("../db/main.db", Path.dirname(__ENV__.file)),
   pool_size: 5,
   show_sensitive_data_on_connection_error: true
 

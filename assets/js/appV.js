@@ -66,17 +66,17 @@ async function addCurrentPageToCache({ current, routes }) {
 
 // Monitor navigation events and cache the current page if in declared routes
 navigation.addEventListener("navigate", async ({ destination: { url } }) => {
+  console.log("navigate event:", url);
   return addCurrentPageToCache({ current: url, routes: CONFIG.ROUTES });
 });
 
 //---------------
 // Check server reachability
-async function checkServer() {
+export async function checkServer() {
   try {
     const response = await fetch("/connectivity", { method: "HEAD" });
-    const isOk = response.ok;
-    console.log("Server check result:", isOk);
-    return isOk;
+    console.log("Server check result:", response.ok);
+    return response.ok;
   } catch (error) {
     console.log("Server unreachable:", error);
     return false;
@@ -93,45 +93,40 @@ async function startPolling(status, interval = CONFIG.POLL_INTERVAL) {
   AppState.interval = setInterval(async () => {
     const wasOnline = AppState.isOnline;
     AppState.isOnline = await checkServer();
+    const new_status = AppState.isOnline ? "online" : "offline";
+    console.log("Polling...", AppState.isOnline, status, new_status);
 
     if (AppState.isOnline !== wasOnline) {
       console.log(
         `Connection status changed: ${
           wasOnline ? "online->offline" : "offline->online"
-        }`
+        }`,
+        "=============="
       );
-      updateConnectionStatusUI(AppState.isOnline ? "online" : "offline");
+      updateConnectionStatusUI(new_status);
+      clearInterval(AppState.interval);
+      startPolling(new_status);
     }
 
-    if (AppState.isOnline && status === "offline") {
-      window.location.reload();
+    if (AppState.isOnline && new_status === "offline") {
+      console.log(
+        "Reconnecting...",
+        AppState.isOnline,
+        status,
+        new_status,
+        "###################"
+      );
+      // window.location.reload();
     }
   }, interval);
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
   AppState.status = (await checkServer()) ? "online" : "offline";
-  console.log("DOMContentLoaded", AppState.status);
+  console.log("==========> DOMContentLoaded", AppState.status);
   updateConnectionStatusUI(AppState.status);
   // Always start polling to detect status changes
   startPolling(AppState.status);
-
-  // Monitor online and offline events
-  window.addEventListener("online", () => {
-    console.log("to online");
-    AppState.isOnline = true;
-    AppState.status = "online";
-    updateConnectionStatusUI("online");
-    // window.location.reload();
-  });
-
-  window.addEventListener("offline", async () => {
-    console.log("to offline");
-    AppState.isOnline = false;
-    AppState.status = "offline";
-    updateConnectionStatusUI("offline");
-    return startPolling(AppState.status); // Start polling when offline
-  });
 });
 
 //--------------
@@ -230,6 +225,8 @@ async function initLiveSocket(hooks) {
     await initApp(AppState.isOnline);
 
     window.addEventListener("phx:page-loading-stop", () => {
+      console.log("Phoenix event phx:page-loading-stop ~~~~~~~~~~~~~~~~~~~~");
+      console.log(window.liveSocket, window.liveSocket?.isConnected());
       if (!window.liveSocket?.isConnected()) {
         console.log("liveSocket not connected");
         window.liveSocket.connect();
@@ -242,23 +239,12 @@ async function initLiveSocket(hooks) {
         routes: CONFIG.ROUTES,
       });
     }
-
-    window.addEventListener("offline", () => {
-      console.warn("Application going offline");
-    });
-
-    window.addEventListener("online", () => {
-      console.log("Application back online");
-      window.location.reload();
-    });
   } catch (error) {
     console.error("Initialization error:", error);
   }
 })();
 
 //--------------
-// Show progress bar on live navigation and form submits
-
 // Enable server log streaming to client. Disable with reloader.disableServerLogs()
 window.addEventListener("phx:live_reload:attached", ({ detail: reloader }) => {
   reloader.enableServerLogs();

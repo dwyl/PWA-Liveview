@@ -52,7 +52,8 @@
     "isDynamicEntry": true,
     "imports": [
       "_preload-helper.js",
-      "_web.js"
+      "_web.js",
+      "js/appV.js"
     ],
     "dynamicImports": [
       "js/counter.jsx"
@@ -271,6 +272,7 @@
     "imports": [
       "js/SolidYComp.jsx",
       "_yjs.js",
+      "js/appV.js",
       "_preload-helper.js",
       "_web.js"
     ]

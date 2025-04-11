@@ -6,13 +6,12 @@ defmodule SolidyjsWeb.MapLive do
   alias Phoenix.PubSub
 
   require Logger
-  @table_name :app_state
 
   @impl true
   def render(assigns) do
     ~H"""
     <div>
-      <p>{@user_id}</p>
+      <p class="text-sm text-gray-600 mt-4 mb-2">User ID: {@user_id}</p>
       <Menu.display />
       <div
         id="map"
@@ -32,12 +31,6 @@ defmodule SolidyjsWeb.MapLive do
     # set by "set_user_id" plug
     %{"user_id" => user_id} = session
 
-    fetched_airports? =
-      case :ets.lookup(@table_name, :fetched_airports) do
-        [{:fetched, ^user_id}] -> true
-        _ -> false
-      end
-
     if connected?(socket) do
       :ok = PubSub.subscribe(:pubsub, "new_airport")
       :ok = PubSub.subscribe(:pubsub, "remove_airport")
@@ -46,7 +39,6 @@ defmodule SolidyjsWeb.MapLive do
 
     {:ok,
      socket
-     |> assign(:fetched_airports?, fetched_airports?)
      |> push_event("user", %{user_id: user_id})}
   end
 
@@ -54,17 +46,13 @@ defmodule SolidyjsWeb.MapLive do
   def handle_params(_, uri, socket) do
     case URI.parse(uri).path do
       "/map" ->
-        if socket.assigns.fetched_airports? do
-          {:noreply, socket}
-        else
-          {:noreply,
-           socket
-           |> assign(:airports, AsyncResult.loading())
-           |> start_async(
-             :fetch_airports,
-             fn -> SqliteHandler.municipalities() end
-           )}
-        end
+        {:noreply,
+         socket
+         |> assign(:airports, AsyncResult.loading())
+         |> start_async(
+           :fetch_airports,
+           fn -> SqliteHandler.municipalities() end
+         )}
     end
   end
 
@@ -72,7 +60,6 @@ defmodule SolidyjsWeb.MapLive do
   @impl true
   def handle_async(:fetch_airports, {:ok, fetched_airports}, socket) do
     %{airports: airports} = socket.assigns
-    :ets.insert(:app_state, {:fetched, socket.assigns.user_id})
 
     {:noreply,
      socket

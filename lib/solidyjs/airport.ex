@@ -1,12 +1,10 @@
 defmodule Airport do
   use Ecto.Schema
 
-  #
-
   @headers [
     # Airport ID from source data
     # 1,
-    # :airport_id,
+    :airport_id,
     # Name of airport
     # "Goroka Airport",
     :name,

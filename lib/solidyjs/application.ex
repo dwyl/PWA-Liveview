@@ -7,7 +7,10 @@ defmodule Solidyjs.Application do
 
   @impl true
   def start(_type, _args) do
-    start_ets_tables()
+    db = Application.get_env(:solidyjs, Solidyjs.Repo)[:database] |> dbg()
+    db_dir = Path.dirname(db) |> dbg()
+    File.mkdir_p!(db_dir)
+    File.chmod!(db_dir, 0o777)
     # Solidyjs.Release.migrate()
 
     children = [
@@ -16,7 +19,8 @@ defmodule Solidyjs.Application do
       {Phoenix.PubSub, name: :pubsub},
       SolidyjsWeb.Endpoint,
       Solidyjs.Repo,
-      {SqliteHandler, [Application.fetch_env!(:solidyjs, Solidyjs.Repo)[:database], "airports"]}
+      {SqliteHandler, [db]},
+      {Solidyjs.StockDb, [db, "stock"]}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
@@ -31,12 +35,5 @@ defmodule Solidyjs.Application do
   def config_change(changed, _new, removed) do
     SolidyjsWeb.Endpoint.config_change(changed, removed)
     :ok
-  end
-
-  defp start_ets_tables do
-    :app_state = :ets.new(:app_state, [:named_table, :public])
-
-    :stock =
-      :ets.new(:stock, [:named_table, :public, :set, {:read_concurrency, true}])
   end
 end
