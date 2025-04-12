@@ -10,7 +10,12 @@ An example of a Progressive Web App (PWA) combining Phoenix LiveView's real-time
   - [Why?](#why)
   - [Demo Pages](#demo-pages)
     - [Stock Manager](#stock-manager)
+      - [Using the LiveSocket for the CRDT updates](#using-the-livesocket-for-the-crdt-updates)
     - [Flight Map](#flight-map)
+      - [Airport dataset](#airport-dataset)
+      - [Great circle computation with a WASM module](#great-circle-computation-with-a-wasm-module)
+      - [Interactive input](#interactive-input)
+      - [Client state management](#client-state-management)
     - [Core Technologies](#core-technologies)
   - [Page-Specific State](#page-specific-state)
     - [Architecture](#architecture)
@@ -75,38 +80,99 @@ This project demonstrates how to overcome these challenges by combining `LiveVie
 ### Stock Manager
 
 Real-time collaborative inventory management with offline persistence (available at `/`).
+![Stock Manager Screenshot](https://github.com/user-attachments/assets/f5e68b4d-6229-4736-a4b3-a60fc813b6bf)
 
 - CRDT-based synchronization (`Y.js`)
 - `IndexedDB` local storage
 - Automatic conflict resolution
 
-![Stock Manager Screenshot](https://github.com/user-attachments/assets/f5e68b4d-6229-4736-a4b3-a60fc813b6bf)
+#### Using the LiveSocket for the CRDT updates
+
+The authorative source of truth is the client. We save the client state in `y-indexeddb` with `Y.js`. `Y.js` produces a CRDT update along with the "state" value(s).
+
+The server keeps the corresponding update in the socket and persist it into a SQLite database.
+
+We use the `liveSocket` to push data between the server and the client.
+
+Since the client is authoritative, the server can be out-of-date when the user is _offline_ and continues his work.
+
+On reconnection, the client sends the CRDT state, and compares it to the database. The result is then broadcasted under "reconnect_sync".
+
+When the client mounts,
+
+We use **Base64 encoding** to go through the `liveSocket` and the state is saved as a binary `Blob` (`:bniary`) in `SQLite`.
+
+When the server sends the state payload as read from the database, it is a B64 encoded string, so we decode it:
+
+```js
+const decoded = Uint8Array.from(atob(db_state), (c) => c.charCodeAt(0));
+Y.applyUpdate(ydoc, decoded, "server");
+```
+
+When the client sends a CRDT update, we encode the state payload,
+
+```js
+const value = this.ymap.get("stock-value");
+const encoded = Y.encodeStateAsUpdate(ydoc);
+const base64 = btoa(String.fromCharCode(...encoded));
+
+this.pushEvent("reconnect_sync", {
+  value,
+  state: base64,
+});
+```
 
 ### Flight Map
 
-Interactive route planning with vector tiles (available at `/map`).
+The display an interactive route planning with vector tiles (available at `/map`).
+It is a client component, meaning offline capable, which offers some collaborative - not sophisticated - interaction with multi-user input.
+
+![Flight Map Screenshot](https://github.com/user-attachments/assets/2eb459e6-29fb-4dbb-a101-841cbad5af95)
+
+Key features:
 
 - WebAssembly-powered great circle calculations
 - Valtio-based local state management
 - Efficient map rendering with MapTiler and vector tiles
 - Works offline for CPU-intensive calculations
 
-![Flight Map Screenshot](https://github.com/user-attachments/assets/2eb459e6-29fb-4dbb-a101-841cbad5af95)
+#### Airport dataset
+
+We use a dataset from <https://ourairports.com/>.
+We stream download a CSV file, parse it (`NimbleCSV`) and bulk insert into an SQLite table.
+When a user mounts, we read from the database an pass the data asynchronously to the client via the liveSocket.
+The socket "airports" assign is then pruned.
+We persist the data in `localStorage` for client-side search.
+
+#### Great circle computation with a WASM module
+
+`Zig` is used to compute a "great circle" between two points, as a list of `[lat, long]` spaced by 100km.
+The `Zig` code is compiled to WASM and available for the client JavaScript to run it.
+Once the list of successive coordinates are in JavaScript, `Leaflet` can use it to produce a polyline and draw it into a canvas.
+
+#### Interactive input
+
+The UI displays a form with two inputs, which are pushed to Phoenix and broadcasted via Phoenix PubSub.
+A marker is drawn by `Leaflet` to display the choosen coordinates on a vector-tiled map using `MapTiler`.
+
+#### Client state management
+
+We used `Valtio`, a browser-only state manager, perfect for ephemeral UI state.
 
 ### Core Technologies
 
 **Stack**:
 
-- **Backend**: Phoenix LiveView for real-time server
-- **Frontend**: SolidJS for reactive UI with LiveView hooks
-- **Build**: Vite with PWA plugin and Workbox
+- **Backend**: `Phoenix LiveView` for real-time server with `Phoenix PubSub`
+- **Frontend**: reactive UI with LiveView hooks running `SolidJS` components
+- **Build**: `Vite` with PWA plugin and `Workbox`
 - **State**:
-  - Y.js (CRDT) for Stock Manager
-  - Valtio for Flight Map
-- **Maps**: Leaflet.js with MapTiler to use vector tiles
-- **Database**: Ecto with Sqlite
-- **Storage**: IndexedDB for offline persistence
-- **WebAssembly**: Zig-compiled great circle route calculation
+  - `Y.js` (CRDT) for Stock Manager
+  - `Valtio` for Flight Map
+- **Maps**: `Leaflet.js` with `MapTiler` to use vector tiles
+- **Database**: `Ecto` with `SQLite`
+- **Storage**: `IndexedDB` for offline persistence
+- **WebAssembly**: `Zig`-compiled great circle route calculation
 
 **Dependencies**:
 
@@ -128,7 +194,7 @@ This application demonstrates two different approaches to state management:
 
 **Map Page (path `/map`)**: Uses `Valtio`
 
-- Simple browser-only state management for geographical points, perfect for ephemeral UI state
+- Simple browser-only state management for geographical points
 - No need for CRDT as map interactions are single-user and browser-local
 - Lighter weight solution when complex conflict resolution isn't needed
 - Perfect for ephemeral UI state that doesn't need cross-client sync

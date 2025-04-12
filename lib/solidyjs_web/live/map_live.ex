@@ -1,9 +1,9 @@
 defmodule SolidyjsWeb.MapLive do
   use SolidyjsWeb, :live_view
   use Phoenix.Component
-  alias SolidyjsWeb.Menu
   alias Phoenix.LiveView.AsyncResult
   alias Phoenix.PubSub
+  alias SolidyjsWeb.Menu
 
   require Logger
 
@@ -51,7 +51,7 @@ defmodule SolidyjsWeb.MapLive do
          |> assign(:airports, AsyncResult.loading())
          |> start_async(
            :fetch_airports,
-           fn -> SqliteHandler.municipalities() end
+           fn -> Airports.municipalities() end
          )}
     end
   end

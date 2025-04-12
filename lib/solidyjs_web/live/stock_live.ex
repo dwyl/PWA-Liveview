@@ -1,7 +1,6 @@
 defmodule SolidyjsWeb.StockLive do
   use SolidyjsWeb, :live_view
   alias Phoenix.PubSub
-  alias Solidyjs.StockDb
   alias SolidyjsWeb.Menu
   require Logger
 
@@ -34,48 +33,51 @@ defmodule SolidyjsWeb.StockLive do
 
   @impl true
   def mount(_params, session, socket) do
-    user_id = session["user_id"] || "anonymous-#{:rand.uniform(1000)}"
+    user_id = session["user_id"]
+    # Get current DB state for initial sync
+    {db_value, db_state} = StockDb.get_stock()
 
     if connected?(socket) do
       :ok = PubSub.subscribe(:pubsub, "stock")
-      # Get current DB state for initial sync
-      {db_value, db_state} = StockDb.get_stock()
-
       Logger.info("Client connected: user_id=#{user_id}, current_stock=#{db_value}")
-
-      {:ok,
-       socket
-       |> assign(:update_available, false)
-       |> assign(:user_id, user_id)
-       |> assign(:current_stock, db_value)
-       |> push_event("init_stock", %{
-         # Renamed to clarify it's from DB
-         db_value: db_value,
-         # Renamed to clarify it's from DB
-         db_state: Base.encode64(db_state),
-         max: @max
-       })}
-    else
-      {value, _} = StockDb.get_stock()
-
-      {:ok,
-       socket
-       |> assign(:update_available, false)
-       |> assign(:user_id, user_id)
-       |> assign(:current_stock, value)}
     end
+
+    {:ok,
+     socket
+     |> assign(:update_available, false)
+     |> assign(:user_id, user_id)
+     |> assign(:current_stock, db_value)
+     |> push_event("init_stock", %{
+       # Renamed to clarify it's from DB
+       db_value: db_value,
+       # Renamed to clarify it's from DB
+       db_state: Base.encode64(db_state),
+       max: @max
+     })}
+
+    # else
+    #   {value, _} = StockDb.get_stock()
+
+    #   {:ok,
+    #    socket
+    #    |> assign(:update_available, false)
+    #    |> assign(:user_id, user_id)
+    #    |> assign(:current_stock, value)}
+    # end
   end
 
   @impl true
   def handle_info({:y_update, value, b64_state}, socket) do
-    Logger.info("Broadcasting y_update: value=#{value}")
+    Logger.info("Received broadcasted y_update with value=#{value}")
+    user_id = socket.assigns.user_id
 
     {:noreply,
      socket
      |> assign(:current_stock, value)
      |> push_event("sync_stock", %{
        value: value,
-       state: b64_state
+       state: b64_state,
+       from: user_id
      })}
   end
 
@@ -84,25 +86,23 @@ defmodule SolidyjsWeb.StockLive do
     user_id = socket.assigns.user_id
     Logger.info("Received sync_state with value: #{value} from user: #{user_id}")
 
-    case Base.decode64(b64_state) do
-      {:ok, state_bin} ->
-        StockDb.update_stock(value, state_bin) |> dbg()
-        :ok = Phoenix.PubSub.broadcast(:pubsub, "stock", {:y_update, value, b64_state})
-
-        {:noreply, assign(socket, :current_stock, value)}
-
+    with {:ok, state_bin} <-
+           Base.decode64(b64_state),
+         {current_value, y_state} <-
+           StockDb.update_stock(value, state_bin),
+         encoded <- Base.encode64(y_state),
+         :ok <-
+           Phoenix.PubSub.broadcast(:pubsub, "stock", {:y_update, current_value, encoded}) do
+      {:noreply, assign(socket, :current_stock, value)}
+    else
       :error ->
         Logger.error("Failed to decode base64 Yjs state from client")
         {:noreply, socket}
+
+      msg ->
+        Logger.error(inspect(msg))
+        {:noreply, socket}
     end
-
-    # state_bin = :erlang.list_to_binary(encoded_state)
-    # StockDb.update_stock(value, state_bin)
-
-    # Broadcast to all clients for CRDT sync
-    # :ok = Phoenix.PubSub.broadcast(:pubsub, "stock", {:y_update, value, Base.encode64(state_bin)})
-
-    # {:noreply, assign(socket, :current_stock, value)}
   end
 
   @doc """
@@ -113,22 +113,21 @@ defmodule SolidyjsWeb.StockLive do
     user_id = socket.assigns.user_id
     Logger.info("Client #{user_id} reconnected with value: #{client_value}")
 
-    # Use StockDb's reconciliation logic
-    case Base.decode64(client_state) do
-      {:ok, state_bin} ->
-        case StockDb.handle_client_reconnection(client_value, state_bin) do
-          {:client_wins, value, state} ->
-            # respond with encoded again
-            {:noreply,
-             push_event(socket, "sync_stock", %{value: value, state: Base.encode64(state)})}
-
-          {:server_wins, value, state} ->
-            {:noreply,
-             push_event(socket, "sync_stock", %{value: value, state: Base.encode64(state)})}
-        end
-
+    with {:ok, state_bin} <-
+           Base.decode64(client_state),
+         {:client_wins, value, state} <-
+           StockDb.handle_client_reconnection(client_value, state_bin) do
+      {:noreply, push_event(socket, "sync_stock", %{value: value, state: Base.encode64(state)})}
+    else
       :error ->
         Logger.error("Failed to decode base64 Yjs state on reconnect")
+        {:noreply, socket}
+
+      {:server_wins, value, state} ->
+        {:noreply, push_event(socket, "sync_stock", %{value: value, state: Base.encode64(state)})}
+
+      msg ->
+        Logger.error(inspect(msg))
         {:noreply, socket}
     end
   end

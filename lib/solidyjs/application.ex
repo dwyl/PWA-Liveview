@@ -7,11 +7,10 @@ defmodule Solidyjs.Application do
 
   @impl true
   def start(_type, _args) do
-    db = Application.get_env(:solidyjs, Solidyjs.Repo)[:database] |> dbg()
-    db_dir = Path.dirname(db) |> dbg()
-    File.mkdir_p!(db_dir)
-    File.chmod!(db_dir, 0o777)
-    # Solidyjs.Release.migrate()
+    db = Application.get_env(:solidyjs, Solidyjs.Repo)[:database]
+    db_dir = Path.dirname(db)
+    :ok = File.mkdir_p!(db_dir)
+    :ok = File.chmod!(db_dir, 0o777)
 
     children = [
       SolidyjsWeb.Telemetry,
@@ -19,8 +18,8 @@ defmodule Solidyjs.Application do
       {Phoenix.PubSub, name: :pubsub},
       SolidyjsWeb.Endpoint,
       Solidyjs.Repo,
-      {SqliteHandler, [db]},
-      {Solidyjs.StockDb, [db, "stock"]}
+      {AirportDB, [db]},
+      {StockDb, [db]}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

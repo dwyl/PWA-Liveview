@@ -1,12 +1,71 @@
 defmodule Airports do
+  alias Exqlite.Sqlite3
   require Logger
+
+  NimbleCSV.define(CSVParser, separator: ",", escape: "\"")
 
   def url do
     "https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat"
   end
 
-  def stream_download(path) do
-    Logger.info("Starting airports database download...")
+  def stream_and_parse_airports_csv do
+    Logger.info("Starting airports CSV download and parse...")
+
+    %Req.Response{private: %{csv: %{rows: rows}}} =
+      Req.get!(
+        url(),
+        headers: %{"accept" => "text/csv"},
+        into: fn {:data, chunk}, {req, resp} ->
+          %{rows: rows, leftover: leftover} =
+            Map.get(resp.private, :csv, %{rows: [], leftover: ""})
+
+          {parsed_rows, new_leftover} = parse_chunk(chunk, leftover)
+
+          new_resp =
+            Req.Response.put_private(resp, :csv, %{
+              rows: rows ++ parsed_rows,
+              leftover: new_leftover
+            })
+
+          {:cont, {req, new_resp}}
+        end
+      )
+
+    new_rows =
+      Enum.map(rows, fn row ->
+        [airport_id, name, city, country, _, _, lat, lon, _, _, _, _, _, _] = row
+        [airport_id, name, city, country, lat, lon]
+      end)
+
+    Logger.info("Finished streaming. Parsed #{length(new_rows)} rows.")
+    {:ok, new_rows}
+  end
+
+  defp parse_chunk(chunk, leftover) do
+    # "leftover"partial lines between chunks
+    full = leftover <> chunk
+
+    case String.split(full, "\n", trim: false) do
+      [] ->
+        {[], ""}
+
+      lines ->
+        # Keep the last line as leftover (incomplete row)
+        {complete, [rest]} = Enum.split(lines, -1)
+        # parsed_rows = CSVParser.parse_string(Enum.join(complete, "\n"))
+        parsed_rows =
+          Enum.reject(complete, &(&1 == ""))
+          |> Enum.join("\n")
+          |> CSVParser.parse_string()
+
+        {parsed_rows, rest}
+    end
+  end
+
+  # debug function to check the CSV file
+  def stream_download do
+    Logger.info("Starting airports database download into a file...")
+    path = url()
 
     func = fn {:data, data}, {req, resp} ->
       File.write!(path, data, [:append])
@@ -34,123 +93,59 @@ defmodule Airports do
     end
   end
 
-  def parse_csv_file(path) do
-    path
-    |> File.stream!(read_ahead: 1000)
-    |> Stream.map(&String.trim/1)
-    |> Stream.reject(&(&1 == ""))
-    |> Stream.map(fn line ->
-      # Parse CSV line handling quoted fields and commas
-      # fields = parse_csv_line(line)
+  @doc """
+    Simple query that returns all airports from the database.
+  """
+  def municipalities do
+    db = Application.get_env(:solidyjs, Solidyjs.Repo)[:database]
+    query = "SELECT airport_id,name,city,country,latitude, longitude FROM airports;"
 
-      case parse_csv_line(line) do
-        fields when length(fields) >= 13 ->
-          [_ | headers] = Airport.schema_headers()
-          # Process fields according to CSV format:
-          # 1|Goroka Airport|Goroka|Papua New Guinea|GKA|AYGA|-6.08168983459|145.391998291|5282.0|10|U|Pacific/Port_Moresby|airport|OurAirports
-          values =
-            [
-              # airport_id - preserve as string to handle both integer and text IDs
-              get_field(fields, 0),
-              # name (text not null) - Full airport name
-              get_field(fields, 1),
-              # city (text not null) - City name
-              get_field(fields, 2),
-              # country (text not null)
-              get_field(fields, 3),
-              # iata (text not null) - 3-letter IATA code
-              get_field(fields, 4),
-              # icao (text not null) - 4-letter ICAO code
-              get_field(fields, 5),
-              # latitude (real not null)
-              get_field(fields, 6),
-              # longitude (real not null)
-              get_field(fields, 7),
-              # altitude (integer not null) - In feet
-              get_field(fields, 8),
-              # timezone (float not null) - Hours offset from UTC
-              get_field(fields, 9),
-              # dst (text not null)
-              get_field(fields, 10),
-              # tz (text not null)
-              get_field(fields, 11),
-              # type (text not null)
-              get_field(fields, 12),
-              # source (text not null)
-              get_field(fields, 13)
-            ]
-            |> dbg()
-
-          # Return a map with the values
-          headers
-          |> Enum.zip(values)
-          |> Map.new()
-          |> dbg()
-
-        _ ->
-          # Return empty map for invalid rows
-          %{}
-      end
-    end)
-    |> Stream.reject(&(&1 == %{}))
+    with true <-
+           File.exists?(db),
+         {:ok, conn} <-
+           Sqlite3.open(db),
+         {:ok, stmt} <-
+           Sqlite3.prepare(conn, query),
+         {:ok, results} <-
+           Sqlite3.fetch_all(conn, stmt),
+         :ok <-
+           Sqlite3.close(conn) do
+      Enum.map(results, &format_line/1)
+    else
+      reason ->
+        Logger.error("Failed to open of fetch airports: #{inspect(reason)}")
+        raise "Failed to open database connection"
+    end
   end
 
-  # Parse a CSV line handling quoted fields and commas
-  def parse_csv_line(line) do
-    line
-    |> String.trim()
-    |> parse_csv_fields([], "", false)
+  defp format_line(line) do
+    [
+      airport_id,
+      name,
+      city,
+      country,
+      latitude,
+      longitude
+    ] = line
+
+    %{
+      airport_id: airport_id,
+      name: name,
+      city: city,
+      country: country,
+      latitude: parse_float(latitude),
+      longitude: parse_float(longitude)
+    }
   end
 
-  # Parse CSV fields recursively
-  defp parse_csv_fields("", fields, current, _in_quotes) do
-    # Convert \N and empty strings to nil, trim quotes, and reverse the fields
-    fields = [current | fields]
-    # [current | fields]
-    fields
-    |> Enum.reverse()
-    |> Enum.map(fn field ->
-      case field do
-        "\\N" ->
-          nil
+  defp parse_float(val) when is_float(val), do: val
 
-        "" ->
-          nil
-
-        field ->
-          field = String.trim(field, "\"")
-          if field == "", do: nil, else: field
-      end
-    end)
+  defp parse_float(val) when is_binary(val) do
+    case Float.parse(val) do
+      {num, _} -> num
+      :error -> 0.0
+    end
   end
 
-  # Handle escaped quotes inside quoted fields
-  defp parse_csv_fields(<<?\"::utf8, ?\"::utf8, rest::binary>>, fields, current, true) do
-    parse_csv_fields(rest, fields, current <> "\"", true)
-  end
-
-  # Handle quote start/end
-  defp parse_csv_fields(<<?\"::utf8, rest::binary>>, fields, current, in_quotes) do
-    parse_csv_fields(rest, fields, current, !in_quotes)
-  end
-
-  # Handle commas inside quotes
-  defp parse_csv_fields(<<?\,::utf8, rest::binary>>, fields, current, true) do
-    parse_csv_fields(rest, fields, current <> ",", true)
-  end
-
-  # Handle field separators (commas)
-  defp parse_csv_fields(<<?\,::utf8, rest::binary>>, fields, current, false) do
-    parse_csv_fields(rest, [current | fields], "", false)
-  end
-
-  # Handle all other characters
-  defp parse_csv_fields(<<char::utf8, rest::binary>>, fields, current, in_quotes) do
-    parse_csv_fields(rest, fields, current <> <<char::utf8>>, in_quotes)
-  end
-
-  # Get field value from CSV fields list with index
-  defp get_field(fields, index) do
-    Enum.at(fields, index)
-  end
+  defp parse_float(val) when is_integer(val), do: val / 1.0
 end

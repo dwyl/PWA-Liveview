@@ -1,6 +1,6 @@
 import { render } from "solid-js/web";
 import { createSignal, createEffect, lazy, onCleanup } from "solid-js";
-import { checkServer } from "./appV.js";
+// import { checkServer } from "./appV.js";
 
 export const SolidYComp = ({ ydoc, userID, max, el }) => {
   const ymap = ydoc.getMap("stock");
@@ -13,25 +13,21 @@ export const SolidYComp = ({ ydoc, userID, max, el }) => {
 
   const [localStock, setLocalStock] = createSignal(ymap.get("stock-value"));
   const [range, setRange] = createSignal([]);
-  const [isOnline, setIsOnline] = createSignal(false);
+  // const [isOnline, setIsOnline] = createSignal(false);
 
-  // Check server connectivity initially and periodically
-  const checkConnectivity = async () => {
-    const serverReachable = await checkServer();
-    setIsOnline(serverReachable);
-  };
+  // const checkConnectivity = async () => {
+  //   console.log("from SolidYComp");
+  //   const serverReachable = await checkServer();
+  //   setIsOnline(serverReachable);
+  // };
 
-  // Initial check
-  checkConnectivity();
+  // // Check server connectivity periodically when offline
+  // let intervalId = null;
+  // if (!checkConnectivity()) {
+  //   intervalId = setInterval(checkConnectivity, 1000);
+  // }
+
   // Periodic check every 5 seconds
-  const intervalId = setInterval(checkConnectivity, 5000);
-
-  const handleUpdate = (newValue) => {
-    // Update Y.js state - this will trigger the observer
-    ydoc.transact(() => {
-      ymap.set("stock-value", newValue);
-    });
-  };
 
   createEffect(() => {
     setRange((ar) => [...ar, ...Array(Number(max)).keys()]);
@@ -51,26 +47,19 @@ export const SolidYComp = ({ ydoc, userID, max, el }) => {
 
   ymap.observe(yObserver);
 
-  // Online/offline status handlers
-  const handleOnline = () => {
-    console.log("Browser reports online status---------------");
-    setIsOnline(true);
-  };
-
-  const handleOffline = () => {
-    console.log("Browser reports offline status---------------");
-    setIsOnline(false);
-  };
-
-  window.addEventListener("online", handleOnline);
-  window.addEventListener("offline", handleOffline);
-
   onCleanup(() => {
     ymap.unobserve(yObserver);
     clearInterval(intervalId);
   });
 
   const Counter = lazy(() => import("./counter.jsx"));
+
+  // Update Y.js state - this will trigger the observer
+  const handleUpdate = (newValue) => {
+    ydoc.transact(() => {
+      ymap.set("stock-value", newValue);
+    });
+  };
 
   render(
     () => (

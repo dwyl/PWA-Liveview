@@ -95,8 +95,8 @@ export const yHook = (ydoc) => ({
     }
   },
 
-  handleSyncStock({ value, state }) {
-    console.log("Received sync from server:", value);
+  handleSyncStock({ value, state, from }) {
+    console.log("Received sync from server:", value, from);
 
     if (state?.length > 0) {
       const binary = Uint8Array.from(atob(state), (c) => c.charCodeAt(0));

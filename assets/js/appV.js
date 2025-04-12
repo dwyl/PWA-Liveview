@@ -94,7 +94,13 @@ async function startPolling(status, interval = CONFIG.POLL_INTERVAL) {
     const wasOnline = AppState.isOnline;
     AppState.isOnline = await checkServer();
     const new_status = AppState.isOnline ? "online" : "offline";
-    console.log("Polling...", AppState.isOnline, status, new_status);
+    console.log(
+      "Polling...",
+      AppState.isOnline,
+      status,
+      new_status,
+      AppState.interval
+    );
 
     if (AppState.isOnline !== wasOnline) {
       console.log(

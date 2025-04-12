@@ -1,4 +1,4 @@
-defmodule Solidyjs.StockDb do
+defmodule StockDb do
   use GenServer
   alias Exqlite.Sqlite3
   alias Phoenix.PubSub
@@ -31,20 +31,23 @@ defmodule Solidyjs.StockDb do
   #### callbacks ###########################
 
   @impl true
-  def init([db, table_name]) do
-    case Sqlite3.open(db) do
-      {:ok, conn} ->
-        # Set pragmas for better performance
-        :ok = Sqlite3.execute(conn, "PRAGMA busy_timeout = 5000")
-        :ok = Sqlite3.execute(conn, "PRAGMA journal_mode = WAL")
-        :ok = Sqlite3.execute(conn, "PRAGMA synchronous = NORMAL")
-
-        state = %{conn: conn, db: db, name: table_name}
-        {:ok, state}
-
+  def init([db]) do
+    # Set pragmas for better performance
+    with true <- File.exists?(db),
+         {:ok, conn} <- Sqlite3.open(db),
+         :ok <- Sqlite3.execute(conn, "PRAGMA busy_timeout = 5000"),
+         :ok <- Sqlite3.execute(conn, "PRAGMA journal_mode = WAL"),
+         :ok <- Sqlite3.execute(conn, "PRAGMA synchronous = NORMAL") do
+      state = %{conn: conn, db: db, name: "stock"}
+      {:ok, state}
+    else
       {:error, reason} ->
         Logger.error("Failed to open stock database: #{inspect(reason)}")
         {:stop, reason}
+
+      msg ->
+        Logger.error("Failed to open stock database: #{inspect(msg)}")
+        {:stop, msg}
     end
   end
 
@@ -90,7 +93,7 @@ defmodule Solidyjs.StockDb do
   @impl true
   def handle_call({:update_stock, value, y_state}, _from, state) do
     %{conn: conn, name: name} = state
-    {current_value, _current_state} = get_current_stock(conn, name) |> dbg()
+    {current_value, _current_state} = get_current_stock(conn, name)
 
     if value < current_value do
       with {:ok, statement} <-
@@ -131,7 +134,7 @@ defmodule Solidyjs.StockDb do
            Sqlite3.release(conn, statement) do
       result
     else
-      {:error, reason} ->
+      reason ->
         Logger.error("Failed to get stock: #{inspect(reason)}")
         {20, <<>>}
     end
@@ -140,8 +143,6 @@ defmodule Solidyjs.StockDb do
   defp get_result(conn, statement, name) do
     case Sqlite3.step(conn, statement) do
       {:row, [value, state_bin]} when is_binary(state_bin) ->
-        Logger.info("get result, found :row")
-
         {value, state_bin}
 
       :done ->
@@ -173,7 +174,6 @@ defmodule Solidyjs.StockDb do
       {:error, reason} ->
         Logger.error("Failed to initialize stock: #{inspect(reason)}")
         {20, <<>>}
-        # {20, []}
     end
   end
 end

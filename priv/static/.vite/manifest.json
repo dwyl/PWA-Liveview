@@ -52,8 +52,7 @@
     "isDynamicEntry": true,
     "imports": [
       "_preload-helper.js",
-      "_web.js",
-      "js/appV.js"
+      "_web.js"
     ],
     "dynamicImports": [
       "js/counter.jsx"
