@@ -36,6 +36,7 @@ defmodule SolidyjsWeb.StockLive do
     user_id = session["user_id"]
     # Get current DB state for initial sync
     {db_value, db_state} = StockDb.get_stock()
+    dbg(db_state)
 
     if connected?(socket) do
       :ok = PubSub.subscribe(:pubsub, "stock")
@@ -48,51 +49,56 @@ defmodule SolidyjsWeb.StockLive do
      |> assign(:user_id, user_id)
      |> assign(:current_stock, db_value)
      |> push_event("init_stock", %{
-       # Renamed to clarify it's from DB
        db_value: db_value,
-       # Renamed to clarify it's from DB
        db_state: Base.encode64(db_state),
        max: @max
      })}
-
-    # else
-    #   {value, _} = StockDb.get_stock()
-
-    #   {:ok,
-    #    socket
-    #    |> assign(:update_available, false)
-    #    |> assign(:user_id, user_id)
-    #    |> assign(:current_stock, value)}
-    # end
   end
 
   @impl true
-  def handle_info({:y_update, value, b64_state}, socket) do
-    Logger.info("Received broadcasted y_update with value=#{value}")
+  def handle_info({:y_update, value, sender_id, b64_broadcasted_state}, socket) do
     user_id = socket.assigns.user_id
 
-    {:noreply,
-     socket
-     |> assign(:current_stock, value)
-     |> push_event("sync_stock", %{
-       value: value,
-       state: b64_state,
-       from: user_id
-     })}
+    if sender_id != user_id do
+      Logger.info(
+        "#{user_id} received broadcasted y_update with value=#{value} from #{sender_id}"
+      )
+
+      {:noreply,
+       socket
+       |> assign(:current_stock, value)
+       |> push_event("sync_stock", %{
+         value: value,
+         state: b64_broadcasted_state,
+         from: "server"
+       })}
+    else
+      Logger.info("#{user_id} Ignoring y_update from self: , #{sender_id}")
+      {:noreply, socket}
+    end
+  end
+
+  def handle_info(msg, socket) do
+    Logger.error("Received unexpected message: #{inspect(msg)}")
+    {:noreply, socket}
   end
 
   @impl true
-  def handle_event("sync_state", %{"value" => value, "state" => b64_state}, socket) do
+  def handle_event("sync_state", payload, socket) do
     user_id = socket.assigns.user_id
-    Logger.info("Received sync_state with value: #{value} from user: #{user_id}")
+    %{"value" => value, "b64_state" => b64_client_state} = payload
+    Logger.info("#{user_id} received sync_state with value: #{value}")
 
     with {:ok, state_bin} <-
-           Base.decode64(b64_state),
-         {current_value, y_state} <-
+           Base.decode64(b64_client_state),
+         {current_value, _y_state} <-
            StockDb.update_stock(value, state_bin),
-         encoded <- Base.encode64(y_state),
          :ok <-
-           Phoenix.PubSub.broadcast(:pubsub, "stock", {:y_update, current_value, encoded}) do
+           PubSub.broadcast(
+             :pubsub,
+             "stock",
+             {:y_update, current_value, user_id, b64_client_state}
+           ) do
       {:noreply, assign(socket, :current_stock, value)}
     else
       :error ->
@@ -109,8 +115,9 @@ defmodule SolidyjsWeb.StockLive do
   When a client reconnects, they send their local state.
   We need to reconcile it with the server state to ensure CRDT consistency.
   """
-  def handle_event("reconnect_sync", %{"value" => client_value, "state" => client_state}, socket) do
+  def handle_event("reconnect_sync", payload, socket) do
     user_id = socket.assigns.user_id
+    %{"value" => client_value, "b64_state" => client_state} = payload
     Logger.info("Client #{user_id} reconnected with value: #{client_value}")
 
     with {:ok, state_bin} <-

@@ -52,9 +52,33 @@ defmodule StockDb do
   end
 
   @impl true
-  def handle_call(:get_stock, _from, state) do
+  def handle_call({:update_stock, value, y_state}, _from, state) do
     %{conn: conn, name: name} = state
-    {:reply, get_current_stock(conn, name), state}
+    {current_value, _current_state} = get_current_stock(conn, name)
+
+    if value < current_value do
+      with {:ok, statement} <-
+             Sqlite3.prepare(conn, "UPDATE #{name} SET value = ?, state = ? WHERE id = 'stock'"),
+           :ok <-
+             Sqlite3.bind(statement, [value, y_state]),
+           :done <-
+             Sqlite3.step(conn, statement),
+           :ok <-
+             Sqlite3.release(conn, statement) do
+        Logger.info("Updated stock to value: #{value}")
+        {:reply, {value, y_state}, state}
+      else
+        msg ->
+          Logger.error("Failed to update stock: #{inspect(msg)}")
+          {:reply, {current_value, y_state}, state}
+      end
+    else
+      Logger.debug(
+        "Not updating stock as new value (#{value}) is not lower than current (#{current_value})"
+      )
+
+      {:reply, {current_value, y_state}, state}
+    end
   end
 
   def handle_call(
@@ -91,36 +115,9 @@ defmodule StockDb do
   end
 
   @impl true
-  def handle_call({:update_stock, value, y_state}, _from, state) do
+  def handle_call(:get_stock, _from, state) do
     %{conn: conn, name: name} = state
-    {current_value, _current_state} = get_current_stock(conn, name)
-
-    if value < current_value do
-      with {:ok, statement} <-
-             Sqlite3.prepare(conn, "UPDATE #{name} SET value = ?, state = ? WHERE id = 'stock'"),
-           :ok <-
-             Sqlite3.bind(statement, [value, y_state]),
-           :done <-
-             Sqlite3.step(conn, statement),
-           :ok <-
-             Sqlite3.release(conn, statement),
-           encoded_y_state =
-             Base.encode64(y_state),
-           :ok <-
-             PubSub.broadcast(:pubsub, "stock", {:y_update, value, encoded_y_state}) do
-        {:reply, {value, y_state}, state}
-      else
-        msg ->
-          Logger.error("Failed to update stock: #{inspect(msg)}")
-          {:reply, {current_value, y_state}, state}
-      end
-    else
-      Logger.debug(
-        "Not updating stock as new value (#{value}) is not lower than current (#{current_value})"
-      )
-
-      {:reply, {current_value, y_state}, state}
-    end
+    {:reply, get_current_stock(conn, name), state}
   end
 
   defp get_current_stock(conn, name) do
@@ -169,6 +166,7 @@ defmodule StockDb do
            Sqlite3.step(conn, statement),
          :ok <-
            Sqlite3.release(conn, statement) do
+      Logger.info("Initialized stock with value: #{value}")
       {value, state}
     else
       {:error, reason} ->

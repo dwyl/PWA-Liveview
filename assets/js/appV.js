@@ -77,8 +77,7 @@ export async function checkServer() {
     const response = await fetch("/connectivity", { method: "HEAD" });
     console.log("Server check result:", response.ok);
     return response.ok;
-  } catch (error) {
-    console.log("Server unreachable:", error);
+  } catch (_err) {
     return false;
   }
 }
@@ -88,51 +87,45 @@ function updateConnectionStatusUI(status) {
     status === "online" ? "/images/online.svg" : "/images/offline.svg";
 }
 
-async function startPolling(status, interval = CONFIG.POLL_INTERVAL) {
-  clearInterval(AppState.interval);
+async function startPolling(interval = CONFIG.POLL_INTERVAL) {
+  if (AppState.interval) return;
+
   AppState.interval = setInterval(async () => {
     const wasOnline = AppState.isOnline;
     AppState.isOnline = await checkServer();
-    const new_status = AppState.isOnline ? "online" : "offline";
-    console.log(
-      "Polling...",
-      AppState.isOnline,
-      status,
-      new_status,
-      AppState.interval
-    );
+    const newStatus = AppState.isOnline ? "online" : "offline";
+    if (!AppState.isOnline) {
+      AppState.status = "offline";
+      console.log("Server unreachable");
+    }
 
     if (AppState.isOnline !== wasOnline) {
+      AppState.status = newStatus;
+      updateConnectionStatusUI(newStatus);
       console.log(
         `Connection status changed: ${
           wasOnline ? "online->offline" : "offline->online"
         }`,
         "=============="
       );
-      updateConnectionStatusUI(new_status);
-      clearInterval(AppState.interval);
-      startPolling(new_status);
+      updateConnectionStatusUI(newStatus);
     }
-
-    if (AppState.isOnline && new_status === "offline") {
-      console.log(
-        "Reconnecting...",
-        AppState.isOnline,
-        status,
-        new_status,
-        "###################"
-      );
-      // window.location.reload();
-    }
+    console.log("Polling...", AppState.isOnline, AppState.interval);
   }, interval);
 }
 
+window.addEventListener("beforeunload", () => {
+  clearInterval(AppState.interval);
+});
+
 document.addEventListener("DOMContentLoaded", async () => {
+  // clearInterval(AppState.interval);
   AppState.status = (await checkServer()) ? "online" : "offline";
   console.log("==========> DOMContentLoaded", AppState.status);
   updateConnectionStatusUI(AppState.status);
-  // Always start polling to detect status changes
-  startPolling(AppState.status);
+  if (!AppState.interval) {
+    startPolling();
+  }
 });
 
 //--------------
@@ -185,15 +178,14 @@ async function initApp(lineStatus) {
     }
 
     // Offline mode
-    initOfflineComponents();
+    return initOfflineComponents();
   } catch (error) {
     console.error("Init failed:", error);
   }
 }
 
-function initOfflineComponents() {
+async function initOfflineComponents() {
   const path = window.location.pathname;
-
   if (path === "/map") {
     displayVMap();
     displayVForm();
@@ -229,6 +221,11 @@ async function initLiveSocket(hooks) {
     AppState.isOnline = await checkServer();
 
     await initApp(AppState.isOnline);
+    AppState.isOnline
+      ? (AppState.status = "online")
+      : (AppState.status = "offline");
+
+    updateConnectionStatusUI(AppState.status);
 
     window.addEventListener("phx:page-loading-stop", () => {
       console.log("Phoenix event phx:page-loading-stop ~~~~~~~~~~~~~~~~~~~~");

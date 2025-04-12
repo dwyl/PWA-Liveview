@@ -10,6 +10,7 @@ An example of a Progressive Web App (PWA) combining Phoenix LiveView's real-time
   - [Why?](#why)
   - [Demo Pages](#demo-pages)
     - [Stock Manager](#stock-manager)
+    - [What is `Yjs`?](#what-is-yjs)
       - [Using the LiveSocket for the CRDT updates](#using-the-livesocket-for-the-crdt-updates)
     - [Flight Map](#flight-map)
       - [Airport dataset](#airport-dataset)
@@ -33,9 +34,10 @@ An example of a Progressive Web App (PWA) combining Phoenix LiveView's real-time
     - [Server-Side Implementation](#server-side-implementation)
     - [State Synchronization Flow](#state-synchronization-flow)
   - [Misc](#misc)
+    - [Common pitfall of combining LiveView with CSR components](#common-pitfall-of-combining-liveview-with-csr-components)
     - ["Important" `Workbox` settings](#important-workbox-settings)
     - [Icons](#icons)
-  - [Manifest](#manifest)
+    - [Manifest](#manifest)
   - [Performance](#performance)
   - [Resources](#resources)
   - [Known bug](#known-bug)
@@ -85,6 +87,18 @@ Real-time collaborative inventory management with offline persistence (available
 - CRDT-based synchronization (`Y.js`)
 - `IndexedDB` local storage
 - Automatic conflict resolution
+
+### What is `Yjs`?
+
+`Yjs` is a state-based CRDT: each document has a "state vector" (SV) and an "update" history. It ensures eventual consistency by:
+
+- Merging changes via doc.applyUpdate(update) or doc.mergeUpdates([a, b]).
+
+- Using Y.encodeStateAsUpdate(doc, remoteStateVector) to generate a diff.
+
+- Encoding and decoding state as binary.
+
+Yjs doesn’t track a “last write wins” or “who’s right” — instead, all updates get merged, and it’s up to the app to decide what that means semantically.
 
 #### Using the LiveSocket for the CRDT updates
 
@@ -592,6 +606,12 @@ sequenceDiagram
 
 ## Misc
 
+### Common pitfall of combining LiveView with CSR components
+
+The client-side rendered components are manually mounted via hooks.
+They will leak or stack duplicate components if you don't cleanup and unmount them.
+You can use the `destroyed` callback where you can use `SolidJS` makes this easy with a `cleanupSolid` callback (where you take a reference to the SolidJS component in the hook).
+
 ### "Important" `Workbox` settings
 
 `navigateFallbackDenylist` excludes LiveView critical path
@@ -619,7 +639,7 @@ You will need is to have at least two very low resolution icons of size 192 and 
 
 Check [Resources](#resources)
 
-## Manifest
+### Manifest
 
 The "manifest.webmanifest" file will be generated from "vite.config.js".
 
@@ -640,8 +660,6 @@ The "manifest.webmanifest" file will be generated from "vite.config.js".
   ]
 }
 ```
-
-<br/>
 
 ✅ Insert the links to the icons in the (root layout) HTML:
 
@@ -676,8 +694,8 @@ These metrics are achieved through:
 
 ## Resources
 
-- [Phoenix LiveView Documentation](https://hexdocs.pm/phoenix_live_view)
-- [SolidJS Documentation](https://www.solidjs.com/docs)
+Besides PHoenix LiveView and SolidJS documentation, we have:
+
 - [Y.js Documentation](https://docs.yjs.dev/)
 - [Vite PWA Plugin Guide](https://vite-pwa-org.netlify.app/guide/)
 - [Favicon Generator](https://favicon.inbrowser.app/tools/favicon-generator) and <https://vite-pwa-org.netlify.app/assets-generator/#pwa-minimal-icons-requirements>
