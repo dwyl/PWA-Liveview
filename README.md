@@ -11,7 +11,9 @@ An example of a Progressive Web App (PWA) combining Phoenix LiveView's real-time
   - [Demo Pages](#demo-pages)
     - [Stock Manager](#stock-manager)
     - [What is `Yjs`?](#what-is-yjs)
-      - [Using the LiveSocket for the CRDT updates](#using-the-livesocket-for-the-crdt-updates)
+      - [Using the LiveSocket for the CRDT state updates](#using-the-livesocket-for-the-crdt-state-updates)
+      - [Overview](#overview)
+      - [Client-side update (online)](#client-side-update-online)
     - [Flight Map](#flight-map)
       - [Airport dataset](#airport-dataset)
       - [Great circle computation with a WASM module](#great-circle-computation-with-a-wasm-module)
@@ -100,7 +102,7 @@ Real-time collaborative inventory management with offline persistence (available
 
 Yjs doesn’t track a “last write wins” or “who’s right” — instead, all updates get merged, and it’s up to the app to decide what that means semantically.
 
-#### Using the LiveSocket for the CRDT updates
+#### Using the LiveSocket for the CRDT state updates
 
 The authorative source of truth is the client. We save the client state in `y-indexeddb` with `Y.js`. `Y.js` produces a CRDT update along with the "state" value(s).
 
@@ -134,6 +136,121 @@ this.pushEvent("reconnect_sync", {
   value,
   state: base64,
 });
+```
+
+#### Overview
+
+| Component                  | Role                                                                                                               |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| SQLite                     | Persistent storage of latest CRDT-derived state (e.g., stock value)                                                |
+| Phoenix LiveView           | Encodes initial Yjs state, handles crdt_update, and persists via Ecto                                              |
+| PubSub                     | Broadcast/notifies other clients of updates                                                                        |
+| LiveSocket                 | Sends/receives data flow - Yjs updates and socket.assigns - between client and server (WebSocket or HTTP-LongPoll) |
+| Y.Doc / Y.Map              | Holds the CRDT state client-side (shared)                                                                          |
+| y-indexeddb                | Persists state locally for offline mode                                                                            |
+| SolidJS                    | Reactive framework to render standalone UI using signals, driven by Yjs observers                                  |
+| Hooks                      | Injects communication primitives and controls JavaScript code                                                      |
+| Service Worker / Cache API | Enable offline UI rendering and navigation by caching HTML pages and static assets                                 |
+
+```mermaid
+flowchart TD
+    subgraph Backend [Phoenix Server]
+        A1[SQLite : stock table]
+        A2[LiveView mount<br/>send Yjs state]
+        A3[Phoenix.PubSub<br/>broadcast updates]
+    end
+
+    subgraph Client [Browser]
+        B1[y-indexeddb<br/>Yjs local persistence]
+        B2[Y.Doc CRDT]
+        B3[Y.Map 'stock']
+        B4[SolidJS signal<br/>createSignal]
+        B5[UI: Counter Component]
+        B6[LiveSocket<br/>phx-hook / pushEvent]
+    end
+
+    %% Flow: Server to Client
+    A1 -->|Initial Yjs state| A2
+    A2 -->|Base64-encoded Yjs update| B6
+    B6 -->|applyUpdate| B2
+    B2 -->|Triggers| B3
+    B3 -->|ymap.observe| B4
+    B4 -->|setStock| B5
+
+    %% Flow: Client update
+    B5 -->|click| B3
+    B3 -->|ymap.set 'stock', newVal| B2
+    B2 -->|ydoc.on 'update'| B6
+    B6 -->|pushEvent 'crdt_update'| A2
+    A2 -->|UPDATE stock SET ...| A1
+    A2 -->|PubSub.broadcast 'update'| A3
+    A3 -->|Yjs update| B6
+    B6 -->|applyUpdate| B2
+
+    %% Offline Local Flow
+    B2 -->|auto-persist| B1
+    B1 -->|load persisted CRDT| B2
+
+    %% Optional reconnection
+    B6 -->|y-indexeddb synced doc| B2
+    B2 -->|send state vector + update| B6
+    B6 -->|push to server| A2
+```
+
+```mermaid
+sequenceDiagram
+    participant C as Client <br>(SolidYComp)
+    participant H as yHook <br> (LiveView Hook)
+    participant S as Server <br> (LiveView + SQLite)
+    participant P as PubSub <br>(Phoenix.PubSub)
+    participant O as Other Clients
+
+    Note over C: 1️⃣ User loads app (Online)
+    C->>H: Connect LiveSocket + yHook init
+    H->>S: Join LiveView, mount request
+    S->>S: Load Yjs state from SQLite
+    S->>H: Push base64-encoded CRDT state
+    H->>C: Apply update to Y.Doc
+    C->>C: SolidYComp observes Y.Doc and renders
+
+    Note over C: 2️⃣ User clicks (e.g., decrement stock)
+    C->>C: Yjs local change (yMap.set)
+    C->>H: Send Yjs update (base64)
+
+    H->>S: Forward encoded update
+    S->>S: Apply update to server Y.Doc
+    S->>S: Persist updated Y.Doc to SQLite
+
+    S->>P: Broadcast CRDT update to topic
+    P->>O: Other clients receive update
+
+    O->>O: Apply patch to Y.Doc
+    O->>O: SolidYComp updates reactively
+```
+
+#### Client-side update (online)
+
+```mermaid
+flowchart TD
+    A[App Mounts] --> B[Create Y.Doc <br>and Y.Map]
+    B --> C[Get stock from yMap <br> or default]
+    C --> D[Create SolidJS signal<br/> createSignal stock]
+    D --> E[Observe yMap changes<br/>ymap.observe...]
+
+    subgraph Local Interaction
+        F[User clicks decrement]
+        F --> G[ymap.set 'stock', newValue]
+        G --> H[Triggers ymap.observe]
+        H --> I[setStock newValue <br/>SolidJS re-renders]
+        G --> J[Triggers ydoc.on 'update']
+        J --> K[Send update to server<br/>via pushEvent / hook]
+    end
+
+    subgraph Remote Sync
+        L[Receive update from server<br/>applyUpdate 'update']
+        L --> M[Triggers ymap.observe]
+        M --> I
+    end
 ```
 
 ### Flight Map

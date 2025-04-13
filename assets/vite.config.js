@@ -296,6 +296,7 @@ const createPWAConfig = (mode) => ({
   registerType: "autoUpdate",
   filename: "sw.js",
   strategies: "generateSW",
+
   // srcDir: "./js",
   includeAssets: ["favicon.ico", "robots.txt"],
   manifest: manifestOpts,
@@ -330,7 +331,20 @@ const createPWAConfig = (mode) => ({
     ],
     runtimeCaching: [
       {
-        urlPattern: ({ url }) => url.pathname.startsWith("/assets/"),
+        urlPattern: ({ request }) => request.mode === "navigate",
+        handler: "NetworkFirst",
+        options: {
+          cacheName: "html-cache",
+          networkTimeoutSeconds: 3,
+          expiration: {
+            maxEntries: 20,
+            maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+          },
+        },
+      },
+      {
+        // urlPattern: ({ url }) => url.pathname.startsWith("/assets/"),
+        urlPattern: /.*\.(js|css|woff2?|png|jpg|jpeg|svg|ico)/,
         handler: "CacheFirst",
         options: {
           cacheName: "static-assets",

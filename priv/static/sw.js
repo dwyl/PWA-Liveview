@@ -2132,6 +2132,39 @@ class ExpirationPlugin {
   }
 }
 
+// @ts-ignore
+try {
+  self['workbox:strategies:7.2.0'] && _();
+} catch (e) {}
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+const cacheOkAndOpaquePlugin = {
+  /**
+   * Returns a valid response (to allow caching) if the status is 200 (OK) or
+   * 0 (opaque).
+   *
+   * @param {Object} options
+   * @param {Response} options.response
+   * @return {Response|null}
+   *
+   * @private
+   */
+  cacheWillUpdate: async ({
+    response
+  }) => {
+    if (response.status === 200 || response.status === 0) {
+      return response;
+    }
+    return null;
+  }
+};
+
 /*
   Copyright 2020 Google LLC
   Use of this source code is governed by an MIT-style
@@ -2250,11 +2283,6 @@ async function executeQuotaErrorCallbacks() {
 function timeout(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
-
-// @ts-ignore
-try {
-  self['workbox:strategies:7.2.0'] && _();
-} catch (e) {}
 
 /*
   Copyright 2020 Google LLC
@@ -3009,6 +3037,209 @@ const messages = {
   https://opensource.org/licenses/MIT.
 */
 /**
+ * An implementation of a
+ * [network first](https://developer.chrome.com/docs/workbox/caching-strategies-overview/#network-first-falling-back-to-cache)
+ * request strategy.
+ *
+ * By default, this strategy will cache responses with a 200 status code as
+ * well as [opaque responses](https://developer.chrome.com/docs/workbox/caching-resources-during-runtime/#opaque-responses).
+ * Opaque responses are are cross-origin requests where the response doesn't
+ * support [CORS](https://enable-cors.org/).
+ *
+ * If the network request fails, and there is no cache match, this will throw
+ * a `WorkboxError` exception.
+ *
+ * @extends workbox-strategies.Strategy
+ * @memberof workbox-strategies
+ */
+class NetworkFirst extends Strategy {
+  /**
+   * @param {Object} [options]
+   * @param {string} [options.cacheName] Cache name to store and retrieve
+   * requests. Defaults to cache names provided by
+   * {@link workbox-core.cacheNames}.
+   * @param {Array<Object>} [options.plugins] [Plugins]{@link https://developers.google.com/web/tools/workbox/guides/using-plugins}
+   * to use in conjunction with this caching strategy.
+   * @param {Object} [options.fetchOptions] Values passed along to the
+   * [`init`](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch#Parameters)
+   * of [non-navigation](https://github.com/GoogleChrome/workbox/issues/1796)
+   * `fetch()` requests made by this strategy.
+   * @param {Object} [options.matchOptions] [`CacheQueryOptions`](https://w3c.github.io/ServiceWorker/#dictdef-cachequeryoptions)
+   * @param {number} [options.networkTimeoutSeconds] If set, any network requests
+   * that fail to respond within the timeout will fallback to the cache.
+   *
+   * This option can be used to combat
+   * "[lie-fi]{@link https://developers.google.com/web/fundamentals/performance/poor-connectivity/#lie-fi}"
+   * scenarios.
+   */
+  constructor(options = {}) {
+    super(options);
+    // If this instance contains no plugins with a 'cacheWillUpdate' callback,
+    // prepend the `cacheOkAndOpaquePlugin` plugin to the plugins list.
+    if (!this.plugins.some(p => 'cacheWillUpdate' in p)) {
+      this.plugins.unshift(cacheOkAndOpaquePlugin);
+    }
+    this._networkTimeoutSeconds = options.networkTimeoutSeconds || 0;
+    {
+      if (this._networkTimeoutSeconds) {
+        finalAssertExports.isType(this._networkTimeoutSeconds, 'number', {
+          moduleName: 'workbox-strategies',
+          className: this.constructor.name,
+          funcName: 'constructor',
+          paramName: 'networkTimeoutSeconds'
+        });
+      }
+    }
+  }
+  /**
+   * @private
+   * @param {Request|string} request A request to run this strategy for.
+   * @param {workbox-strategies.StrategyHandler} handler The event that
+   *     triggered the request.
+   * @return {Promise<Response>}
+   */
+  async _handle(request, handler) {
+    const logs = [];
+    {
+      finalAssertExports.isInstance(request, Request, {
+        moduleName: 'workbox-strategies',
+        className: this.constructor.name,
+        funcName: 'handle',
+        paramName: 'makeRequest'
+      });
+    }
+    const promises = [];
+    let timeoutId;
+    if (this._networkTimeoutSeconds) {
+      const {
+        id,
+        promise
+      } = this._getTimeoutPromise({
+        request,
+        logs,
+        handler
+      });
+      timeoutId = id;
+      promises.push(promise);
+    }
+    const networkPromise = this._getNetworkPromise({
+      timeoutId,
+      request,
+      logs,
+      handler
+    });
+    promises.push(networkPromise);
+    const response = await handler.waitUntil((async () => {
+      // Promise.race() will resolve as soon as the first promise resolves.
+      return (await handler.waitUntil(Promise.race(promises))) || (
+      // If Promise.race() resolved with null, it might be due to a network
+      // timeout + a cache miss. If that were to happen, we'd rather wait until
+      // the networkPromise resolves instead of returning null.
+      // Note that it's fine to await an already-resolved promise, so we don't
+      // have to check to see if it's still "in flight".
+      await networkPromise);
+    })());
+    {
+      logger.groupCollapsed(messages.strategyStart(this.constructor.name, request));
+      for (const log of logs) {
+        logger.log(log);
+      }
+      messages.printFinalResponse(response);
+      logger.groupEnd();
+    }
+    if (!response) {
+      throw new WorkboxError('no-response', {
+        url: request.url
+      });
+    }
+    return response;
+  }
+  /**
+   * @param {Object} options
+   * @param {Request} options.request
+   * @param {Array} options.logs A reference to the logs array
+   * @param {Event} options.event
+   * @return {Promise<Response>}
+   *
+   * @private
+   */
+  _getTimeoutPromise({
+    request,
+    logs,
+    handler
+  }) {
+    let timeoutId;
+    const timeoutPromise = new Promise(resolve => {
+      const onNetworkTimeout = async () => {
+        {
+          logs.push(`Timing out the network response at ` + `${this._networkTimeoutSeconds} seconds.`);
+        }
+        resolve(await handler.cacheMatch(request));
+      };
+      timeoutId = setTimeout(onNetworkTimeout, this._networkTimeoutSeconds * 1000);
+    });
+    return {
+      promise: timeoutPromise,
+      id: timeoutId
+    };
+  }
+  /**
+   * @param {Object} options
+   * @param {number|undefined} options.timeoutId
+   * @param {Request} options.request
+   * @param {Array} options.logs A reference to the logs Array.
+   * @param {Event} options.event
+   * @return {Promise<Response>}
+   *
+   * @private
+   */
+  async _getNetworkPromise({
+    timeoutId,
+    request,
+    logs,
+    handler
+  }) {
+    let error;
+    let response;
+    try {
+      response = await handler.fetchAndCachePut(request);
+    } catch (fetchError) {
+      if (fetchError instanceof Error) {
+        error = fetchError;
+      }
+    }
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    {
+      if (response) {
+        logs.push(`Got response from network.`);
+      } else {
+        logs.push(`Unable to get a response from the network. Will respond ` + `with a cached response.`);
+      }
+    }
+    if (error || !response) {
+      response = await handler.cacheMatch(request);
+      {
+        if (response) {
+          logs.push(`Found a cached response in the '${this.cacheName}'` + ` cache.`);
+        } else {
+          logs.push(`No response found in the '${this.cacheName}' cache.`);
+        }
+      }
+    }
+    return response;
+  }
+}
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
  * An implementation of a [cache-first](https://developer.chrome.com/docs/workbox/caching-strategies-overview/#cache-first-falling-back-to-network)
  * request strategy.
  *
@@ -3255,34 +3486,6 @@ class CacheableResponsePlugin {
   license that can be found in the LICENSE file or at
   https://opensource.org/licenses/MIT.
 */
-const cacheOkAndOpaquePlugin = {
-  /**
-   * Returns a valid response (to allow caching) if the status is 200 (OK) or
-   * 0 (opaque).
-   *
-   * @param {Object} options
-   * @param {Response} options.response
-   * @return {Response|null}
-   *
-   * @private
-   */
-  cacheWillUpdate: async ({
-    response
-  }) => {
-    if (response.status === 200 || response.status === 0) {
-      return response;
-    }
-    return null;
-  }
-};
-
-/*
-  Copyright 2018 Google LLC
-
-  Use of this source code is governed by an MIT-style
-  license that can be found in the LICENSE file or at
-  https://opensource.org/licenses/MIT.
-*/
 /**
  * An implementation of a
  * [stale-while-revalidate](https://developer.chrome.com/docs/workbox/caching-strategies-overview/#stale-while-revalidate)
@@ -3470,209 +3673,6 @@ class NetworkOnly extends Strategy {
         url: request.url,
         error
       });
-    }
-    return response;
-  }
-}
-
-/*
-  Copyright 2018 Google LLC
-
-  Use of this source code is governed by an MIT-style
-  license that can be found in the LICENSE file or at
-  https://opensource.org/licenses/MIT.
-*/
-/**
- * An implementation of a
- * [network first](https://developer.chrome.com/docs/workbox/caching-strategies-overview/#network-first-falling-back-to-cache)
- * request strategy.
- *
- * By default, this strategy will cache responses with a 200 status code as
- * well as [opaque responses](https://developer.chrome.com/docs/workbox/caching-resources-during-runtime/#opaque-responses).
- * Opaque responses are are cross-origin requests where the response doesn't
- * support [CORS](https://enable-cors.org/).
- *
- * If the network request fails, and there is no cache match, this will throw
- * a `WorkboxError` exception.
- *
- * @extends workbox-strategies.Strategy
- * @memberof workbox-strategies
- */
-class NetworkFirst extends Strategy {
-  /**
-   * @param {Object} [options]
-   * @param {string} [options.cacheName] Cache name to store and retrieve
-   * requests. Defaults to cache names provided by
-   * {@link workbox-core.cacheNames}.
-   * @param {Array<Object>} [options.plugins] [Plugins]{@link https://developers.google.com/web/tools/workbox/guides/using-plugins}
-   * to use in conjunction with this caching strategy.
-   * @param {Object} [options.fetchOptions] Values passed along to the
-   * [`init`](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch#Parameters)
-   * of [non-navigation](https://github.com/GoogleChrome/workbox/issues/1796)
-   * `fetch()` requests made by this strategy.
-   * @param {Object} [options.matchOptions] [`CacheQueryOptions`](https://w3c.github.io/ServiceWorker/#dictdef-cachequeryoptions)
-   * @param {number} [options.networkTimeoutSeconds] If set, any network requests
-   * that fail to respond within the timeout will fallback to the cache.
-   *
-   * This option can be used to combat
-   * "[lie-fi]{@link https://developers.google.com/web/fundamentals/performance/poor-connectivity/#lie-fi}"
-   * scenarios.
-   */
-  constructor(options = {}) {
-    super(options);
-    // If this instance contains no plugins with a 'cacheWillUpdate' callback,
-    // prepend the `cacheOkAndOpaquePlugin` plugin to the plugins list.
-    if (!this.plugins.some(p => 'cacheWillUpdate' in p)) {
-      this.plugins.unshift(cacheOkAndOpaquePlugin);
-    }
-    this._networkTimeoutSeconds = options.networkTimeoutSeconds || 0;
-    {
-      if (this._networkTimeoutSeconds) {
-        finalAssertExports.isType(this._networkTimeoutSeconds, 'number', {
-          moduleName: 'workbox-strategies',
-          className: this.constructor.name,
-          funcName: 'constructor',
-          paramName: 'networkTimeoutSeconds'
-        });
-      }
-    }
-  }
-  /**
-   * @private
-   * @param {Request|string} request A request to run this strategy for.
-   * @param {workbox-strategies.StrategyHandler} handler The event that
-   *     triggered the request.
-   * @return {Promise<Response>}
-   */
-  async _handle(request, handler) {
-    const logs = [];
-    {
-      finalAssertExports.isInstance(request, Request, {
-        moduleName: 'workbox-strategies',
-        className: this.constructor.name,
-        funcName: 'handle',
-        paramName: 'makeRequest'
-      });
-    }
-    const promises = [];
-    let timeoutId;
-    if (this._networkTimeoutSeconds) {
-      const {
-        id,
-        promise
-      } = this._getTimeoutPromise({
-        request,
-        logs,
-        handler
-      });
-      timeoutId = id;
-      promises.push(promise);
-    }
-    const networkPromise = this._getNetworkPromise({
-      timeoutId,
-      request,
-      logs,
-      handler
-    });
-    promises.push(networkPromise);
-    const response = await handler.waitUntil((async () => {
-      // Promise.race() will resolve as soon as the first promise resolves.
-      return (await handler.waitUntil(Promise.race(promises))) || (
-      // If Promise.race() resolved with null, it might be due to a network
-      // timeout + a cache miss. If that were to happen, we'd rather wait until
-      // the networkPromise resolves instead of returning null.
-      // Note that it's fine to await an already-resolved promise, so we don't
-      // have to check to see if it's still "in flight".
-      await networkPromise);
-    })());
-    {
-      logger.groupCollapsed(messages.strategyStart(this.constructor.name, request));
-      for (const log of logs) {
-        logger.log(log);
-      }
-      messages.printFinalResponse(response);
-      logger.groupEnd();
-    }
-    if (!response) {
-      throw new WorkboxError('no-response', {
-        url: request.url
-      });
-    }
-    return response;
-  }
-  /**
-   * @param {Object} options
-   * @param {Request} options.request
-   * @param {Array} options.logs A reference to the logs array
-   * @param {Event} options.event
-   * @return {Promise<Response>}
-   *
-   * @private
-   */
-  _getTimeoutPromise({
-    request,
-    logs,
-    handler
-  }) {
-    let timeoutId;
-    const timeoutPromise = new Promise(resolve => {
-      const onNetworkTimeout = async () => {
-        {
-          logs.push(`Timing out the network response at ` + `${this._networkTimeoutSeconds} seconds.`);
-        }
-        resolve(await handler.cacheMatch(request));
-      };
-      timeoutId = setTimeout(onNetworkTimeout, this._networkTimeoutSeconds * 1000);
-    });
-    return {
-      promise: timeoutPromise,
-      id: timeoutId
-    };
-  }
-  /**
-   * @param {Object} options
-   * @param {number|undefined} options.timeoutId
-   * @param {Request} options.request
-   * @param {Array} options.logs A reference to the logs Array.
-   * @param {Event} options.event
-   * @return {Promise<Response>}
-   *
-   * @private
-   */
-  async _getNetworkPromise({
-    timeoutId,
-    request,
-    logs,
-    handler
-  }) {
-    let error;
-    let response;
-    try {
-      response = await handler.fetchAndCachePut(request);
-    } catch (fetchError) {
-      if (fetchError instanceof Error) {
-        error = fetchError;
-      }
-    }
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-    {
-      if (response) {
-        logs.push(`Got response from network.`);
-      } else {
-        logs.push(`Unable to get a response from the network. Will respond ` + `with a cached response.`);
-      }
-    }
-    if (error || !response) {
-      response = await handler.cacheMatch(request);
-      {
-        if (response) {
-          logs.push(`Found a cached response in the '${this.cacheName}'` + ` cache.`);
-        } else {
-          logs.push(`No response found in the '${this.cacheName}' cache.`);
-        }
-      }
     }
     return response;
   }
@@ -5175,8 +5175,16 @@ registerRoute(new NavigationRoute(createHandlerBoundToURL("/"), {
   denylist: [/^\/live/, /^\/phoenix/, /^\/websocket/, /\.(js|css|png|jpg|jpeg|gif|svg)$/]
 }));
 registerRoute(({
-  url
-}) => url.pathname.startsWith("/assets/"), new CacheFirst({
+  request
+}) => request.mode === "navigate", new NetworkFirst({
+  "cacheName": "html-cache",
+  "networkTimeoutSeconds": 3,
+  plugins: [new ExpirationPlugin({
+    maxEntries: 20,
+    maxAgeSeconds: 604800
+  })]
+}), 'GET');
+registerRoute(/.*\.(js|css|woff2?|png|jpg|jpeg|svg|ico)/, new CacheFirst({
   "cacheName": "static-assets",
   "matchOptions": {
     "ignoreSearch": true

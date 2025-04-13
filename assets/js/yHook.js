@@ -2,9 +2,33 @@ import { SolidYComp } from "./SolidYComp";
 import * as Y from "yjs";
 import { checkServer } from "./appV";
 
+function decodeBase64(str) {
+  return Uint8Array.from(atob(str), (c) => c.charCodeAt(0));
+}
+
+function encodeBase64(buf) {
+  return btoa(String.fromCharCode(...buf));
+}
+
+function mergeWithLowestWins(ydoc, serverUpdate) {
+  const tempDoc = new Y.Doc();
+  Y.applyUpdate(tempDoc, serverUpdate);
+
+  const localMap = ydoc.getMap("stock");
+  const remoteMap = tempDoc.getMap("stock");
+
+  const localValue = localMap.get("value") ?? Infinity;
+  const remoteValue = remoteMap.get("value") ?? Infinity;
+
+  const winner = Math.min(localValue, remoteValue);
+  localMap.set("value", winner);
+}
+
 export const yHook = (ydoc) => ({
   destroyed() {
-    this.ydoc.off("update", this.yUpdateHandler);
+    this.ydoc.off("update", this.handleYUpdate);
+    const ymap = this.ydoc?.getMap("stock");
+    if (ymap) ymap.unobserve();
     console.log("yHook destroyed");
   },
 
@@ -18,15 +42,15 @@ export const yHook = (ydoc) => ({
     this.ydoc = ydoc;
     this.cleanupSolid = null;
 
-    this.yUpdateHandler = this.yUpdateHandler.bind(this);
-    this.ydoc.on("update", this.yUpdateHandler);
+    this.handleYUpdate = this.handleYUpdate.bind(this);
+    this.ydoc.on("update", this.handleYUpdate);
 
     // ---- Phoenix Event: Initial state from server ----
     this.handleEvent("init_stock", this.handleInitStock.bind(this));
     // ---- Phoenix Event: Sync state from server ----
     this.handleEvent("sync_stock", this.handleSyncStock.bind(this));
     // ---- Yjs document updates ----
-    this.ydoc.on("update", this.yUpdateHandler.bind(this));
+    this.ydoc.on("update", this.handleYUpdate.bind(this));
   },
 
   handleInitStock({ db_value, db_64_state, max }) {
@@ -40,9 +64,7 @@ export const yHook = (ydoc) => ({
     if (this.ymap.get("stock-value") === undefined) {
       if (db_64_state && db_64_state.length > 0) {
         console.log("Initializing Y.js state from DB state vector");
-        const decoded = Uint8Array.from(atob(db_64_state), (c) =>
-          c.charCodeAt(0)
-        );
+        const decoded = decodeBase64(db_64_state);
         Y.applyUpdate(ydoc, decoded, "server");
       } else {
         console.log("No Y.js state in DB, initializing with raw DB value");
@@ -57,7 +79,7 @@ export const yHook = (ydoc) => ({
       userID: sessionStorage.getItem("userID"),
     });
   },
-  async yUpdateHandler(update, origin) {
+  async handleYUpdate(update, origin) {
     this.isOnline = await checkServer();
     const value = this.ymap.get("stock-value");
     console.log(
@@ -73,11 +95,21 @@ export const yHook = (ydoc) => ({
       this.syncStateToServer();
     }
   },
+  syncStateToServer() {
+    const value = this.ymap.get("stock-value");
+    console.log("Sending ", value, "to server");
+
+    const encoded = Y.encodeStateAsUpdate(this.ydoc);
+    this.pushEvent("sync_state", {
+      value,
+      b64_state: encodeBase64(encoded),
+    });
+  },
 
   handleSyncStock({ value, state, from }) {
     // merge state vector
     if (state?.length > 0) {
-      const binary = Uint8Array.from(atob(state), (c) => c.charCodeAt(0));
+      const binary = decodeBase64(state);
       Y.applyUpdate(ydoc, binary, from);
     }
 
@@ -96,35 +128,43 @@ export const yHook = (ydoc) => ({
     // }
   },
 
-  syncStateToServer() {
-    const value = this.ymap.get("stock-value");
-    console.log("Sending ", value, "to server");
+  mergeWithLowestWins(updateFromServer) {
+    const tempDoc = new Y.Doc();
+    Y.applyUpdate(tempDoc, serverUpdate);
+
+    const localValue = this.ydoc.getMap("stock-value").get("value") ?? Infinity;
+    const remoteValue =
+      this.ydoc.getMap("stock-value").get("value") ?? Infinity;
+
+    const winner = Math.min(localValue, remoteValue);
+
+    ydoc.getMap("stock").set("value", winner);
+    const mergedUpdate = Y.encodeStateAsUpdate(this.ydoc);
 
     const encoded = Y.encodeStateAsUpdate(this.ydoc);
-    const base64 = btoa(String.fromCharCode(...encoded));
-    this.pushEvent("sync_state", {
+    this.pushEvent("merge_lowest_wins", {
       value,
-      b64_state: base64,
+      b64_state: encodeBase64(encoded),
     });
   },
-  requestLatestState() {
-    const value = this.ymap.get("stock-value");
-    const encoded = Y.encodeStateAsUpdate(ydoc);
-    const base64 = btoa(String.fromCharCode(...encoded));
-    console.log("Requesting latest state from server:", value);
+  // requestLatestState() {
+  //   const value = this.ymap.get("stock-value");
+  //   const encoded = Y.encodeStateAsUpdate(ydoc);
+  //   const base64 = btoa(String.fromCharCode(...encoded));
+  //   console.log("Requesting latest state from server:", value);
 
-    console.log("Reconnection payload:", {
-      value,
-      b64_state: base64,
-    });
+  //   console.log("Reconnection payload:", {
+  //     value,
+  //     b64_state: base64,
+  //   });
 
-    this.pushEvent("reconnect_sync", {
-      value,
-      b64_state: base64,
-    });
+  //   this.pushEvent("reconnect_sync", {
+  //     value,
+  //     b64_state: base64,
+  //   });
 
-    this.pendingSync = false;
-  },
+  //   this.pendingSync = false;
+  // },
   // resyncToServer() {
   //   const update = Y.encodeStateAsUpdate(this.ydoc);
   //   const encoded = btoa(String.fromCharCode(...update));

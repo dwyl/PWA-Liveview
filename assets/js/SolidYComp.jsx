@@ -2,18 +2,20 @@ import { render } from "solid-js/web";
 import { createSignal, createEffect, lazy, onCleanup } from "solid-js";
 
 export const SolidYComp = ({ ydoc, userID, max, el }) => {
+  const ymap = ydoc.getMap("stock");
   const [localStock, setLocalStock] = createSignal(ymap.get("stock-value"));
   const [range, setRange] = createSignal([]);
   const Counter = lazy(() => import("./counter.jsx"));
 
-  const ymap = ydoc.getMap("stock");
   // Initialize Y.js state if needed
   if (ymap.get("stock-value") === undefined) {
     ydoc.transact(() => {
       ymap.set("stock-value", max);
     });
   }
-  // Listen for Y.js updates
+  // This is the observer that will be called when the Y.js state changes
+  // wether from local or remote
+  // It will update the local state with the new value
   const yObserver = (event) => {
     if (event.changes.keys.has("stock-value")) {
       const newValue = ymap.get("stock-value");
@@ -21,7 +23,7 @@ export const SolidYComp = ({ ydoc, userID, max, el }) => {
         `${userID} SolidYComp yObserver gets Y.js updated value, received: ${newValue}, updating local signal`
       );
 
-      setLocalStock(newValue);
+      setLocalStock(ymap.get("stock-value"));
     }
   };
   // const yObserver = (event) => {
@@ -32,9 +34,7 @@ export const SolidYComp = ({ ydoc, userID, max, el }) => {
 
   ymap.observe(yObserver);
 
-  onCleanup(() => {
-    ymap.unobserve(yObserver);
-  });
+  onCleanup(() => ymap.unobserve(yObserver));
 
   // Update Y.js state - this will trigger the observer
   const handleUpdate = (newValue) => {
