@@ -36,7 +36,6 @@ defmodule SolidyjsWeb.StockLive do
     user_id = session["user_id"]
     # Get current DB state for initial sync
     {db_value, db_state} = StockDb.get_stock()
-    dbg(db_state)
 
     if connected?(socket) do
       :ok = PubSub.subscribe(:pubsub, "stock")
@@ -67,10 +66,10 @@ defmodule SolidyjsWeb.StockLive do
       {:noreply,
        socket
        |> assign(:current_stock, value)
-       |> push_event("sync_stock", %{
+       |> push_event("sync_from_server", %{
          value: value,
          state: b64_broadcasted_state,
-         from: "server"
+         sender: "server"
        })}
     else
       Logger.info("#{user_id} Ignoring y_update from self: , #{sender_id}")
@@ -86,8 +85,8 @@ defmodule SolidyjsWeb.StockLive do
   @impl true
   def handle_event("sync_state", payload, socket) do
     user_id = socket.assigns.user_id
-    %{"value" => value, "b64_state" => b64_client_state} = payload
-    Logger.info("#{user_id} received sync_state with value: #{value}")
+    %{"value" => value, "b64_state" => b64_client_state, "sender" => sender_id} = payload
+    Logger.info("#{user_id} received sync_state with value: #{value} from #{inspect(sender_id)}")
 
     with {:ok, state_bin} <-
            Base.decode64(b64_client_state),
@@ -111,60 +110,68 @@ defmodule SolidyjsWeb.StockLive do
     end
   end
 
+  # def handle_event("client_state", payload, socket) do
+  #   user_id = socket.assigns.user_id
+  #   %{"value" => value, "b64_state" => b64_client_state, "sender" => "server"} = payload
+  #   Logger.info("#{user_id} received client_state with value: #{value}")
+  # end
+
   @doc """
   When a client reconnects, they send their local state.
   We need to reconcile it with the server state to ensure CRDT consistency.
   """
-  def handle_event("reconnect_sync", payload, socket) do
-    user_id = socket.assigns.user_id
-    %{"value" => client_value, "b64_state" => client_state} = payload
-    Logger.info("Client #{user_id} reconnected with value: #{client_value}")
 
-    with {:ok, state_bin} <-
-           Base.decode64(client_state),
-         {:client_wins, value, state} <-
-           StockDb.handle_client_reconnection(client_value, state_bin) do
-      {:noreply, push_event(socket, "sync_stock", %{value: value, state: Base.encode64(state)})}
-    else
-      :error ->
-        Logger.error("Failed to decode base64 Yjs state on reconnect")
-        {:noreply, socket}
+  # def handle_event("reconnect_sync", payload, socket) do
+  #   user_id = socket.assigns.user_id
+  #   %{"value" => client_value, "b64_state" => client_state} = payload
+  #   Logger.info("Client #{user_id} reconnected with value: #{client_value}")
 
-      {:server_wins, value, state} ->
-        {:noreply, push_event(socket, "sync_stock", %{value: value, state: Base.encode64(state)})}
+  #   with {:ok, state_bin} <-
+  #          Base.decode64(client_state),
+  #        {:client_wins, value, state} <-
+  #          StockDb.handle_client_reconnection(client_value, state_bin) do
+  #     {:noreply, push_event(socket, "sync_stock", %{value: value, state: Base.encode64(state)})}
+  #   else
+  #     :error ->
+  #       Logger.error("Failed to decode base64 Yjs state on reconnect")
+  #       {:noreply, socket}
 
-      msg ->
-        Logger.error(inspect(msg))
-        {:noreply, socket}
-    end
-  end
+  #     {:server_wins, value, state} ->
+  #       {:noreply, push_event(socket, "sync_stock", %{value: value, state: Base.encode64(state)})}
+
+  #     msg ->
+  #       Logger.error(inspect(msg))
+  #       {:noreply, socket}
+  #   end
+  # end
 
   @impl true
-  def handle_event("request_latest_state", _params, socket) do
-    user_id = socket.assigns.user_id
-    Logger.info("Received request_latest_state from user: #{user_id}")
+  # def handle_event("request_latest_state", _params, socket) do
+  #   user_id = socket.assigns.user_id
+  #   Logger.info("Received request_latest_state from user: #{user_id}")
 
-    # Just get the DB value for initial sync
-    # Client will keep their own value if it's higher
-    {value, state} = StockDb.get_stock()
-    Logger.info("Sending latest state: value=#{value}")
+  #   # Just get the DB value for initial sync
+  #   # Client will keep their own value if it's higher
+  #   {value, state} = StockDb.get_stock()
+  #   Logger.info("Sending latest state: value=#{value}")
 
-    {:noreply,
-     socket
-     |> push_event("sync_stock", %{
-       value: value,
-       state: state
-     })}
-  end
+  #   {:noreply,
+  #    socket
+  #    |> push_event("sync_stock", %{
+  #      value: value,
+  #      state: state
+  #    })}
+  # end
 
   # PWA event handlers
+  def handle_event("pwa-update-available", %{"updateAvailable" => true}, socket) do
+    Logger.warning("PWA Update available")
+    {:noreply, assign(socket, :update_available, true)}
+  end
+
   def handle_event("pwa-offline-ready", %{"msg" => msg}, socket) do
     Logger.info("PWA offline ready: #{msg}")
     {:noreply, put_flash(socket, :info, msg)}
-  end
-
-  def handle_event("pwa-update-available", %{"updateAvailable" => true}, socket) do
-    {:noreply, assign(socket, :update_available, true)}
   end
 
   def handle_event("pwa-registration-error", %{"error" => error}, socket) do

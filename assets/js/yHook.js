@@ -10,25 +10,26 @@ function encodeBase64(buf) {
   return btoa(String.fromCharCode(...buf));
 }
 
-function mergeWithLowestWins(ydoc, serverUpdate) {
-  const tempDoc = new Y.Doc();
-  Y.applyUpdate(tempDoc, serverUpdate);
+// function mergeWithLowestWins(ydoc, serverUpdate) {
+//   const tempDoc = new Y.Doc();
+//   Y.applyUpdate(tempDoc, serverUpdate);
 
-  const localMap = ydoc.getMap("stock");
-  const remoteMap = tempDoc.getMap("stock");
+//   const localMap = ydoc.getMap("stock");
+//   const remoteMap = tempDoc.getMap("stock");
 
-  const localValue = localMap.get("value") ?? Infinity;
-  const remoteValue = remoteMap.get("value") ?? Infinity;
+//   const localValue = localMap.get("value") ?? Infinity;
+//   const remoteValue = remoteMap.get("value") ?? Infinity;
 
-  const winner = Math.min(localValue, remoteValue);
-  localMap.set("value", winner);
-}
+//   const winner = Math.min(localValue, remoteValue);
+//   localMap.set("value", winner);
+// }
 
 export const yHook = (ydoc) => ({
   destroyed() {
+    // memoy leak prevention
     this.ydoc.off("update", this.handleYUpdate);
-    const ymap = this.ydoc?.getMap("stock");
-    if (ymap) ymap.unobserve();
+    // const ymap = this.ydoc?.getMap("stock");
+    // if (ymap) ymap.unobserveDeep();
     console.log("yHook destroyed");
   },
 
@@ -42,34 +43,43 @@ export const yHook = (ydoc) => ({
     this.ydoc = ydoc;
     this.cleanupSolid = null;
 
+    // observe Y.js state changes
     this.handleYUpdate = this.handleYUpdate.bind(this);
     this.ydoc.on("update", this.handleYUpdate);
 
     // ---- Phoenix Event: Initial state from server ----
     this.handleEvent("init_stock", this.handleInitStock.bind(this));
     // ---- Phoenix Event: Sync state from server ----
-    this.handleEvent("sync_stock", this.handleSyncStock.bind(this));
+    this.handleEvent("sync_from_server", this.handleSyncFromServer.bind(this));
     // ---- Yjs document updates ----
-    this.ydoc.on("update", this.handleYUpdate.bind(this));
   },
 
   handleInitStock({ db_value, db_64_state, max }) {
+    console.log(`handleInitStock ${this.currentUser}`);
     // defensive cleanup if "destroyed" was not called before
     if (this.cleanupSolid) {
       this.cleanupSolid?.(); // unmount previous instance
     }
 
     sessionStorage.setItem("max", max);
+    const localValue = this.ymap.get("stock-value");
 
-    if (this.ymap.get("stock-value") === undefined) {
+    if (localValue === undefined) {
       if (db_64_state && db_64_state.length > 0) {
-        console.log("Initializing Y.js state from DB state vector");
+        console.log(`Initializing Y.js state from DB state vector`);
         const decoded = decodeBase64(db_64_state);
         Y.applyUpdate(ydoc, decoded, "server");
       } else {
-        console.log("No Y.js state in DB, initializing with raw DB value");
-        this.ymap.set("stock-value", db_value);
+        console.log(
+          `${this.currentUser} No Y.js state in DB, initializing with raw DB value`
+        );
+        ydoc.transact(() => {
+          this.ymap.set("stock-value", db_value);
+        }, "server");
       }
+    } else if (localValue < db_value) {
+      console.log("this.pushStateToServer", localValue);
+      this.pushStateToServer(localValue);
     }
 
     this.cleanupSolid = SolidYComp({
@@ -80,94 +90,62 @@ export const yHook = (ydoc) => ({
     });
   },
   async handleYUpdate(update, origin) {
+    console.log(`handleYUpdate, ${this.currentUser}, origin: `, origin);
+
     this.isOnline = await checkServer();
-    const value = this.ymap.get("stock-value");
-    console.log(
-      `${this.currentUser} yHook: ydoc.on gets Y.js update: ${value}, origin: ${origin}`
-    );
-    if (origin === "server") {
-      console.log("Received server-originated update:", value);
-      if (!this.isOnline) {
-        console.log("Offline - will sync on reconnection");
-        this.pendingSync = true;
-      }
+    if (!this.isOnline) {
+      console.log("Offline - will sync on reconnection");
+      this.pendingSync = true;
+      return;
     } else {
-      this.syncStateToServer();
+      console.log("Online - syncing with server");
+      this.pendingSync = false;
+    }
+
+    const value = this.ymap.get("stock-value");
+    // const encoded = Y.encodeStateAsUpdate(this.ydoc);
+    console.log(
+      `${this.currentUser} handleYUpdate: ydoc.on gets Y.js update: ${value}, origin: ${origin}`
+    );
+
+    if (origin == this.currentUser) {
+      console.log(`${this.currentUser} Client pushes update to server`);
+      this.pushStateToServer(value, this.currentUser);
+    } else if (origin === "server") {
+      console.log(
+        `${this.currentUser} Received server-originated update: `,
+        value
+      );
+      // this.syncClientStateFromServer();
     }
   },
-  syncStateToServer() {
-    const value = this.ymap.get("stock-value");
-    console.log("Sending ", value, "to server");
 
-    const encoded = Y.encodeStateAsUpdate(this.ydoc);
-    this.pushEvent("sync_state", {
-      value,
-      b64_state: encodeBase64(encoded),
-    });
-  },
-
-  handleSyncStock({ value, state, from }) {
+  handleSyncFromServer({ value, state, sender }) {
+    console.log(`handleSyncFromServer, ${this.currentUser}: `, sender);
     // merge state vector
     if (state?.length > 0) {
       const binary = decodeBase64(state);
-      Y.applyUpdate(ydoc, binary, from);
+      Y.applyUpdate(ydoc, binary, sender);
     }
 
     // update local value
     if (value !== this.ymap.get("stock-value")) {
+      console.log(`Updating Yjs with ${value}`);
       ydoc.transact(() => {
         this.ymap.set("stock-value", value);
       }, "server");
     }
-    // const currentValue = this.ymap.get("stock-value");
-    // if (value !== currentValue) {
-    //   console.log(`Updating local value from ${currentValue} to ${value}`);
-    //   ydoc.transact(() => {
-    //     this.ymap.set("stock-value", value);
-    //   }, "server");
-    // }
   },
-
-  mergeWithLowestWins(updateFromServer) {
-    const tempDoc = new Y.Doc();
-    Y.applyUpdate(tempDoc, serverUpdate);
-
-    const localValue = this.ydoc.getMap("stock-value").get("value") ?? Infinity;
-    const remoteValue =
-      this.ydoc.getMap("stock-value").get("value") ?? Infinity;
-
-    const winner = Math.min(localValue, remoteValue);
-
-    ydoc.getMap("stock").set("value", winner);
-    const mergedUpdate = Y.encodeStateAsUpdate(this.ydoc);
-
+  pushStateToServer(value) {
+    console.log(`syncStateToServer, ${this.currentUser}: `);
     const encoded = Y.encodeStateAsUpdate(this.ydoc);
-    this.pushEvent("merge_lowest_wins", {
+    this.pushEvent("sync_state", {
       value,
       b64_state: encodeBase64(encoded),
+      sender: this.currentUser,
     });
   },
-  // requestLatestState() {
-  //   const value = this.ymap.get("stock-value");
-  //   const encoded = Y.encodeStateAsUpdate(ydoc);
-  //   const base64 = btoa(String.fromCharCode(...encoded));
-  //   console.log("Requesting latest state from server:", value);
-
-  //   console.log("Reconnection payload:", {
-  //     value,
-  //     b64_state: base64,
-  //   });
-
-  //   this.pushEvent("reconnect_sync", {
-  //     value,
-  //     b64_state: base64,
-  //   });
-
-  //   this.pendingSync = false;
-  // },
-  // resyncToServer() {
-  //   const update = Y.encodeStateAsUpdate(this.ydoc);
-  //   const encoded = btoa(String.fromCharCode(...update));
-  //   this.pushEvent("y-update", { update: encoded });
-  // },
+  syncClientStateFromServer() {
+    console.log(`syncClientStateFomrServer, ${this.currentUser}: `);
+  },
 });

@@ -13,34 +13,30 @@ export const SolidYComp = ({ ydoc, userID, max, el }) => {
       ymap.set("stock-value", max);
     });
   }
-  // This is the observer that will be called when the Y.js state changes
-  // wether from local or remote
-  // It will update the local state with the new value
-  const yObserver = (event) => {
-    if (event.changes.keys.has("stock-value")) {
-      const newValue = ymap.get("stock-value");
-      console.log(
-        `${userID} SolidYComp yObserver gets Y.js updated value, received: ${newValue}, updating local signal`
-      );
+  // This observer will be called when the Y.js state changes
+  // wether from local user or remote user
 
-      setLocalStock(ymap.get("stock-value"));
+  ymap.observeDeep(updateStockSignal);
+
+  function updateStockSignal(events, { origin }) {
+    for (const event of events) {
+      if (event.keysChanged.has("stock-value")) {
+        setLocalStock(ymap.get("stock-value"));
+        console.log(userID, "observes change from:  ", origin);
+      }
     }
-  };
-  // const yObserver = (event) => {
-  //   if (event.changes.keys.has("stock-value")) {
-  //     setLocalStock(ymap.get("stock-value"));
-  //   }
-  // };
+  }
 
-  ymap.observe(yObserver);
+  // memory leak prevention
+  onCleanup(() => ymap.unobserveDeep(updateStockSignal));
 
-  onCleanup(() => ymap.unobserve(yObserver));
-
-  // Update Y.js state - this will trigger the observer
+  // this will trigger the observer and set the origin of the change
+  // so yHook can use it
   const handleUpdate = (newValue) => {
+    console.log(userID, "clicks on stock", newValue);
     ydoc.transact(() => {
       ymap.set("stock-value", newValue);
-    });
+    }, userID);
   };
 
   createEffect(() => {

@@ -1,5 +1,4 @@
 import "../css/app.css";
-
 // Include phoenix_html to handle method=PUT/DELETE in forms and buttons.
 import "phoenix_html";
 
@@ -15,60 +14,6 @@ const CONFIG = {
     interval: null,
     globalYdoc: null,
   };
-
-async function addCurrentPageToCache({ current, routes }) {
-  await navigator.serviceWorker.ready;
-  if (!("caches" in window)) return;
-
-  const newPath = new URL(current).pathname;
-
-  // we cache the two pages "/" and "/map", and only once.
-  if (!routes.includes(newPath)) return;
-  if (AppState.paths.has(newPath)) return;
-  if (newPath !== window.location.pathname) return;
-
-  // let Workbox know this page should be cached
-  // by triggering a "pageshow" event which Workbox can listen for
-  if (navigator.serviceWorker.controller) {
-    console.log(
-      "Service worker is active - letting it handle page caching for:",
-      newPath
-    );
-    AppState.paths.add(newPath);
-    // Let workbox handle it by not manually caching
-    return;
-  }
-
-  // Fall back to manual caching only if Workbox isn't available
-  const cache = await caches.open(CONFIG.CACHE_NAME);
-  const htmlContent = document.documentElement.outerHTML;
-  const contentLength = new TextEncoder().encode(htmlContent).length;
-  const headers = new Headers({
-    "Content-Type": "text/html",
-    "Content-Length": contentLength,
-  });
-
-  const response = new Response(htmlContent, {
-    headers: headers,
-    status: 200,
-    statusText: "OK",
-  });
-
-  try {
-    await cache.put(current, response);
-    AppState.paths.add(newPath);
-    console.log("Page cached successfully:", newPath);
-  } catch (error) {
-    console.error("Error caching page:", error);
-    return;
-  }
-}
-
-// Monitor navigation events and cache the current page if in declared routes
-navigation.addEventListener("navigate", async ({ destination: { url } }) => {
-  console.log("navigate event:", url);
-  return addCurrentPageToCache({ current: url, routes: CONFIG.ROUTES });
-});
 
 //---------------
 // Check server reachability
@@ -228,20 +173,21 @@ async function initLiveSocket(hooks) {
     updateConnectionStatusUI(AppState.status);
 
     window.addEventListener("phx:page-loading-stop", () => {
-      console.log("Phoenix event phx:page-loading-stop ~~~~~~~~~~~~~~~~~~~~");
-      console.log(window.liveSocket, window.liveSocket?.isConnected());
+      console.log("phx:page-loading-stop ~~~~~~~~~~~~~~~~~~~~");
       if (!window.liveSocket?.isConnected()) {
         console.log("liveSocket not connected");
         window.liveSocket.connect();
+      } else {
+        console.log("liveSocket connected");
       }
     });
 
-    if ("serviceWorker" in navigator && AppState.isOnline) {
-      await addCurrentPageToCache({
-        current: window.location.href,
-        routes: CONFIG.ROUTES,
-      });
-    }
+    // if ("serviceWorker" in navigator && AppState.isOnline) {
+    //   await addCurrentPageToCache({
+    //     current: window.location.href,
+    //     routes: CONFIG.ROUTES,
+    //   });
+    // }
   } catch (error) {
     console.error("Initialization error:", error);
   }
@@ -253,3 +199,58 @@ window.addEventListener("phx:live_reload:attached", ({ detail: reloader }) => {
   reloader.enableServerLogs();
   window.liveReloader = reloader;
 });
+
+// Rules for manual caching, replaced by Workbox
+async function addCurrentPageToCache({ current, routes }) {
+  await navigator.serviceWorker.ready;
+  if (!("caches" in window)) return;
+
+  const newPath = new URL(current).pathname;
+
+  // we cache the two pages "/" and "/map", and only once.
+  if (!routes.includes(newPath)) return;
+  if (AppState.paths.has(newPath)) return;
+  if (newPath !== window.location.pathname) return;
+
+  // let Workbox know this page should be cached
+  // by triggering a "pageshow" event which Workbox can listen for
+  if (navigator.serviceWorker.controller) {
+    console.log(
+      "Service worker is active - letting it handle page caching for:",
+      newPath
+    );
+    AppState.paths.add(newPath);
+    // Let workbox handle it by not manually caching
+    return;
+  }
+
+  // Fall back to manual caching only if Workbox isn't available
+  const cache = await caches.open(CONFIG.CACHE_NAME);
+  const htmlContent = document.documentElement.outerHTML;
+  const contentLength = new TextEncoder().encode(htmlContent).length;
+  const headers = new Headers({
+    "Content-Type": "text/html",
+    "Content-Length": contentLength,
+  });
+
+  const response = new Response(htmlContent, {
+    headers: headers,
+    status: 200,
+    statusText: "OK",
+  });
+
+  try {
+    await cache.put(current, response);
+    AppState.paths.add(newPath);
+    console.log("Page cached successfully:", newPath);
+  } catch (error) {
+    console.error("Error caching page:", error);
+    return;
+  }
+}
+
+// Monitor navigation events and cache the current page if in declared routes
+// navigation.addEventListener("navigate", async ({ destination: { url } }) => {
+//   console.log("navigate event:", url);
+//   return addCurrentPageToCache({ current: url, routes: CONFIG.ROUTES });
+// });

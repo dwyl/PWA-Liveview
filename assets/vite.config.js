@@ -6,6 +6,7 @@ import autoprefixer from "autoprefixer";
 import viteCompression from "vite-plugin-compression";
 import wasm from "vite-plugin-wasm";
 import path from "path";
+import { url } from "inspector";
 // import tailwindcss from "@tailwindcss/vite";
 
 // https://web.dev/articles/add-manifest?utm_source=devtools
@@ -66,19 +67,31 @@ const buildOps = {
   },
 };
 
-const LVLongPoll = {
+const LongPoll = {
   urlPattern: ({ url }) => url.pathname.startsWith("/live/longpoll"),
-  handler: "NetworkOnly",
+  options: {
+    fetchOptions: {
+      credentials: "same-origin", // 🔐 preserves cookies and headers needed by Phoenix
+    },
+  },
+  handler: async ({ event }) => {
+    try {
+      const response = await fetch(event.request);
+      return response;
+    } catch (error) {
+      // console.warn("[Workbox fallback] Failed to fetch longpoll:", error);
+      return new Response(null, {
+        status: 204,
+        statusText: "Longpoll fallback",
+      });
+    }
+  },
+  method: "GET",
 };
 
-const LVTestOnline = {
-  urlPattern: ({ url }) => url.pathname.startsWith("/test"),
+const LiveReload = {
+  urlPattern: ({ url }) => url.pathname.startsWith("/live/reload"),
   handler: "NetworkOnly",
-};
-
-const LVWebSocket = {
-  urlPattern: ({ url }) => url.pathname.startsWith("/live/websocket"),
-  handler: "NetworkOnly", // Websockets must always go to network
 };
 
 const VersionedAssets = {
@@ -95,6 +108,9 @@ const VersionedAssets = {
     },
     matchOptions: {
       ignoreSearch: true, // Ignore vsn parameter
+    },
+    fetchOptions: {
+      credentials: "same-origin",
     },
     cacheableResponse: {
       statuses: [0, 200],
@@ -168,19 +184,6 @@ const Fonts = {
       mode: "cors",
       credentials: "same-origin",
     },
-    // plugins: [
-    //   {
-    //     cacheKeyWillBeUsed: async ({ request }) => {
-    //       // Strip out dynamic query parameters
-    //       const url = new URL(request.url);
-    //       const baseUrl = `${url.origin}${url.pathname}`;
-    //       return baseUrl;
-    //     },
-    //     fetchDidFail: async ({ request }) => {
-    //       console.warn("MapTiler SDK request failed:", request.url);
-    //     },
-    //   },
-    // ],
   },
 };
 
@@ -262,11 +265,6 @@ const Tiles = {
   },
 };
 
-const LiveReload = {
-  urlPattern: ({ url }) => url.pathname.startsWith("/phoenix"),
-  handler: "NetworkOnly",
-};
-
 const Pages = {
   urlPattern: ({ url }) => url.pathname === "/" || url.pathname === "/map",
   // || url.pathname.startsWith("/"),
@@ -286,8 +284,60 @@ const Pages = {
   },
 };
 
+const runtimeCaching = [
+  // {
+  //   // urlPattern: ({ url }) => url.pathname.startsWith("/assets/"),
+  //   urlPattern: /.*\.(js|css|woff2?|png|jpg|jpeg|svg|ico)/,
+  //   handler: "CacheFirst",
+  //   options: {
+  //     cacheName: "static-assets",
+  //     expiration: {
+  //       maxEntries: 60,
+  //       maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+  //     },
+  //     matchOptions: {
+  //       ignoreSearch: true, // Crucial for handling ?vsn= parameters
+  //     },
+  //     fetchOptions: {
+  //       credentials: "same-origin",
+  //     },
+  //     plugins: [
+  //       {
+  //         cacheKeyWillBeUsed: async ({ request }) => {
+  //           // Preserve base URL without VSN parameter
+  //           const url = new URL(request.url);
+  //           const baseUrl = `${url.origin}${url.pathname}`;
+  //           return baseUrl;
+  //         },
+  //       },
+  //     ],
+  //   },
+  // },
+  // Phoenix,
+  LongPoll,
+  LiveReload,
+  Scripts,
+  VersionedAssets,
+  MapTilerSDK, // Add the SDK route before Tiles
+  StaticAssets,
+  Tiles,
+  Fonts,
+  Pages,
+  // {
+  //   urlPattern: ({ request }) => request.mode === "navigate",
+  //   handler: "NetworkFirst",
+  //   options: {
+  //     cacheName: "html-cache",
+  //     networkTimeoutSeconds: 3,
+  //     expiration: {
+  //       maxEntries: 20,
+  //       maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+  //     },
+  //   },
+  // },
+];
+
 const createPWAConfig = (mode) => ({
-  // const PWAOpts = {
   devOptions: {
     enabled: mode === "development",
     type: "module",
@@ -329,59 +379,7 @@ const createPWAConfig = (mode) => ({
       { url: "/", revision: null },
       { url: "/map", revision: null },
     ],
-    runtimeCaching: [
-      {
-        urlPattern: ({ request }) => request.mode === "navigate",
-        handler: "NetworkFirst",
-        options: {
-          cacheName: "html-cache",
-          networkTimeoutSeconds: 3,
-          expiration: {
-            maxEntries: 20,
-            maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
-          },
-        },
-      },
-      {
-        // urlPattern: ({ url }) => url.pathname.startsWith("/assets/"),
-        urlPattern: /.*\.(js|css|woff2?|png|jpg|jpeg|svg|ico)/,
-        handler: "CacheFirst",
-        options: {
-          cacheName: "static-assets",
-          expiration: {
-            maxEntries: 60,
-            maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
-          },
-          matchOptions: {
-            ignoreSearch: true, // Crucial for handling ?vsn= parameters
-          },
-          fetchOptions: {
-            credentials: "same-origin",
-          },
-          plugins: [
-            {
-              cacheKeyWillBeUsed: async ({ request }) => {
-                // Preserve base URL without VSN parameter
-                const url = new URL(request.url);
-                const baseUrl = `${url.origin}${url.pathname}`;
-                return baseUrl;
-              },
-            },
-          ],
-        },
-      },
-      VersionedAssets,
-      MapTilerSDK, // Add the SDK route before Tiles
-      Tiles,
-      StaticAssets,
-      Scripts,
-      Fonts,
-      LVLongPoll,
-      LVWebSocket,
-      LVTestOnline,
-      LiveReload,
-      Pages,
-    ],
+    runtimeCaching: runtimeCaching,
     clientsClaim: false, // take control of all open pages as soon as the service worker activates
     skipWaiting: false, // New service worker versions activate immediately
     // Without these settings, you might have some pages using old service worker versions

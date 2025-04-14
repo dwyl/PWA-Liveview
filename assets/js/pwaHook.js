@@ -1,18 +1,20 @@
 // Track offline notification state at module level
 let hasNotifiedOfflineReady = false;
+const { registerSW } = await import("virtual:pwa-register");
 
 export const PwaHook = {
-  async mounted() {
+  mounted() {
     const _this = this;
-    const { registerSW } = await import("virtual:pwa-register");
-    console.log("LiveView mounted, current path:", window.location.pathname);
+    console.log("PwaHook mounted");
 
     this.updateAvailable = false;
     let updateSWFunction;
+
+    // Register service worker
     const updateSW = registerSW({
-      onNeedRefresh() {
+      onNeedRefresh: () => {
         console.log("New version available");
-        this.updateAvailable = true;
+        _this.updateAvailable = true;
         updateSWFunction = updateSW;
 
         // Let LiveView handle the button visibility
@@ -21,7 +23,7 @@ export const PwaHook = {
         });
       },
       immediate: false, // Prevents immediate registration on page load
-      onOfflineReady() {
+      onOfflineReady: () => {
         // Only notify once when service worker is first installed
         if (!hasNotifiedOfflineReady) {
           console.log("Service Worker installed - App ready for offline use");
@@ -31,7 +33,7 @@ export const PwaHook = {
           hasNotifiedOfflineReady = true;
         }
       },
-      onRegisterError(error) {
+      onRegisterError: (error) => {
         console.error("SW registration error", error);
         _this.pushEvent("pwa-registration-error", {
           error: error.toString(),
@@ -39,13 +41,14 @@ export const PwaHook = {
       },
     });
 
-    this.handleEvent("confirm-update", () => {
+    // Handle the confirm-update event triggered by the user
+    _this.handleEvent("confirm-update", () => {
       if (updateSWFunction) {
-        // This will trigger the update
+        // Trigger the update
         updateSWFunction(true);
+      } else {
+        console.warn("Service worker update function not available");
       }
     });
-
-    updateSW();
   },
 };

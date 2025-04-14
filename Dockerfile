@@ -14,7 +14,8 @@ RUN apt-get update -y && apt-get install -y \
   apt-get install -y nodejs && \
   apt-get clean && rm -f /var/lib/apt/lists/*_*
 
-RUN npm install -g pnpm && pnpm self-update
+RUN npm install -g pnpm 
+# && pnpm self-update
 
 # Prepare build dir
 WORKDIR /app
@@ -40,7 +41,7 @@ COPY lib lib
 WORKDIR /app/assets
 
 COPY assets/package.json assets/pnpm-lock.yaml ./
-RUN pnpm install
+RUN pnpm self-update && pnpm install
 
 COPY assets ./
 RUN pnpm exec vite build --mode production --config vite.config.js

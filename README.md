@@ -6,8 +6,9 @@ An example of a Progressive Web App (PWA) combining Phoenix LiveView's real-time
 
 - [Phoenix LiveView + SolidJS PWA](#phoenix-liveview--solidjs-pwa)
   - [Table of Contents](#table-of-contents)
-  - [Key Features](#key-features)
+  - [Key points](#key-points)
   - [Why?](#why)
+  - [Core Technologies](#core-technologies)
   - [Demo Pages](#demo-pages)
     - [Stock Manager](#stock-manager)
     - [What is `Yjs`?](#what-is-yjs)
@@ -19,7 +20,6 @@ An example of a Progressive Web App (PWA) combining Phoenix LiveView's real-time
       - [Great circle computation with a WASM module](#great-circle-computation-with-a-wasm-module)
       - [Interactive input](#interactive-input)
       - [Client state management](#client-state-management)
-    - [Core Technologies](#core-technologies)
   - [Page-Specific State](#page-specific-state)
     - [Architecture](#architecture)
   - [Quick Start](#quick-start)
@@ -45,14 +45,24 @@ An example of a Progressive Web App (PWA) combining Phoenix LiveView's real-time
   - [Known bug](#known-bug)
   - [License](#license)
 
-## Key Features
+## Key points
 
-- **Build tool**: `Vite` with `Workbox` for PWA
-- **Performant UI**: Reactive JavaScript framework (`SolidJS`) components with `LiveView` hooks (online mode) or standalone components (offline mode)
-- **Offline navigation**: `Vite` plugin to setup a Service Worker with `Workbox`
-- **Offline-First Architecture**: Full functionality even without internet connection
-- **Real-time Collaboration**: client-side CRDT-based synchronization (`Y.js`) with automatic conflict resolution, or local state management (`Valtio`) and Phoenix PubSub server
-- **Progressive Enhancement**: Works across all network conditions
+The Service Worker features `Workbox` and is built with `Vite` plugins.
+
+We used `Y.js` with `y-indexeddb` to manage the authoritative state client-side.
+
+The communication with the server uses a `liveSocket`.
+
+We used `SQLite` to mirro and persist the state.
+
+- **Build tool**: `Vite` with `Workbox` for the Service Worker
+- **Ractive UI**: Reactive JavaScript (small) framework (`SolidJS`) components with `LiveView` hooks (online mode) or standalone components (offline mode)
+- **Offline navigation**: `Workbox`
+- **Offline-First Architecture**: Reactive without internet connection
+- **Real-time Collaboration**:
+  - client-side CRDT-based synchronization (`Y.js`) with automatic conflict resolution,
+  - or local state management (`Valtio`)
+  - Phoenix PubSub server
 - **WebAssembly Powered**: High-performance calculations for map routes
 - **Vector tiles**: Rendered on `Leaflet` canvas with `MapTiler`
 
@@ -77,7 +87,29 @@ Traditional Phoenix LiveView applications face several challenges in offline sce
 
 6. **Build tool**: We use `Vite` as the build tool to bundle and optimize the application and enable PWA features seamlessly
 
-This project demonstrates how to overcome these challenges by combining `LiveView` with a reactive JavaScript framework (`SolidJS`) and client-side state managers (`Y.js` and `Valtio`) and using `Vite` as the build tool.
+This project demonstrates how to overcome these challenges by combining `LiveView` with a reactive JavaScript framework and client-side state managers (`Y.js` and `Valtio`) and using `Vite` as the build tool.
+
+## Core Technologies
+
+**Stack**:
+
+- **Backend**: `Phoenix LiveView` for real-time server with `Phoenix PubSub`
+- **Frontend**: reactive UI with LiveView hooks running `SolidJS` components
+- **Build**: `Vite` with PWA plugin and `Workbox`
+- **State**:
+  - `Y.js` (CRDT) for Stock Manager
+  - `Valtio` for Flight Map
+- **Maps**: `Leaflet.js` with `MapTiler` to use vector tiles
+- **Database**: `SQLite`
+- **Storage**: `IndexedDB` for offline persistence
+- **WebAssembly**: `Zig`-compiled great circle route calculation
+
+**Dependencies**:
+
+- Elixir/Phoenix
+- Node.js and pnpm
+- Browser with Service Worker
+- Docker (optional)
 
 ## Demo Pages
 
@@ -289,28 +321,6 @@ A marker is drawn by `Leaflet` to display the choosen coordinates on a vector-ti
 #### Client state management
 
 We used `Valtio`, a browser-only state manager, perfect for ephemeral UI state.
-
-### Core Technologies
-
-**Stack**:
-
-- **Backend**: `Phoenix LiveView` for real-time server with `Phoenix PubSub`
-- **Frontend**: reactive UI with LiveView hooks running `SolidJS` components
-- **Build**: `Vite` with PWA plugin and `Workbox`
-- **State**:
-  - `Y.js` (CRDT) for Stock Manager
-  - `Valtio` for Flight Map
-- **Maps**: `Leaflet.js` with `MapTiler` to use vector tiles
-- **Database**: `Ecto` with `SQLite`
-- **Storage**: `IndexedDB` for offline persistence
-- **WebAssembly**: `Zig`-compiled great circle route calculation
-
-**Dependencies**:
-
-- Elixir/Phoenix
-- Node.js and pnpm
-- Browser with Service Worker
-- Docker (optional)
 
 ## Page-Specific State
 
