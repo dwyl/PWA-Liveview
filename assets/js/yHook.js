@@ -30,6 +30,10 @@ export const yHook = (ydoc) => ({
     this.ydoc.off("update", this.handleYUpdate);
     // const ymap = this.ydoc?.getMap("stock");
     // if (ymap) ymap.unobserveDeep();
+    if (this.cleanupSolid) {
+      this.cleanupSolid();
+      this.cleanupSolid = null;
+    }
     console.log("yHook destroyed");
   },
 

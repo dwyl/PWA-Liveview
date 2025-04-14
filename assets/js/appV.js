@@ -20,7 +20,6 @@ const CONFIG = {
 export async function checkServer() {
   try {
     const response = await fetch("/connectivity", { method: "HEAD" });
-    console.log("Server check result:", response.ok);
     return response.ok;
   } catch (_err) {
     return false;
@@ -55,7 +54,6 @@ async function startPolling(interval = CONFIG.POLL_INTERVAL) {
       );
       updateConnectionStatusUI(newStatus);
     }
-    console.log("Polling...", AppState.isOnline, AppState.interval);
   }, interval);
 }
 

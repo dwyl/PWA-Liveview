@@ -8,6 +8,7 @@ export const MapVHook = {
       this.map.eachLayer((layer) => {
         this.map.removeLayer(layer);
       });
+      this.map = null;
       console.log("Map destroyed-----");
     }
   },
