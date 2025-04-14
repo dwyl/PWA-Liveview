@@ -10,6 +10,12 @@ export const PwaHook = {
     this.updateAvailable = false;
     let updateSWFunction;
 
+    if (navigator.serviceWorker) {
+      navigator.serviceWorker.addEventListener("message", (event) => {
+        console.log("Message from Service Worker:", event.data);
+      });
+    }
+
     // Register service worker
     const updateSW = registerSW({
       onNeedRefresh: () => {
@@ -42,13 +48,14 @@ export const PwaHook = {
     });
 
     // Handle the confirm-update event triggered by the user
-    _this.handleEvent("confirm-update", () => {
-      if (updateSWFunction) {
-        // Trigger the update
-        updateSWFunction(true);
-      } else {
-        console.warn("Service worker update function not available");
-      }
-    });
+    // _this.handleEvent("confirm-update", () => {
+    //   console.log("Received confirm-update event");
+    //   if (updateSWFunction) {
+    //     // Trigger the update
+    //     updateSWFunction(true);
+    //   } else {
+    //     console.warn("Service worker update function not available");
+    //   }
+    // });
   },
 };

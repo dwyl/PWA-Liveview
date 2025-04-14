@@ -97,7 +97,9 @@ const LiveReload = {
 const VersionedAssets = {
   urlPattern: ({ url }) => {
     // Match versioned assets (with hash in filename)
-    return url.pathname.match(/\/assets\/.*-[a-f0-9]+\.(js|css)/);
+    return url.pathname.match(
+      /\/assets\/(.*-[a-f0-9]+\.(js|css)|appV-[a-f0-9]+\.(js|css))/
+    );
   },
   handler: "CacheFirst",
   options: {
@@ -123,23 +125,34 @@ const VersionedAssets = {
           url.search = "";
           return url.toString();
         },
+        // fetchDidFail: async ({ request }) => {
+        //   console.warn("Versioned asset fetch failed:", request.url);
+        // },
       },
     ],
   },
 };
 
 const StaticAssets = {
+  // urlPattern: ({ url }) => {
+  //   const staticPaths = ["/assets/", "/images/"];
+  //   return staticPaths.some(
+  //     (path) =>
+  //       url.pathname.startsWith(path) ||
+  //       url.pathname.match(/\/assets\/.*\.[a-z]+(\?vsn=\w+)?$/)
+  //   );
+  // },
   urlPattern: ({ url }) => {
-    const staticPaths = ["/assets/", "/images/"];
-    return staticPaths.some(
-      (path) =>
-        url.pathname.startsWith(path) ||
-        url.pathname.match(/\/assets\/.*\.[a-z]+(\?vsn=\w+)?$/)
+    // Match static assets and script destinations
+    return (
+      url.pathname.startsWith("/assets/") ||
+      url.pathname.startsWith("/images/") ||
+      url.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|wasm)$/)
     );
   },
   handler: "CacheFirst",
   options: {
-    cacheName: "static",
+    cacheName: "static-assets",
     expiration: {
       maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
       maxEntries: 200,
@@ -151,57 +164,48 @@ const StaticAssets = {
     fetchOptions: {
       credentials: "same-origin",
     },
+    cacheableResponse: {
+      statuses: [0, 200],
+    },
+    // plugins: [
+    //   {
+    //     cacheKeyWillBeUsed: async ({ request }) => {
+    //       // Strip out vsn query parameter
+    //       const url = new URL(request.url);
+    //       url.search = ""; // Remove query string
+    //       return url.toString();
+    //     },
+    //   },
+    // ],
+  },
+};
+
+const AppAssets = {
+  urlPattern: ({ url }) => {
+    // Target primary app bundles (both JS and CSS)
+    return url.pathname.match(/\/assets\/appV-[a-f0-9]+\.(js|css)/);
+  },
+  handler: "StaleWhileRevalidate", // Better strategy for critical app files
+  options: {
+    cacheName: "app-core-assets",
+    fetchOptions: {
+      credentials: "same-origin",
+    },
+    matchOptions: {
+      ignoreSearch: true, // Ignore vsn parameters
+    },
     plugins: [
       {
         cacheKeyWillBeUsed: async ({ request }) => {
-          // Strip out vsn query parameter
           const url = new URL(request.url);
-          url.search = ""; // Remove query string
+          url.search = ""; // Strip query parameters
           return url.toString();
+        },
+        fetchDidFail: async ({ request }) => {
+          console.error("App asset fetch failed:", request.url);
         },
       },
     ],
-  },
-};
-
-const Fonts = {
-  urlPattern: ({ url }) => {
-    const externalPatterns = ["https://fonts.googleapis.com"];
-    return externalPatterns.some((pattern) => url.href.startsWith(pattern));
-  },
-  handler: "CacheFirst",
-  options: {
-    cacheName: "external",
-    expiration: {
-      maxAgeSeconds: 60 * 60 * 24 * 365, // 1 hours
-      maxEntries: 500,
-    },
-    matchOptions: {
-      // ignoreVary: true, // Important for some external resources
-      ignoreSearch: true, // Ignore query parameters
-    },
-    fetchOptions: {
-      mode: "cors",
-      credentials: "same-origin",
-    },
-  },
-};
-
-const Scripts = {
-  urlPattern: ({ request }) => request.destination === "script",
-  handler: "CacheFirst",
-  options: {
-    cacheName: "scripts",
-    expiration: {
-      maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
-      maxEntries: 50,
-    },
-    matchOptions: {
-      ignoreSearch: true, // Ignore query parameters
-    },
-    fetchOptions: {
-      credentials: "same-origin",
-    },
   },
 };
 
@@ -212,7 +216,6 @@ const MapTilerSDK = {
     );
   },
   handler: "StaleWhileRevalidate",
-  // handler: "CacheFirst",
   options: {
     cacheName: "maptiler-sdk",
     expiration: {
@@ -265,6 +268,32 @@ const Tiles = {
   },
 };
 
+const Fonts = {
+  urlPattern: ({ url }) => {
+    return (
+      url.hostname === "fonts.googleapis.com" ||
+      url.hostname === "fonts.gstatic.com" ||
+      url.pathname.match(/\.(woff|woff2|ttf|otf)$/)
+    );
+  },
+  handler: "CacheFirst",
+  options: {
+    cacheName: "fonts",
+    expiration: {
+      maxAgeSeconds: 60 * 60 * 24 * 365, // 1 hours
+      maxEntries: 20,
+    },
+    // matchOptions: {
+    //   ignoreVary: true, // Important for some external resources
+    //   ignoreSearch: true, // Ignore query parameters
+    // },
+    fetchOptions: {
+      mode: "cors",
+      // credentials: "same-origin",
+    },
+  },
+};
+
 const Pages = {
   urlPattern: ({ url }) => url.pathname === "/" || url.pathname === "/map",
   // || url.pathname.startsWith("/"),
@@ -284,57 +313,32 @@ const Pages = {
   },
 };
 
+const HtmlNavigation = {
+  urlPattern: ({ request }) => request.mode === "navigate",
+  handler: "NetworkFirst",
+  options: {
+    networkTimeoutSeconds: 3,
+    plugins: [
+      {
+        handlerDidError: async () => {
+          return caches.match("/", { ignoreSearch: true });
+        },
+      },
+    ],
+  },
+};
+
 const runtimeCaching = [
-  // {
-  //   // urlPattern: ({ url }) => url.pathname.startsWith("/assets/"),
-  //   urlPattern: /.*\.(js|css|woff2?|png|jpg|jpeg|svg|ico)/,
-  //   handler: "CacheFirst",
-  //   options: {
-  //     cacheName: "static-assets",
-  //     expiration: {
-  //       maxEntries: 60,
-  //       maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
-  //     },
-  //     matchOptions: {
-  //       ignoreSearch: true, // Crucial for handling ?vsn= parameters
-  //     },
-  //     fetchOptions: {
-  //       credentials: "same-origin",
-  //     },
-  //     plugins: [
-  //       {
-  //         cacheKeyWillBeUsed: async ({ request }) => {
-  //           // Preserve base URL without VSN parameter
-  //           const url = new URL(request.url);
-  //           const baseUrl = `${url.origin}${url.pathname}`;
-  //           return baseUrl;
-  //         },
-  //       },
-  //     ],
-  //   },
-  // },
-  // Phoenix,
   LongPoll,
   LiveReload,
-  Scripts,
+  AppAssets,
   VersionedAssets,
-  MapTilerSDK, // Add the SDK route before Tiles
   StaticAssets,
+  MapTilerSDK, // Add the SDK route before Tiles
   Tiles,
   Fonts,
   Pages,
-  // {
-  //   urlPattern: ({ request }) => request.mode === "navigate",
-  //   handler: "NetworkFirst",
-  //   options: {
-  //     cacheName: "html-cache",
-  //     networkTimeoutSeconds: 3,
-  //     expiration: {
-  //       maxEntries: 20,
-  //       maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
-  //     },
-  //   },
-  // },
+  HtmlNavigation,
 ];
 
 const createPWAConfig = (mode) => ({
@@ -352,7 +356,7 @@ const createPWAConfig = (mode) => ({
   manifest: manifestOpts,
   outDir: path.resolve(__dirname, "../priv/static/"),
   manifestFilename: "manifest.webmanifest",
-  injectRegister: "auto", // Automatically inject the SW registration script
+  // injectRegister: "auto", // Automatically inject the SW registration script
   injectManifest: {
     injectionPoint: undefined,
   },
@@ -379,9 +383,9 @@ const createPWAConfig = (mode) => ({
       { url: "/", revision: null },
       { url: "/map", revision: null },
     ],
-    runtimeCaching: runtimeCaching,
-    clientsClaim: false, // take control of all open pages as soon as the service worker activates
-    skipWaiting: false, // New service worker versions activate immediately
+    runtimeCaching,
+    clientsClaim: true, // take control of all open pages as soon as the service worker activates
+    skipWaiting: true, // New service worker versions activate immediately
     // Without these settings, you might have some pages using old service worker versions
     // while others use new ones, which could lead to inconsistent behavior in your offline capabilities.
     mode: mode === "development" ? "development" : "production", // workbox own mode

@@ -5,30 +5,59 @@ import "phoenix_html";
 const CONFIG = {
     ROUTES: Object.freeze(["/", "/map"]),
     POLL_INTERVAL: 2_000,
-    CACHE_NAME: "lv-pages",
+    MAX_RETRY_ATTEMPTS: 3,
+    // CACHE_NAME: "lv-pages",
   },
   AppState = {
-    paths: new Set(),
     status: "checking",
     isOnline: true,
     interval: null,
     globalYdoc: null,
+    reconnectAttempts: 0,
+    swRegistration: null,
+    // paths: new Set(),
   };
 
 //---------------
 // Check server reachability
-export async function checkServer() {
+export async function checkServer(retryCount = 0) {
   try {
-    const response = await fetch("/connectivity", { method: "HEAD" });
+    // const controller = new AbortController();
+    // const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s timeout
+    const response = await fetch("/connectivity", {
+      method: "HEAD",
+      // signal: controller.signal,
+      cache: "no-store",
+    });
+    // clearTimeout(timeoutId);
     return response.ok;
-  } catch (_err) {
+  } catch (err) {
+    console.log(
+      `Connectivity check failed: ${
+        err.name === "AbortError" ? "timeout" : err.message
+      }`
+    );
+
+    // if (retryCount < CONFIG.MAX_RETRY_ATTEMPTS) {
+    //   await new Promise((r) => setTimeout(r, 1000 * (retryCount + 1)));
+    //   return checkServer(retryCount + 1);
+    // }
     return false;
   }
 }
 
 function updateConnectionStatusUI(status) {
-  document.getElementById("online-status").src =
+  const statusIcon = document.getElementById("online-status");
+  if (!statusIcon) return;
+  statusIcon.src =
     status === "online" ? "/images/online.svg" : "/images/offline.svg";
+
+  // Dispatch event that other components can listen for
+  window.dispatchEvent(
+    new CustomEvent("connection-status-change", {
+      detail: { status },
+    })
+  );
 }
 
 async function startPolling(interval = CONFIG.POLL_INTERVAL) {
@@ -38,9 +67,9 @@ async function startPolling(interval = CONFIG.POLL_INTERVAL) {
     const wasOnline = AppState.isOnline;
     AppState.isOnline = await checkServer();
     const newStatus = AppState.isOnline ? "online" : "offline";
-    if (!AppState.isOnline) {
-      AppState.status = "offline";
-      console.log("Server unreachable");
+
+    if (!AppState.isOnline && !wasOnline) {
+      handleReconnection();
     }
 
     if (AppState.isOnline !== wasOnline) {
@@ -55,6 +84,18 @@ async function startPolling(interval = CONFIG.POLL_INTERVAL) {
       updateConnectionStatusUI(newStatus);
     }
   }, interval);
+}
+
+async function handleReconnection() {
+  // Check if we need to reload for LiveView reconnection
+  const path = window.location.pathname;
+  if (CONFIG.ROUTES.includes(path)) {
+    // If we're on a LiveView route, try to reconnect
+    if (window.liveSocket && !window.liveSocket.isConnected()) {
+      console.log("Attempting LiveSocket reconnection...");
+      window.liveSocket.connect();
+    }
+  }
 }
 
 window.addEventListener("beforeunload", () => {
@@ -75,25 +116,37 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 async function displayVMap() {
   console.log("Render Map-----");
-  const { RenderVMap } = await import("./renderVMap.js");
-  return RenderVMap();
+  try {
+    const { RenderVMap } = await import("./renderVMap.js");
+    return RenderVMap();
+  } catch (error) {
+    console.error("Error rendering map:", error);
+  }
 }
 
 async function displayVForm() {
   console.log("Render Form-----");
-  const { RenderVForm } = await import("./renderVForm.js");
-  return RenderVForm();
+  try {
+    const { RenderVForm } = await import("./renderVForm.js");
+    return RenderVForm();
+  } catch (err) {
+    console.error("Error rendering form:", err);
+  }
 }
 
 async function displayStock(ydoc) {
   console.log("Render Stock-----");
-  const { SolidYComp } = await import("./SolidYComp.jsx");
-  return SolidYComp({
-    ydoc,
-    userID: sessionStorage.getItem("userID"),
-    max: sessionStorage.getItem("max"),
-    el: document.getElementById("stock"),
-  });
+  try {
+    const { SolidYComp } = await import("./SolidYComp.jsx");
+    return SolidYComp({
+      ydoc,
+      userID: sessionStorage.getItem("userID"),
+      max: sessionStorage.getItem("max"),
+      el: document.getElementById("stock"),
+    });
+  } catch (error) {
+    console.error("Error rendering stock:", error);
+  }
 }
 
 //---------------
@@ -102,16 +155,19 @@ async function initApp(lineStatus) {
   try {
     const { default: initYdoc } = await import("./initYJS.js");
     AppState.globalYdoc = await initYdoc();
-    const { yHook } = await import("./yHook.js"),
-      { MapVHook } = await import("./mapVHook.js"),
-      { FormVHook } = await import("./formVHook.js"),
-      { configureTopbar } = await import("./configureTopbar.js"),
-      { PwaHook } = await import("./pwaHook.js");
 
+    const { configureTopbar } = await import("./configureTopbar.js");
     configureTopbar();
+
+    console.log("initApp ", lineStatus);
 
     // Online mode
     if (lineStatus) {
+      const { yHook } = await import("./yHook.js"),
+        { MapVHook } = await import("./mapVHook.js"),
+        { FormVHook } = await import("./formVHook.js"),
+        { PwaHook } = await import("./pwaHook.js");
+
       return initLiveSocket({
         MapVHook,
         FormVHook,
@@ -121,6 +177,7 @@ async function initApp(lineStatus) {
     }
 
     // Offline mode
+    console.log("initApp offline mode, loading components directly");
     return initOfflineComponents();
   } catch (error) {
     console.error("Init failed:", error);
@@ -138,24 +195,30 @@ async function initOfflineComponents() {
 }
 
 async function initLiveSocket(hooks) {
-  const { LiveSocket } = await import("phoenix_live_view");
-  const { Socket } = await import("phoenix");
-  const csrfToken = document
-    .querySelector("meta[name='csrf-token']")
-    .getAttribute("content");
+  try {
+    const { LiveSocket } = await import("phoenix_live_view");
+    const { Socket } = await import("phoenix");
+    const csrfToken = document
+      .querySelector("meta[name='csrf-token']")
+      .getAttribute("content");
 
-  const liveSocket = new LiveSocket("/live", Socket, {
-    longPollFallbackMs: 2000,
-    params: { _csrf_token: csrfToken },
-    hooks,
-  });
+    const liveSocket = new LiveSocket("/live", Socket, {
+      longPollFallbackMs: 2000,
+      params: { _csrf_token: csrfToken },
+      hooks,
+    });
 
-  liveSocket.connect();
-  window.liveSocket = liveSocket;
+    liveSocket.connect();
+    window.liveSocket = liveSocket;
 
-  liveSocket.getSocket()?.onOpen(() => {
-    console.log("liveSocket connected", liveSocket?.socket.isConnected());
-  });
+    liveSocket.getSocket()?.onOpen(() => {
+      console.log("liveSocket connected", liveSocket?.socket.isConnected());
+    });
+    return liveSocket;
+  } catch (error) {
+    console.error("Error initializing LiveSocket:", error);
+    return initOfflineComponents();
+  }
 }
 
 // **************************************
@@ -169,27 +232,16 @@ async function initLiveSocket(hooks) {
       : (AppState.status = "offline");
 
     updateConnectionStatusUI(AppState.status);
-
-    window.addEventListener("phx:page-loading-stop", () => {
-      console.log("phx:page-loading-stop ~~~~~~~~~~~~~~~~~~~~");
-      if (!window.liveSocket?.isConnected()) {
-        console.log("liveSocket not connected");
-        window.liveSocket.connect();
-      } else {
-        console.log("liveSocket connected");
-      }
-    });
-
-    // if ("serviceWorker" in navigator && AppState.isOnline) {
-    //   await addCurrentPageToCache({
-    //     current: window.location.href,
-    //     routes: CONFIG.ROUTES,
-    //   });
-    // }
   } catch (error) {
     console.error("Initialization error:", error);
   }
 })();
+// if ("serviceWorker" in navigator && AppState.isOnline) {
+//   await addCurrentPageToCache({
+//     current: window.location.href,
+//     routes: CONFIG.ROUTES,
+//   });
+// }
 
 //--------------
 // Enable server log streaming to client. Disable with reloader.disableServerLogs()
@@ -198,6 +250,7 @@ window.addEventListener("phx:live_reload:attached", ({ detail: reloader }) => {
   window.liveReloader = reloader;
 });
 
+/*
 // Rules for manual caching, replaced by Workbox
 async function addCurrentPageToCache({ current, routes }) {
   await navigator.serviceWorker.ready;
@@ -248,7 +301,8 @@ async function addCurrentPageToCache({ current, routes }) {
 }
 
 // Monitor navigation events and cache the current page if in declared routes
-// navigation.addEventListener("navigate", async ({ destination: { url } }) => {
-//   console.log("navigate event:", url);
-//   return addCurrentPageToCache({ current: url, routes: CONFIG.ROUTES });
-// });
+navigation.addEventListener("navigate", async ({ destination: { url } }) => {
+  console.log("navigate event:", url);
+  return addCurrentPageToCache({ current: url, routes: CONFIG.ROUTES });
+});
+*/
