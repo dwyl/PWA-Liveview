@@ -69,22 +69,6 @@ function mergeWithLowestWins(ydoc, serverValue, serverState, origin) {
     // Values are equal, no update needed
     return false;
   }
-
-  /*
-  if (serverValue < localValue && serverState) {
-    const decoded = decodeBase64(serverState);
-    Y.applyUpdate(ydoc, decoded, "server");
-  }
-  // If local has a lower value, just ensure it's set
-  else if (serverValue > localValue) {
-    ydoc.transact(() => {
-      localMap.set("stock-value", localValue);
-    }, "lowest-wins");
-    return true; // Indicates server needs updating
-  }
-
-  return false; // No server update needed
-  */
 }
 
 export const yHook = (ydoc) => ({
@@ -95,6 +79,7 @@ export const yHook = (ydoc) => ({
       this.cleanupSolid();
       this.cleanupSolid = null;
     }
+    clearInterval(this.connectionCheckInterval);
     console.log("yHook destroyed");
   },
 
