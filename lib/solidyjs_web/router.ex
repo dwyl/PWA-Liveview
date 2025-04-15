@@ -3,7 +3,7 @@ defmodule SolidyjsWeb.Router do
 
   @csp (case MIX_ENV do
           :prod ->
-            "require-trusted-types-for 'script'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline' https://cdn.maptiler.com/; object-src 'none'; connect-src 'self' http://localhost:4000 https://solidyjs-lively-pine-4375.fly.dev wss://solidyjs-lively-pine-4375.fly.dev ws://solidyjs-lively-pine-4375.fly.dev ws://localhost:4000 https://api.maptiler.com/ https://*.maptiler.com/; img-src 'self' data: https://*.maptiler.com/ https://api.maptiler.com/ http://localhost:4000; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; default-src 'self' https://solidyjs-lively-pine-4375.fly.dev; frame-ancestors 'none'; base-uri 'self'"
+            "require-trusted-types-for 'script'; script-src 'self' 'nonce-mainappv1' 'strict-dynamic' 'wasm-unsafe-eval' 'unsafe-inline' https://cdn.maptiler.com/; object-src 'none'; connect-src 'self' http://localhost:4000 https://solidyjs-lively-pine-4375.fly.dev wss://solidyjs-lively-pine-4375.fly.dev ws://solidyjs-lively-pine-4375.fly.dev ws://localhost:4000 https://api.maptiler.com/ https://*.maptiler.com/; img-src 'self' data: https://*.maptiler.com/ https://api.maptiler.com/ http://localhost:4000; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; default-src 'self' https://solidyjs-lively-pine-4375.fly.dev; frame-ancestors 'none'; base-uri 'self'"
 
           _ ->
             "script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline' https://cdn.maptiler.com/; object-src 'none'; connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:* https://api.maptiler.com/ https://*.maptiler.com/; img-src 'self' data: https://*.maptiler.com/ https://api.maptiler.com/; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; default-src 'self'; frame-ancestors 'none'; base-uri 'self'"
@@ -18,7 +18,7 @@ defmodule SolidyjsWeb.Router do
     "strict-transport-security" => "max-age=#{@hsts_max_age}; includeSubDomains; preload"
   }
 
-  # Note: After adding 'preload', submit your domain to https://hstspreload.org/
+  # Note: After adding 'preload', submit your domain to
   # Ensure you can maintain HTTPS for the entire domain and all subdomains
   # indefinitely before submitting
 
@@ -33,18 +33,18 @@ defmodule SolidyjsWeb.Router do
     plug :set_current_user
   end
 
-  pipeline :api do
-    plug :accepts, ["json"]
-  end
+  # pipeline :api do
+  #   plug :accepts, ["json"]
+  # end
 
   scope "/", SolidyjsWeb do
     pipe_through :browser
 
     live_session :pretend_authenticated,
       on_mount: {SolidyjsWeb.MountUserId, :ensure_authenticated} do
-      get "/connectivity", ConnectivityController, :check
       live "/", StockLive, :index
       live "/map", MapLive, :index
+      get "/connectivity", ConnectivityController, :check
     end
   end
 
@@ -59,14 +59,6 @@ defmodule SolidyjsWeb.Router do
         conn
     end
   end
-
-  def csp do
-  end
-
-  # Other scopes may use custom stacks.
-  # scope "/api", SolidyjsWeb do
-  #   pipe_through :api
-  # end
 
   # Enable LiveDashboard in development
   if Application.compile_env(:solidyjs, :dev_routes) do

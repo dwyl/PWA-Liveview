@@ -5024,6 +5024,9 @@ precacheAndRoute([{
   "url": "assets/leaflet-src.js",
   "revision": null
 }, {
+  "url": "assets/leaflet.css",
+  "revision": null
+}, {
   "url": "assets/mapVHook.js",
   "revision": null
 }, {

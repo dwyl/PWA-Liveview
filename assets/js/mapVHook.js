@@ -2,18 +2,36 @@ import state from "./vStore.js";
 
 export const MapVHook = {
   map: null,
+  flightObserver: null,
+  selectionObserver: null,
   destroyed() {
     state.selection.clear();
+
+    if (this.selectionObserver) {
+      this.selectionObserver.cleanup(); // 👈 clean up selection observer
+      this.selectionObserver = null;
+    }
+
+    if (this.flightObserver) {
+      this.flightObserver.cleanup(); // 👈 clean up flight observer
+      this.flightObserver = null;
+    }
+
     if (this.map) {
       this.map.eachLayer((layer) => {
         this.map.removeLayer(layer);
       });
+      this.map.remove();
       this.map = null;
-      console.log("Map destroyed-----");
     }
+
+    console.log("Map destroyed-----");
   },
   async mounted() {
-    console.log("Map mounted---");
+    console.log(
+      "~~~~~~~~~~~>  Map mounted",
+      window.liveSocket?.socket?.isConnected()
+    );
     try {
       const { initMap } = await import("./initMap.js");
       const { L, map, group } = await initMap();
@@ -31,10 +49,14 @@ export const MapVHook = {
         "./valtioObservers.js"
       );
       const selectionObserver = createSelectionObserver(params);
+      this.selectionObserver = selectionObserver;
       const flightObserver = await createFlightObserver(params);
+      this.flightObserver = flightObserver;
 
       // Valtio observers
       selectionObserver.observeVSelections();
+      // selectionObserver.observeDeletionState();
+      // selectionObserver.observeVSelections();
       flightObserver.observeVFlight();
 
       this.handleEvent("do_fly", ({ from, departure, arrival }) => {

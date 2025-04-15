@@ -12,4 +12,7 @@ export async function RenderVMap() {
   // Valtio observers
   selectionObserver.observeVSelections();
   flightObserver.observeVFlight();
+
+  flightObserver.cleanup();
+  selectionObserver.cleanup();
 }

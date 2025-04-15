@@ -1,5 +1,5 @@
 import { render } from "solid-js/web";
-import { createSignal, createEffect, lazy, onCleanup } from "solid-js";
+import { createSignal, createEffect, lazy } from "solid-js";
 
 export const SolidYComp = ({ ydoc, userID, max, el }) => {
   const ymap = ydoc.getMap("stock");
@@ -22,7 +22,7 @@ export const SolidYComp = ({ ydoc, userID, max, el }) => {
     for (const event of events) {
       if (event.keysChanged.has("stock-value")) {
         setLocalStock(ymap.get("stock-value"));
-        console.log(userID, "observes change from:  ", origin);
+        console.log(userID, "observes change from: ", origin);
       }
     }
   }

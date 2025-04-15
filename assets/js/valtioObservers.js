@@ -3,6 +3,7 @@ import { subscribe } from "valtio/vanilla";
 
 export async function createFlightObserver({ L, map, group }) {
   let currentAnimationInterval = null;
+  let unFlight = null;
   async function loadWasm() {
     try {
       const importObject = {
@@ -70,16 +71,33 @@ export async function createFlightObserver({ L, map, group }) {
     marker.addTo(group);
 
     let idx = 0;
-    return new Promise((resolve) => {
-      const currentAnimationInterval = setInterval(() => {
-        if (idx >= latLngs.length - 1) {
-          clearInterval(currentAnimationInterval);
-          resolve();
-        }
+    currentAnimationInterval = setInterval(() => {
+      if (idx >= latLngs.length - 1) {
+        clearInterval(currentAnimationInterval);
+        // currentAnimationInterval = null;
+      } else {
         marker.setLatLng(latLngs[idx]);
         idx++;
-      }, animationTime);
+      }
+    }, animationTime);
+
+    return new Promise((resolve) => {
+      setTimeout(resolve, latLngs.length * animationTime);
     });
+    // return () => {
+    //   clearInterval(currentAnimationInterval);
+    //   group.removeLayer(marker);
+    // };
+    // return new Promise((resolve) => {
+    //   const currentAnimationInterval = setInterval(() => {
+    //     if (idx >= latLngs.length - 1) {
+    //       clearInterval(currentAnimationInterval);
+    //       resolve();
+    //     }
+    //     marker.setLatLng(latLngs[idx]);
+    //     idx++;
+    //   }, animationTime);
+    // });
   }
   async function animateRoute({ L, map, group, departure, arrival }) {
     try {
@@ -96,7 +114,6 @@ export async function createFlightObserver({ L, map, group }) {
       });
 
       animate({ L, group, latLngs }, 200);
-      clearInterval(currentAnimationInterval);
     } catch (error) {
       console.error(`Unable to instantiate module`, error);
       throw error;
@@ -105,7 +122,7 @@ export async function createFlightObserver({ L, map, group }) {
 
   return {
     observeVFlight: () => {
-      subscribe(state.flight, () => {
+      unFlight = subscribe(state.flight, () => {
         const { arrival, departure } = state.flight;
         if (departure && arrival) {
           animateRoute({ L, map, group, departure, arrival });
@@ -123,6 +140,17 @@ export async function createFlightObserver({ L, map, group }) {
         arrival: { lat: latA, lng: lngA },
       });
     },
+    cleanup: () => {
+      if (currentAnimationInterval) {
+        clearInterval(currentAnimationInterval);
+        currentAnimationInterval = null;
+      }
+      if (unFlight) {
+        unFlight();
+        unFlight = null;
+      }
+      group.clearLayers();
+    },
   };
 }
 
@@ -130,8 +158,10 @@ export function createSelectionObserver({ L, group, userID, _this }) {
   const markersMap = new Map();
   const processedInputs = new Set(); // Track processed inputs
   let isProcessingBroadcast = false;
+  let unsubscribeSelection = null;
+  let unsubscribeDeletion = null;
 
-  subscribe(state.deletionState, () => {
+  unsubscribeDeletion = subscribe(state.deletionState, () => {
     if (state.deletionState.isDeleted) {
       // Clear all map layers
       group.clearLayers();
@@ -148,7 +178,8 @@ export function createSelectionObserver({ L, group, userID, _this }) {
 
   return {
     observeVSelections: () => {
-      subscribe(state.selection, () => {
+      if (unsubscribeSelection) unsubscribeSelection();
+      unsubscribeSelection = subscribe(state.selection, () => {
         if (isProcessingBroadcast) return; // prevent race condition & infinite loop
         state.selection.forEach((selection) => {
           const { lat, lng, inputType, userID: selectionUserID } = selection;
@@ -171,6 +202,12 @@ export function createSelectionObserver({ L, group, userID, _this }) {
           markersMap.set(inputType, marker);
         });
       });
+    },
+    cleanup: () => {
+      if (unsubscribeSelection) unsubscribeSelection();
+      if (unsubscribeDeletion) unsubscribeDeletion();
+      markersMap.clear();
+      group.clearLayers(); // remove from map
     },
   };
 }

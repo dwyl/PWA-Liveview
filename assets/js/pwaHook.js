@@ -5,7 +5,10 @@ const { registerSW } = await import("virtual:pwa-register");
 export const PwaHook = {
   mounted() {
     const _this = this;
-    console.log("PwaHook mounted");
+    console.log(
+      "~~~~~~~~~~~>  PwaHook mounted",
+      window.liveSocket?.socket?.isConnected()
+    );
 
     this.updateAvailable = false;
     let updateSWFunction;
@@ -46,16 +49,48 @@ export const PwaHook = {
         });
       },
     });
-
-    // Handle the confirm-update event triggered by the user
-    // _this.handleEvent("confirm-update", () => {
-    //   console.log("Received confirm-update event");
-    //   if (updateSWFunction) {
-    //     // Trigger the update
-    //     updateSWFunction(true);
-    //   } else {
-    //     console.warn("Service worker update function not available");
-    //   }
-    // });
   },
 };
+// // Track offline notification state at module level
+// let hasNotifiedOfflineReady = false;
+// const { registerSW } = await import("virtual:pwa-register");
+
+// export const PwaHook = {
+//   mounted() {
+//     console.log("PwaHook mounted");
+
+//     this.updateAvailable = false;
+//     let updateSWFunction = null;
+
+//     if (navigator.serviceWorker) {
+//       navigator.serviceWorker.addEventListener("message", (event) => {
+//         console.log("Message from Service Worker:", event.data);
+//       });
+//     }
+
+//     updateSWFunction = registerSW({
+//       immediate: false, // Defer registration until PWAHook is mounted
+//       onNeedRefresh: () => {
+//         console.log("New version available");
+//         this.pushEvent("pwa-update-available", {
+//           updateAvailable: true,
+//         });
+//       },
+//       onOfflineReady: () => {
+//         if (!hasNotifiedOfflineReady) {
+//           console.log("Service Worker installed - App ready for offline use");
+//           this.pushEvent("pwa-offline-ready", {
+//             msg: "App ready for offline use",
+//           });
+//           hasNotifiedOfflineReady = true;
+//         }
+//       },
+//       onRegisterError: (error) => {
+//         console.error("SW registration error", error);
+//         this.pushEvent("pwa-registration-error", {
+//           error: error.toString(),
+//         });
+//       },
+//     });
+//   },
+// };

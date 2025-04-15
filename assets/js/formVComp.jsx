@@ -18,7 +18,7 @@ export const FormVComponent = async (props) => {
   };
 
   // Subscribe to changes in the airports state on first hook mount
-  subscribe(state.airports, setCitiesFromState);
+  const unsubscribe = subscribe(state.airports, setCitiesFromState);
 
   // Initialize cities from state on each component mount
   setCitiesFromState();
@@ -50,7 +50,7 @@ export const FormVComponent = async (props) => {
     }
   }
 
-  render(
+  const dispose = render(
     () => (
       <>
         {isInitialized() ? (
@@ -126,4 +126,9 @@ export const FormVComponent = async (props) => {
     ),
     props.el
   );
+
+  return () => {
+    unsubscribe();
+    dispose();
+  };
 };

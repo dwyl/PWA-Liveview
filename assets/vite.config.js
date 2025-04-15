@@ -6,7 +6,7 @@ import autoprefixer from "autoprefixer";
 import viteCompression from "vite-plugin-compression";
 import wasm from "vite-plugin-wasm";
 import path from "path";
-import { url } from "inspector";
+// import { url } from "inspector";
 // import tailwindcss from "@tailwindcss/vite";
 
 // https://web.dev/articles/add-manifest?utm_source=devtools
@@ -347,6 +347,7 @@ const createPWAConfig = (mode) => ({
     type: "module",
     suppressWarnings: false,
   },
+  // injectRegister: null, // Do not nject the SW registration script as "index.html" does not exist
   registerType: "autoUpdate",
   filename: "sw.js",
   strategies: "generateSW",
@@ -356,7 +357,6 @@ const createPWAConfig = (mode) => ({
   manifest: manifestOpts,
   outDir: path.resolve(__dirname, "../priv/static/"),
   manifestFilename: "manifest.webmanifest",
-  // injectRegister: "auto", // Automatically inject the SW registration script
   injectManifest: {
     injectionPoint: undefined,
   },

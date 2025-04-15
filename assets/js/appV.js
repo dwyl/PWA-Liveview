@@ -6,7 +6,6 @@ const CONFIG = {
     ROUTES: Object.freeze(["/", "/map"]),
     POLL_INTERVAL: 2_000,
     MAX_RETRY_ATTEMPTS: 3,
-    // CACHE_NAME: "lv-pages",
   },
   AppState = {
     status: "checking",
@@ -15,21 +14,16 @@ const CONFIG = {
     globalYdoc: null,
     reconnectAttempts: 0,
     swRegistration: null,
-    // paths: new Set(),
   };
 
 //---------------
 // Check server reachability
 export async function checkServer(retryCount = 0) {
   try {
-    // const controller = new AbortController();
-    // const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s timeout
     const response = await fetch("/connectivity", {
       method: "HEAD",
-      // signal: controller.signal,
       cache: "no-store",
     });
-    // clearTimeout(timeoutId);
     return response.ok;
   } catch (err) {
     console.log(
@@ -37,11 +31,6 @@ export async function checkServer(retryCount = 0) {
         err.name === "AbortError" ? "timeout" : err.message
       }`
     );
-
-    // if (retryCount < CONFIG.MAX_RETRY_ATTEMPTS) {
-    //   await new Promise((r) => setTimeout(r, 1000 * (retryCount + 1)));
-    //   return checkServer(retryCount + 1);
-    // }
     return false;
   }
 }
@@ -68,9 +57,9 @@ async function startPolling(interval = CONFIG.POLL_INTERVAL) {
     AppState.isOnline = await checkServer();
     const newStatus = AppState.isOnline ? "online" : "offline";
 
-    if (!AppState.isOnline && !wasOnline) {
-      handleReconnection();
-    }
+    // if (!AppState.isOnline && !wasOnline) {
+    //   handleReconnection();
+    // }
 
     if (AppState.isOnline !== wasOnline) {
       AppState.status = newStatus;
@@ -86,17 +75,17 @@ async function startPolling(interval = CONFIG.POLL_INTERVAL) {
   }, interval);
 }
 
-async function handleReconnection() {
-  // Check if we need to reload for LiveView reconnection
-  const path = window.location.pathname;
-  if (CONFIG.ROUTES.includes(path)) {
-    // If we're on a LiveView route, try to reconnect
-    if (window.liveSocket && !window.liveSocket.isConnected()) {
-      console.log("Attempting LiveSocket reconnection...");
-      window.liveSocket.connect();
-    }
-  }
-}
+// async function handleReconnection() {
+//   // Check if we need to reload for LiveView reconnection
+//   const path = window.location.pathname;
+//   if (CONFIG.ROUTES.includes(path)) {
+//     // If we're on a LiveView route, try to reconnect
+//     if (window.liveSocket && !window.liveSocket.isConnected()) {
+//       console.log("Attempting LiveSocket reconnection...");
+//       window.liveSocket.connect();
+//     }
+//   }
+// }
 
 window.addEventListener("beforeunload", () => {
   clearInterval(AppState.interval);
