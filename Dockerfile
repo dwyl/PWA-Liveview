@@ -41,6 +41,7 @@ COPY lib lib
 WORKDIR /app/assets
 
 COPY assets/package.json assets/pnpm-lock.yaml ./
+# RUN pnpm config set store-dir /app/.pnpm-store
 RUN pnpm self-update && pnpm install
 
 COPY assets ./

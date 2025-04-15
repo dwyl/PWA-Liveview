@@ -53,18 +53,22 @@ export const SolidYComp = ({ ydoc, userID, max, el }) => {
     el
   );
 
-  // Memory leak!
-  // return a ref to the render so it will be properly cleaned up
-  // when the component is unmounted.
-  // this is a workaround for the SolidJS lifecycle
-  // and the fact that we need to clean up the observer
-  // when the component is unmounted.
-  // since the lifecycle is managed by Phoenix.js
-  //  so "onCleanup" won't work.
   return () => {
     dispose();
     ymap.unobserveDeep(updateStockSignal);
     console.log("Observer cleanup");
     console.log("SolidYComp cleanup completed for user:", userID);
   };
+
+  /**
+   * 
+  !!Memory leak!!
+  You return a ref to the render so it will be properly cleaned up
+  when the component is unmounted.
+  This is a workaround for the SolidJS lifecycle
+  and the fact that we need to clean up the observer
+  when the component is unmounted.
+  since the lifecycle is managed by Phoenix.js
+  so "onCleanup" won't work.
+  */
 };

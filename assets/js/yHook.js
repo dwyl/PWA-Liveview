@@ -10,12 +10,67 @@ function encodeBase64(buf) {
   return btoa(String.fromCharCode(...buf));
 }
 
-function mergeWithLowestWins(ydoc, serverValue, serverState) {
+function mergeWithLowestWins(ydoc, serverValue, serverState, origin) {
   const localMap = ydoc.getMap("stock");
   const localValue = localMap.get("stock-value") ?? Infinity;
 
   console.log(localValue, serverValue);
 
+  // Case 1: Update coming from another user via server
+  if (origin === "server") {
+    // If server has a lower value, accept it unconditionally
+    if (serverValue < localValue) {
+      console.log(
+        `Server value ${serverValue} is lower than local ${localValue}, accepting server value`
+      );
+      if (serverState) {
+        const decoded = decodeBase64(serverState);
+        Y.applyUpdate(ydoc, decoded, "server");
+      } else {
+        // Fallback if no state is provided
+        ydoc.transact(() => {
+          localMap.set("stock-value", serverValue);
+        }, "server");
+      }
+      return false; // No server update needed as we just accepted server's value
+    }
+    // If local is lower, we need to tell the server
+    else if (localValue < serverValue) {
+      console.log(
+        `Local value ${localValue} is lower than server ${serverValue}, keeping local value`
+      );
+      return true; // Notify server of our lower value
+    }
+    // Values are equal, no action needed
+    return false;
+  } // Case 2: Local value check during initialization/reconnection
+  else {
+    // Determine the winner
+    if (serverValue < localValue) {
+      console.log(
+        `Server value ${serverValue} is lower, applying server state`
+      );
+      if (serverState) {
+        const decoded = decodeBase64(serverState);
+        Y.applyUpdate(ydoc, decoded, "server");
+      } else {
+        ydoc.transact(() => {
+          localMap.set("stock-value", serverValue);
+        }, "server");
+      }
+      return false; // No need to update server
+    } else if (localValue < serverValue) {
+      console.log(
+        `Local value ${localValue} is lower, keeping it and notifying server`
+      );
+      return true; // We need to update the server with our lower value
+    }
+
+    // Values are equal, no update needed
+    return false;
+  }
+
+  /*
   if (serverValue < localValue && serverState) {
     const decoded = decodeBase64(serverState);
     Y.applyUpdate(ydoc, decoded, "server");
@@ -29,6 +84,7 @@ function mergeWithLowestWins(ydoc, serverValue, serverState) {
   }
 
   return false; // No server update needed
+  */
 }
 
 export const yHook = (ydoc) => ({
@@ -57,6 +113,31 @@ export const yHook = (ydoc) => ({
     this.ydoc = ydoc;
     this.cleanupSolid = null;
     this.reconnecting = false;
+    this.lastConnectionStatus = false;
+
+    checkServer().then((online) => {
+      this.isOnline = online;
+      this.lastConnectionStatus = online;
+    });
+
+    // Setup periodic connection check instead of relying on navigator.onLine
+    this.connectionCheckInterval = setInterval(async () => {
+      const online = await checkServer();
+
+      // If status changed from offline to online
+      if (online && !this.lastConnectionStatus && this.pendingSync) {
+        this.handleReconnection();
+      }
+
+      this.lastConnectionStatus = online;
+      this.isOnline = online;
+    }, 1_000); // Check every 5 seconds
+
+    // Initial connection check
+    checkServer().then((online) => {
+      this.isOnline = online;
+      this.lastConnectionStatus = online;
+    });
 
     // observe Y.js state changes
     this.handleYUpdate = this.handleYUpdate.bind(this);
@@ -68,6 +149,19 @@ export const yHook = (ydoc) => ({
     this.handleEvent("sync_from_server", this.handleSyncFromServer.bind(this));
 
     // ---- Yjs document updates ----
+  },
+  async handleReconnection() {
+    if (!this.pendingSync) return;
+
+    this.reconnecting = true;
+    console.log("Reconnected - syncing with server");
+
+    // Force a server sync to apply lowest-wins logic
+    const value = this.ymap.get("stock-value");
+    this.pushStateToServer(value, this.currentUser);
+    this.pendingSync = false;
+
+    this.reconnecting = false;
   },
 
   // Initializes state from the database or applies Y.js state
@@ -98,7 +192,8 @@ export const yHook = (ydoc) => ({
       const needsServerUpdate = mergeWithLowestWins(
         ydoc,
         db_value,
-        db_64_state
+        db_64_state,
+        "init"
       );
       console.log(needsServerUpdate);
       if (needsServerUpdate) {
@@ -111,7 +206,7 @@ export const yHook = (ydoc) => ({
       ydoc,
       max,
       el: this.el,
-      userID: sessionStorage.getItem("userID"),
+      userID: this.currentUser,
     });
   },
   // Handles Y.js document updates and syncs with the server
@@ -144,31 +239,16 @@ export const yHook = (ydoc) => ({
       return this.pushStateToServer(value, this.currentUser);
     } else {
       console.log(
-        `${this.currentUser} Received server-originated (${origin}) update of: `,
+        `${this.currentUser} does nothing as received server-originated (${origin}) update of: `,
         value
       );
     }
   },
-
-  async handleOnlineStatus() {
-    if (this.pendingSync) {
-      this.reconnecting = true;
-      console.log("Reconnecting to server...");
-      const isOnline = await checkServer();
-      if (isOnline) {
-        this.pendingSync = false;
-        this.pushStateToServer(this.ymap.get("stock-value"));
-        this.pendingSync = false;
-      }
-    }
-    this.reconnecting = false;
-  },
-
   // Applies server updates to the local Y.js document
   handleSyncFromServer({ value, state, sender }) {
     console.log(`handleSyncFromServer, ${this.currentUser}: `, sender);
     // merge state vector
-    const needsServerUpdate = mergeWithLowestWins(ydoc, value, state);
+    const needsServerUpdate = mergeWithLowestWins(ydoc, value, state, "server");
 
     // If our value was lower, push it back to server
     if (needsServerUpdate && !this.reconnecting) {

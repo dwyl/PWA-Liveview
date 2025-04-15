@@ -37,12 +37,7 @@ export const MapVHook = {
       const { L, map, group } = await initMap();
       this.map = map;
 
-      let uid = sessionStorage.getItem("userID");
-      if (!uid) {
-        this.userID = this.el.dataset.userid;
-      } else {
-        this.userID = uid;
-      }
+      this.uid = this.el.dataset.userid || sessionStorage.getItem("userID");
 
       const params = { L, map, group, userID: this.userID, _this: this };
       const { createFlightObserver, createSelectionObserver } = await import(

@@ -35,7 +35,7 @@ defmodule SolidyjsWeb.StockLive do
   def mount(_params, session, socket) do
     user_id = session["user_id"]
     # Get current DB state for initial sync
-    {db_value, db_state} = StockDb.get_stock() |> dbg()
+    {db_value, db_state} = StockDb.get_stock()
 
     if connected?(socket) do
       :ok = PubSub.subscribe(:pubsub, "stock")

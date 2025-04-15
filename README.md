@@ -126,13 +126,22 @@ Real-time collaborative inventory management with offline persistence (available
 
 `Yjs` is a state-based CRDT: each document has a "state vector" (SV) and an "update" history. It ensures eventual consistency by:
 
-- Merging changes via doc.applyUpdate(update) or doc.mergeUpdates([a, b]).
+- Merging changes via `doc.applyUpdate(update)` or `doc.mergeUpdates([a, b])`.
 
-- Using Y.encodeStateAsUpdate(doc, remoteStateVector) to generate a diff.
+- Using `Y.encodeStateAsUpdate(doc, remoteStateVector)` to generate a diff.
 
 - Encoding and decoding state as binary.
 
-Yjs doesn’t track a “last write wins” or “who’s right” — instead, all updates get merged, and it’s up to the app to decide what that means semantically.
+Y.js handles structural conflicts automatically:
+
+- When two clients modify the same Y.Map simultaneously
+- When clients add/remove items from Y.Arrays
+- When clients edit the same Y.Text document concurrently
+
+When you call `Y.applyUpdate(ydoc, update)`, `Yjs` merges those changes with your local document in a conflict-free way.
+
+`Yjs` doesn’t track a “last write wins” or “who’s right” — instead, all updates get merged, and it’s **up to the app** to decide what that means semantically.
+`Yjs` doesn't automatically implement specific application-level logic like "take the lowest value when conflicting changes occur." This is a **business rule specific** to your application.
 
 #### Using the LiveSocket for the CRDT state updates
 
@@ -183,6 +192,101 @@ this.pushEvent("reconnect_sync", {
 | SolidJS                    | Reactive framework to render standalone UI using signals, driven by Yjs observers                                  |
 | Hooks                      | Injects communication primitives and controls JavaScript code                                                      |
 | Service Worker / Cache API | Enable offline UI rendering and navigation by caching HTML pages and static assets                                 |
+
+```mermaid
+sequenceDiagram
+    participant Client1 as Client 1
+    participant SolidYComp1 as SolidYComp (Client 1)
+    participant YHook1 as yHook (Client 1)
+    participant Server as Phoenix LiveView Server
+    participant Client2 as Client 2
+    participant SolidYComp2 as SolidYComp (Client 2)
+    participant YHook2 as yHook (Client 2)
+
+    %% Initialization Flow
+    rect rgb(240, 248, 255)
+    Note over Client1, YHook1: Initialization Flow
+
+    Client1->>Server: Connect to LiveView
+    Server->>YHook1: mount() & push_event("init_stock")
+    YHook1->>YHook1: handleInitStock()
+    YHook1->>YHook1: Initialize Y.doc with DB state
+    YHook1->>SolidYComp1: Create SolidYComp with Y.doc
+    SolidYComp1->>Client1: Render UI with initial stock value
+
+    Client2->>Server: Connect to LiveView
+    Server->>YHook2: mount() & push_event("init_stock")
+    YHook2->>YHook2: handleInitStock()
+    YHook2->>YHook2: Initialize Y.doc with DB state
+    YHook2->>SolidYComp2: Create SolidYComp with Y.doc
+    SolidYComp2->>Client2: Render UI with initial stock value
+    end
+
+    %% Collaborative Flow
+    rect rgb(255, 240, 245)
+    Note over Client1, Client2: Collaborative Flow - User Action
+
+    Client1->>SolidYComp1: User clicks to change stock value
+    SolidYComp1->>SolidYComp1: handleUpdate() mutates Y.js document
+
+    %% Y.js update triggers internal events
+    SolidYComp1-->>SolidYComp1: updateStockSignal updates UI
+    SolidYComp1-->>YHook1: Y.doc emits "update" event
+
+    YHook1->>YHook1: handleYUpdate() processes update
+    YHook1->>YHook1: Check if online with checkServer()
+    YHook1->>Server: pushStateToServer() sends update
+
+    Server->>Server: handle_event("sync_state")
+    Server->>Server: Apply lowest-wins logic & update DB
+
+    Server->>YHook2: Broadcast update to other clients
+    Server->>YHook1: Broadcast confirmation back to sender
+
+    YHook2->>YHook2: handleSyncFromServer() with new value
+    YHook2->>YHook2: mergeWithLowestWins() logic
+    YHook2->>YHook2: Apply Y.js update if needed
+
+    YHook2-->>SolidYComp2: Y.doc update triggers change
+    SolidYComp2->>Client2: Update UI with new stock value
+    end
+
+    %% Offline to Online Reconnection
+    rect rgb(255, 248, 220)
+    Note over Client1, Server: Offline to Online Reconnection Flow
+
+    Client1->>Client1: Goes offline
+    Client1->>SolidYComp1: User makes changes while offline
+    SolidYComp1->>SolidYComp1: handleUpdate() mutates Y.js document
+    SolidYComp1-->>SolidYComp1: updateStockSignal updates UI
+    SolidYComp1-->>YHook1: Y.doc emits "update" event
+
+    YHook1->>YHook1: handleYUpdate() detects offline
+    YHook1->>YHook1: Sets pendingSync = true
+
+    Client1->>Client1: Connection restored
+    YHook1->>YHook1: Connection check interval detects online
+    YHook1->>YHook1: handleReconnection()
+    YHook1->>Server: pushStateToServer() with offline changes
+
+    Server->>Server: handle_event("sync_state")
+    Server->>Server: Apply lowest-wins logic comparing with current DB
+    Server->>Server: Update DB if client value is lower
+
+    Server->>YHook1: Send response with winning value
+    Server->>YHook2: Broadcast winning value to all clients
+
+    YHook1->>YHook1: handleSyncFromServer()
+    YHook1->>YHook1: mergeWithLowestWins() applies lowest value
+    YHook1-->>SolidYComp1: Y.doc update triggers change if needed
+    SolidYComp1->>Client1: Update UI with winning value
+
+    YHook2->>YHook2: handleSyncFromServer()
+    YHook2->>YHook2: mergeWithLowestWins() applies lowest value
+    YHook2-->>SolidYComp2: Y.doc update triggers change if needed
+    SolidYComp2->>Client2: Update UI with winning value
+    end
+```
 
 ```mermaid
 flowchart TD
