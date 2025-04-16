@@ -44,10 +44,10 @@
     "name": "yjs",
     "isDynamicEntry": true
   },
-  "js/SolidYComp.jsx": {
-    "file": "assets/SolidYComp.js",
-    "name": "SolidYComp",
-    "src": "js/SolidYComp.jsx",
+  "js/StockComponent.jsx": {
+    "file": "assets/StockComponent.js",
+    "name": "StockComponent",
+    "src": "js/StockComponent.jsx",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
@@ -58,10 +58,24 @@
       "js/counter.jsx"
     ]
   },
-  "js/appV.js": {
-    "file": "assets/appV.js",
-    "name": "appV",
-    "src": "js/appV.js",
+  "js/StockHook.js": {
+    "file": "assets/StockHook.js",
+    "name": "StockHook",
+    "src": "js/StockHook.js",
+    "isEntry": true,
+    "isDynamicEntry": true,
+    "imports": [
+      "js/StockComponent.jsx",
+      "_yjs.js",
+      "js/app.js",
+      "_preload-helper.js",
+      "_web.js"
+    ]
+  },
+  "js/app.js": {
+    "file": "assets/app.js",
+    "name": "app",
+    "src": "js/app.js",
     "isEntry": true,
     "imports": [
       "_preload-helper.js"
@@ -69,10 +83,10 @@
     "dynamicImports": [
       "js/renderVMap.js",
       "js/renderVForm.js",
-      "js/SolidYComp.jsx",
+      "js/StockComponent.jsx",
       "js/initYJS.js",
       "js/configureTopbar.js",
-      "js/yHook.js",
+      "js/StockHook.js",
       "js/mapVHook.js",
       "js/formVHook.js",
       "js/pwaHook.js",
@@ -80,7 +94,7 @@
       "node_modules/.pnpm/phoenix@file+..+deps+phoenix/node_modules/phoenix/priv/static/phoenix.mjs"
     ],
     "css": [
-      "assets/appV.css"
+      "assets/app.css"
     ]
   },
   "js/bins.jsx": {
@@ -260,20 +274,6 @@
     "isDynamicEntry": true,
     "imports": [
       "js/vStore.js"
-    ]
-  },
-  "js/yHook.js": {
-    "file": "assets/yHook.js",
-    "name": "yHook",
-    "src": "js/yHook.js",
-    "isEntry": true,
-    "isDynamicEntry": true,
-    "imports": [
-      "js/SolidYComp.jsx",
-      "_yjs.js",
-      "js/appV.js",
-      "_preload-helper.js",
-      "_web.js"
     ]
   },
   "node_modules/.pnpm/@maptiler+leaflet-maptilersdk@4.0.3/node_modules/@maptiler/leaflet-maptilersdk/dist/leaflet-maptilersdk.js": {

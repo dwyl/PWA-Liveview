@@ -40,7 +40,7 @@ const buildOps = {
   manifest: true,
   rollupOptions: {
     input: [
-      "js/appV.js",
+      "js/app.js",
       "js/bins.jsx",
       "js/configureTopbar.js",
       "js/counter.jsx",
@@ -53,10 +53,10 @@ const buildOps = {
       "js/pwaHook.js",
       "js/renderVForm.js",
       "js/renderVMap.js",
-      "js/SolidYComp.jsx",
+      "js/StockComponent.jsx",
+      "js/StockHook.js",
       "js/valtioObservers.js",
       "js/vStore.js",
-      "js/yHook.js",
       "wasm/great_circle.wasm",
     ],
     output: {

@@ -128,7 +128,7 @@ export const FormVComponent = async (props) => {
   );
 
   return () => {
-    unsubscribe();
-    dispose();
+    unsubscribe;
+    dispose;
   };
 };

@@ -1,7 +1,7 @@
 import { render } from "solid-js/web";
 import { createSignal, createEffect, lazy } from "solid-js";
 
-export const SolidYComp = ({ ydoc, userID, max, el }) => {
+export const StockComponent = ({ ydoc, userID, max, el }) => {
   const ymap = ydoc.getMap("stock");
   const [localStock, setLocalStock] = createSignal(ymap.get("stock-value"));
   const [range, setRange] = createSignal([]);
@@ -22,7 +22,12 @@ export const SolidYComp = ({ ydoc, userID, max, el }) => {
     for (const event of events) {
       if (event.keysChanged.has("stock-value")) {
         setLocalStock(ymap.get("stock-value"));
-        console.log(userID, "observes change from: ", origin);
+        console.log(
+          userID,
+          "observes change from: ",
+          origin,
+          ymap.get("stock-value")
+        );
       }
     }
   }

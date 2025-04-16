@@ -42,7 +42,6 @@ An example of a Progressive Web App (PWA) combining Phoenix LiveView's real-time
     - [Manifest](#manifest)
   - [Performance](#performance)
   - [Resources](#resources)
-  - [Known bug](#known-bug)
   - [License](#license)
 
 ## Key points
@@ -932,19 +931,6 @@ Besides PHoenix LiveView and SolidJS documentation, we have:
 - [Favicon Generator](https://favicon.inbrowser.app/tools/favicon-generator) and <https://vite-pwa-org.netlify.app/assets-generator/#pwa-minimal-icons-requirements>
 - [CSP Evaluator](https://csp-evaluator.withgoogle.com/)
 - [Haversine formula](https://en.wikipedia.org/wiki/Haversine_formula)
-
-## Known bug
-
-There is one persisting bug that appears once you navigate away from a page and return to it.
-
-The `pushEvent` is said to fail because `LiveView` is not connected. However, the code runs succesfully.
-
-```txt
-phoenix_live_view.esm.js:1 Uncaught (in promise) Error: unable to push hook event. LiveView not connected
-    at phoenix_live_view.esm.js:1:52720
-    at new Promise (<anonymous>)
-    at tt.pushEvent (phoenix_live_view.esm.js:1:52627)
-```
 
 ## License
 

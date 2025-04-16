@@ -70,7 +70,6 @@ async function startPolling(interval = CONFIG.POLL_INTERVAL) {
         }`,
         "=============="
       );
-      updateConnectionStatusUI(newStatus);
     }
   }, interval);
 }
@@ -91,15 +90,15 @@ window.addEventListener("beforeunload", () => {
   clearInterval(AppState.interval);
 });
 
-document.addEventListener("DOMContentLoaded", async () => {
-  // clearInterval(AppState.interval);
-  AppState.status = (await checkServer()) ? "online" : "offline";
-  console.log("==========> DOMContentLoaded", AppState.status);
-  updateConnectionStatusUI(AppState.status);
-  if (!AppState.interval) {
-    startPolling();
-  }
-});
+// document.addEventListener("DOMContentLoaded", async () => {
+//   // clearInterval(AppState.interval);
+//   AppState.status = (await checkServer()) ? "online" : "offline";
+//   console.log("==========> DOMContentLoaded", AppState.status);
+//   // updateConnectionStatusUI(AppState.status);
+//   if (!AppState.interval) {
+//     startPolling();
+//   }
+// });
 
 //--------------
 
@@ -126,7 +125,7 @@ async function displayVForm() {
 async function displayStock(ydoc) {
   console.log("Render Stock-----");
   try {
-    const { SolidYComp } = await import("./SolidYComp.jsx");
+    const { SolidYComp } = await import("./StockComponent.jsx");
     return SolidYComp({
       ydoc,
       userID: sessionStorage.getItem("userID"),
@@ -152,7 +151,7 @@ async function initApp(lineStatus) {
 
     // Online mode
     if (lineStatus) {
-      const { yHook } = await import("./yHook.js"),
+      const { StockHook } = await import("./StockHook.js"),
         { MapVHook } = await import("./mapVHook.js"),
         { FormVHook } = await import("./formVHook.js"),
         { PwaHook } = await import("./pwaHook.js");
@@ -161,7 +160,7 @@ async function initApp(lineStatus) {
         MapVHook,
         FormVHook,
         PwaHook,
-        YHook: yHook(AppState.globalYdoc),
+        StockHook: StockHook(AppState.globalYdoc),
       });
     }
 

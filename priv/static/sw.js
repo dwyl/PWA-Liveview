@@ -4982,10 +4982,7 @@ precacheAndRoute([{
   "url": "assets/app.css",
   "revision": null
 }, {
-  "url": "assets/appV.css",
-  "revision": null
-}, {
-  "url": "assets/appV.js",
+  "url": "assets/app.js",
   "revision": null
 }, {
   "url": "assets/bins.js",
@@ -5024,9 +5021,6 @@ precacheAndRoute([{
   "url": "assets/leaflet-src.js",
   "revision": null
 }, {
-  "url": "assets/leaflet.css",
-  "revision": null
-}, {
   "url": "assets/mapVHook.js",
   "revision": null
 }, {
@@ -5048,7 +5042,10 @@ precacheAndRoute([{
   "url": "assets/renderVMap.js",
   "revision": null
 }, {
-  "url": "assets/SolidYComp.js",
+  "url": "assets/StockComponent.js",
+  "revision": null
+}, {
+  "url": "assets/StockHook.js",
   "revision": null
 }, {
   "url": "assets/topbar.min.js",
@@ -5070,9 +5067,6 @@ precacheAndRoute([{
   "revision": null
 }, {
   "url": "assets/y-indexeddb.js",
-  "revision": null
-}, {
-  "url": "assets/yHook.js",
   "revision": null
 }, {
   "url": "assets/yjs.js",

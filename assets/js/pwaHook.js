@@ -1,9 +1,9 @@
 // Track offline notification state at module level
 let hasNotifiedOfflineReady = false;
-const { registerSW } = await import("virtual:pwa-register");
 
 export const PwaHook = {
-  mounted() {
+  async mounted() {
+    const { registerSW } = await import("virtual:pwa-register");
     const _this = this;
     console.log(
       "~~~~~~~~~~~>  PwaHook mounted",
@@ -11,7 +11,6 @@ export const PwaHook = {
     );
 
     this.updateAvailable = false;
-    let updateSWFunction;
 
     if (navigator.serviceWorker) {
       navigator.serviceWorker.addEventListener("message", (event) => {
@@ -20,7 +19,7 @@ export const PwaHook = {
     }
 
     // Register service worker
-    const updateSW = registerSW({
+    registerSW({
       onNeedRefresh: () => {
         console.log("New version available");
         _this.updateAvailable = true;
@@ -31,7 +30,7 @@ export const PwaHook = {
           updateAvailable: true,
         });
       },
-      immediate: false, // Prevents immediate registration on page load
+      immediate: true, // Prevents immediate registration on page load
       onOfflineReady: () => {
         // Only notify once when service worker is first installed
         if (!hasNotifiedOfflineReady) {
@@ -51,6 +50,7 @@ export const PwaHook = {
     });
   },
 };
+
 // // Track offline notification state at module level
 // let hasNotifiedOfflineReady = false;
 // const { registerSW } = await import("virtual:pwa-register");

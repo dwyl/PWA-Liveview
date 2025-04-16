@@ -26,7 +26,7 @@ defmodule SolidyjsWeb.StockLive do
       <p class="text-sm text-gray-600 mt-4 mb-2">Current database stock: {@current_stock}</p>
       <hr />
       <br />
-      <div id="stock" phx-hook="YHook" phx-update="ignore" data-userid={@user_id}></div>
+      <div id="stock" phx-hook="StockHook" phx-update="ignore" data-userid={@user_id}></div>
     </div>
     """
   end

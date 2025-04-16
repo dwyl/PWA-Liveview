@@ -5,6 +5,9 @@ export const FormVHook = {
   userID: null,
   destroyed() {
     state.selection.clear();
+    if (this.unsubscribe) this.unsubscribe();
+    if (this.dispose) this.dispose();
+
     if (this.cleanupSolid) {
       this.cleanupSolid();
       this.cleanupSolid = null;
@@ -12,10 +15,12 @@ export const FormVHook = {
     console.log("Form destroyed-----");
   },
   async mounted() {
-    if (this.cleanupSolid) {
-      this.cleanupSolid(); // defensive cleanup
-      this.cleanupSolid = null;
-    }
+    if (this.cleanupSolid) this.cleanupSolid(); // defensive cleanup
+    this.cleanupSolid = null;
+    if (this.dispose) this.dispose();
+    this.dispose = null;
+    if (this.unsubscribe) this.unsubscribe();
+    this.unsubscribe = null;
 
     const { FormVComponent } = await import("./formVComp.jsx");
     this.userID = this.el.dataset.userid || sessionStorage.getItem("userID");
@@ -43,6 +48,12 @@ export const FormVHook = {
       }
     });
 
+    // we return both "dispose" and "cleanup" functions
+    // to allow for cleanup of the Solid component and Valtio subscription
+    // when the component is destroyed
     this.cleanupSolid = await FormVComponent({ el: this.el, _this: this });
+    const { dispose, unsubscribe } = this.cleanupSolid;
+    this.dispose = dispose;
+    this.unsubscribe = unsubscribe;
   },
 };

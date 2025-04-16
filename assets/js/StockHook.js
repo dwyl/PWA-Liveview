@@ -1,6 +1,6 @@
-import { SolidYComp } from "./SolidYComp";
+import { StockComponent } from "./StockComponent";
 import * as Y from "yjs";
-import { checkServer } from "./appV";
+import { checkServer } from "./app";
 
 function decodeBase64(str) {
   return Uint8Array.from(atob(str), (c) => c.charCodeAt(0));
@@ -71,7 +71,7 @@ function mergeWithLowestWins(ydoc, serverValue, serverState, origin) {
   }
 }
 
-export const yHook = (ydoc) => ({
+export const StockHook = (ydoc) => ({
   destroyed() {
     // memoy leak prevention
     this.ydoc.off("update", this.handleYUpdate);
@@ -88,11 +88,9 @@ export const yHook = (ydoc) => ({
       "~~~~~~~~~~~>  YHook mounted",
       window.liveSocket?.socket?.isConnected()
     );
-    this.currentUser = this.el.dataset.userid;
     sessionStorage.setItem("userID", this.currentUser);
-
+    this.currentUser = this.el.dataset.userid;
     this.ymap = ydoc.getMap("stock");
-
     this.isOnline = null;
     this.pendingSync = false;
     this.ydoc = ydoc;
@@ -100,47 +98,59 @@ export const yHook = (ydoc) => ({
     this.reconnecting = false;
     this.lastConnectionStatus = false;
 
-    checkServer().then((online) => {
-      this.isOnline = online;
-      this.lastConnectionStatus = online;
-    });
-
-    // Setup periodic connection check instead of relying on navigator.onLine
-    this.connectionCheckInterval = setInterval(async () => {
-      const online = await checkServer();
-
-      // If status changed from offline to online
-      if (online && !this.lastConnectionStatus && this.pendingSync) {
-        this.handleReconnection();
-      }
-
-      this.lastConnectionStatus = online;
-      this.isOnline = online;
-    }, 1_000); // Check every 5 seconds
-
     // Initial connection check
     checkServer().then((online) => {
       this.isOnline = online;
       this.lastConnectionStatus = online;
     });
 
+    window.addEventListener("connection-status-change", ({ detail }) => {
+      console.log("yhook listener", evt.detail);
+      if (detail.status === "offline") {
+        this.isOnline = false;
+        this.lastConnectionStatus = true;
+      } else if (detail.status === "online") {
+        this.isOnline = true;
+        this.lastConnectionStatus = false;
+        this.handleReconnection();
+      }
+    });
+
+    // Setup periodic connection check instead of relying on navigator.onLine
+    // this.connectionCheckInterval = setInterval(async () => {
+    //   const online = await checkServer();
+
+    //   // If status changed from offline to online
+    //   if (online && !this.lastConnectionStatus && this.pendingSync) {
+    //     this.handleReconnection();
+    //   }
+
+    //   this.lastConnectionStatus = online;
+    //   this.isOnline = online;
+    // }, 2_000); // Check every 5 seconds
+
     // observe Y.js state changes
     this.handleYUpdate = this.handleYUpdate.bind(this);
+    this.handleInitStock = this.handleInitStock.bind(this);
+    this.handleSyncFromServer = this.handleSyncFromServer.bind(this);
+
+    // ---- Yjs listener on updates -----
     this.ydoc.on("update", this.handleYUpdate);
-
     // ---- Phoenix Event: Initial state from server ----
-    this.handleEvent("init_stock", this.handleInitStock.bind(this));
+    this.handleEvent("init_stock", this.handleInitStock);
     // ---- Phoenix Event: Sync state from server ----
-    this.handleEvent("sync_from_server", this.handleSyncFromServer.bind(this));
-
-    // ---- Yjs document updates ----
+    this.handleEvent("sync_from_server", this.handleSyncFromServer);
   },
+  // Handles reconnection and syncs with the server
+  // This is called when the connection status changes
+  // and the user is back online
+  // It checks if there are pending updates to sync
+  // and if so, it pushes the local state to the server
   async handleReconnection() {
     if (!this.pendingSync) return;
 
     this.reconnecting = true;
     console.log("Reconnected - syncing with server");
-
     // Force a server sync to apply lowest-wins logic
     const value = this.ymap.get("stock-value");
     this.pushStateToServer(value, this.currentUser);
@@ -150,6 +160,17 @@ export const yHook = (ydoc) => ({
   },
 
   // Initializes state from the database or applies Y.js state
+  // to the local Y.js document
+  // This is called when the component is mounted
+  // and the server sends the initial state
+  // It checks if there is a local value in the Y.js document
+  // and if not, it initializes it with the value from the server
+  // If there is a local value, it checks if it is lower than the server value
+  // and if so, it pushes the local value to the server
+  // If the server value is lower, it applies the server state to the local Y.js document
+  // and updates the local value
+  // If the values are equal, it does nothing
+  // It also initializes the SolidYComp component
   handleInitStock({ db_value, db_64_state, max }) {
     console.log(`handleInitStock ${this.currentUser}`);
     // defensive cleanup if "destroyed" was not called before
@@ -187,7 +208,7 @@ export const yHook = (ydoc) => ({
       }
     }
 
-    this.cleanupSolid = SolidYComp({
+    this.cleanupSolid = StockComponent({
       ydoc,
       max,
       el: this.el,
@@ -195,7 +216,15 @@ export const yHook = (ydoc) => ({
     });
   },
   // Handles Y.js document updates and syncs with the server
-  async handleYUpdate(update, origin) {
+  // This is called when the Y.js document is updated
+  // It checks if the update is coming from the server or the local user
+  // If it is coming from the server, it ignores it
+  // If it is coming from the local user, it checks if the user is online
+  // and if so, it pushes the local state to the server
+  // If the user is offline, it sets a flag to sync when back online
+  // It also checks if the update is coming from the lowest-wins algorithm
+  // and if so, it ignores it
+  async handleYUpdate(_update, origin) {
     console.log(`handleYUpdate, ${this.currentUser}, origin: `, origin);
 
     if (origin === "server" || origin === "lowest-wins") {
@@ -214,7 +243,6 @@ export const yHook = (ydoc) => ({
     }
 
     const value = this.ymap.get("stock-value");
-    // const encoded = Y.encodeStateAsUpdate(this.ydoc);
     console.log(
       `${this.currentUser} handleYUpdate: ydoc.on gets Y.js update: ${value}, origin: ${origin}`
     );
@@ -230,6 +258,8 @@ export const yHook = (ydoc) => ({
     }
   },
   // Applies server updates to the local Y.js document
+  // This is called when the server sends an update
+
   handleSyncFromServer({ value, state, sender }) {
     console.log(`handleSyncFromServer, ${this.currentUser}: `, sender);
     // merge state vector
@@ -237,8 +267,11 @@ export const yHook = (ydoc) => ({
 
     // If our value was lower, push it back to server
     if (needsServerUpdate && !this.reconnecting) {
-      const newValue = this.ymap.get("stock-value");
-      this.pushStateToServer(newValue);
+      // mutate the local Y.js document and the UI will update automatically
+      //  as SolidYComp is observing the Y.js document
+      this.ymap.set("stock-value", value);
+
+      this.pushStateToServer(value);
     }
   },
   // Sends local state to the server
