@@ -90,15 +90,15 @@ window.addEventListener("beforeunload", () => {
   clearInterval(AppState.interval);
 });
 
-// document.addEventListener("DOMContentLoaded", async () => {
-//   // clearInterval(AppState.interval);
-//   AppState.status = (await checkServer()) ? "online" : "offline";
-//   console.log("==========> DOMContentLoaded", AppState.status);
-//   // updateConnectionStatusUI(AppState.status);
-//   if (!AppState.interval) {
-//     startPolling();
-//   }
-// });
+document.addEventListener("DOMContentLoaded", async () => {
+  // clearInterval(AppState.interval);
+  AppState.status = (await checkServer()) ? "online" : "offline";
+  console.log("==========> DOMContentLoaded", AppState.status);
+  // updateConnectionStatusUI(AppState.status);
+  if (!AppState.interval) {
+    startPolling();
+  }
+});
 
 //--------------
 
