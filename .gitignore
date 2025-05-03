@@ -45,6 +45,7 @@ solidyjs-*.tar
 npm-debug.log
 /assets/node_modules/
 /assets/other/
+/assets/logo.png
 
 /zig-wasm/.zig-cache/
 /zig-wasm/zig-out/
