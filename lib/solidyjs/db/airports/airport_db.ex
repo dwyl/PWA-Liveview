@@ -53,9 +53,9 @@ defmodule AirportDB do
         Logger.warning("Failed to open db: #{inspect(reason)}")
         {:stop, reason}
 
-      msg ->
-        Logger.warning("Failed to open db: #{inspect(msg)}")
-        {:stop, msg}
+        # msg ->
+        #   Logger.warning("Failed to open db: #{inspect(msg)}")
+        #   {:stop, msg}
     end
   end
 

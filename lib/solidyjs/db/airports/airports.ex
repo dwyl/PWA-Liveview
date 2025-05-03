@@ -31,7 +31,7 @@ defmodule Airports do
           %{rows: rows, leftover: leftover} =
             Map.get(resp.private, :csv, %{rows: [], leftover: ""})
 
-          {parsed_rows, new_leftover} = parse_chunk(chunk, leftover) |> dbg()
+          {parsed_rows, new_leftover} = parse_chunk(chunk, leftover)
 
           new_resp =
             Req.Response.put_private(resp, :csv, %{
@@ -53,34 +53,39 @@ defmodule Airports do
     {:ok, new_rows}
   end
 
+  # No data in chunk, return leftover
+  defp parse_chunk("", leftover) do
+    {[], leftover}
+  end
+
   defp parse_chunk(chunk, leftover) do
     # "leftover"partial lines between chunks
     full = leftover <> chunk
 
-    case String.split(full, "\n", trim: false) do
-      [] ->
-        {[], ""}
+    case String.split(full, "\n") do
+      # No newline found
+      [line] ->
+        {[], line}
 
-      lines ->
-        # Keep the last line as leftover (incomplete row)
-        {complete, [rest]} = Enum.split(lines, -1)
-        # parsed_rows = CSVParser.parse_string(Enum.join(complete, "\n"))
-        parsed_rows =
-          Enum.reject(complete, &(&1 == ""))
-          |> Enum.join("\n")
-          |> CSVParser.parse_string()
+      # Found exactly one newline, most common case
+      [complete, rest] ->
+        {CSVParser.parse_string(complete), rest}
 
-        {parsed_rows, rest}
+      # Multiple newlines
+      [first | rest] ->
+        last = List.last(rest)
+        complete = [first | Enum.take(rest, length(rest) - 1)]
+        {CSVParser.parse_string(Enum.join(complete, "\n")), last}
     end
   end
 
   # debug function to check the CSV file
   def stream_download do
     Logger.info("Starting airports database download into a file...")
-    path = url()
+    path = "./priv/static/airports.csv"
 
     func = fn {:data, data}, {req, resp} ->
-      File.write!(path, data, [:append])
+      :ok = File.write!(path, data, [:append])
       {:cont, {req, resp}}
     end
 
@@ -95,10 +100,6 @@ defmodule Airports do
            File.stat(path) do
       Logger.info("Airport database downloaded successfully. File size: #{size} bytes")
     else
-      {:error, reason} ->
-        Logger.error("Failed to open file for writing: #{reason}")
-        raise "Failed to open file for writing"
-
       err ->
         Logger.error("Failed to download airports data: #{inspect(err)}")
         raise "Failed to write airports data to file"
