@@ -1,6 +1,11 @@
 defmodule SolidyjsWeb.CircularProgress do
   use Phoenix.Component
 
+  @moduledoc """
+  A circular progress component that displays a circular progress bar
+  with a percentage label in the center.
+  """
+
   attr :progress, :float, required: true
   attr :color, :string, default: "#f77a52"
   attr :width, :integer, default: 60

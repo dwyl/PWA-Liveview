@@ -18,8 +18,8 @@ defmodule Solidyjs.Application do
       {Phoenix.PubSub, name: :pubsub},
       Solidyjs.Repo,
       SolidyjsWeb.Endpoint,
-      {Solidyjs.DocHandler, [db, @max]},
-      {AirportDB, [db]}
+      {AirportDB, [db]},
+      {Solidyjs.DocHandler, [db, @max]}
     ]
 
     opts = [strategy: :one_for_one, name: Solidyjs.Supervisor]

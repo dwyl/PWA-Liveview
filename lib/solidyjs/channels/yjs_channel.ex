@@ -5,6 +5,12 @@ defmodule Solidyjs.YjsChannel do
   alias Solidyjs.DocHandler
   require Logger
 
+  @moduledoc """
+  Yjs channel for bridging the Yjs client document
+  and the mirrored Yjs document in the database.
+  It uses binary payloads to send and receive updates.
+  """
+
   @impl true
   def join("yjs-state", params, socket) do
     user_id = params["userID"]

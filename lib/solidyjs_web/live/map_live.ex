@@ -5,6 +5,14 @@ defmodule SolidyjsWeb.MapLive do
   alias Phoenix.PubSub
   alias SolidyjsWeb.Menu
 
+  @moduledoc """
+  LiveView for the map page.
+  This module handles the rendering of the map and the
+  form with the client-side JavaScript.
+  It subscribes to PubSub events for adding and removing
+  airports.
+
+  """
   require Logger
 
   @impl true

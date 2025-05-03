@@ -4,19 +4,23 @@ defmodule SolidyjsWeb.StockYLive do
   alias SolidyjsWeb.Menu
   require Logger
 
+  @moduledoc """
+  LiveView for the stock_y page.
+  """
+
   @impl true
   def render(assigns) do
     ~H"""
     <div>
       <span id="pwa-flash" phx-hook="PwaFlash"></span>
-        <.link
-          :if={@update_available}
-          href="/"
-          class="px-4 mb-4 mt-4 py-2 border-2 rounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300"
-          id="refresh-btn"
-        >
-          Refresh needed
-        </.link>
+      <.link
+        :if={@update_available}
+        href="/"
+        class="px-4 mb-4 mt-4 py-2 border-2 rounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300"
+        id="refresh-btn"
+      >
+        Refresh needed
+      </.link>
       <%!-- </div> --%>
       <p class="text-sm text-gray-600 mt-4 mb-2">User ID: {@user_id}</p>
       <Menu.display />

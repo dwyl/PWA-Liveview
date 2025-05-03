@@ -35,6 +35,7 @@ solidyjs-*.tar
 /priv/static/airports.csv
 /priv/old/
 /priv/cert/
+/priv/static/.vite/
 
 
 /test/

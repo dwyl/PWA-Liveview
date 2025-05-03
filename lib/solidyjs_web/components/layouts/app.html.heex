@@ -1,6 +1,6 @@
 <header class="px-4 sm:px-6 lg:px-8">
-  <div id="user_token" data-user-token={@user_token} ></div>
-  
+  <div id="user_token" data-user-token={@user_token}></div>
+
   <div class="flex items-center justify-between border-b border-zinc-100 py-3 text-sm">
     <div class="flex items-center gap-4">
       <p>
@@ -106,7 +106,7 @@
 </header>
 <main class="px-4 py-20 sm:px-6 lg:px-8 mx-auto max-w-2xl" id="main-content">
   <%!-- <div class="mx-auto max-w-2xl"> --%>
-    <.flash_group flash={@flash} />
-    {@inner_content}
+  <.flash_group flash={@flash} />
+  {@inner_content}
   <%!-- </div> --%>
 </main>
