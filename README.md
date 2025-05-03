@@ -30,6 +30,8 @@ An example of a Progressive Web App (PWA) combining Phoenix LiveView's real-time
     - [Configuration and settings](#configuration-and-settings)
       - [PWA and Workbox Caching Strategies](#pwa-and-workbox-caching-strategies)
       - [Server configuration](#server-configuration)
+      - [Phoenix settings: dev build and watcher](#phoenix-settings-dev-build-and-watcher)
+      - [CSP rules and evaluation](#csp-rules-and-evaluation)
     - [Yjs](#yjs)
       - [Documentation source](#documentation-source)
       - [Yjs initialization](#yjs-initialization)
@@ -538,35 +540,35 @@ The Service Worker has different cache strategies:
 
 #### Server configuration
 
-1. Phoenix settings: dev build and watcher
+#### Phoenix settings: dev build and watcher
 
-   ```elixir
-   # endpoint.ex
-   def static_paths do
-     ~w(assets fonts images favicon.ico robots.txt sw.js manifest.webmanifest)
-   end
-   ```
+```elixir
+# endpoint.ex
+def static_paths do
+  ~w(assets fonts images favicon.ico robots.txt sw.js manifest.webmanifest)
+end
+```
 
-   The watcher config is:
+The watcher config is:
 
-   ```elixir
-   # config/dev.exs
-   :solidyjs, SolidyjsWeb.Endpoint,
-      watchers: [
-        npx: [
-          "vite",
-          "build",
-          "--mode",
-          "development",
-          "--watch",
-          "--config",
-          "vite.config.js",
-          cd: Path.expand("../assets", __DIR__)
-        ],
-      ]
-   ```
+```elixir
+# config/dev.exs
+:solidyjs, SolidyjsWeb.Endpoint,
+   watchers: [
+     npx: [
+       "vite",
+       "build",
+       "--mode",
+       "development",
+       "--watch",
+       "--config",
+       "vite.config.js",
+       cd: Path.expand("../assets", __DIR__)
+     ],
+   ]
+```
 
-2. Browser CSP rules
+#### CSP rules and evaluation
 
 The application implements security CSP headers set by a plug: `BrowserCSP`.
 
