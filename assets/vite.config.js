@@ -1,15 +1,28 @@
 import { VitePWA } from "vite-plugin-pwa";
 import { defineConfig, loadEnv } from "vite";
 import solidPlugin from "vite-plugin-solid";
-import tailwindcss from "tailwindcss";
-import autoprefixer from "autoprefixer";
-import viteCompression from "vite-plugin-compression";
 import wasm from "vite-plugin-wasm";
 import path from "path";
-// import { url } from "inspector";
-// import tailwindcss from "@tailwindcss/vite";
+import fg from "fast-glob"; // for recursive file scanning
+import viteCompression from "vite-plugin-compression";
 
-// https://web.dev/articles/add-manifest?utm_source=devtools
+// do not use @tailwindcss/vite
+import tailwindcss from "tailwindcss";
+
+const APPVERSION = "0.1.0"; // Update this when you change the app version
+
+const rootDir = path.resolve(__dirname);
+const cssDir = path.resolve(rootDir, "css");
+const jsDir = path.resolve(rootDir, "js");
+const wasmDir = path.resolve(rootDir, "wasm");
+const srcImgDir = path.resolve(rootDir, "images");
+const staticDir = path.resolve(rootDir, "../priv/static/");
+const tailwindConfigPath = path.resolve(rootDir, "tailwind.config.js");
+
+const Icon192 = "assets/icon-192.png";
+const Icon512 = "assets/icon-512.png";
+
+// https://web.dev/articles/add-manifest
 const manifestOpts = {
   name: "SolidYjs",
   short_name: "SolidYjs",
@@ -20,251 +33,150 @@ const manifestOpts = {
   theme_color: "#000000",
   icons: [
     {
-      src: "/images/icon-192.png",
+      src: Icon192,
       sizes: "192x192",
       type: "image/png",
     },
     {
-      src: "/images/icon-512.png",
+      src: Icon512,
       sizes: "512x512",
       type: "image/png",
     },
   ],
 };
 
-const buildOps = {
-  outDir: "../priv/static/",
-  emptyOutDir: false,
-  // sourcemap: true,
+// fg will scan JS directory recursively - update to match your actual file structure
+const getEntryPoints = () => {
+  const entries = [];
+  fg.sync([`${jsDir}/**/*.{js,jsx}`]).forEach((file) => {
+    if (/\.(js|jsx)$/.test(file)) {
+      entries.push(path.resolve(rootDir, file));
+    }
+  });
+  // Add WASM & CSS explicitly
+  entries.push(path.resolve(cssDir, "app.css"));
+  entries.push(path.resolve(wasmDir, "great_circle.wasm"));
+
+  fg.sync([`${srcImgDir}/**/*.*`]).forEach((file) => {
+    if (/\.(jpg|png|svg|webp)$/.test(file)) {
+      entries.push(path.resolve(rootDir, file));
+    }
+  });
+
+  return entries;
+};
+
+// source: <https://vite.dev/config/build-options>
+const buildOps = (mode) => ({
   target: ["esnext"],
-  manifest: true,
+  // Specify the directory to nest generated assets under (relative to build.outDir
+  outDir: staticDir,
+  cssCodeSplit: true, // Split CSS for better caching
   rollupOptions: {
-    input: [
-      "js/app.js",
-      "js/bins.jsx",
-      "js/configureTopbar.js",
-      "js/counter.jsx",
-      "js/formCities.jsx",
-      "js/formVComp.jsx",
-      "js/formVHook.js",
-      "js/initMap.js",
-      "js/initYJS.js",
-      "js/mapVHook.js",
-      "js/pwaHook.js",
-      "js/renderVForm.js",
-      "js/renderVMap.js",
-      "js/StockComponent.jsx",
-      "js/StockHook.js",
-      "js/valtioObservers.js",
-      "js/vStore.js",
-      "wasm/great_circle.wasm",
-    ],
+    input: getEntryPoints(),
     output: {
       assetFileNames: "assets/[name][extname]",
       chunkFileNames: "assets/[name].js",
       entryFileNames: "assets/[name].js",
     },
   },
-};
+  // generate a manifest file that contains a mapping of non-hashed asset filenames
+  // to their hashed versions, which can then be used by a server framework
+  // to render the correct asset links.
+  manifest: true, // When true, the path would be .vite/manifest.json.
+  minify: mode === "production",
+  emptyOutDir: false,
+  reportCompressedSize: mode === "production",
+});
 
-const LongPoll = {
-  urlPattern: ({ url }) => url.pathname.startsWith("/live/longpoll"),
+// =============================================
+// Service Worker Caching Strategies
+// =============================================
+
+const Navigation = {
+  urlPattern: ({ request }) => request.mode === "navigate",
+  handler: "NetworkFirst",
   options: {
     fetchOptions: {
-      credentials: "same-origin", // 🔐 preserves cookies and headers needed by Phoenix
+      credentials: "same-origin",
     },
-  },
-  handler: async ({ event }) => {
-    try {
-      const response = await fetch(event.request);
-      return response;
-    } catch (error) {
-      // console.warn("[Workbox fallback] Failed to fetch longpoll:", error);
-      return new Response(null, {
-        status: 204,
-        statusText: "Longpoll fallback",
-      });
-    }
-  },
-  method: "GET",
-};
-
-const LiveReload = {
-  urlPattern: ({ url }) => url.pathname.startsWith("/live/reload"),
-  handler: "NetworkOnly",
-};
-
-const VersionedAssets = {
-  urlPattern: ({ url }) => {
-    // Match versioned assets (with hash in filename)
-    return url.pathname.match(
-      /\/assets\/(.*-[a-f0-9]+\.(js|css)|appV-[a-f0-9]+\.(js|css))/
-    );
-  },
-  handler: "CacheFirst",
-  options: {
-    cacheName: "versioned-assets",
+    cacheName: "pages-cache",
     expiration: {
       maxEntries: 50,
-      maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year (versioned assets rarely change)
-    },
-    matchOptions: {
-      ignoreSearch: true, // Ignore vsn parameter
-    },
-    fetchOptions: {
-      credentials: "same-origin",
+      maxAgeSeconds: 24 * 60 * 60, // 1 day
     },
     cacheableResponse: {
       statuses: [0, 200],
     },
-    plugins: [
-      {
-        cacheKeyWillBeUsed: async ({ request }) => {
-          // Strip query parameters
-          const url = new URL(request.url);
-          url.search = "";
-          return url.toString();
-        },
-        // fetchDidFail: async ({ request }) => {
-        //   console.warn("Versioned asset fetch failed:", request.url);
-        // },
+  },
+};
+
+const LiveView = [
+  {
+    urlPattern: ({ url }) => {
+      return url.pathname.startsWith("/live/longpoll");
+    },
+    handler: "NetworkOnly",
+    options: {
+      fetchOptions: {
+        credentials: "same-origin",
       },
-    ],
+    },
   },
-};
-
-const StaticAssets = {
-  // urlPattern: ({ url }) => {
-  //   const staticPaths = ["/assets/", "/images/"];
-  //   return staticPaths.some(
-  //     (path) =>
-  //       url.pathname.startsWith(path) ||
-  //       url.pathname.match(/\/assets\/.*\.[a-z]+(\?vsn=\w+)?$/)
-  //   );
-  // },
-  urlPattern: ({ url }) => {
-    // Match static assets and script destinations
-    return (
-      url.pathname.startsWith("/assets/") ||
-      url.pathname.startsWith("/images/") ||
-      url.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|wasm)$/)
-    );
-  },
-  handler: "CacheFirst",
-  options: {
-    cacheName: "static-assets",
-    expiration: {
-      maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
-      maxEntries: 200,
-    },
-    matchOptions: {
-      // ignoreVary: true, // Important for Phoenix static asset handling
-      ignoreSearch: true, // Crucial for handling ?vsn= parameters
-    },
-    fetchOptions: {
-      credentials: "same-origin",
-    },
-    cacheableResponse: {
-      statuses: [0, 200],
-    },
-    // plugins: [
-    //   {
-    //     cacheKeyWillBeUsed: async ({ request }) => {
-    //       // Strip out vsn query parameter
-    //       const url = new URL(request.url);
-    //       url.search = ""; // Remove query string
-    //       return url.toString();
-    //     },
-    //   },
-    // ],
-  },
-};
-
-const AppAssets = {
-  urlPattern: ({ url }) => {
-    // Target primary app bundles (both JS and CSS)
-    return url.pathname.match(/\/assets\/appV-[a-f0-9]+\.(js|css)/);
-  },
-  handler: "StaleWhileRevalidate", // Better strategy for critical app files
-  options: {
-    cacheName: "app-core-assets",
-    fetchOptions: {
-      credentials: "same-origin",
-    },
-    matchOptions: {
-      ignoreSearch: true, // Ignore vsn parameters
-    },
-    plugins: [
-      {
-        cacheKeyWillBeUsed: async ({ request }) => {
-          const url = new URL(request.url);
-          url.search = ""; // Strip query parameters
-          return url.toString();
-        },
-        fetchDidFail: async ({ request }) => {
-          console.error("App asset fetch failed:", request.url);
-        },
+  {
+    urlPattern: ({ url }) => url.pathname.startsWith("/phoenix/live_reload/"),
+    handler: "NetworkOnly",
+    options: {
+      fetchOptions: {
+        credentials: "same-origin",
       },
-    ],
+    },
   },
-};
+  {
+    urlPattern: ({ url }) => url.pathname.startsWith("/ydoc/"),
+    handler: "NetworkOnly",
+    options: {
+      fetchOptions: {
+        credentials: "same-origin",
+      },
+    },
+  },
+];
 
-const MapTilerSDK = {
-  urlPattern: ({ url }) => {
-    return (
-      url.hostname === "api.maptiler.com" && url.pathname.startsWith("/maps/")
-    );
-  },
+const MapTiler = {
+  urlPattern: ({ url }) =>
+    (url.hostname === "api.maptiler.com" &&
+      (url.pathname.startsWith("/maps/") || // Style configs
+        url.pathname.startsWith("/resources/"))) || // SDK assets
+    url.pathname.startsWith("/tiles/") || // Raster/vector tiles
+    url.pathname.startsWith("/data/"), // Tile JSON
   handler: "StaleWhileRevalidate",
   options: {
-    cacheName: "maptiler-sdk",
-    expiration: {
-      maxEntries: 10,
-      maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
-      purgeOnQuotaError: true,
+    cacheName: "maptiler",
+    cacheableResponse: {
+      statuses: [0, 200],
     },
-    matchOptions: {
-      ignoreSearch: true, // Ignore query parameters
-    },
-    fetchOptions: {
-      credentials: "same-origin",
-    },
+    expiration: { maxEntries: 10, maxAgeSeconds: 604800 }, // 7 days
   },
 };
 
-const Tiles = {
-  urlPattern: ({ url }) => {
-    return (
-      url.hostname === "api.maptiler.com" && !url.pathname.startsWith("/maps/")
-    );
-  },
+const OtherStaticAsset = {
+  urlPattern: ({ url }) =>
+    /\.(png|jpg|jpeg|gif|svg|ico|webp|woff2)$/i.test(url.pathname),
   handler: "CacheFirst",
   options: {
-    cacheName: "maptiler-tiles",
+    cacheName: "static",
     expiration: {
-      maxEntries: 500,
-      maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
-      purgeOnQuotaError: true,
+      maxEntries: 200,
+      maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
     },
     matchOptions: {
       ignoreSearch: true, // Ignore query parameters
+      ignoreVary: true,
     },
-    fetchOptions: {
-      credentials: "same-origin",
+    cacheableResponse: {
+      statuses: [0, 200],
     },
-    // plugins: [
-    //   {
-    //     cacheKeyWillBeUsed: async ({ request }) => {
-    //       // Strip out dynamic query parameters
-    //       const url = new URL(request.url);
-    //       const baseUrl = `${url.origin}${url.pathname}`;
-    //       return baseUrl;
-    //     },
-    //     fetchDidFail: async ({ request }) => {
-    //       console.warn("Tile request failed:", request.url);
-    //     },
-    //   },
-    // ],
   },
 };
 
@@ -283,107 +195,93 @@ const Fonts = {
       maxAgeSeconds: 60 * 60 * 24 * 365, // 1 hours
       maxEntries: 20,
     },
-    // matchOptions: {
-    //   ignoreVary: true, // Important for some external resources
-    //   ignoreSearch: true, // Ignore query parameters
-    // },
-    fetchOptions: {
-      mode: "cors",
-      // credentials: "same-origin",
-    },
-  },
-};
-
-const Pages = {
-  urlPattern: ({ url }) => url.pathname === "/" || url.pathname === "/map",
-  // || url.pathname.startsWith("/"),
-  handler: "NetworkFirst",
-  options: {
-    cacheName: "pages",
-    expiration: {
-      maxEntries: 10, // Only keep 10 page versions
-      maxAgeSeconds: 60 * 60 * 2, // 2 hours
-    },
     matchOptions: {
+      ignoreVary: true, // Important for some external resources
       ignoreSearch: true, // Ignore query parameters
     },
     fetchOptions: {
-      credentials: "same-origin",
+      mode: "cors",
     },
   },
 };
 
-const HtmlNavigation = {
-  urlPattern: ({ request }) => request.mode === "navigate",
-  handler: "NetworkFirst",
-  options: {
-    networkTimeoutSeconds: 3,
-    plugins: [
-      {
-        handlerDidError: async () => {
-          return caches.match("/", { ignoreSearch: true });
-        },
-      },
-    ],
-  },
-};
+/**
+ * List of all caching strategies passed to Workbox
+ * The order of the strategies matters! More specific ones should be listed first
+ * to avoid conflicts with more general ones.
+ */
 
 const runtimeCaching = [
-  LongPoll,
-  LiveReload,
-  AppAssets,
-  VersionedAssets,
-  StaticAssets,
-  MapTilerSDK, // Add the SDK route before Tiles
-  Tiles,
+  Navigation,
+  ...LiveView,
+  MapTiler, // Add the SDK route before Tiles
+  OtherStaticAsset,
   Fonts,
-  Pages,
-  HtmlNavigation,
+  // Catch-all for other resources - stale while revalidate
+  // {
+  //   urlPattern: /.*/,
+  //   handler: "StaleWhileRevalidate",
+  //   options: {
+  //     cacheName: "others",
+  //     expiration: {
+  //       maxEntries: 50,
+  //       maxAgeSeconds: 24 * 60 * 60, // 1 day
+  //     },
+  //     cacheableResponse: {
+  //       statuses: [0, 200],
+  //     },
+  //   },
+  // },
 ];
 
-const createPWAConfig = (mode) => ({
+// =============================================
+// PWA Configuration Generator
+// =============================================
+// <https://vite-pwa-org.netlify.app/guide/>
+
+const PWAConfig = (mode) => ({
   devOptions: {
     enabled: mode === "development",
     type: "module",
-    suppressWarnings: false,
   },
-  // injectRegister: null, // Do not nject the SW registration script as "index.html" does not exist
-  registerType: "autoUpdate",
-  filename: "sw.js",
-  strategies: "generateSW",
-
-  // srcDir: "./js",
+  suppressWarnings: true,
+  injectRegister: null, // Do not nject the SW registration script as "index.html" does not exist
+  registerType: "autoUpdate", // Auto-update service worker
+  filename: "sw.js", // Service worker filename
+  strategies: "generateSW", // Generate service worker
   includeAssets: ["favicon.ico", "robots.txt"],
   manifest: manifestOpts,
-  outDir: path.resolve(__dirname, "../priv/static/"),
+  outDir: staticDir,
   manifestFilename: "manifest.webmanifest",
-  injectManifest: {
-    injectionPoint: undefined,
-  },
+  // injectManifest: false,
+  injectManifest: false, // Do not inject the SW registration script as "index.html" does not exist
+  // injectRegister: "auto", // Automatically inject the SW registration script
   workbox: {
-    navigationPreload: false, // <----???
-    // navigateFallback: null, // Do not fallback to index.html !!!!!!!!!
-    navigateFallback: "/",
-    navigateFallbackDenylist: [
-      /^\/live/, // Exclude LiveView websocket paths
-      /^\/phoenix/, // Exclude Phoenix-specific paths
-      /^\/websocket/,
-      /\.(js|css|png|jpg|jpeg|gif|svg)$/,
-    ],
-    globDirectory: path.resolve(__dirname, "../priv/static/"),
-    globPatterns: [
-      "assets/**/*.{js,jsx,css,ico, wasm}",
-      "images/**/*.{png,jpg,svg,webp}",
-    ],
-    swDest: path.resolve(__dirname, "../priv/static/sw.js"),
+    navigationPreload: false, // Ensure WebSocket connections aren't cached
+    navigateFallback: null, // ⚠️ Critical for LiveView
+    navigateFallbackDenylist: [/^\/websocket/, /^\/live/],
+    //   /^\/live/, // Don't use fallback for LiveView websocket connections
+    //   /^\/phoenix/,
+    // ],
+    // globDirectory: staticDir,
+    globPatterns: ["assets/**/*.*"],
+    swDest: path.resolve(staticDir, "sw.js"),
+    // Ensure HTML responses are cached correctly
     cleanupOutdatedCaches: true,
-    inlineWorkboxRuntime: true, // Inline the Workbox runtime into the service worker. You can't serve timestamped URLs with Phoenix
-    ignoreURLParametersMatching: [/^vsn$/],
-    additionalManifestEntries: [
-      { url: "/", revision: null },
-      { url: "/map", revision: null },
+    // ⚠️  Inline the Workbox runtime into the service worker.
+    // You can't serve timestamped URLs with Phoenix
+    inlineWorkboxRuntime: true,
+    // tells Workbox which URL parameters to ignore
+    // when determining if a request matches a cached resource.
+    ignoreURLParametersMatching: [
+      /^vsn$/, // Phoenix asset versioning
+      /^_csrf$/, // CSRF tokens ],
     ],
-    runtimeCaching,
+    additionalManifestEntries: [
+      { url: "/", revision: `${APPVERSION}` },
+      { url: "/map", revision: `${APPVERSION}` },
+    ],
+    runtimeCaching, // Apply our caching strategies defined above
     clientsClaim: true, // take control of all open pages as soon as the service worker activates
     skipWaiting: true, // New service worker versions activate immediately
     // Without these settings, you might have some pages using old service worker versions
@@ -392,19 +290,27 @@ const createPWAConfig = (mode) => ({
   },
 });
 
-const CSSSOpts = {
-  postcss: {
-    plugins: [tailwindcss, autoprefixer],
-  },
-};
-
+/*
+Aliases (alias property):
+Creates shortcuts for directory paths, 
+so instead of writing relative paths 
+like ../../components/Button, 
+you can use @js/components/Button
+*/
 const resolveConfig = {
   alias: {
-    "@": path.resolve(__dirname, "./js"),
-    "@components": path.resolve(__dirname, "./js/components"),
-    "@assets": path.resolve(__dirname, "./assets"),
+    // "@": rootDir,
+    "@js": jsDir,
+    "@jsx": jsDir,
+    "@css": cssDir,
+    "@static": staticDir,
   },
+  extensions: [".js", ".jsx", "png", ".css", "webp", "jpg", "svg"],
 };
+
+// =============================================
+// Main Configuration Export
+// =============================================
 
 export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), "VITE_");
@@ -420,42 +326,22 @@ export default defineConfig(({ command, mode }) => {
     base: "/",
     plugins: [
       wasm(),
-      viteCompression(),
       solidPlugin(),
-      VitePWA(createPWAConfig(mode)),
+      VitePWA(PWAConfig(mode)),
+      mode == "production"
+        ? viteCompression({ algorithm: "brotliCompress" })
+        : null,
     ],
-    resolve: {
-      ...resolveConfig,
-      extensions: [
-        ".mjs",
-        ".js",
-        ".ts",
-        ".jsx",
-        ".tsx",
-        ".json",
-        "wasm",
-        "svg",
-        "png",
-        "webp",
-        "jpg",
-      ],
-    },
-    publicDir: false,
-    build: {
-      ...buildOps,
-      // sourceMap: true, // Enable source maps in all modes
-      minify: mode === "production" ? "terser" : false,
-      cssCodeSplit: true,
-      reportCompressedSize: mode === "production",
-    },
-    css: CSSSOpts,
-    define: {
-      __APP_ENV__: JSON.stringify(env.APP_ENV),
-    },
-    server: {
-      watch: {
-        usePolling: true,
+    resolve: resolveConfig,
+    publicDir: false, // Disable default public dir (using Phoenix's)
+    build: buildOps(mode),
+    css: {
+      postcss: {
+        plugins: [tailwindcss(tailwindConfigPath)],
       },
+    },
+    define: {
+      __APP_ENV__: env.APP_ENV, // Inject env vars
     },
   };
 });

@@ -1181,24 +1181,6 @@ function registerRoute(capture, handler, method) {
 }
 
 /*
-  Copyright 2019 Google LLC
-  Use of this source code is governed by an MIT-style
-  license that can be found in the LICENSE file or at
-  https://opensource.org/licenses/MIT.
-*/
-/**
- * Returns a promise that resolves and the passed number of milliseconds.
- * This utility is an async/await-friendly version of `setTimeout`.
- *
- * @param {number} ms
- * @return {Promise}
- * @private
- */
-function timeout(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-/*
   Copyright 2018 Google LLC
 
   Use of this source code is governed by an MIT-style
@@ -1246,1096 +1228,6 @@ const cacheNames = {
 };
 
 /*
-  Copyright 2020 Google LLC
-  Use of this source code is governed by an MIT-style
-  license that can be found in the LICENSE file or at
-  https://opensource.org/licenses/MIT.
-*/
-function stripParams(fullURL, ignoreParams) {
-  const strippedURL = new URL(fullURL);
-  for (const param of ignoreParams) {
-    strippedURL.searchParams.delete(param);
-  }
-  return strippedURL.href;
-}
-/**
- * Matches an item in the cache, ignoring specific URL params. This is similar
- * to the `ignoreSearch` option, but it allows you to ignore just specific
- * params (while continuing to match on the others).
- *
- * @private
- * @param {Cache} cache
- * @param {Request} request
- * @param {Object} matchOptions
- * @param {Array<string>} ignoreParams
- * @return {Promise<Response|undefined>}
- */
-async function cacheMatchIgnoreParams(cache, request, ignoreParams, matchOptions) {
-  const strippedRequestURL = stripParams(request.url, ignoreParams);
-  // If the request doesn't include any ignored params, match as normal.
-  if (request.url === strippedRequestURL) {
-    return cache.match(request, matchOptions);
-  }
-  // Otherwise, match by comparing keys
-  const keysOptions = Object.assign(Object.assign({}, matchOptions), {
-    ignoreSearch: true
-  });
-  const cacheKeys = await cache.keys(request, keysOptions);
-  for (const cacheKey of cacheKeys) {
-    const strippedCacheKeyURL = stripParams(cacheKey.url, ignoreParams);
-    if (strippedRequestURL === strippedCacheKeyURL) {
-      return cache.match(cacheKey, matchOptions);
-    }
-  }
-  return;
-}
-
-/*
-  Copyright 2018 Google LLC
-
-  Use of this source code is governed by an MIT-style
-  license that can be found in the LICENSE file or at
-  https://opensource.org/licenses/MIT.
-*/
-/**
- * The Deferred class composes Promises in a way that allows for them to be
- * resolved or rejected from outside the constructor. In most cases promises
- * should be used directly, but Deferreds can be necessary when the logic to
- * resolve a promise must be separate.
- *
- * @private
- */
-class Deferred {
-  /**
-   * Creates a promise and exposes its resolve and reject functions as methods.
-   */
-  constructor() {
-    this.promise = new Promise((resolve, reject) => {
-      this.resolve = resolve;
-      this.reject = reject;
-    });
-  }
-}
-
-/*
-  Copyright 2018 Google LLC
-
-  Use of this source code is governed by an MIT-style
-  license that can be found in the LICENSE file or at
-  https://opensource.org/licenses/MIT.
-*/
-// Callbacks to be executed whenever there's a quota error.
-// Can't change Function type right now.
-// eslint-disable-next-line @typescript-eslint/ban-types
-const quotaErrorCallbacks = new Set();
-
-/*
-  Copyright 2018 Google LLC
-
-  Use of this source code is governed by an MIT-style
-  license that can be found in the LICENSE file or at
-  https://opensource.org/licenses/MIT.
-*/
-/**
- * Runs all of the callback functions, one at a time sequentially, in the order
- * in which they were registered.
- *
- * @memberof workbox-core
- * @private
- */
-async function executeQuotaErrorCallbacks() {
-  {
-    logger.log(`About to run ${quotaErrorCallbacks.size} ` + `callbacks to clean up caches.`);
-  }
-  for (const callback of quotaErrorCallbacks) {
-    await callback();
-    {
-      logger.log(callback, 'is complete.');
-    }
-  }
-  {
-    logger.log('Finished running callbacks.');
-  }
-}
-
-// @ts-ignore
-try {
-  self['workbox:strategies:7.2.0'] && _();
-} catch (e) {}
-
-/*
-  Copyright 2020 Google LLC
-
-  Use of this source code is governed by an MIT-style
-  license that can be found in the LICENSE file or at
-  https://opensource.org/licenses/MIT.
-*/
-function toRequest(input) {
-  return typeof input === 'string' ? new Request(input) : input;
-}
-/**
- * A class created every time a Strategy instance instance calls
- * {@link workbox-strategies.Strategy~handle} or
- * {@link workbox-strategies.Strategy~handleAll} that wraps all fetch and
- * cache actions around plugin callbacks and keeps track of when the strategy
- * is "done" (i.e. all added `event.waitUntil()` promises have resolved).
- *
- * @memberof workbox-strategies
- */
-class StrategyHandler {
-  /**
-   * Creates a new instance associated with the passed strategy and event
-   * that's handling the request.
-   *
-   * The constructor also initializes the state that will be passed to each of
-   * the plugins handling this request.
-   *
-   * @param {workbox-strategies.Strategy} strategy
-   * @param {Object} options
-   * @param {Request|string} options.request A request to run this strategy for.
-   * @param {ExtendableEvent} options.event The event associated with the
-   *     request.
-   * @param {URL} [options.url]
-   * @param {*} [options.params] The return value from the
-   *     {@link workbox-routing~matchCallback} (if applicable).
-   */
-  constructor(strategy, options) {
-    this._cacheKeys = {};
-    /**
-     * The request the strategy is performing (passed to the strategy's
-     * `handle()` or `handleAll()` method).
-     * @name request
-     * @instance
-     * @type {Request}
-     * @memberof workbox-strategies.StrategyHandler
-     */
-    /**
-     * The event associated with this request.
-     * @name event
-     * @instance
-     * @type {ExtendableEvent}
-     * @memberof workbox-strategies.StrategyHandler
-     */
-    /**
-     * A `URL` instance of `request.url` (if passed to the strategy's
-     * `handle()` or `handleAll()` method).
-     * Note: the `url` param will be present if the strategy was invoked
-     * from a workbox `Route` object.
-     * @name url
-     * @instance
-     * @type {URL|undefined}
-     * @memberof workbox-strategies.StrategyHandler
-     */
-    /**
-     * A `param` value (if passed to the strategy's
-     * `handle()` or `handleAll()` method).
-     * Note: the `param` param will be present if the strategy was invoked
-     * from a workbox `Route` object and the
-     * {@link workbox-routing~matchCallback} returned
-     * a truthy value (it will be that value).
-     * @name params
-     * @instance
-     * @type {*|undefined}
-     * @memberof workbox-strategies.StrategyHandler
-     */
-    {
-      finalAssertExports.isInstance(options.event, ExtendableEvent, {
-        moduleName: 'workbox-strategies',
-        className: 'StrategyHandler',
-        funcName: 'constructor',
-        paramName: 'options.event'
-      });
-    }
-    Object.assign(this, options);
-    this.event = options.event;
-    this._strategy = strategy;
-    this._handlerDeferred = new Deferred();
-    this._extendLifetimePromises = [];
-    // Copy the plugins list (since it's mutable on the strategy),
-    // so any mutations don't affect this handler instance.
-    this._plugins = [...strategy.plugins];
-    this._pluginStateMap = new Map();
-    for (const plugin of this._plugins) {
-      this._pluginStateMap.set(plugin, {});
-    }
-    this.event.waitUntil(this._handlerDeferred.promise);
-  }
-  /**
-   * Fetches a given request (and invokes any applicable plugin callback
-   * methods) using the `fetchOptions` (for non-navigation requests) and
-   * `plugins` defined on the `Strategy` object.
-   *
-   * The following plugin lifecycle methods are invoked when using this method:
-   * - `requestWillFetch()`
-   * - `fetchDidSucceed()`
-   * - `fetchDidFail()`
-   *
-   * @param {Request|string} input The URL or request to fetch.
-   * @return {Promise<Response>}
-   */
-  async fetch(input) {
-    const {
-      event
-    } = this;
-    let request = toRequest(input);
-    if (request.mode === 'navigate' && event instanceof FetchEvent && event.preloadResponse) {
-      const possiblePreloadResponse = await event.preloadResponse;
-      if (possiblePreloadResponse) {
-        {
-          logger.log(`Using a preloaded navigation response for ` + `'${getFriendlyURL(request.url)}'`);
-        }
-        return possiblePreloadResponse;
-      }
-    }
-    // If there is a fetchDidFail plugin, we need to save a clone of the
-    // original request before it's either modified by a requestWillFetch
-    // plugin or before the original request's body is consumed via fetch().
-    const originalRequest = this.hasCallback('fetchDidFail') ? request.clone() : null;
-    try {
-      for (const cb of this.iterateCallbacks('requestWillFetch')) {
-        request = await cb({
-          request: request.clone(),
-          event
-        });
-      }
-    } catch (err) {
-      if (err instanceof Error) {
-        throw new WorkboxError('plugin-error-request-will-fetch', {
-          thrownErrorMessage: err.message
-        });
-      }
-    }
-    // The request can be altered by plugins with `requestWillFetch` making
-    // the original request (most likely from a `fetch` event) different
-    // from the Request we make. Pass both to `fetchDidFail` to aid debugging.
-    const pluginFilteredRequest = request.clone();
-    try {
-      let fetchResponse;
-      // See https://github.com/GoogleChrome/workbox/issues/1796
-      fetchResponse = await fetch(request, request.mode === 'navigate' ? undefined : this._strategy.fetchOptions);
-      if ("development" !== 'production') {
-        logger.debug(`Network request for ` + `'${getFriendlyURL(request.url)}' returned a response with ` + `status '${fetchResponse.status}'.`);
-      }
-      for (const callback of this.iterateCallbacks('fetchDidSucceed')) {
-        fetchResponse = await callback({
-          event,
-          request: pluginFilteredRequest,
-          response: fetchResponse
-        });
-      }
-      return fetchResponse;
-    } catch (error) {
-      {
-        logger.log(`Network request for ` + `'${getFriendlyURL(request.url)}' threw an error.`, error);
-      }
-      // `originalRequest` will only exist if a `fetchDidFail` callback
-      // is being used (see above).
-      if (originalRequest) {
-        await this.runCallbacks('fetchDidFail', {
-          error: error,
-          event,
-          originalRequest: originalRequest.clone(),
-          request: pluginFilteredRequest.clone()
-        });
-      }
-      throw error;
-    }
-  }
-  /**
-   * Calls `this.fetch()` and (in the background) runs `this.cachePut()` on
-   * the response generated by `this.fetch()`.
-   *
-   * The call to `this.cachePut()` automatically invokes `this.waitUntil()`,
-   * so you do not have to manually call `waitUntil()` on the event.
-   *
-   * @param {Request|string} input The request or URL to fetch and cache.
-   * @return {Promise<Response>}
-   */
-  async fetchAndCachePut(input) {
-    const response = await this.fetch(input);
-    const responseClone = response.clone();
-    void this.waitUntil(this.cachePut(input, responseClone));
-    return response;
-  }
-  /**
-   * Matches a request from the cache (and invokes any applicable plugin
-   * callback methods) using the `cacheName`, `matchOptions`, and `plugins`
-   * defined on the strategy object.
-   *
-   * The following plugin lifecycle methods are invoked when using this method:
-   * - cacheKeyWillBeUsed()
-   * - cachedResponseWillBeUsed()
-   *
-   * @param {Request|string} key The Request or URL to use as the cache key.
-   * @return {Promise<Response|undefined>} A matching response, if found.
-   */
-  async cacheMatch(key) {
-    const request = toRequest(key);
-    let cachedResponse;
-    const {
-      cacheName,
-      matchOptions
-    } = this._strategy;
-    const effectiveRequest = await this.getCacheKey(request, 'read');
-    const multiMatchOptions = Object.assign(Object.assign({}, matchOptions), {
-      cacheName
-    });
-    cachedResponse = await caches.match(effectiveRequest, multiMatchOptions);
-    {
-      if (cachedResponse) {
-        logger.debug(`Found a cached response in '${cacheName}'.`);
-      } else {
-        logger.debug(`No cached response found in '${cacheName}'.`);
-      }
-    }
-    for (const callback of this.iterateCallbacks('cachedResponseWillBeUsed')) {
-      cachedResponse = (await callback({
-        cacheName,
-        matchOptions,
-        cachedResponse,
-        request: effectiveRequest,
-        event: this.event
-      })) || undefined;
-    }
-    return cachedResponse;
-  }
-  /**
-   * Puts a request/response pair in the cache (and invokes any applicable
-   * plugin callback methods) using the `cacheName` and `plugins` defined on
-   * the strategy object.
-   *
-   * The following plugin lifecycle methods are invoked when using this method:
-   * - cacheKeyWillBeUsed()
-   * - cacheWillUpdate()
-   * - cacheDidUpdate()
-   *
-   * @param {Request|string} key The request or URL to use as the cache key.
-   * @param {Response} response The response to cache.
-   * @return {Promise<boolean>} `false` if a cacheWillUpdate caused the response
-   * not be cached, and `true` otherwise.
-   */
-  async cachePut(key, response) {
-    const request = toRequest(key);
-    // Run in the next task to avoid blocking other cache reads.
-    // https://github.com/w3c/ServiceWorker/issues/1397
-    await timeout(0);
-    const effectiveRequest = await this.getCacheKey(request, 'write');
-    {
-      if (effectiveRequest.method && effectiveRequest.method !== 'GET') {
-        throw new WorkboxError('attempt-to-cache-non-get-request', {
-          url: getFriendlyURL(effectiveRequest.url),
-          method: effectiveRequest.method
-        });
-      }
-      // See https://github.com/GoogleChrome/workbox/issues/2818
-      const vary = response.headers.get('Vary');
-      if (vary) {
-        logger.debug(`The response for ${getFriendlyURL(effectiveRequest.url)} ` + `has a 'Vary: ${vary}' header. ` + `Consider setting the {ignoreVary: true} option on your strategy ` + `to ensure cache matching and deletion works as expected.`);
-      }
-    }
-    if (!response) {
-      {
-        logger.error(`Cannot cache non-existent response for ` + `'${getFriendlyURL(effectiveRequest.url)}'.`);
-      }
-      throw new WorkboxError('cache-put-with-no-response', {
-        url: getFriendlyURL(effectiveRequest.url)
-      });
-    }
-    const responseToCache = await this._ensureResponseSafeToCache(response);
-    if (!responseToCache) {
-      {
-        logger.debug(`Response '${getFriendlyURL(effectiveRequest.url)}' ` + `will not be cached.`, responseToCache);
-      }
-      return false;
-    }
-    const {
-      cacheName,
-      matchOptions
-    } = this._strategy;
-    const cache = await self.caches.open(cacheName);
-    const hasCacheUpdateCallback = this.hasCallback('cacheDidUpdate');
-    const oldResponse = hasCacheUpdateCallback ? await cacheMatchIgnoreParams(
-    // TODO(philipwalton): the `__WB_REVISION__` param is a precaching
-    // feature. Consider into ways to only add this behavior if using
-    // precaching.
-    cache, effectiveRequest.clone(), ['__WB_REVISION__'], matchOptions) : null;
-    {
-      logger.debug(`Updating the '${cacheName}' cache with a new Response ` + `for ${getFriendlyURL(effectiveRequest.url)}.`);
-    }
-    try {
-      await cache.put(effectiveRequest, hasCacheUpdateCallback ? responseToCache.clone() : responseToCache);
-    } catch (error) {
-      if (error instanceof Error) {
-        // See https://developer.mozilla.org/en-US/docs/Web/API/DOMException#exception-QuotaExceededError
-        if (error.name === 'QuotaExceededError') {
-          await executeQuotaErrorCallbacks();
-        }
-        throw error;
-      }
-    }
-    for (const callback of this.iterateCallbacks('cacheDidUpdate')) {
-      await callback({
-        cacheName,
-        oldResponse,
-        newResponse: responseToCache.clone(),
-        request: effectiveRequest,
-        event: this.event
-      });
-    }
-    return true;
-  }
-  /**
-   * Checks the list of plugins for the `cacheKeyWillBeUsed` callback, and
-   * executes any of those callbacks found in sequence. The final `Request`
-   * object returned by the last plugin is treated as the cache key for cache
-   * reads and/or writes. If no `cacheKeyWillBeUsed` plugin callbacks have
-   * been registered, the passed request is returned unmodified
-   *
-   * @param {Request} request
-   * @param {string} mode
-   * @return {Promise<Request>}
-   */
-  async getCacheKey(request, mode) {
-    const key = `${request.url} | ${mode}`;
-    if (!this._cacheKeys[key]) {
-      let effectiveRequest = request;
-      for (const callback of this.iterateCallbacks('cacheKeyWillBeUsed')) {
-        effectiveRequest = toRequest(await callback({
-          mode,
-          request: effectiveRequest,
-          event: this.event,
-          // params has a type any can't change right now.
-          params: this.params // eslint-disable-line
-        }));
-      }
-      this._cacheKeys[key] = effectiveRequest;
-    }
-    return this._cacheKeys[key];
-  }
-  /**
-   * Returns true if the strategy has at least one plugin with the given
-   * callback.
-   *
-   * @param {string} name The name of the callback to check for.
-   * @return {boolean}
-   */
-  hasCallback(name) {
-    for (const plugin of this._strategy.plugins) {
-      if (name in plugin) {
-        return true;
-      }
-    }
-    return false;
-  }
-  /**
-   * Runs all plugin callbacks matching the given name, in order, passing the
-   * given param object (merged ith the current plugin state) as the only
-   * argument.
-   *
-   * Note: since this method runs all plugins, it's not suitable for cases
-   * where the return value of a callback needs to be applied prior to calling
-   * the next callback. See
-   * {@link workbox-strategies.StrategyHandler#iterateCallbacks}
-   * below for how to handle that case.
-   *
-   * @param {string} name The name of the callback to run within each plugin.
-   * @param {Object} param The object to pass as the first (and only) param
-   *     when executing each callback. This object will be merged with the
-   *     current plugin state prior to callback execution.
-   */
-  async runCallbacks(name, param) {
-    for (const callback of this.iterateCallbacks(name)) {
-      // TODO(philipwalton): not sure why `any` is needed. It seems like
-      // this should work with `as WorkboxPluginCallbackParam[C]`.
-      await callback(param);
-    }
-  }
-  /**
-   * Accepts a callback and returns an iterable of matching plugin callbacks,
-   * where each callback is wrapped with the current handler state (i.e. when
-   * you call each callback, whatever object parameter you pass it will
-   * be merged with the plugin's current state).
-   *
-   * @param {string} name The name fo the callback to run
-   * @return {Array<Function>}
-   */
-  *iterateCallbacks(name) {
-    for (const plugin of this._strategy.plugins) {
-      if (typeof plugin[name] === 'function') {
-        const state = this._pluginStateMap.get(plugin);
-        const statefulCallback = param => {
-          const statefulParam = Object.assign(Object.assign({}, param), {
-            state
-          });
-          // TODO(philipwalton): not sure why `any` is needed. It seems like
-          // this should work with `as WorkboxPluginCallbackParam[C]`.
-          return plugin[name](statefulParam);
-        };
-        yield statefulCallback;
-      }
-    }
-  }
-  /**
-   * Adds a promise to the
-   * [extend lifetime promises]{@link https://w3c.github.io/ServiceWorker/#extendableevent-extend-lifetime-promises}
-   * of the event event associated with the request being handled (usually a
-   * `FetchEvent`).
-   *
-   * Note: you can await
-   * {@link workbox-strategies.StrategyHandler~doneWaiting}
-   * to know when all added promises have settled.
-   *
-   * @param {Promise} promise A promise to add to the extend lifetime promises
-   *     of the event that triggered the request.
-   */
-  waitUntil(promise) {
-    this._extendLifetimePromises.push(promise);
-    return promise;
-  }
-  /**
-   * Returns a promise that resolves once all promises passed to
-   * {@link workbox-strategies.StrategyHandler~waitUntil}
-   * have settled.
-   *
-   * Note: any work done after `doneWaiting()` settles should be manually
-   * passed to an event's `waitUntil()` method (not this handler's
-   * `waitUntil()` method), otherwise the service worker thread my be killed
-   * prior to your work completing.
-   */
-  async doneWaiting() {
-    let promise;
-    while (promise = this._extendLifetimePromises.shift()) {
-      await promise;
-    }
-  }
-  /**
-   * Stops running the strategy and immediately resolves any pending
-   * `waitUntil()` promises.
-   */
-  destroy() {
-    this._handlerDeferred.resolve(null);
-  }
-  /**
-   * This method will call cacheWillUpdate on the available plugins (or use
-   * status === 200) to determine if the Response is safe and valid to cache.
-   *
-   * @param {Request} options.request
-   * @param {Response} options.response
-   * @return {Promise<Response|undefined>}
-   *
-   * @private
-   */
-  async _ensureResponseSafeToCache(response) {
-    let responseToCache = response;
-    let pluginsUsed = false;
-    for (const callback of this.iterateCallbacks('cacheWillUpdate')) {
-      responseToCache = (await callback({
-        request: this.request,
-        response: responseToCache,
-        event: this.event
-      })) || undefined;
-      pluginsUsed = true;
-      if (!responseToCache) {
-        break;
-      }
-    }
-    if (!pluginsUsed) {
-      if (responseToCache && responseToCache.status !== 200) {
-        responseToCache = undefined;
-      }
-      {
-        if (responseToCache) {
-          if (responseToCache.status !== 200) {
-            if (responseToCache.status === 0) {
-              logger.warn(`The response for '${this.request.url}' ` + `is an opaque response. The caching strategy that you're ` + `using will not cache opaque responses by default.`);
-            } else {
-              logger.debug(`The response for '${this.request.url}' ` + `returned a status code of '${response.status}' and won't ` + `be cached as a result.`);
-            }
-          }
-        }
-      }
-    }
-    return responseToCache;
-  }
-}
-
-/*
-  Copyright 2020 Google LLC
-
-  Use of this source code is governed by an MIT-style
-  license that can be found in the LICENSE file or at
-  https://opensource.org/licenses/MIT.
-*/
-/**
- * An abstract base class that all other strategy classes must extend from:
- *
- * @memberof workbox-strategies
- */
-class Strategy {
-  /**
-   * Creates a new instance of the strategy and sets all documented option
-   * properties as public instance properties.
-   *
-   * Note: if a custom strategy class extends the base Strategy class and does
-   * not need more than these properties, it does not need to define its own
-   * constructor.
-   *
-   * @param {Object} [options]
-   * @param {string} [options.cacheName] Cache name to store and retrieve
-   * requests. Defaults to the cache names provided by
-   * {@link workbox-core.cacheNames}.
-   * @param {Array<Object>} [options.plugins] [Plugins]{@link https://developers.google.com/web/tools/workbox/guides/using-plugins}
-   * to use in conjunction with this caching strategy.
-   * @param {Object} [options.fetchOptions] Values passed along to the
-   * [`init`](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch#Parameters)
-   * of [non-navigation](https://github.com/GoogleChrome/workbox/issues/1796)
-   * `fetch()` requests made by this strategy.
-   * @param {Object} [options.matchOptions] The
-   * [`CacheQueryOptions`]{@link https://w3c.github.io/ServiceWorker/#dictdef-cachequeryoptions}
-   * for any `cache.match()` or `cache.put()` calls made by this strategy.
-   */
-  constructor(options = {}) {
-    /**
-     * Cache name to store and retrieve
-     * requests. Defaults to the cache names provided by
-     * {@link workbox-core.cacheNames}.
-     *
-     * @type {string}
-     */
-    this.cacheName = cacheNames.getRuntimeName(options.cacheName);
-    /**
-     * The list
-     * [Plugins]{@link https://developers.google.com/web/tools/workbox/guides/using-plugins}
-     * used by this strategy.
-     *
-     * @type {Array<Object>}
-     */
-    this.plugins = options.plugins || [];
-    /**
-     * Values passed along to the
-     * [`init`]{@link https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch#Parameters}
-     * of all fetch() requests made by this strategy.
-     *
-     * @type {Object}
-     */
-    this.fetchOptions = options.fetchOptions;
-    /**
-     * The
-     * [`CacheQueryOptions`]{@link https://w3c.github.io/ServiceWorker/#dictdef-cachequeryoptions}
-     * for any `cache.match()` or `cache.put()` calls made by this strategy.
-     *
-     * @type {Object}
-     */
-    this.matchOptions = options.matchOptions;
-  }
-  /**
-   * Perform a request strategy and returns a `Promise` that will resolve with
-   * a `Response`, invoking all relevant plugin callbacks.
-   *
-   * When a strategy instance is registered with a Workbox
-   * {@link workbox-routing.Route}, this method is automatically
-   * called when the route matches.
-   *
-   * Alternatively, this method can be used in a standalone `FetchEvent`
-   * listener by passing it to `event.respondWith()`.
-   *
-   * @param {FetchEvent|Object} options A `FetchEvent` or an object with the
-   *     properties listed below.
-   * @param {Request|string} options.request A request to run this strategy for.
-   * @param {ExtendableEvent} options.event The event associated with the
-   *     request.
-   * @param {URL} [options.url]
-   * @param {*} [options.params]
-   */
-  handle(options) {
-    const [responseDone] = this.handleAll(options);
-    return responseDone;
-  }
-  /**
-   * Similar to {@link workbox-strategies.Strategy~handle}, but
-   * instead of just returning a `Promise` that resolves to a `Response` it
-   * it will return an tuple of `[response, done]` promises, where the former
-   * (`response`) is equivalent to what `handle()` returns, and the latter is a
-   * Promise that will resolve once any promises that were added to
-   * `event.waitUntil()` as part of performing the strategy have completed.
-   *
-   * You can await the `done` promise to ensure any extra work performed by
-   * the strategy (usually caching responses) completes successfully.
-   *
-   * @param {FetchEvent|Object} options A `FetchEvent` or an object with the
-   *     properties listed below.
-   * @param {Request|string} options.request A request to run this strategy for.
-   * @param {ExtendableEvent} options.event The event associated with the
-   *     request.
-   * @param {URL} [options.url]
-   * @param {*} [options.params]
-   * @return {Array<Promise>} A tuple of [response, done]
-   *     promises that can be used to determine when the response resolves as
-   *     well as when the handler has completed all its work.
-   */
-  handleAll(options) {
-    // Allow for flexible options to be passed.
-    if (options instanceof FetchEvent) {
-      options = {
-        event: options,
-        request: options.request
-      };
-    }
-    const event = options.event;
-    const request = typeof options.request === 'string' ? new Request(options.request) : options.request;
-    const params = 'params' in options ? options.params : undefined;
-    const handler = new StrategyHandler(this, {
-      event,
-      request,
-      params
-    });
-    const responseDone = this._getResponse(handler, request, event);
-    const handlerDone = this._awaitComplete(responseDone, handler, request, event);
-    // Return an array of promises, suitable for use with Promise.all().
-    return [responseDone, handlerDone];
-  }
-  async _getResponse(handler, request, event) {
-    await handler.runCallbacks('handlerWillStart', {
-      event,
-      request
-    });
-    let response = undefined;
-    try {
-      response = await this._handle(request, handler);
-      // The "official" Strategy subclasses all throw this error automatically,
-      // but in case a third-party Strategy doesn't, ensure that we have a
-      // consistent failure when there's no response or an error response.
-      if (!response || response.type === 'error') {
-        throw new WorkboxError('no-response', {
-          url: request.url
-        });
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        for (const callback of handler.iterateCallbacks('handlerDidError')) {
-          response = await callback({
-            error,
-            event,
-            request
-          });
-          if (response) {
-            break;
-          }
-        }
-      }
-      if (!response) {
-        throw error;
-      } else {
-        logger.log(`While responding to '${getFriendlyURL(request.url)}', ` + `an ${error instanceof Error ? error.toString() : ''} error occurred. Using a fallback response provided by ` + `a handlerDidError plugin.`);
-      }
-    }
-    for (const callback of handler.iterateCallbacks('handlerWillRespond')) {
-      response = await callback({
-        event,
-        request,
-        response
-      });
-    }
-    return response;
-  }
-  async _awaitComplete(responseDone, handler, request, event) {
-    let response;
-    let error;
-    try {
-      response = await responseDone;
-    } catch (error) {
-      // Ignore errors, as response errors should be caught via the `response`
-      // promise above. The `done` promise will only throw for errors in
-      // promises passed to `handler.waitUntil()`.
-    }
-    try {
-      await handler.runCallbacks('handlerDidRespond', {
-        event,
-        request,
-        response
-      });
-      await handler.doneWaiting();
-    } catch (waitUntilError) {
-      if (waitUntilError instanceof Error) {
-        error = waitUntilError;
-      }
-    }
-    await handler.runCallbacks('handlerDidComplete', {
-      event,
-      request,
-      response,
-      error: error
-    });
-    handler.destroy();
-    if (error) {
-      throw error;
-    }
-  }
-}
-/**
- * Classes extending the `Strategy` based class should implement this method,
- * and leverage the {@link workbox-strategies.StrategyHandler}
- * arg to perform all fetching and cache logic, which will ensure all relevant
- * cache, cache options, fetch options and plugins are used (per the current
- * strategy instance).
- *
- * @name _handle
- * @instance
- * @abstract
- * @function
- * @param {Request} request
- * @param {workbox-strategies.StrategyHandler} handler
- * @return {Promise<Response>}
- *
- * @memberof workbox-strategies.Strategy
- */
-
-/*
-  Copyright 2018 Google LLC
-
-  Use of this source code is governed by an MIT-style
-  license that can be found in the LICENSE file or at
-  https://opensource.org/licenses/MIT.
-*/
-const messages = {
-  strategyStart: (strategyName, request) => `Using ${strategyName} to respond to '${getFriendlyURL(request.url)}'`,
-  printFinalResponse: response => {
-    if (response) {
-      logger.groupCollapsed(`View the final response here.`);
-      logger.log(response || '[No response returned]');
-      logger.groupEnd();
-    }
-  }
-};
-
-/*
-  Copyright 2018 Google LLC
-
-  Use of this source code is governed by an MIT-style
-  license that can be found in the LICENSE file or at
-  https://opensource.org/licenses/MIT.
-*/
-/**
- * An implementation of a
- * [network-only](https://developer.chrome.com/docs/workbox/caching-strategies-overview/#network-only)
- * request strategy.
- *
- * This class is useful if you want to take advantage of any
- * [Workbox plugins](https://developer.chrome.com/docs/workbox/using-plugins/).
- *
- * If the network request fails, this will throw a `WorkboxError` exception.
- *
- * @extends workbox-strategies.Strategy
- * @memberof workbox-strategies
- */
-class NetworkOnly extends Strategy {
-  /**
-   * @param {Object} [options]
-   * @param {Array<Object>} [options.plugins] [Plugins]{@link https://developers.google.com/web/tools/workbox/guides/using-plugins}
-   * to use in conjunction with this caching strategy.
-   * @param {Object} [options.fetchOptions] Values passed along to the
-   * [`init`](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch#Parameters)
-   * of [non-navigation](https://github.com/GoogleChrome/workbox/issues/1796)
-   * `fetch()` requests made by this strategy.
-   * @param {number} [options.networkTimeoutSeconds] If set, any network requests
-   * that fail to respond within the timeout will result in a network error.
-   */
-  constructor(options = {}) {
-    super(options);
-    this._networkTimeoutSeconds = options.networkTimeoutSeconds || 0;
-  }
-  /**
-   * @private
-   * @param {Request|string} request A request to run this strategy for.
-   * @param {workbox-strategies.StrategyHandler} handler The event that
-   *     triggered the request.
-   * @return {Promise<Response>}
-   */
-  async _handle(request, handler) {
-    {
-      finalAssertExports.isInstance(request, Request, {
-        moduleName: 'workbox-strategies',
-        className: this.constructor.name,
-        funcName: '_handle',
-        paramName: 'request'
-      });
-    }
-    let error = undefined;
-    let response;
-    try {
-      const promises = [handler.fetch(request)];
-      if (this._networkTimeoutSeconds) {
-        const timeoutPromise = timeout(this._networkTimeoutSeconds * 1000);
-        promises.push(timeoutPromise);
-      }
-      response = await Promise.race(promises);
-      if (!response) {
-        throw new Error(`Timed out the network response after ` + `${this._networkTimeoutSeconds} seconds.`);
-      }
-    } catch (err) {
-      if (err instanceof Error) {
-        error = err;
-      }
-    }
-    {
-      logger.groupCollapsed(messages.strategyStart(this.constructor.name, request));
-      if (response) {
-        logger.log(`Got response from network.`);
-      } else {
-        logger.log(`Unable to get a response from the network.`);
-      }
-      messages.printFinalResponse(response);
-      logger.groupEnd();
-    }
-    if (!response) {
-      throw new WorkboxError('no-response', {
-        url: request.url,
-        error
-      });
-    }
-    return response;
-  }
-}
-
-/*
-  Copyright 2018 Google LLC
-
-  Use of this source code is governed by an MIT-style
-  license that can be found in the LICENSE file or at
-  https://opensource.org/licenses/MIT.
-*/
-const cacheOkAndOpaquePlugin = {
-  /**
-   * Returns a valid response (to allow caching) if the status is 200 (OK) or
-   * 0 (opaque).
-   *
-   * @param {Object} options
-   * @param {Response} options.response
-   * @return {Response|null}
-   *
-   * @private
-   */
-  cacheWillUpdate: async ({
-    response
-  }) => {
-    if (response.status === 200 || response.status === 0) {
-      return response;
-    }
-    return null;
-  }
-};
-
-/*
-  Copyright 2018 Google LLC
-
-  Use of this source code is governed by an MIT-style
-  license that can be found in the LICENSE file or at
-  https://opensource.org/licenses/MIT.
-*/
-/**
- * An implementation of a
- * [stale-while-revalidate](https://developer.chrome.com/docs/workbox/caching-strategies-overview/#stale-while-revalidate)
- * request strategy.
- *
- * Resources are requested from both the cache and the network in parallel.
- * The strategy will respond with the cached version if available, otherwise
- * wait for the network response. The cache is updated with the network response
- * with each successful request.
- *
- * By default, this strategy will cache responses with a 200 status code as
- * well as [opaque responses](https://developer.chrome.com/docs/workbox/caching-resources-during-runtime/#opaque-responses).
- * Opaque responses are cross-origin requests where the response doesn't
- * support [CORS](https://enable-cors.org/).
- *
- * If the network request fails, and there is no cache match, this will throw
- * a `WorkboxError` exception.
- *
- * @extends workbox-strategies.Strategy
- * @memberof workbox-strategies
- */
-class StaleWhileRevalidate extends Strategy {
-  /**
-   * @param {Object} [options]
-   * @param {string} [options.cacheName] Cache name to store and retrieve
-   * requests. Defaults to cache names provided by
-   * {@link workbox-core.cacheNames}.
-   * @param {Array<Object>} [options.plugins] [Plugins]{@link https://developers.google.com/web/tools/workbox/guides/using-plugins}
-   * to use in conjunction with this caching strategy.
-   * @param {Object} [options.fetchOptions] Values passed along to the
-   * [`init`](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch#Parameters)
-   * of [non-navigation](https://github.com/GoogleChrome/workbox/issues/1796)
-   * `fetch()` requests made by this strategy.
-   * @param {Object} [options.matchOptions] [`CacheQueryOptions`](https://w3c.github.io/ServiceWorker/#dictdef-cachequeryoptions)
-   */
-  constructor(options = {}) {
-    super(options);
-    // If this instance contains no plugins with a 'cacheWillUpdate' callback,
-    // prepend the `cacheOkAndOpaquePlugin` plugin to the plugins list.
-    if (!this.plugins.some(p => 'cacheWillUpdate' in p)) {
-      this.plugins.unshift(cacheOkAndOpaquePlugin);
-    }
-  }
-  /**
-   * @private
-   * @param {Request|string} request A request to run this strategy for.
-   * @param {workbox-strategies.StrategyHandler} handler The event that
-   *     triggered the request.
-   * @return {Promise<Response>}
-   */
-  async _handle(request, handler) {
-    const logs = [];
-    {
-      finalAssertExports.isInstance(request, Request, {
-        moduleName: 'workbox-strategies',
-        className: this.constructor.name,
-        funcName: 'handle',
-        paramName: 'request'
-      });
-    }
-    const fetchAndCachePromise = handler.fetchAndCachePut(request).catch(() => {
-      // Swallow this error because a 'no-response' error will be thrown in
-      // main handler return flow. This will be in the `waitUntil()` flow.
-    });
-    void handler.waitUntil(fetchAndCachePromise);
-    let response = await handler.cacheMatch(request);
-    let error;
-    if (response) {
-      {
-        logs.push(`Found a cached response in the '${this.cacheName}'` + ` cache. Will update with the network response in the background.`);
-      }
-    } else {
-      {
-        logs.push(`No response found in the '${this.cacheName}' cache. ` + `Will wait for the network response.`);
-      }
-      try {
-        // NOTE(philipwalton): Really annoying that we have to type cast here.
-        // https://github.com/microsoft/TypeScript/issues/20006
-        response = await fetchAndCachePromise;
-      } catch (err) {
-        if (err instanceof Error) {
-          error = err;
-        }
-      }
-    }
-    {
-      logger.groupCollapsed(messages.strategyStart(this.constructor.name, request));
-      for (const log of logs) {
-        logger.log(log);
-      }
-      messages.printFinalResponse(response);
-      logger.groupEnd();
-    }
-    if (!response) {
-      throw new WorkboxError('no-response', {
-        url: request.url,
-        error
-      });
-    }
-    return response;
-  }
-}
-
-/*
   Copyright 2019 Google LLC
   Use of this source code is governed by an MIT-style
   license that can be found in the LICENSE file or at
@@ -2350,6 +1242,18 @@ function dontWaitFor(promise) {
   // Effective no-op.
   void promise.then(() => {});
 }
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+// Callbacks to be executed whenever there's a quota error.
+// Can't change Function type right now.
+// eslint-disable-next-line @typescript-eslint/ban-types
+const quotaErrorCallbacks = new Set();
 
 /*
   Copyright 2019 Google LLC
@@ -3393,6 +2297,84 @@ class CacheableResponsePlugin {
   }
 }
 
+// @ts-ignore
+try {
+  self['workbox:strategies:7.2.0'] && _();
+} catch (e) {}
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+const cacheOkAndOpaquePlugin = {
+  /**
+   * Returns a valid response (to allow caching) if the status is 200 (OK) or
+   * 0 (opaque).
+   *
+   * @param {Object} options
+   * @param {Response} options.response
+   * @return {Response|null}
+   *
+   * @private
+   */
+  cacheWillUpdate: async ({
+    response
+  }) => {
+    if (response.status === 200 || response.status === 0) {
+      return response;
+    }
+    return null;
+  }
+};
+
+/*
+  Copyright 2020 Google LLC
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+function stripParams(fullURL, ignoreParams) {
+  const strippedURL = new URL(fullURL);
+  for (const param of ignoreParams) {
+    strippedURL.searchParams.delete(param);
+  }
+  return strippedURL.href;
+}
+/**
+ * Matches an item in the cache, ignoring specific URL params. This is similar
+ * to the `ignoreSearch` option, but it allows you to ignore just specific
+ * params (while continuing to match on the others).
+ *
+ * @private
+ * @param {Cache} cache
+ * @param {Request} request
+ * @param {Object} matchOptions
+ * @param {Array<string>} ignoreParams
+ * @return {Promise<Response|undefined>}
+ */
+async function cacheMatchIgnoreParams(cache, request, ignoreParams, matchOptions) {
+  const strippedRequestURL = stripParams(request.url, ignoreParams);
+  // If the request doesn't include any ignored params, match as normal.
+  if (request.url === strippedRequestURL) {
+    return cache.match(request, matchOptions);
+  }
+  // Otherwise, match by comparing keys
+  const keysOptions = Object.assign(Object.assign({}, matchOptions), {
+    ignoreSearch: true
+  });
+  const cacheKeys = await cache.keys(request, keysOptions);
+  for (const cacheKey of cacheKeys) {
+    const strippedCacheKeyURL = stripParams(cacheKey.url, ignoreParams);
+    if (strippedRequestURL === strippedCacheKeyURL) {
+      return cache.match(cacheKey, matchOptions);
+    }
+  }
+  return;
+}
+
 /*
   Copyright 2018 Google LLC
 
@@ -3401,79 +2383,816 @@ class CacheableResponsePlugin {
   https://opensource.org/licenses/MIT.
 */
 /**
- * An implementation of a [cache-first](https://developer.chrome.com/docs/workbox/caching-strategies-overview/#cache-first-falling-back-to-network)
- * request strategy.
+ * The Deferred class composes Promises in a way that allows for them to be
+ * resolved or rejected from outside the constructor. In most cases promises
+ * should be used directly, but Deferreds can be necessary when the logic to
+ * resolve a promise must be separate.
  *
- * A cache first strategy is useful for assets that have been revisioned,
- * such as URLs like `/styles/example.a8f5f1.css`, since they
- * can be cached for long periods of time.
+ * @private
+ */
+class Deferred {
+  /**
+   * Creates a promise and exposes its resolve and reject functions as methods.
+   */
+  constructor() {
+    this.promise = new Promise((resolve, reject) => {
+      this.resolve = resolve;
+      this.reject = reject;
+    });
+  }
+}
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * Runs all of the callback functions, one at a time sequentially, in the order
+ * in which they were registered.
  *
- * If the network request fails, and there is no cache match, this will throw
- * a `WorkboxError` exception.
+ * @memberof workbox-core
+ * @private
+ */
+async function executeQuotaErrorCallbacks() {
+  {
+    logger.log(`About to run ${quotaErrorCallbacks.size} ` + `callbacks to clean up caches.`);
+  }
+  for (const callback of quotaErrorCallbacks) {
+    await callback();
+    {
+      logger.log(callback, 'is complete.');
+    }
+  }
+  {
+    logger.log('Finished running callbacks.');
+  }
+}
+
+/*
+  Copyright 2019 Google LLC
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * Returns a promise that resolves and the passed number of milliseconds.
+ * This utility is an async/await-friendly version of `setTimeout`.
  *
- * @extends workbox-strategies.Strategy
+ * @param {number} ms
+ * @return {Promise}
+ * @private
+ */
+function timeout(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/*
+  Copyright 2020 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+function toRequest(input) {
+  return typeof input === 'string' ? new Request(input) : input;
+}
+/**
+ * A class created every time a Strategy instance instance calls
+ * {@link workbox-strategies.Strategy~handle} or
+ * {@link workbox-strategies.Strategy~handleAll} that wraps all fetch and
+ * cache actions around plugin callbacks and keeps track of when the strategy
+ * is "done" (i.e. all added `event.waitUntil()` promises have resolved).
+ *
  * @memberof workbox-strategies
  */
-class CacheFirst extends Strategy {
+class StrategyHandler {
   /**
-   * @private
-   * @param {Request|string} request A request to run this strategy for.
-   * @param {workbox-strategies.StrategyHandler} handler The event that
-   *     triggered the request.
-   * @return {Promise<Response>}
+   * Creates a new instance associated with the passed strategy and event
+   * that's handling the request.
+   *
+   * The constructor also initializes the state that will be passed to each of
+   * the plugins handling this request.
+   *
+   * @param {workbox-strategies.Strategy} strategy
+   * @param {Object} options
+   * @param {Request|string} options.request A request to run this strategy for.
+   * @param {ExtendableEvent} options.event The event associated with the
+   *     request.
+   * @param {URL} [options.url]
+   * @param {*} [options.params] The return value from the
+   *     {@link workbox-routing~matchCallback} (if applicable).
    */
-  async _handle(request, handler) {
-    const logs = [];
+  constructor(strategy, options) {
+    this._cacheKeys = {};
+    /**
+     * The request the strategy is performing (passed to the strategy's
+     * `handle()` or `handleAll()` method).
+     * @name request
+     * @instance
+     * @type {Request}
+     * @memberof workbox-strategies.StrategyHandler
+     */
+    /**
+     * The event associated with this request.
+     * @name event
+     * @instance
+     * @type {ExtendableEvent}
+     * @memberof workbox-strategies.StrategyHandler
+     */
+    /**
+     * A `URL` instance of `request.url` (if passed to the strategy's
+     * `handle()` or `handleAll()` method).
+     * Note: the `url` param will be present if the strategy was invoked
+     * from a workbox `Route` object.
+     * @name url
+     * @instance
+     * @type {URL|undefined}
+     * @memberof workbox-strategies.StrategyHandler
+     */
+    /**
+     * A `param` value (if passed to the strategy's
+     * `handle()` or `handleAll()` method).
+     * Note: the `param` param will be present if the strategy was invoked
+     * from a workbox `Route` object and the
+     * {@link workbox-routing~matchCallback} returned
+     * a truthy value (it will be that value).
+     * @name params
+     * @instance
+     * @type {*|undefined}
+     * @memberof workbox-strategies.StrategyHandler
+     */
     {
-      finalAssertExports.isInstance(request, Request, {
+      finalAssertExports.isInstance(options.event, ExtendableEvent, {
         moduleName: 'workbox-strategies',
-        className: this.constructor.name,
-        funcName: 'makeRequest',
-        paramName: 'request'
+        className: 'StrategyHandler',
+        funcName: 'constructor',
+        paramName: 'options.event'
       });
     }
-    let response = await handler.cacheMatch(request);
-    let error = undefined;
-    if (!response) {
-      {
-        logs.push(`No response found in the '${this.cacheName}' cache. ` + `Will respond with a network request.`);
-      }
-      try {
-        response = await handler.fetchAndCachePut(request);
-      } catch (err) {
-        if (err instanceof Error) {
-          error = err;
+    Object.assign(this, options);
+    this.event = options.event;
+    this._strategy = strategy;
+    this._handlerDeferred = new Deferred();
+    this._extendLifetimePromises = [];
+    // Copy the plugins list (since it's mutable on the strategy),
+    // so any mutations don't affect this handler instance.
+    this._plugins = [...strategy.plugins];
+    this._pluginStateMap = new Map();
+    for (const plugin of this._plugins) {
+      this._pluginStateMap.set(plugin, {});
+    }
+    this.event.waitUntil(this._handlerDeferred.promise);
+  }
+  /**
+   * Fetches a given request (and invokes any applicable plugin callback
+   * methods) using the `fetchOptions` (for non-navigation requests) and
+   * `plugins` defined on the `Strategy` object.
+   *
+   * The following plugin lifecycle methods are invoked when using this method:
+   * - `requestWillFetch()`
+   * - `fetchDidSucceed()`
+   * - `fetchDidFail()`
+   *
+   * @param {Request|string} input The URL or request to fetch.
+   * @return {Promise<Response>}
+   */
+  async fetch(input) {
+    const {
+      event
+    } = this;
+    let request = toRequest(input);
+    if (request.mode === 'navigate' && event instanceof FetchEvent && event.preloadResponse) {
+      const possiblePreloadResponse = await event.preloadResponse;
+      if (possiblePreloadResponse) {
+        {
+          logger.log(`Using a preloaded navigation response for ` + `'${getFriendlyURL(request.url)}'`);
         }
-      }
-      {
-        if (response) {
-          logs.push(`Got response from network.`);
-        } else {
-          logs.push(`Unable to get a response from the network.`);
-        }
-      }
-    } else {
-      {
-        logs.push(`Found a cached response in the '${this.cacheName}' cache.`);
+        return possiblePreloadResponse;
       }
     }
+    // If there is a fetchDidFail plugin, we need to save a clone of the
+    // original request before it's either modified by a requestWillFetch
+    // plugin or before the original request's body is consumed via fetch().
+    const originalRequest = this.hasCallback('fetchDidFail') ? request.clone() : null;
+    try {
+      for (const cb of this.iterateCallbacks('requestWillFetch')) {
+        request = await cb({
+          request: request.clone(),
+          event
+        });
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        throw new WorkboxError('plugin-error-request-will-fetch', {
+          thrownErrorMessage: err.message
+        });
+      }
+    }
+    // The request can be altered by plugins with `requestWillFetch` making
+    // the original request (most likely from a `fetch` event) different
+    // from the Request we make. Pass both to `fetchDidFail` to aid debugging.
+    const pluginFilteredRequest = request.clone();
+    try {
+      let fetchResponse;
+      // See https://github.com/GoogleChrome/workbox/issues/1796
+      fetchResponse = await fetch(request, request.mode === 'navigate' ? undefined : this._strategy.fetchOptions);
+      if ("development" !== 'production') {
+        logger.debug(`Network request for ` + `'${getFriendlyURL(request.url)}' returned a response with ` + `status '${fetchResponse.status}'.`);
+      }
+      for (const callback of this.iterateCallbacks('fetchDidSucceed')) {
+        fetchResponse = await callback({
+          event,
+          request: pluginFilteredRequest,
+          response: fetchResponse
+        });
+      }
+      return fetchResponse;
+    } catch (error) {
+      {
+        logger.log(`Network request for ` + `'${getFriendlyURL(request.url)}' threw an error.`, error);
+      }
+      // `originalRequest` will only exist if a `fetchDidFail` callback
+      // is being used (see above).
+      if (originalRequest) {
+        await this.runCallbacks('fetchDidFail', {
+          error: error,
+          event,
+          originalRequest: originalRequest.clone(),
+          request: pluginFilteredRequest.clone()
+        });
+      }
+      throw error;
+    }
+  }
+  /**
+   * Calls `this.fetch()` and (in the background) runs `this.cachePut()` on
+   * the response generated by `this.fetch()`.
+   *
+   * The call to `this.cachePut()` automatically invokes `this.waitUntil()`,
+   * so you do not have to manually call `waitUntil()` on the event.
+   *
+   * @param {Request|string} input The request or URL to fetch and cache.
+   * @return {Promise<Response>}
+   */
+  async fetchAndCachePut(input) {
+    const response = await this.fetch(input);
+    const responseClone = response.clone();
+    void this.waitUntil(this.cachePut(input, responseClone));
+    return response;
+  }
+  /**
+   * Matches a request from the cache (and invokes any applicable plugin
+   * callback methods) using the `cacheName`, `matchOptions`, and `plugins`
+   * defined on the strategy object.
+   *
+   * The following plugin lifecycle methods are invoked when using this method:
+   * - cacheKeyWillBeUsed()
+   * - cachedResponseWillBeUsed()
+   *
+   * @param {Request|string} key The Request or URL to use as the cache key.
+   * @return {Promise<Response|undefined>} A matching response, if found.
+   */
+  async cacheMatch(key) {
+    const request = toRequest(key);
+    let cachedResponse;
+    const {
+      cacheName,
+      matchOptions
+    } = this._strategy;
+    const effectiveRequest = await this.getCacheKey(request, 'read');
+    const multiMatchOptions = Object.assign(Object.assign({}, matchOptions), {
+      cacheName
+    });
+    cachedResponse = await caches.match(effectiveRequest, multiMatchOptions);
     {
-      logger.groupCollapsed(messages.strategyStart(this.constructor.name, request));
-      for (const log of logs) {
-        logger.log(log);
+      if (cachedResponse) {
+        logger.debug(`Found a cached response in '${cacheName}'.`);
+      } else {
+        logger.debug(`No cached response found in '${cacheName}'.`);
       }
-      messages.printFinalResponse(response);
-      logger.groupEnd();
+    }
+    for (const callback of this.iterateCallbacks('cachedResponseWillBeUsed')) {
+      cachedResponse = (await callback({
+        cacheName,
+        matchOptions,
+        cachedResponse,
+        request: effectiveRequest,
+        event: this.event
+      })) || undefined;
+    }
+    return cachedResponse;
+  }
+  /**
+   * Puts a request/response pair in the cache (and invokes any applicable
+   * plugin callback methods) using the `cacheName` and `plugins` defined on
+   * the strategy object.
+   *
+   * The following plugin lifecycle methods are invoked when using this method:
+   * - cacheKeyWillBeUsed()
+   * - cacheWillUpdate()
+   * - cacheDidUpdate()
+   *
+   * @param {Request|string} key The request or URL to use as the cache key.
+   * @param {Response} response The response to cache.
+   * @return {Promise<boolean>} `false` if a cacheWillUpdate caused the response
+   * not be cached, and `true` otherwise.
+   */
+  async cachePut(key, response) {
+    const request = toRequest(key);
+    // Run in the next task to avoid blocking other cache reads.
+    // https://github.com/w3c/ServiceWorker/issues/1397
+    await timeout(0);
+    const effectiveRequest = await this.getCacheKey(request, 'write');
+    {
+      if (effectiveRequest.method && effectiveRequest.method !== 'GET') {
+        throw new WorkboxError('attempt-to-cache-non-get-request', {
+          url: getFriendlyURL(effectiveRequest.url),
+          method: effectiveRequest.method
+        });
+      }
+      // See https://github.com/GoogleChrome/workbox/issues/2818
+      const vary = response.headers.get('Vary');
+      if (vary) {
+        logger.debug(`The response for ${getFriendlyURL(effectiveRequest.url)} ` + `has a 'Vary: ${vary}' header. ` + `Consider setting the {ignoreVary: true} option on your strategy ` + `to ensure cache matching and deletion works as expected.`);
+      }
     }
     if (!response) {
-      throw new WorkboxError('no-response', {
-        url: request.url,
-        error
+      {
+        logger.error(`Cannot cache non-existent response for ` + `'${getFriendlyURL(effectiveRequest.url)}'.`);
+      }
+      throw new WorkboxError('cache-put-with-no-response', {
+        url: getFriendlyURL(effectiveRequest.url)
+      });
+    }
+    const responseToCache = await this._ensureResponseSafeToCache(response);
+    if (!responseToCache) {
+      {
+        logger.debug(`Response '${getFriendlyURL(effectiveRequest.url)}' ` + `will not be cached.`, responseToCache);
+      }
+      return false;
+    }
+    const {
+      cacheName,
+      matchOptions
+    } = this._strategy;
+    const cache = await self.caches.open(cacheName);
+    const hasCacheUpdateCallback = this.hasCallback('cacheDidUpdate');
+    const oldResponse = hasCacheUpdateCallback ? await cacheMatchIgnoreParams(
+    // TODO(philipwalton): the `__WB_REVISION__` param is a precaching
+    // feature. Consider into ways to only add this behavior if using
+    // precaching.
+    cache, effectiveRequest.clone(), ['__WB_REVISION__'], matchOptions) : null;
+    {
+      logger.debug(`Updating the '${cacheName}' cache with a new Response ` + `for ${getFriendlyURL(effectiveRequest.url)}.`);
+    }
+    try {
+      await cache.put(effectiveRequest, hasCacheUpdateCallback ? responseToCache.clone() : responseToCache);
+    } catch (error) {
+      if (error instanceof Error) {
+        // See https://developer.mozilla.org/en-US/docs/Web/API/DOMException#exception-QuotaExceededError
+        if (error.name === 'QuotaExceededError') {
+          await executeQuotaErrorCallbacks();
+        }
+        throw error;
+      }
+    }
+    for (const callback of this.iterateCallbacks('cacheDidUpdate')) {
+      await callback({
+        cacheName,
+        oldResponse,
+        newResponse: responseToCache.clone(),
+        request: effectiveRequest,
+        event: this.event
+      });
+    }
+    return true;
+  }
+  /**
+   * Checks the list of plugins for the `cacheKeyWillBeUsed` callback, and
+   * executes any of those callbacks found in sequence. The final `Request`
+   * object returned by the last plugin is treated as the cache key for cache
+   * reads and/or writes. If no `cacheKeyWillBeUsed` plugin callbacks have
+   * been registered, the passed request is returned unmodified
+   *
+   * @param {Request} request
+   * @param {string} mode
+   * @return {Promise<Request>}
+   */
+  async getCacheKey(request, mode) {
+    const key = `${request.url} | ${mode}`;
+    if (!this._cacheKeys[key]) {
+      let effectiveRequest = request;
+      for (const callback of this.iterateCallbacks('cacheKeyWillBeUsed')) {
+        effectiveRequest = toRequest(await callback({
+          mode,
+          request: effectiveRequest,
+          event: this.event,
+          // params has a type any can't change right now.
+          params: this.params // eslint-disable-line
+        }));
+      }
+      this._cacheKeys[key] = effectiveRequest;
+    }
+    return this._cacheKeys[key];
+  }
+  /**
+   * Returns true if the strategy has at least one plugin with the given
+   * callback.
+   *
+   * @param {string} name The name of the callback to check for.
+   * @return {boolean}
+   */
+  hasCallback(name) {
+    for (const plugin of this._strategy.plugins) {
+      if (name in plugin) {
+        return true;
+      }
+    }
+    return false;
+  }
+  /**
+   * Runs all plugin callbacks matching the given name, in order, passing the
+   * given param object (merged ith the current plugin state) as the only
+   * argument.
+   *
+   * Note: since this method runs all plugins, it's not suitable for cases
+   * where the return value of a callback needs to be applied prior to calling
+   * the next callback. See
+   * {@link workbox-strategies.StrategyHandler#iterateCallbacks}
+   * below for how to handle that case.
+   *
+   * @param {string} name The name of the callback to run within each plugin.
+   * @param {Object} param The object to pass as the first (and only) param
+   *     when executing each callback. This object will be merged with the
+   *     current plugin state prior to callback execution.
+   */
+  async runCallbacks(name, param) {
+    for (const callback of this.iterateCallbacks(name)) {
+      // TODO(philipwalton): not sure why `any` is needed. It seems like
+      // this should work with `as WorkboxPluginCallbackParam[C]`.
+      await callback(param);
+    }
+  }
+  /**
+   * Accepts a callback and returns an iterable of matching plugin callbacks,
+   * where each callback is wrapped with the current handler state (i.e. when
+   * you call each callback, whatever object parameter you pass it will
+   * be merged with the plugin's current state).
+   *
+   * @param {string} name The name fo the callback to run
+   * @return {Array<Function>}
+   */
+  *iterateCallbacks(name) {
+    for (const plugin of this._strategy.plugins) {
+      if (typeof plugin[name] === 'function') {
+        const state = this._pluginStateMap.get(plugin);
+        const statefulCallback = param => {
+          const statefulParam = Object.assign(Object.assign({}, param), {
+            state
+          });
+          // TODO(philipwalton): not sure why `any` is needed. It seems like
+          // this should work with `as WorkboxPluginCallbackParam[C]`.
+          return plugin[name](statefulParam);
+        };
+        yield statefulCallback;
+      }
+    }
+  }
+  /**
+   * Adds a promise to the
+   * [extend lifetime promises]{@link https://w3c.github.io/ServiceWorker/#extendableevent-extend-lifetime-promises}
+   * of the event event associated with the request being handled (usually a
+   * `FetchEvent`).
+   *
+   * Note: you can await
+   * {@link workbox-strategies.StrategyHandler~doneWaiting}
+   * to know when all added promises have settled.
+   *
+   * @param {Promise} promise A promise to add to the extend lifetime promises
+   *     of the event that triggered the request.
+   */
+  waitUntil(promise) {
+    this._extendLifetimePromises.push(promise);
+    return promise;
+  }
+  /**
+   * Returns a promise that resolves once all promises passed to
+   * {@link workbox-strategies.StrategyHandler~waitUntil}
+   * have settled.
+   *
+   * Note: any work done after `doneWaiting()` settles should be manually
+   * passed to an event's `waitUntil()` method (not this handler's
+   * `waitUntil()` method), otherwise the service worker thread my be killed
+   * prior to your work completing.
+   */
+  async doneWaiting() {
+    let promise;
+    while (promise = this._extendLifetimePromises.shift()) {
+      await promise;
+    }
+  }
+  /**
+   * Stops running the strategy and immediately resolves any pending
+   * `waitUntil()` promises.
+   */
+  destroy() {
+    this._handlerDeferred.resolve(null);
+  }
+  /**
+   * This method will call cacheWillUpdate on the available plugins (or use
+   * status === 200) to determine if the Response is safe and valid to cache.
+   *
+   * @param {Request} options.request
+   * @param {Response} options.response
+   * @return {Promise<Response|undefined>}
+   *
+   * @private
+   */
+  async _ensureResponseSafeToCache(response) {
+    let responseToCache = response;
+    let pluginsUsed = false;
+    for (const callback of this.iterateCallbacks('cacheWillUpdate')) {
+      responseToCache = (await callback({
+        request: this.request,
+        response: responseToCache,
+        event: this.event
+      })) || undefined;
+      pluginsUsed = true;
+      if (!responseToCache) {
+        break;
+      }
+    }
+    if (!pluginsUsed) {
+      if (responseToCache && responseToCache.status !== 200) {
+        responseToCache = undefined;
+      }
+      {
+        if (responseToCache) {
+          if (responseToCache.status !== 200) {
+            if (responseToCache.status === 0) {
+              logger.warn(`The response for '${this.request.url}' ` + `is an opaque response. The caching strategy that you're ` + `using will not cache opaque responses by default.`);
+            } else {
+              logger.debug(`The response for '${this.request.url}' ` + `returned a status code of '${response.status}' and won't ` + `be cached as a result.`);
+            }
+          }
+        }
+      }
+    }
+    return responseToCache;
+  }
+}
+
+/*
+  Copyright 2020 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * An abstract base class that all other strategy classes must extend from:
+ *
+ * @memberof workbox-strategies
+ */
+class Strategy {
+  /**
+   * Creates a new instance of the strategy and sets all documented option
+   * properties as public instance properties.
+   *
+   * Note: if a custom strategy class extends the base Strategy class and does
+   * not need more than these properties, it does not need to define its own
+   * constructor.
+   *
+   * @param {Object} [options]
+   * @param {string} [options.cacheName] Cache name to store and retrieve
+   * requests. Defaults to the cache names provided by
+   * {@link workbox-core.cacheNames}.
+   * @param {Array<Object>} [options.plugins] [Plugins]{@link https://developers.google.com/web/tools/workbox/guides/using-plugins}
+   * to use in conjunction with this caching strategy.
+   * @param {Object} [options.fetchOptions] Values passed along to the
+   * [`init`](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch#Parameters)
+   * of [non-navigation](https://github.com/GoogleChrome/workbox/issues/1796)
+   * `fetch()` requests made by this strategy.
+   * @param {Object} [options.matchOptions] The
+   * [`CacheQueryOptions`]{@link https://w3c.github.io/ServiceWorker/#dictdef-cachequeryoptions}
+   * for any `cache.match()` or `cache.put()` calls made by this strategy.
+   */
+  constructor(options = {}) {
+    /**
+     * Cache name to store and retrieve
+     * requests. Defaults to the cache names provided by
+     * {@link workbox-core.cacheNames}.
+     *
+     * @type {string}
+     */
+    this.cacheName = cacheNames.getRuntimeName(options.cacheName);
+    /**
+     * The list
+     * [Plugins]{@link https://developers.google.com/web/tools/workbox/guides/using-plugins}
+     * used by this strategy.
+     *
+     * @type {Array<Object>}
+     */
+    this.plugins = options.plugins || [];
+    /**
+     * Values passed along to the
+     * [`init`]{@link https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch#Parameters}
+     * of all fetch() requests made by this strategy.
+     *
+     * @type {Object}
+     */
+    this.fetchOptions = options.fetchOptions;
+    /**
+     * The
+     * [`CacheQueryOptions`]{@link https://w3c.github.io/ServiceWorker/#dictdef-cachequeryoptions}
+     * for any `cache.match()` or `cache.put()` calls made by this strategy.
+     *
+     * @type {Object}
+     */
+    this.matchOptions = options.matchOptions;
+  }
+  /**
+   * Perform a request strategy and returns a `Promise` that will resolve with
+   * a `Response`, invoking all relevant plugin callbacks.
+   *
+   * When a strategy instance is registered with a Workbox
+   * {@link workbox-routing.Route}, this method is automatically
+   * called when the route matches.
+   *
+   * Alternatively, this method can be used in a standalone `FetchEvent`
+   * listener by passing it to `event.respondWith()`.
+   *
+   * @param {FetchEvent|Object} options A `FetchEvent` or an object with the
+   *     properties listed below.
+   * @param {Request|string} options.request A request to run this strategy for.
+   * @param {ExtendableEvent} options.event The event associated with the
+   *     request.
+   * @param {URL} [options.url]
+   * @param {*} [options.params]
+   */
+  handle(options) {
+    const [responseDone] = this.handleAll(options);
+    return responseDone;
+  }
+  /**
+   * Similar to {@link workbox-strategies.Strategy~handle}, but
+   * instead of just returning a `Promise` that resolves to a `Response` it
+   * it will return an tuple of `[response, done]` promises, where the former
+   * (`response`) is equivalent to what `handle()` returns, and the latter is a
+   * Promise that will resolve once any promises that were added to
+   * `event.waitUntil()` as part of performing the strategy have completed.
+   *
+   * You can await the `done` promise to ensure any extra work performed by
+   * the strategy (usually caching responses) completes successfully.
+   *
+   * @param {FetchEvent|Object} options A `FetchEvent` or an object with the
+   *     properties listed below.
+   * @param {Request|string} options.request A request to run this strategy for.
+   * @param {ExtendableEvent} options.event The event associated with the
+   *     request.
+   * @param {URL} [options.url]
+   * @param {*} [options.params]
+   * @return {Array<Promise>} A tuple of [response, done]
+   *     promises that can be used to determine when the response resolves as
+   *     well as when the handler has completed all its work.
+   */
+  handleAll(options) {
+    // Allow for flexible options to be passed.
+    if (options instanceof FetchEvent) {
+      options = {
+        event: options,
+        request: options.request
+      };
+    }
+    const event = options.event;
+    const request = typeof options.request === 'string' ? new Request(options.request) : options.request;
+    const params = 'params' in options ? options.params : undefined;
+    const handler = new StrategyHandler(this, {
+      event,
+      request,
+      params
+    });
+    const responseDone = this._getResponse(handler, request, event);
+    const handlerDone = this._awaitComplete(responseDone, handler, request, event);
+    // Return an array of promises, suitable for use with Promise.all().
+    return [responseDone, handlerDone];
+  }
+  async _getResponse(handler, request, event) {
+    await handler.runCallbacks('handlerWillStart', {
+      event,
+      request
+    });
+    let response = undefined;
+    try {
+      response = await this._handle(request, handler);
+      // The "official" Strategy subclasses all throw this error automatically,
+      // but in case a third-party Strategy doesn't, ensure that we have a
+      // consistent failure when there's no response or an error response.
+      if (!response || response.type === 'error') {
+        throw new WorkboxError('no-response', {
+          url: request.url
+        });
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        for (const callback of handler.iterateCallbacks('handlerDidError')) {
+          response = await callback({
+            error,
+            event,
+            request
+          });
+          if (response) {
+            break;
+          }
+        }
+      }
+      if (!response) {
+        throw error;
+      } else {
+        logger.log(`While responding to '${getFriendlyURL(request.url)}', ` + `an ${error instanceof Error ? error.toString() : ''} error occurred. Using a fallback response provided by ` + `a handlerDidError plugin.`);
+      }
+    }
+    for (const callback of handler.iterateCallbacks('handlerWillRespond')) {
+      response = await callback({
+        event,
+        request,
+        response
       });
     }
     return response;
   }
+  async _awaitComplete(responseDone, handler, request, event) {
+    let response;
+    let error;
+    try {
+      response = await responseDone;
+    } catch (error) {
+      // Ignore errors, as response errors should be caught via the `response`
+      // promise above. The `done` promise will only throw for errors in
+      // promises passed to `handler.waitUntil()`.
+    }
+    try {
+      await handler.runCallbacks('handlerDidRespond', {
+        event,
+        request,
+        response
+      });
+      await handler.doneWaiting();
+    } catch (waitUntilError) {
+      if (waitUntilError instanceof Error) {
+        error = waitUntilError;
+      }
+    }
+    await handler.runCallbacks('handlerDidComplete', {
+      event,
+      request,
+      response,
+      error: error
+    });
+    handler.destroy();
+    if (error) {
+      throw error;
+    }
+  }
 }
+/**
+ * Classes extending the `Strategy` based class should implement this method,
+ * and leverage the {@link workbox-strategies.StrategyHandler}
+ * arg to perform all fetching and cache logic, which will ensure all relevant
+ * cache, cache options, fetch options and plugins are used (per the current
+ * strategy instance).
+ *
+ * @name _handle
+ * @instance
+ * @abstract
+ * @function
+ * @param {Request} request
+ * @param {workbox-strategies.StrategyHandler} handler
+ * @return {Promise<Response>}
+ *
+ * @memberof workbox-strategies.Strategy
+ */
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+const messages = {
+  strategyStart: (strategyName, request) => `Using ${strategyName} to respond to '${getFriendlyURL(request.url)}'`,
+  printFinalResponse: response => {
+    if (response) {
+      logger.groupCollapsed(`View the final response here.`);
+      logger.log(response || '[No response returned]');
+      logger.groupEnd();
+    }
+  }
+};
 
 /*
   Copyright 2018 Google LLC
@@ -3673,6 +3392,287 @@ class NetworkFirst extends Strategy {
           logs.push(`No response found in the '${this.cacheName}' cache.`);
         }
       }
+    }
+    return response;
+  }
+}
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * An implementation of a
+ * [network-only](https://developer.chrome.com/docs/workbox/caching-strategies-overview/#network-only)
+ * request strategy.
+ *
+ * This class is useful if you want to take advantage of any
+ * [Workbox plugins](https://developer.chrome.com/docs/workbox/using-plugins/).
+ *
+ * If the network request fails, this will throw a `WorkboxError` exception.
+ *
+ * @extends workbox-strategies.Strategy
+ * @memberof workbox-strategies
+ */
+class NetworkOnly extends Strategy {
+  /**
+   * @param {Object} [options]
+   * @param {Array<Object>} [options.plugins] [Plugins]{@link https://developers.google.com/web/tools/workbox/guides/using-plugins}
+   * to use in conjunction with this caching strategy.
+   * @param {Object} [options.fetchOptions] Values passed along to the
+   * [`init`](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch#Parameters)
+   * of [non-navigation](https://github.com/GoogleChrome/workbox/issues/1796)
+   * `fetch()` requests made by this strategy.
+   * @param {number} [options.networkTimeoutSeconds] If set, any network requests
+   * that fail to respond within the timeout will result in a network error.
+   */
+  constructor(options = {}) {
+    super(options);
+    this._networkTimeoutSeconds = options.networkTimeoutSeconds || 0;
+  }
+  /**
+   * @private
+   * @param {Request|string} request A request to run this strategy for.
+   * @param {workbox-strategies.StrategyHandler} handler The event that
+   *     triggered the request.
+   * @return {Promise<Response>}
+   */
+  async _handle(request, handler) {
+    {
+      finalAssertExports.isInstance(request, Request, {
+        moduleName: 'workbox-strategies',
+        className: this.constructor.name,
+        funcName: '_handle',
+        paramName: 'request'
+      });
+    }
+    let error = undefined;
+    let response;
+    try {
+      const promises = [handler.fetch(request)];
+      if (this._networkTimeoutSeconds) {
+        const timeoutPromise = timeout(this._networkTimeoutSeconds * 1000);
+        promises.push(timeoutPromise);
+      }
+      response = await Promise.race(promises);
+      if (!response) {
+        throw new Error(`Timed out the network response after ` + `${this._networkTimeoutSeconds} seconds.`);
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        error = err;
+      }
+    }
+    {
+      logger.groupCollapsed(messages.strategyStart(this.constructor.name, request));
+      if (response) {
+        logger.log(`Got response from network.`);
+      } else {
+        logger.log(`Unable to get a response from the network.`);
+      }
+      messages.printFinalResponse(response);
+      logger.groupEnd();
+    }
+    if (!response) {
+      throw new WorkboxError('no-response', {
+        url: request.url,
+        error
+      });
+    }
+    return response;
+  }
+}
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * An implementation of a
+ * [stale-while-revalidate](https://developer.chrome.com/docs/workbox/caching-strategies-overview/#stale-while-revalidate)
+ * request strategy.
+ *
+ * Resources are requested from both the cache and the network in parallel.
+ * The strategy will respond with the cached version if available, otherwise
+ * wait for the network response. The cache is updated with the network response
+ * with each successful request.
+ *
+ * By default, this strategy will cache responses with a 200 status code as
+ * well as [opaque responses](https://developer.chrome.com/docs/workbox/caching-resources-during-runtime/#opaque-responses).
+ * Opaque responses are cross-origin requests where the response doesn't
+ * support [CORS](https://enable-cors.org/).
+ *
+ * If the network request fails, and there is no cache match, this will throw
+ * a `WorkboxError` exception.
+ *
+ * @extends workbox-strategies.Strategy
+ * @memberof workbox-strategies
+ */
+class StaleWhileRevalidate extends Strategy {
+  /**
+   * @param {Object} [options]
+   * @param {string} [options.cacheName] Cache name to store and retrieve
+   * requests. Defaults to cache names provided by
+   * {@link workbox-core.cacheNames}.
+   * @param {Array<Object>} [options.plugins] [Plugins]{@link https://developers.google.com/web/tools/workbox/guides/using-plugins}
+   * to use in conjunction with this caching strategy.
+   * @param {Object} [options.fetchOptions] Values passed along to the
+   * [`init`](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch#Parameters)
+   * of [non-navigation](https://github.com/GoogleChrome/workbox/issues/1796)
+   * `fetch()` requests made by this strategy.
+   * @param {Object} [options.matchOptions] [`CacheQueryOptions`](https://w3c.github.io/ServiceWorker/#dictdef-cachequeryoptions)
+   */
+  constructor(options = {}) {
+    super(options);
+    // If this instance contains no plugins with a 'cacheWillUpdate' callback,
+    // prepend the `cacheOkAndOpaquePlugin` plugin to the plugins list.
+    if (!this.plugins.some(p => 'cacheWillUpdate' in p)) {
+      this.plugins.unshift(cacheOkAndOpaquePlugin);
+    }
+  }
+  /**
+   * @private
+   * @param {Request|string} request A request to run this strategy for.
+   * @param {workbox-strategies.StrategyHandler} handler The event that
+   *     triggered the request.
+   * @return {Promise<Response>}
+   */
+  async _handle(request, handler) {
+    const logs = [];
+    {
+      finalAssertExports.isInstance(request, Request, {
+        moduleName: 'workbox-strategies',
+        className: this.constructor.name,
+        funcName: 'handle',
+        paramName: 'request'
+      });
+    }
+    const fetchAndCachePromise = handler.fetchAndCachePut(request).catch(() => {
+      // Swallow this error because a 'no-response' error will be thrown in
+      // main handler return flow. This will be in the `waitUntil()` flow.
+    });
+    void handler.waitUntil(fetchAndCachePromise);
+    let response = await handler.cacheMatch(request);
+    let error;
+    if (response) {
+      {
+        logs.push(`Found a cached response in the '${this.cacheName}'` + ` cache. Will update with the network response in the background.`);
+      }
+    } else {
+      {
+        logs.push(`No response found in the '${this.cacheName}' cache. ` + `Will wait for the network response.`);
+      }
+      try {
+        // NOTE(philipwalton): Really annoying that we have to type cast here.
+        // https://github.com/microsoft/TypeScript/issues/20006
+        response = await fetchAndCachePromise;
+      } catch (err) {
+        if (err instanceof Error) {
+          error = err;
+        }
+      }
+    }
+    {
+      logger.groupCollapsed(messages.strategyStart(this.constructor.name, request));
+      for (const log of logs) {
+        logger.log(log);
+      }
+      messages.printFinalResponse(response);
+      logger.groupEnd();
+    }
+    if (!response) {
+      throw new WorkboxError('no-response', {
+        url: request.url,
+        error
+      });
+    }
+    return response;
+  }
+}
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * An implementation of a [cache-first](https://developer.chrome.com/docs/workbox/caching-strategies-overview/#cache-first-falling-back-to-network)
+ * request strategy.
+ *
+ * A cache first strategy is useful for assets that have been revisioned,
+ * such as URLs like `/styles/example.a8f5f1.css`, since they
+ * can be cached for long periods of time.
+ *
+ * If the network request fails, and there is no cache match, this will throw
+ * a `WorkboxError` exception.
+ *
+ * @extends workbox-strategies.Strategy
+ * @memberof workbox-strategies
+ */
+class CacheFirst extends Strategy {
+  /**
+   * @private
+   * @param {Request|string} request A request to run this strategy for.
+   * @param {workbox-strategies.StrategyHandler} handler The event that
+   *     triggered the request.
+   * @return {Promise<Response>}
+   */
+  async _handle(request, handler) {
+    const logs = [];
+    {
+      finalAssertExports.isInstance(request, Request, {
+        moduleName: 'workbox-strategies',
+        className: this.constructor.name,
+        funcName: 'makeRequest',
+        paramName: 'request'
+      });
+    }
+    let response = await handler.cacheMatch(request);
+    let error = undefined;
+    if (!response) {
+      {
+        logs.push(`No response found in the '${this.cacheName}' cache. ` + `Will respond with a network request.`);
+      }
+      try {
+        response = await handler.fetchAndCachePut(request);
+      } catch (err) {
+        if (err instanceof Error) {
+          error = err;
+        }
+      }
+      {
+        if (response) {
+          logs.push(`Got response from network.`);
+        } else {
+          logs.push(`Unable to get a response from the network.`);
+        }
+      }
+    } else {
+      {
+        logs.push(`Found a cached response in the '${this.cacheName}' cache.`);
+      }
+    }
+    {
+      logger.groupCollapsed(messages.strategyStart(this.constructor.name, request));
+      for (const log of logs) {
+        logger.log(log);
+      }
+      messages.printFinalResponse(response);
+      logger.groupEnd();
+    }
+    if (!response) {
+      throw new WorkboxError('no-response', {
+        url: request.url,
+        error
+      });
     }
     return response;
   }
@@ -4830,143 +4830,6 @@ function cleanupOutdatedCaches() {
   });
 }
 
-/*
-  Copyright 2018 Google LLC
-
-  Use of this source code is governed by an MIT-style
-  license that can be found in the LICENSE file or at
-  https://opensource.org/licenses/MIT.
-*/
-/**
- * NavigationRoute makes it easy to create a
- * {@link workbox-routing.Route} that matches for browser
- * [navigation requests]{@link https://developers.google.com/web/fundamentals/primers/service-workers/high-performance-loading#first_what_are_navigation_requests}.
- *
- * It will only match incoming Requests whose
- * {@link https://fetch.spec.whatwg.org/#concept-request-mode|mode}
- * is set to `navigate`.
- *
- * You can optionally only apply this route to a subset of navigation requests
- * by using one or both of the `denylist` and `allowlist` parameters.
- *
- * @memberof workbox-routing
- * @extends workbox-routing.Route
- */
-class NavigationRoute extends Route {
-  /**
-   * If both `denylist` and `allowlist` are provided, the `denylist` will
-   * take precedence and the request will not match this route.
-   *
-   * The regular expressions in `allowlist` and `denylist`
-   * are matched against the concatenated
-   * [`pathname`]{@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLHyperlinkElementUtils/pathname}
-   * and [`search`]{@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLHyperlinkElementUtils/search}
-   * portions of the requested URL.
-   *
-   * *Note*: These RegExps may be evaluated against every destination URL during
-   * a navigation. Avoid using
-   * [complex RegExps](https://github.com/GoogleChrome/workbox/issues/3077),
-   * or else your users may see delays when navigating your site.
-   *
-   * @param {workbox-routing~handlerCallback} handler A callback
-   * function that returns a Promise resulting in a Response.
-   * @param {Object} options
-   * @param {Array<RegExp>} [options.denylist] If any of these patterns match,
-   * the route will not handle the request (even if a allowlist RegExp matches).
-   * @param {Array<RegExp>} [options.allowlist=[/./]] If any of these patterns
-   * match the URL's pathname and search parameter, the route will handle the
-   * request (assuming the denylist doesn't match).
-   */
-  constructor(handler, {
-    allowlist = [/./],
-    denylist = []
-  } = {}) {
-    {
-      finalAssertExports.isArrayOfClass(allowlist, RegExp, {
-        moduleName: 'workbox-routing',
-        className: 'NavigationRoute',
-        funcName: 'constructor',
-        paramName: 'options.allowlist'
-      });
-      finalAssertExports.isArrayOfClass(denylist, RegExp, {
-        moduleName: 'workbox-routing',
-        className: 'NavigationRoute',
-        funcName: 'constructor',
-        paramName: 'options.denylist'
-      });
-    }
-    super(options => this._match(options), handler);
-    this._allowlist = allowlist;
-    this._denylist = denylist;
-  }
-  /**
-   * Routes match handler.
-   *
-   * @param {Object} options
-   * @param {URL} options.url
-   * @param {Request} options.request
-   * @return {boolean}
-   *
-   * @private
-   */
-  _match({
-    url,
-    request
-  }) {
-    if (request && request.mode !== 'navigate') {
-      return false;
-    }
-    const pathnameAndSearch = url.pathname + url.search;
-    for (const regExp of this._denylist) {
-      if (regExp.test(pathnameAndSearch)) {
-        {
-          logger.log(`The navigation route ${pathnameAndSearch} is not ` + `being used, since the URL matches this denylist pattern: ` + `${regExp.toString()}`);
-        }
-        return false;
-      }
-    }
-    if (this._allowlist.some(regExp => regExp.test(pathnameAndSearch))) {
-      {
-        logger.debug(`The navigation route ${pathnameAndSearch} ` + `is being used.`);
-      }
-      return true;
-    }
-    {
-      logger.log(`The navigation route ${pathnameAndSearch} is not ` + `being used, since the URL being navigated to doesn't ` + `match the allowlist.`);
-    }
-    return false;
-  }
-}
-
-/*
-  Copyright 2019 Google LLC
-
-  Use of this source code is governed by an MIT-style
-  license that can be found in the LICENSE file or at
-  https://opensource.org/licenses/MIT.
-*/
-/**
- * Helper function that calls
- * {@link PrecacheController#createHandlerBoundToURL} on the default
- * {@link PrecacheController} instance.
- *
- * If you are creating your own {@link PrecacheController}, then call the
- * {@link PrecacheController#createHandlerBoundToURL} on that instance,
- * instead of using this function.
- *
- * @param {string} url The precached URL which will be used to lookup the
- * `Response`.
- * @param {boolean} [fallbackToNetwork=true] Whether to attempt to get the
- * response from the network if there's a precache miss.
- * @return {workbox-routing~handlerCallback}
- *
- * @memberof workbox-precaching
- */
-function createHandlerBoundToURL(url) {
-  const precacheController = getOrCreatePrecacheController();
-  return precacheController.createHandlerBoundToURL(url);
-}
-
 self.skipWaiting();
 clientsClaim();
 
@@ -4979,13 +4842,25 @@ precacheAndRoute([{
   "url": "assets/_commonjsHelpers.js",
   "revision": null
 }, {
+  "url": "assets/airplan.png",
+  "revision": null
+}, {
+  "url": "assets/airplane.svg",
+  "revision": null
+}, {
   "url": "assets/app.css",
   "revision": null
 }, {
-  "url": "assets/app.js",
+  "url": "assets/bins.js",
   "revision": null
 }, {
-  "url": "assets/bins.js",
+  "url": "assets/checkServer.js",
+  "revision": null
+}, {
+  "url": "assets/citiesForm.js",
+  "revision": null
+}, {
+  "url": "assets/city.js",
   "revision": null
 }, {
   "url": "assets/configureTopbar.js",
@@ -4994,16 +4869,34 @@ precacheAndRoute([{
   "url": "assets/counter.js",
   "revision": null
 }, {
-  "url": "assets/formCities.js",
-  "revision": null
-}, {
-  "url": "assets/formVComp.js",
-  "revision": null
-}, {
-  "url": "assets/formVHook.js",
+  "url": "assets/Elixir.svg",
   "revision": null
 }, {
   "url": "assets/great_circle.js",
+  "revision": null
+}, {
+  "url": "assets/great_circle.wasm",
+  "revision": null
+}, {
+  "url": "assets/hookForm.js",
+  "revision": null
+}, {
+  "url": "assets/hookMap.js",
+  "revision": null
+}, {
+  "url": "assets/hookPwa.js",
+  "revision": null
+}, {
+  "url": "assets/hookPwaFlash.js",
+  "revision": null
+}, {
+  "url": "assets/hookYStock.js",
+  "revision": null
+}, {
+  "url": "assets/icon-192.png",
+  "revision": null
+}, {
+  "url": "assets/icon-512.png",
   "revision": null
 }, {
   "url": "assets/initMap.css",
@@ -5015,13 +4908,55 @@ precacheAndRoute([{
   "url": "assets/initYJS.js",
   "revision": null
 }, {
+  "url": "assets/layers-2x.png",
+  "revision": null
+}, {
+  "url": "assets/layers.png",
+  "revision": null
+}, {
   "url": "assets/leaflet-maptilersdk.js",
   "revision": null
 }, {
   "url": "assets/leaflet-src.js",
   "revision": null
 }, {
-  "url": "assets/mapVHook.js",
+  "url": "assets/leafletjs.svg",
+  "revision": null
+}, {
+  "url": "assets/loadWasm.js",
+  "revision": null
+}, {
+  "url": "assets/logo.svg",
+  "revision": null
+}, {
+  "url": "assets/main.js",
+  "revision": null
+}, {
+  "url": "assets/mapObservers.js",
+  "revision": null
+}, {
+  "url": "assets/maptiler.png",
+  "revision": null
+}, {
+  "url": "assets/maptiler.webp",
+  "revision": null
+}, {
+  "url": "assets/marker-icon-2x.png",
+  "revision": null
+}, {
+  "url": "assets/marker-icon.png",
+  "revision": null
+}, {
+  "url": "assets/marker-shadow.png",
+  "revision": null
+}, {
+  "url": "assets/offline.svg",
+  "revision": null
+}, {
+  "url": "assets/online.svg",
+  "revision": null
+}, {
+  "url": "assets/p404.webp",
   "revision": null
 }, {
   "url": "assets/phoenix_live_view.esm.js",
@@ -5033,28 +4968,40 @@ precacheAndRoute([{
   "url": "assets/preload-helper.js",
   "revision": null
 }, {
-  "url": "assets/pwaHook.js",
+  "url": "assets/pwa-registration.js",
   "revision": null
 }, {
-  "url": "assets/renderVForm.js",
+  "url": "assets/pwaRegistration.js",
   "revision": null
 }, {
-  "url": "assets/renderVMap.js",
+  "url": "assets/renderers.js",
   "revision": null
 }, {
-  "url": "assets/StockComponent.js",
+  "url": "assets/renderMap.js",
   "revision": null
 }, {
-  "url": "assets/StockHook.js",
+  "url": "assets/solidjs.svg",
+  "revision": null
+}, {
+  "url": "assets/sqlite.svg",
+  "revision": null
+}, {
+  "url": "assets/stock.js",
   "revision": null
 }, {
   "url": "assets/topbar.min.js",
   "revision": null
 }, {
-  "url": "assets/valtioObservers.js",
+  "url": "assets/useChannel.js",
+  "revision": null
+}, {
+  "url": "assets/valtio2.webp",
   "revision": null
 }, {
   "url": "assets/virtual_pwa-register.js",
+  "revision": null
+}, {
+  "url": "assets/vitejs.svg",
   "revision": null
 }, {
   "url": "assets/vStore.js",
@@ -5063,198 +5010,55 @@ precacheAndRoute([{
   "url": "assets/web.js",
   "revision": null
 }, {
+  "url": "assets/webassembly.svg",
+  "revision": null
+}, {
   "url": "assets/workbox-window.prod.es5.js",
+  "revision": null
+}, {
+  "url": "assets/workbox.svg",
   "revision": null
 }, {
   "url": "assets/y-indexeddb.js",
   "revision": null
 }, {
-  "url": "assets/yjs.js",
+  "url": "assets/ydocSocket.js",
   "revision": null
 }, {
-  "url": "images/airplan.png",
-  "revision": "f84740bb1b3a55e58a9e4d51ebded79f"
+  "url": "assets/yjs.png",
+  "revision": null
 }, {
-  "url": "images/airplane.svg",
-  "revision": "b5acaa9e8da6786db718600935f5bcbe"
+  "url": "assets/yjs.webp",
+  "revision": null
 }, {
-  "url": "images/Elixir.svg",
-  "revision": "dc5e47f5c026d9a15c63d2e7d17e2364"
+  "url": "assets/yjs3.js",
+  "revision": null
 }, {
-  "url": "images/icon-192.png",
-  "revision": "fffb16a15ad3ea41472dc1893f194ed1"
-}, {
-  "url": "images/icon-512.png",
-  "revision": "f91d41feed42989ae4f739042b270c13"
-}, {
-  "url": "images/layers-2x.png",
-  "revision": "324b4fcaf164735c627269504b7bc28e"
-}, {
-  "url": "images/layers.png",
-  "revision": "7cb0d2482ecadc1b80eb0abe457371b6"
-}, {
-  "url": "images/leafletjs.svg",
-  "revision": "2475a5ad63a8615ea2ce910f3a37b009"
-}, {
-  "url": "images/logo.svg",
-  "revision": "06a11be1f2cdde2c851763d00bdd2e80"
-}, {
-  "url": "images/maptiler.png",
-  "revision": "d6d45a67e8821be4e8a98f2eef6bc659"
-}, {
-  "url": "images/maptiler.webp",
-  "revision": "db5cfd4710c784d7b2a9130db7d14cfd"
-}, {
-  "url": "images/marker-icon-2x.png",
-  "revision": "1c824216f354218b04b25a57e0f7ab1f"
-}, {
-  "url": "images/marker-icon.png",
-  "revision": "87f6ca46ac356e81dc438589630ae107"
-}, {
-  "url": "images/marker-shadow.png",
-  "revision": "e7bd5e4b8dbbc3dfbe3ed88c098bc61e"
-}, {
-  "url": "images/offline.svg",
-  "revision": "c762c7f6c34083953b4ab13baadbcd3c"
-}, {
-  "url": "images/online.svg",
-  "revision": "24d7a14413944ebda517dfcb88a0c081"
-}, {
-  "url": "images/P404.jpg",
-  "revision": "501a8a98497684aa31659e88adf7119b"
-}, {
-  "url": "images/solidjs.svg",
-  "revision": "8a66d423b9275303b51ab275e94e929e"
-}, {
-  "url": "images/sqlite.svg",
-  "revision": "332417a7f4156fbd6f81615a48286092"
-}, {
-  "url": "images/valtio2.webp",
-  "revision": "1b8dc90169f4548cea9ef31f1918fc61"
-}, {
-  "url": "images/vitejs.svg",
-  "revision": "0bd2a9d3f5cd646993e1872565bf36f6"
-}, {
-  "url": "images/webassembly.svg",
-  "revision": "dd6350fa543ebb11bb99a6f131c7f5de"
-}, {
-  "url": "images/workbox.svg",
-  "revision": "5f606ed19b38382cde3ddcc1aad1c246"
-}, {
-  "url": "images/x-circle.svg",
-  "revision": "428b1c46b1cf23a2b74c3e21780cfa7c"
-}, {
-  "url": "images/yjs.png",
-  "revision": "caace6cafaec00a57d71a4f8cc52132c"
-}, {
-  "url": "images/yjs.webp",
-  "revision": "e51539acd5f6d01d14eebe6029a05c08"
-}, {
-  "url": "images/zig.svg",
-  "revision": "7431b66e11d689c489b28abdf312dfec"
+  "url": "assets/zig.svg",
+  "revision": null
 }, {
   "url": "/",
-  "revision": null
+  "revision": "0.1.0"
 }, {
   "url": "/map",
-  "revision": null
+  "revision": "0.1.0"
 }, {
   "url": "manifest.webmanifest",
-  "revision": "f6298ddfcdb78ffea0928906654eacf5"
+  "revision": "276c4d20c7f2bd804e0cc176dd735d3e"
 }], {
-  "ignoreURLParametersMatching": [/^vsn$/]
+  "ignoreURLParametersMatching": [/^vsn$/, /^_csrf$/]
 });
 cleanupOutdatedCaches();
-registerRoute(new NavigationRoute(createHandlerBoundToURL("/"), {
-  denylist: [/^\/live/, /^\/phoenix/, /^\/websocket/, /\.(js|css|png|jpg|jpeg|gif|svg)$/]
-}));
 registerRoute(({
-  url
-}) => url.pathname.startsWith("/live/longpoll"), async ({
-  event
-}) => {
-  try {
-    const response = await fetch(event.request);
-    return response;
-  } catch (error) {
-    return new Response(null, {
-      status: 204,
-      statusText: "Longpoll fallback"
-    });
-  }
-}, 'GET');
-registerRoute(({
-  url
-}) => url.pathname.startsWith("/live/reload"), new NetworkOnly(), 'GET');
-registerRoute(({
-  url
-}) => {
-  return url.pathname.match(/\/assets\/appV-[a-f0-9]+\.(js|css)/);
-}, new StaleWhileRevalidate({
-  "cacheName": "app-core-assets",
+  request
+}) => request.mode === "navigate", new NetworkFirst({
   "fetchOptions": {
     "credentials": "same-origin"
   },
-  "matchOptions": {
-    "ignoreSearch": true
-  },
-  plugins: [{
-    cacheKeyWillBeUsed: async ({
-      request
-    }) => {
-      const url = new URL(request.url);
-      url.search = "";
-      return url.toString();
-    },
-    fetchDidFail: async ({
-      request
-    }) => {
-      console.error("App asset fetch failed:", request.url);
-    }
-  }]
-}), 'GET');
-registerRoute(({
-  url
-}) => {
-  return url.pathname.match(/\/assets\/(.*-[a-f0-9]+\.(js|css)|appV-[a-f0-9]+\.(js|css))/);
-}, new CacheFirst({
-  "cacheName": "versioned-assets",
-  "matchOptions": {
-    "ignoreSearch": true
-  },
-  "fetchOptions": {
-    "credentials": "same-origin"
-  },
+  "cacheName": "pages-cache",
   plugins: [new ExpirationPlugin({
     maxEntries: 50,
-    maxAgeSeconds: 31536000
-  }), new CacheableResponsePlugin({
-    statuses: [0, 200]
-  }), {
-    cacheKeyWillBeUsed: async ({
-      request
-    }) => {
-      const url = new URL(request.url);
-      url.search = "";
-      return url.toString();
-    }
-  }]
-}), 'GET');
-registerRoute(({
-  url
-}) => {
-  return url.pathname.startsWith("/assets/") || url.pathname.startsWith("/images/") || url.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|wasm)$/);
-}, new CacheFirst({
-  "cacheName": "static-assets",
-  "matchOptions": {
-    "ignoreSearch": true
-  },
-  "fetchOptions": {
-    "credentials": "same-origin"
-  },
-  plugins: [new ExpirationPlugin({
-    maxAgeSeconds: 31536000,
-    maxEntries: 200
+    maxAgeSeconds: 86400
   }), new CacheableResponsePlugin({
     statuses: [0, 200]
   })]
@@ -5262,37 +5066,59 @@ registerRoute(({
 registerRoute(({
   url
 }) => {
-  return url.hostname === "api.maptiler.com" && url.pathname.startsWith("/maps/");
-}, new StaleWhileRevalidate({
-  "cacheName": "maptiler-sdk",
-  "matchOptions": {
-    "ignoreSearch": true
-  },
+  return url.pathname.startsWith("/live/longpoll");
+}, new NetworkOnly({
   "fetchOptions": {
     "credentials": "same-origin"
   },
-  plugins: [new ExpirationPlugin({
+  plugins: []
+}), 'GET');
+registerRoute(({
+  url
+}) => url.pathname.startsWith("/phoenix/live_reload/"), new NetworkOnly({
+  "fetchOptions": {
+    "credentials": "same-origin"
+  },
+  plugins: []
+}), 'GET');
+registerRoute(({
+  url
+}) => url.pathname.startsWith("/ydoc/"), new NetworkOnly({
+  "fetchOptions": {
+    "credentials": "same-origin"
+  },
+  plugins: []
+}), 'GET');
+registerRoute(({
+  url
+}) => url.hostname === "api.maptiler.com" && (url.pathname.startsWith("/maps/") ||
+// Style configs
+url.pathname.startsWith("/resources/")) ||
+// SDK assets
+url.pathname.startsWith("/tiles/") ||
+// Raster/vector tiles
+url.pathname.startsWith("/data/"), new StaleWhileRevalidate({
+  "cacheName": "maptiler",
+  plugins: [new CacheableResponsePlugin({
+    statuses: [0, 200]
+  }), new ExpirationPlugin({
     maxEntries: 10,
-    maxAgeSeconds: 604800,
-    purgeOnQuotaError: true
+    maxAgeSeconds: 604800
   })]
 }), 'GET');
 registerRoute(({
   url
-}) => {
-  return url.hostname === "api.maptiler.com" && !url.pathname.startsWith("/maps/");
-}, new CacheFirst({
-  "cacheName": "maptiler-tiles",
+}) => /\.(png|jpg|jpeg|gif|svg|ico|webp|woff2)$/i.test(url.pathname), new CacheFirst({
+  "cacheName": "static",
   "matchOptions": {
-    "ignoreSearch": true
-  },
-  "fetchOptions": {
-    "credentials": "same-origin"
+    "ignoreSearch": true,
+    "ignoreVary": true
   },
   plugins: [new ExpirationPlugin({
-    maxEntries: 500,
-    maxAgeSeconds: 604800,
-    purgeOnQuotaError: true
+    maxEntries: 200,
+    maxAgeSeconds: 2592000
+  }), new CacheableResponsePlugin({
+    statuses: [0, 200]
   })]
 }), 'GET');
 registerRoute(({
@@ -5301,6 +5127,10 @@ registerRoute(({
   return url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com" || url.pathname.match(/\.(woff|woff2|ttf|otf)$/);
 }, new CacheFirst({
   "cacheName": "fonts",
+  "matchOptions": {
+    "ignoreVary": true,
+    "ignoreSearch": true
+  },
   "fetchOptions": {
     "mode": "cors"
   },
@@ -5308,31 +5138,4 @@ registerRoute(({
     maxAgeSeconds: 31536000,
     maxEntries: 20
   })]
-}), 'GET');
-registerRoute(({
-  url
-}) => url.pathname === "/" || url.pathname === "/map", new NetworkFirst({
-  "cacheName": "pages",
-  "matchOptions": {
-    "ignoreSearch": true
-  },
-  "fetchOptions": {
-    "credentials": "same-origin"
-  },
-  plugins: [new ExpirationPlugin({
-    maxEntries: 10,
-    maxAgeSeconds: 7200
-  })]
-}), 'GET');
-registerRoute(({
-  request
-}) => request.mode === "navigate", new NetworkFirst({
-  "networkTimeoutSeconds": 3,
-  plugins: [{
-    handlerDidError: async () => {
-      return caches.match("/", {
-        ignoreSearch: true
-      });
-    }
-  }]
 }), 'GET');

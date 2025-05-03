@@ -8,8 +8,18 @@ config :solidyjs, Solidyjs.Repo, default_transaction_mode: :immediate
 # which you should run after static files are built and
 # before starting your production server.
 config :solidyjs, SolidyjsWeb.Endpoint,
-  cache_static_manifest: "priv/static/cache_manifest.json",
-  static_url: [path: "/"]
+  # cache_static_manifest: "priv/static/cache_manifest.json",
+  static_url: [path: "/"],
+  url: [host: "localhost", port: 4000, scheme: "http"],
+  # url: [host: "localhost"],
+  check_origin: true,
+  https: [
+    ip: {0, 0, 0, 0, 0, 0, 0, 0},
+    port: 4002,
+    cipher_suite: :strong,
+    certfile: "priv/cert/selfsigned.pem",
+    keyfile: "priv/cert/selfsigned_key.pem"
+  ]
 
 # Do not print debug messages in production
 config :logger, level: :info

@@ -1,22 +1,27 @@
 import Config
 
-# config :solidyjs, Solidyjs.Repo, database: ":memory", default_transaction_mode: :immediate
 # For development, we disable any cache and enable
 # debugging and code reloading.
 #
-# The watchers configuration can be used to run external
-# watchers to your application. For example, we can use it
-# to bundle .js and .css sources.
 config :solidyjs, SolidyjsWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
-  http: [ip: {127, 0, 0, 1}, port: 4000],
+  http: [ip: {0, 0, 0, 0}, port: 4000],
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
   secret_key_base: "cOwEjvqFsw3kkx0aVeZDDPdVsLolgX9XRc5ve9BDvVsvwV4485cBFyuNVg+GlAke",
+  live_reload: [
+    patterns: [
+      ~r{priv/static/.*(js|css|png|jpeg|jpg|gif)$},
+      ~r{lib/solidyjs_web/views/.*(ex)$},
+      ~r{lib/solidyjs_web/templates/.*(eex)$}
+    ]
+  ],
+  # The watchers configuration can be used to run external
+  # watchers to your application. For example, we can use it
+  # to bundle .js and .css sources.
   watchers: [
-    # esbuild: {Esbuild, :install_and_run, [:solidyjs, ~w(--sourcemap=inline --watch)]},
     npx: [
       "vite",
       "build",
@@ -26,10 +31,7 @@ config :solidyjs, SolidyjsWeb.Endpoint,
       "--config",
       "vite.config.js",
       cd: Path.expand("../assets", __DIR__)
-    ],
-    # node: ["build.js", "--watch", cd: Path.expand("../assets", __DIR__)]
-    tailwind: {Tailwind, :install_and_run, [:solidyjs, ~w(--watch)]}
-    # esbuild: {Esbuild, :install_and_run, [:solidyjs, ~w(--sourcemap=inline --watch)]}
+    ]
   ]
 
 # ## SSL Support

@@ -2,14 +2,14 @@
 // https://tailwindcss.com/docs/configuration
 /** @type {import('tailwindcss').Config} */
 
-const plugin = require("tailwindcss/plugin");
-const fs = require("fs");
-const path = require("path");
+import plugin from "tailwindcss/plugin";
+import fs from "fs";
+import path from "path";
 
 module.exports = {
   mode: "jit",
   content: [
-    "./js/**/*.js",
+    "../js/**/*.js",
     "../lib/solidyjs_web.ex",
     "../lib/solidyjs_web/**/*.*ex",
   ],

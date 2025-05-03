@@ -11,25 +11,27 @@ defmodule SolidyjsWeb.MapLive do
   def render(assigns) do
     ~H"""
     <div>
+      <span id="pwa-flash" phx-hook="PwaFlash"></span>
       <p class="text-sm text-gray-600 mt-4 mb-2">User ID: {@user_id}</p>
       <Menu.display />
       <div
         id="map"
-        phx-hook="MapVHook"
+        phx-hook="MapHook"
         phx-update="ignore"
         style="height: 300px"
         data-userid={@user_id}
       >
       </div>
-      <div id="select_form" phx-hook="FormVHook" phx-update="ignore"></div>
+      <div id="select_form" phx-hook="FormHook" phx-update="ignore" data-userid={@user_id}></div>
     </div>
     """
   end
 
   @impl true
-  def mount(_params, session, socket) do
-    # set by "set_user_id" plug
-    %{"user_id" => user_id} = session
+  def mount(_params, _session, socket) do
+    # user_id is set by "set_user_id" plug
+    # and then set in the "on_mount" function
+    # os is available in sockets in the same session
 
     if connected?(socket) do
       :ok = PubSub.subscribe(:pubsub, "new_airport")
@@ -37,9 +39,7 @@ defmodule SolidyjsWeb.MapLive do
       :ok = PubSub.subscribe(:pubsub, "do_fly")
     end
 
-    {:ok,
-     socket
-     |> push_event("user", %{user_id: user_id})}
+    {:ok, assign(socket, page_title: "Map")}
   end
 
   @impl true
@@ -51,7 +51,7 @@ defmodule SolidyjsWeb.MapLive do
          |> assign(:airports, AsyncResult.loading())
          |> start_async(
            :fetch_airports,
-           fn -> Airports.municipalities() end
+           fn -> Airport.municipalities() end
          )}
     end
   end
@@ -65,6 +65,8 @@ defmodule SolidyjsWeb.MapLive do
      socket
      |> assign(:airports, AsyncResult.ok(airports, fetched_airports))
      |> push_event("airports", %{airports: fetched_airports})
+     # empty the socket as client will handle the data because
+     # otherwise the server will have as much copies as the numbe of clients
      |> assign(:airports, %{})}
   end
 
@@ -82,11 +84,16 @@ defmodule SolidyjsWeb.MapLive do
   # Clients events callbacks: broadcast to all subscribed clients
   @impl true
   def handle_event("fly", %{"userID" => userID} = payload, socket) do
+    Logger.debug("handle_event, from: #{userID}, #{inspect(payload)}")
+
     :ok =
       PubSub.broadcast(
         :pubsub,
         "do_fly",
-        Map.merge(payload, %{"action" => "do_fly", "from" => userID})
+        Map.merge(payload, %{
+          "action" => "do_fly",
+          "from" => userID
+        })
       )
 
     {:noreply, socket}
@@ -97,7 +104,9 @@ defmodule SolidyjsWeb.MapLive do
       PubSub.broadcast(
         :pubsub,
         "remove_airport",
-        Map.merge(old_airport, %{"action" => "delete_airports"})
+        Map.merge(old_airport, %{
+          "action" => "delete_airports"
+        })
       )
 
     {:noreply, socket}
@@ -117,19 +126,18 @@ defmodule SolidyjsWeb.MapLive do
     {:noreply, socket}
   end
 
-  # PubSub callback: pushes response to other clients
+  # Generic PubSub callback: pushes response to other clients
   @impl true
   def handle_info(%{"action" => action} = payload, socket) do
-    user_id = Integer.to_string(socket.assigns.user_id)
-    # from = Map.get(payload, "userID")
+    # user_id = Integer.to_string(socket.assigns.user_id)
+    user_id = socket.assigns.user_id
     from = Map.get(payload, "origin_user_id")
+    Logger.debug("handle_info: #{inspect({user_id, from, action})}")
 
-    case user_id != from do
-      true ->
-        {:noreply, push_event(socket, action, payload)}
-
-      false ->
-        {:noreply, socket}
+    if user_id != from do
+      {:noreply, push_event(socket, action, payload)}
+    else
+      {:noreply, socket}
     end
   end
 end

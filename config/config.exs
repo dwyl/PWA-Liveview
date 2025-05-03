@@ -6,34 +6,25 @@ config :solidyjs,
 config :solidyjs,
   ecto_repos: [Solidyjs.Repo]
 
+config :solidyjs, :csp_nonce, :crypto.strong_rand_bytes(16) |> Base.encode16()
+
 config :solidyjs, Solidyjs.Repo,
   adapter: Ecto.Adapters.SQLite3,
   database: Path.expand("../db/main.db", Path.dirname(__ENV__.file)),
   pool_size: 5,
   show_sensitive_data_on_connection_error: true
 
-config :exqlite, force_build: false
+config :exqlite, force_build: true
+
 # Configures the endpoint
 config :solidyjs, SolidyjsWeb.Endpoint,
   url: [host: "localhost"],
   adapter: Bandit.PhoenixAdapter,
-  render_errors: [
-    formats: [html: SolidyjsWeb.ErrorHTML, json: SolidyjsWeb.ErrorJSON],
-    layout: false
-  ],
   pubsub_server: :pubsub,
-  live_view: [signing_salt: "zhtHGb8Q"]
-
-# Configure tailwind (the version is required)
-config :tailwind,
-  version: "3.4.3",
-  solidyjs: [
-    args: ~w(
-      --config=tailwind.config.js
-      --input=css/app.css
-      --output=../priv/static/assets/app.css
-    ),
-    cd: Path.expand("../assets", __DIR__)
+  live_view: [signing_salt: "zhtHGb8Q"],
+  render_errors: [
+    formats: [json: SolidyjsWeb.ErrorJSON],
+    layout: false
   ]
 
 config :phoenix,

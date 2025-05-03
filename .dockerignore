@@ -50,3 +50,4 @@ erl_crash.dump
 /lib/old_files/
 /old/
 README.md
+/test/

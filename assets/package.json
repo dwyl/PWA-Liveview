@@ -9,33 +9,31 @@
   "license": "ISC",
   "dependencies": {
     "@maptiler/leaflet-maptilersdk": "^4.0.3",
-    "@maptiler/sdk": "^3.0.3",
+    "@maptiler/sdk": "^3.2.2",
     "leaflet": "^1.9.4",
     "phoenix": "file:../deps/phoenix",
     "phoenix_html": "file:../deps/phoenix_html",
     "phoenix_live_view": "file:../deps/phoenix_live_view",
-    "solid-js": "^1.9.5",
+    "solid-js": "^1.9.6",
     "topbar": "^3.0.0",
     "valtio": "^2.1.4",
-    "vite-plugin-compression": "^0.5.1",
+    "workbox-precaching": "^7.3.0",
     "workbox-routing": "^7.3.0",
     "workbox-strategies": "^7.3.0",
+    "workbox-window": "^7.3.0",
     "y-indexeddb": "^9.0.12",
-    "yjs": "^13.6.24"
+    "yjs": "^13.6.26"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.10",
-    "autoprefixer": "^10.4.21",
-    "esbuild": "^0.25.2",
-    "esbuild-plugin-solid": "^0.6.0",
-    "postcss": "^8.5.3",
+    "esbuild": "^0.25.3",
+    "fast-glob": "^3.3.3",
     "tailwindcss": "^3.4.17",
-    "vite": "^6.2.6",
+    "vite": "^6.3.4",
+    "vite-plugin-compression": "^0.5.1",
     "vite-plugin-pwa": "^1.0.0",
     "vite-plugin-solid": "^2.11.6",
-    "vite-plugin-wasm": "^3.4.1",
-    "workbox-precaching": "^7.3.0",
-    "workbox-window": "^7.3.0"
+    "vite-plugin-wasm": "^3.4.1"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

@@ -1,9 +1,18 @@
-/* @import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities"; */
+/* Ensure Tailwind CSS is properly configured */
+/* @import "tailwindcss"; */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* This file is for your main application CSS */
+/* Custom styles can be added below */
+
+body {
+  font-family: "Inter", sans-serif;
+}
+
+h1 {
+  color: #1a202c;
+  font-size: 2rem;
+  font-weight: bold;
+}

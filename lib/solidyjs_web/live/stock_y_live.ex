@@ -1,0 +1,65 @@
+defmodule SolidyjsWeb.StockYLive do
+  use SolidyjsWeb, :live_view
+  alias Phoenix.PubSub
+  alias SolidyjsWeb.Menu
+  require Logger
+
+  @impl true
+  def render(assigns) do
+    ~H"""
+    <div>
+      <span id="pwa-flash" phx-hook="PwaFlash"></span>
+        <.link
+          :if={@update_available}
+          href="/"
+          class="px-4 mb-4 mt-4 py-2 border-2 rounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300"
+          id="refresh-btn"
+        >
+          Refresh needed
+        </.link>
+      <%!-- </div> --%>
+      <p class="text-sm text-gray-600 mt-4 mb-2">User ID: {@user_id}</p>
+      <Menu.display />
+
+      <br />
+      <div
+        id="stock_y"
+        phx-hook="StockYHook"
+        phx-update="ignore"
+        data-userid={@user_id}
+        data-max={@max}
+      >
+      </div>
+    </div>
+    """
+  end
+
+  @impl true
+  def mount(_params, _session, socket) do
+    if connected?(socket) do
+      :ok = PubSub.subscribe(:pubsub, "ystock")
+    end
+
+    {:ok, assign(socket, %{max: 20, page_title: "Counter"})}
+  end
+
+  # PWA event handlers
+  @impl true
+  # def handle_event("pwa-update-available", %{"updateAvailable" => true}, socket) do
+  #   Logger.warning("PWA Update available")
+
+  #   {:noreply,
+  #    socket
+  #    |> assign(:update_available, true)
+  #    |> push_navigate(to: "/", replace: true)}
+  # end
+
+  def handle_event("pwa-ready", %{"ready" => true}, socket) do
+    Logger.info("PWA offline ready")
+    {:noreply, put_flash(socket, :info, "PWA ready")}
+  end
+
+  # def handle_event("pwa-registration-error", %{"error" => error}, socket) do
+  #   {:noreply, put_flash(socket, :error, error)}
+  # end
+end

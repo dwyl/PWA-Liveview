@@ -39,91 +39,160 @@
     "file": "assets/web.js",
     "name": "web"
   },
-  "_yjs.js": {
-    "file": "assets/yjs.js",
+  "_yjs3.js": {
+    "file": "assets/yjs3.js",
     "name": "yjs",
     "isDynamicEntry": true
   },
-  "js/StockComponent.jsx": {
-    "file": "assets/StockComponent.js",
-    "name": "StockComponent",
-    "src": "js/StockComponent.jsx",
-    "isEntry": true,
-    "isDynamicEntry": true,
-    "imports": [
-      "_preload-helper.js",
-      "_web.js"
-    ],
-    "dynamicImports": [
-      "js/counter.jsx"
-    ]
+  "css/app.css": {
+    "file": "assets/app.css",
+    "src": "css/app.css",
+    "isEntry": true
   },
-  "js/StockHook.js": {
-    "file": "assets/StockHook.js",
-    "name": "StockHook",
-    "src": "js/StockHook.js",
-    "isEntry": true,
-    "isDynamicEntry": true,
-    "imports": [
-      "js/StockComponent.jsx",
-      "_yjs.js",
-      "js/app.js",
-      "_preload-helper.js",
-      "_web.js"
-    ]
+  "images/Elixir.svg": {
+    "file": "assets/Elixir.svg",
+    "src": "images/Elixir.svg"
   },
-  "js/app.js": {
-    "file": "assets/app.js",
-    "name": "app",
-    "src": "js/app.js",
-    "isEntry": true,
-    "imports": [
-      "_preload-helper.js"
-    ],
-    "dynamicImports": [
-      "js/renderVMap.js",
-      "js/renderVForm.js",
-      "js/StockComponent.jsx",
-      "js/initYJS.js",
-      "js/configureTopbar.js",
-      "js/StockHook.js",
-      "js/mapVHook.js",
-      "js/formVHook.js",
-      "js/pwaHook.js",
-      "node_modules/.pnpm/phoenix_live_view@file+..+deps+phoenix_live_view/node_modules/phoenix_live_view/priv/static/phoenix_live_view.esm.js",
-      "node_modules/.pnpm/phoenix@file+..+deps+phoenix/node_modules/phoenix/priv/static/phoenix.mjs"
-    ],
-    "css": [
-      "assets/app.css"
-    ]
+  "images/airplan.png": {
+    "file": "assets/airplan.png",
+    "src": "images/airplan.png"
   },
-  "js/bins.jsx": {
+  "images/airplane.svg": {
+    "file": "assets/airplane.svg",
+    "src": "images/airplane.svg"
+  },
+  "images/icon-192.png": {
+    "file": "assets/icon-192.png",
+    "src": "images/icon-192.png"
+  },
+  "images/icon-512.png": {
+    "file": "assets/icon-512.png",
+    "src": "images/icon-512.png"
+  },
+  "images/layers-2x.png": {
+    "file": "assets/layers-2x.png",
+    "src": "images/layers-2x.png"
+  },
+  "images/layers.png": {
+    "file": "assets/layers.png",
+    "src": "images/layers.png"
+  },
+  "images/leafletjs.svg": {
+    "file": "assets/leafletjs.svg",
+    "src": "images/leafletjs.svg"
+  },
+  "images/logo.svg": {
+    "file": "assets/logo.svg",
+    "src": "images/logo.svg"
+  },
+  "images/maptiler.png": {
+    "file": "assets/maptiler.png",
+    "src": "images/maptiler.png"
+  },
+  "images/maptiler.webp": {
+    "file": "assets/maptiler.webp",
+    "src": "images/maptiler.webp"
+  },
+  "images/marker-icon-2x.png": {
+    "file": "assets/marker-icon-2x.png",
+    "src": "images/marker-icon-2x.png"
+  },
+  "images/marker-icon.png": {
+    "file": "assets/marker-icon.png",
+    "src": "images/marker-icon.png"
+  },
+  "images/marker-shadow.png": {
+    "file": "assets/marker-shadow.png",
+    "src": "images/marker-shadow.png"
+  },
+  "images/offline.svg": {
+    "file": "assets/offline.svg",
+    "src": "images/offline.svg"
+  },
+  "images/online.svg": {
+    "file": "assets/online.svg",
+    "src": "images/online.svg"
+  },
+  "images/p404.webp": {
+    "file": "assets/p404.webp",
+    "src": "images/p404.webp"
+  },
+  "images/solidjs.svg": {
+    "file": "assets/solidjs.svg",
+    "src": "images/solidjs.svg"
+  },
+  "images/sqlite.svg": {
+    "file": "assets/sqlite.svg",
+    "src": "images/sqlite.svg"
+  },
+  "images/valtio2.webp": {
+    "file": "assets/valtio2.webp",
+    "src": "images/valtio2.webp"
+  },
+  "images/vitejs.svg": {
+    "file": "assets/vitejs.svg",
+    "src": "images/vitejs.svg"
+  },
+  "images/webassembly.svg": {
+    "file": "assets/webassembly.svg",
+    "src": "images/webassembly.svg"
+  },
+  "images/workbox.svg": {
+    "file": "assets/workbox.svg",
+    "src": "images/workbox.svg"
+  },
+  "images/yjs.png": {
+    "file": "assets/yjs.png",
+    "src": "images/yjs.png"
+  },
+  "images/yjs.webp": {
+    "file": "assets/yjs.webp",
+    "src": "images/yjs.webp"
+  },
+  "images/zig.svg": {
+    "file": "assets/zig.svg",
+    "src": "images/zig.svg"
+  },
+  "js/components/bins.jsx": {
     "file": "assets/bins.js",
     "name": "bins",
-    "src": "js/bins.jsx",
+    "src": "js/components/bins.jsx",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
       "_web.js"
     ]
   },
-  "js/configureTopbar.js": {
-    "file": "assets/configureTopbar.js",
-    "name": "configureTopbar",
-    "src": "js/configureTopbar.js",
+  "js/components/citiesForm.jsx": {
+    "file": "assets/citiesForm.js",
+    "name": "citiesForm",
+    "src": "js/components/citiesForm.jsx",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
-      "_preload-helper.js"
+      "_preload-helper.js",
+      "_web.js",
+      "js/stores/vStore.js"
     ],
     "dynamicImports": [
-      "_topbar.min.js"
+      "js/components/city.jsx"
     ]
   },
-  "js/counter.jsx": {
+  "js/components/city.jsx": {
+    "file": "assets/city.js",
+    "name": "city",
+    "src": "js/components/city.jsx",
+    "isEntry": true,
+    "isDynamicEntry": true,
+    "imports": [
+      "_web.js",
+      "js/stores/vStore.js"
+    ]
+  },
+  "js/components/counter.jsx": {
     "file": "assets/counter.js",
     "name": "counter",
-    "src": "js/counter.jsx",
+    "src": "js/components/counter.jsx",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
@@ -131,53 +200,13 @@
       "_web.js"
     ],
     "dynamicImports": [
-      "js/bins.jsx"
+      "js/components/bins.jsx"
     ]
   },
-  "js/formCities.jsx": {
-    "file": "assets/formCities.js",
-    "name": "formCities",
-    "src": "js/formCities.jsx",
-    "isEntry": true,
-    "isDynamicEntry": true,
-    "imports": [
-      "_web.js",
-      "js/vStore.js"
-    ]
-  },
-  "js/formVComp.jsx": {
-    "file": "assets/formVComp.js",
-    "name": "formVComp",
-    "src": "js/formVComp.jsx",
-    "isEntry": true,
-    "isDynamicEntry": true,
-    "imports": [
-      "_preload-helper.js",
-      "_web.js",
-      "js/vStore.js"
-    ],
-    "dynamicImports": [
-      "js/formCities.jsx"
-    ]
-  },
-  "js/formVHook.js": {
-    "file": "assets/formVHook.js",
-    "name": "formVHook",
-    "src": "js/formVHook.js",
-    "isEntry": true,
-    "isDynamicEntry": true,
-    "imports": [
-      "_preload-helper.js",
-      "js/vStore.js"
-    ],
-    "dynamicImports": [
-      "js/formVComp.jsx"
-    ]
-  },
-  "js/initMap.js": {
+  "js/components/initMap.js": {
     "file": "assets/initMap.js",
     "name": "initMap",
-    "src": "js/initMap.js",
+    "src": "js/components/initMap.js",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
@@ -191,39 +220,194 @@
       "assets/initMap.css"
     ]
   },
-  "js/initYJS.js": {
-    "file": "assets/initYJS.js",
-    "name": "initYJS",
-    "src": "js/initYJS.js",
+  "js/components/renderMap.js": {
+    "file": "assets/renderMap.js",
+    "name": "renderMap",
+    "src": "js/components/renderMap.js",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
       "_preload-helper.js"
     ],
     "dynamicImports": [
-      "_yjs.js",
-      "node_modules/.pnpm/y-indexeddb@9.0.12_yjs@13.6.24/node_modules/y-indexeddb/src/y-indexeddb.js"
+      "js/components/initMap.js",
+      "js/stores/mapObservers.js"
     ]
   },
-  "js/mapVHook.js": {
-    "file": "assets/mapVHook.js",
-    "name": "mapVHook",
-    "src": "js/mapVHook.js",
+  "js/components/renderers.js": {
+    "file": "assets/renderers.js",
+    "name": "renderers",
+    "src": "js/components/renderers.js",
+    "isEntry": true,
+    "isDynamicEntry": true,
+    "imports": [
+      "_preload-helper.js"
+    ],
+    "dynamicImports": [
+      "js/components/renderMap.js",
+      "js/components/citiesForm.jsx",
+      "js/components/stock.jsx"
+    ]
+  },
+  "js/components/stock.jsx": {
+    "file": "assets/stock.js",
+    "name": "stock",
+    "src": "js/components/stock.jsx",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
       "_preload-helper.js",
-      "js/vStore.js"
+      "_web.js"
     ],
     "dynamicImports": [
-      "js/initMap.js",
-      "js/valtioObservers.js"
+      "js/components/counter.jsx"
     ]
   },
-  "js/pwaHook.js": {
-    "file": "assets/pwaHook.js",
-    "name": "pwaHook",
-    "src": "js/pwaHook.js",
+  "js/hooks/hookForm.js": {
+    "file": "assets/hookForm.js",
+    "name": "hookForm",
+    "src": "js/hooks/hookForm.js",
+    "isEntry": true,
+    "isDynamicEntry": true,
+    "imports": [
+      "_preload-helper.js",
+      "js/stores/vStore.js"
+    ],
+    "dynamicImports": [
+      "js/components/citiesForm.jsx"
+    ]
+  },
+  "js/hooks/hookMap.js": {
+    "file": "assets/hookMap.js",
+    "name": "hookMap",
+    "src": "js/hooks/hookMap.js",
+    "isEntry": true,
+    "isDynamicEntry": true,
+    "imports": [
+      "_preload-helper.js",
+      "js/stores/vStore.js"
+    ],
+    "dynamicImports": [
+      "js/components/initMap.js",
+      "js/stores/mapObservers.js"
+    ]
+  },
+  "js/hooks/hookPwaFlash.js": {
+    "file": "assets/hookPwaFlash.js",
+    "name": "hookPwaFlash",
+    "src": "js/hooks/hookPwaFlash.js",
+    "isEntry": true,
+    "isDynamicEntry": true
+  },
+  "js/hooks/hookYStock.js": {
+    "file": "assets/hookYStock.js",
+    "name": "hookYStock",
+    "src": "js/hooks/hookYStock.js",
+    "isEntry": true,
+    "isDynamicEntry": true,
+    "imports": [
+      "_preload-helper.js",
+      "_yjs3.js",
+      "js/utilities/checkServer.js"
+    ],
+    "dynamicImports": [
+      "js/components/stock.jsx",
+      "js/ydoc_socket/useChannel.js"
+    ]
+  },
+  "js/main.js": {
+    "file": "assets/main.js",
+    "name": "main",
+    "src": "js/main.js",
+    "isEntry": true,
+    "imports": [
+      "_preload-helper.js"
+    ],
+    "dynamicImports": [
+      "js/utilities/checkServer.js",
+      "js/stores/initYJS.js",
+      "js/utilities/pwaRegistration.js",
+      "js/utilities/checkServer.js",
+      "js/utilities/configureTopbar.js",
+      "js/ydoc_socket/ydocSocket.js",
+      "js/hooks/hookYStock.js",
+      "js/hooks/hookPwaFlash.js",
+      "js/hooks/hookMap.js",
+      "js/hooks/hookForm.js",
+      "node_modules/.pnpm/phoenix_live_view@file+..+deps+phoenix_live_view/node_modules/phoenix_live_view/priv/static/phoenix_live_view.esm.js",
+      "node_modules/.pnpm/phoenix@file+..+deps+phoenix/node_modules/phoenix/priv/static/phoenix.mjs",
+      "js/components/renderers.js",
+      "js/components/renderers.js"
+    ],
+    "css": [
+      "assets/app.css"
+    ]
+  },
+  "js/stores/initYJS.js": {
+    "file": "assets/initYJS.js",
+    "name": "initYJS",
+    "src": "js/stores/initYJS.js",
+    "isEntry": true,
+    "isDynamicEntry": true,
+    "imports": [
+      "_preload-helper.js"
+    ],
+    "dynamicImports": [
+      "_yjs3.js",
+      "node_modules/.pnpm/y-indexeddb@9.0.12_yjs@13.6.26/node_modules/y-indexeddb/src/y-indexeddb.js"
+    ]
+  },
+  "js/stores/mapObservers.js": {
+    "file": "assets/mapObservers.js",
+    "name": "mapObservers",
+    "src": "js/stores/mapObservers.js",
+    "isEntry": true,
+    "isDynamicEntry": true,
+    "imports": [
+      "_preload-helper.js",
+      "js/stores/vStore.js"
+    ],
+    "dynamicImports": [
+      "js/utilities/loadWasm.js"
+    ]
+  },
+  "js/stores/vStore.js": {
+    "file": "assets/vStore.js",
+    "name": "vStore",
+    "src": "js/stores/vStore.js",
+    "isEntry": true
+  },
+  "js/utilities/checkServer.js": {
+    "file": "assets/checkServer.js",
+    "name": "checkServer",
+    "src": "js/utilities/checkServer.js",
+    "isEntry": true,
+    "isDynamicEntry": true
+  },
+  "js/utilities/configureTopbar.js": {
+    "file": "assets/configureTopbar.js",
+    "name": "configureTopbar",
+    "src": "js/utilities/configureTopbar.js",
+    "isEntry": true,
+    "isDynamicEntry": true,
+    "imports": [
+      "_preload-helper.js"
+    ],
+    "dynamicImports": [
+      "_topbar.min.js"
+    ]
+  },
+  "js/utilities/loadWasm.js": {
+    "file": "assets/loadWasm.js",
+    "name": "loadWasm",
+    "src": "js/utilities/loadWasm.js",
+    "isEntry": true,
+    "isDynamicEntry": true
+  },
+  "js/utilities/pwaRegistration.js": {
+    "file": "assets/pwaRegistration.js",
+    "name": "pwaRegistration",
+    "src": "js/utilities/pwaRegistration.js",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
@@ -233,47 +417,21 @@
       "../../../../../../@vite-plugin-pwa/virtual:pwa-register"
     ]
   },
-  "js/renderVForm.js": {
-    "file": "assets/renderVForm.js",
-    "name": "renderVForm",
-    "src": "js/renderVForm.js",
+  "js/ydoc_socket/useChannel.js": {
+    "file": "assets/useChannel.js",
+    "name": "useChannel",
+    "src": "js/ydoc_socket/useChannel.js",
+    "isEntry": true,
+    "isDynamicEntry": true
+  },
+  "js/ydoc_socket/ydocSocket.js": {
+    "file": "assets/ydocSocket.js",
+    "name": "ydocSocket",
+    "src": "js/ydoc_socket/ydocSocket.js",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
-      "_preload-helper.js"
-    ],
-    "dynamicImports": [
-      "js/formVComp.jsx"
-    ]
-  },
-  "js/renderVMap.js": {
-    "file": "assets/renderVMap.js",
-    "name": "renderVMap",
-    "src": "js/renderVMap.js",
-    "isEntry": true,
-    "isDynamicEntry": true,
-    "imports": [
-      "_preload-helper.js"
-    ],
-    "dynamicImports": [
-      "js/initMap.js",
-      "js/valtioObservers.js"
-    ]
-  },
-  "js/vStore.js": {
-    "file": "assets/vStore.js",
-    "name": "vStore",
-    "src": "js/vStore.js",
-    "isEntry": true
-  },
-  "js/valtioObservers.js": {
-    "file": "assets/valtioObservers.js",
-    "name": "valtioObservers",
-    "src": "js/valtioObservers.js",
-    "isEntry": true,
-    "isDynamicEntry": true,
-    "imports": [
-      "js/vStore.js"
+      "node_modules/.pnpm/phoenix@file+..+deps+phoenix/node_modules/phoenix/priv/static/phoenix.mjs"
     ]
   },
   "node_modules/.pnpm/@maptiler+leaflet-maptilersdk@4.0.3/node_modules/@maptiler/leaflet-maptilersdk/dist/leaflet-maptilersdk.js": {
@@ -304,13 +462,13 @@
     "src": "node_modules/.pnpm/workbox-window@7.3.0/node_modules/workbox-window/build/workbox-window.prod.es5.mjs",
     "isDynamicEntry": true
   },
-  "node_modules/.pnpm/y-indexeddb@9.0.12_yjs@13.6.24/node_modules/y-indexeddb/src/y-indexeddb.js": {
+  "node_modules/.pnpm/y-indexeddb@9.0.12_yjs@13.6.26/node_modules/y-indexeddb/src/y-indexeddb.js": {
     "file": "assets/y-indexeddb.js",
     "name": "y-indexeddb",
-    "src": "node_modules/.pnpm/y-indexeddb@9.0.12_yjs@13.6.24/node_modules/y-indexeddb/src/y-indexeddb.js",
+    "src": "node_modules/.pnpm/y-indexeddb@9.0.12_yjs@13.6.26/node_modules/y-indexeddb/src/y-indexeddb.js",
     "isDynamicEntry": true,
     "imports": [
-      "_yjs.js"
+      "_yjs3.js"
     ]
   },
   "wasm/great_circle.wasm": {

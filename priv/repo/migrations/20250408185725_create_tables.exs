@@ -11,10 +11,23 @@ defmodule Solidyjs.Repo.Migrations.CreateTables do
       add :longitude, :float
     end
 
-    create_if_not_exists table(:stock, primary_key: false) do
+    # create_if_not_exists table(:stock, primary_key: false) do
+    #   add :id, :string, primary_key: true
+    #   add :value, :integer
+    #   add :state, :binary
+    # end
+
+    create_if_not_exists table(:yjs_documents, primary_key: false) do
       add :id, :string, primary_key: true
-      add :value, :integer
-      add :state, :binary
+      add :y_doc, :binary
+
+      # timestamps(type: :utc_datetime_usec, default: fragment("CURRENT_TIMESTAMP"))
+      # add :updated_at, :utc_datetime_usec, default: fragment("CURRENT_TIMESTAMP")
     end
+
+    execute("""
+      INSERT OR IGNORE INTO yjs_documents (id, y_doc)
+      VALUES ('yjs-doc', x'') -- x'' = empty binary
+    """)
   end
 end

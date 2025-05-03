@@ -20,10 +20,20 @@
     <link rel="manifest" href="/manifest.webmanifest" />
     <%!-- -------------------%>
     <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} crossorigin="anonymous" />
-    <script defer phx-track-static none="mainappv1" type="module" src={~p"/assets/app.js"} crossorigin="anonymous">
+    <%!-- <link phx-track-static rel="stylesheet" href={@conn.private[:vite_app_css]} crossorigin="anonymous" /> --%>
+
+    <script
+      defer
+      phx-track-static
+      nonce={assigns[:main_nonce]}
+      type="module"
+      src={~p"/assets/main.js"}
+      crossorigin="anonymous"
+    >
     </script>
+      <%!-- nonce="mainappv1" --%>
   </head>
   <body class="bg-grey">
-    {@inner_content}
+    <%= @inner_content %>
   </body>
 </html>
