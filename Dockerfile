@@ -9,8 +9,8 @@ ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"
 FROM ${BUILDER_IMAGE} AS builder
 
 RUN apt-get update -y && apt-get install -y \
-  build-essential  git curl \
-  && curl -sL https://deb.nodesource.com/setup_22.x | bash - && \
+  build-essential  git curl && \
+  curl -sL https://deb.nodesource.com/setup_22.x | bash - && \
   apt-get install -y nodejs && \
   apt-get clean && rm -f /var/lib/apt/lists/*_*
 

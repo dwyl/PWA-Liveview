@@ -13,7 +13,7 @@ defmodule SolidyjsWeb.MountUserId do
     user_token = Map.get(session, "user_token")
 
     if !user_id or !user_token do
-      {:halt, socket}
+      {:halt, Phoenix.LiveView.redirect(socket, to: "/404")}
     else
       {:cont,
        assign(socket, %{

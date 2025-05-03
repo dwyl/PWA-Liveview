@@ -11,7 +11,6 @@ config :solidyjs, SolidyjsWeb.Endpoint,
   # cache_static_manifest: "priv/static/cache_manifest.json",
   static_url: [path: "/"],
   url: [host: "localhost", port: 4000, scheme: "http"],
-  # url: [host: "localhost"],
   check_origin: true
 
 # https: [

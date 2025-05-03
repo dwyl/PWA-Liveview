@@ -60,6 +60,8 @@ We used `y_ex` to manage the mirrored state server-side, and `SQLite3` to persis
 
 The client-server communication uses a `Phoenix.Channel` to support binary payloads and decouple this flow from the LiveSocket.
 
+We used the repo <https://github.com/satoren/y-phoenix-channel/tree/main/lib> of the author of `y_ex`.
+
 Source for `y_ex` integration: <https://github.com/satoren/y-phoenix-channel>, by the same author of the Elixir port.
 
 ## Why?
