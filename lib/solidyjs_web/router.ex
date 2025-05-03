@@ -17,11 +17,6 @@ defmodule SolidyjsWeb.Router do
     plug :set_current_user
   end
 
-  # pipeline :wasm do
-  #   plug BrowserCSP
-  #   plug :accepts, ["wasm"]
-  # end
-
   scope "/", SolidyjsWeb do
     pipe_through :browser
 
@@ -32,11 +27,6 @@ defmodule SolidyjsWeb.Router do
       get "/connectivity", ConnectivityController, :check
     end
   end
-
-  # scope "/", SolidyjsWeb do
-  #   pipe_through [:wasm]
-  #   get "/wasm", WasmController, :load
-  # end
 
   def set_current_user(conn, _opts) do
     conn

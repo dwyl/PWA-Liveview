@@ -4884,9 +4884,6 @@ precacheAndRoute([{
   "url": "assets/hookMap.js",
   "revision": null
 }, {
-  "url": "assets/hookPwa.js",
-  "revision": null
-}, {
   "url": "assets/hookPwaFlash.js",
   "revision": null
 }, {
@@ -4966,9 +4963,6 @@ precacheAndRoute([{
   "revision": null
 }, {
   "url": "assets/preload-helper.js",
-  "revision": null
-}, {
-  "url": "assets/pwa-registration.js",
   "revision": null
 }, {
   "url": "assets/pwaRegistration.js",

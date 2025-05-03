@@ -81,8 +81,19 @@ defmodule SolidyjsWeb.MapLive do
 
   # <---------- airport list
 
-  # Clients events callbacks: broadcast to all subscribed clients
+  # PWA event handlers
   @impl true
+  def handle_event("pwa-error", %{"error" => error}, socket) do
+    Logger.warning("PWA on error")
+    {:noreply, put_flash(socket, :error, inspect(error))}
+  end
+
+  def handle_event("pwa-ready", %{"ready" => true}, socket) do
+    Logger.info("PWA offline ready")
+    {:noreply, put_flash(socket, :info, "PWA ready")}
+  end
+
+  # Clients Flight events callbacks
   def handle_event("fly", %{"userID" => userID} = payload, socket) do
     Logger.debug("handle_event, from: #{userID}, #{inspect(payload)}")
 

@@ -161,6 +161,6 @@ export const StockYHook = ({ ydoc, ydocSocket }) => ({
       .receive("error", (err) =>
         console.error("Failed to sync with server:", err)
       );
-    clearInterval(this.connectionCheckInterval);
+    // clearInterval(this.connectionCheckInterval);
   },
 });

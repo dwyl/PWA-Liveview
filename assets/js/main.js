@@ -170,7 +170,11 @@ async function initLiveSocket(hooks) {
           "[PWA] registration error event received",
           e.detail.error
         );
-        // Handle the error needed??
+        window.dispatchEvent(
+          new CustomEvent("pwa-error", {
+            detail: { error: e.detail.error },
+          })
+        );
       });
     });
     return liveSocket;

@@ -45,21 +45,13 @@ defmodule SolidyjsWeb.StockYLive do
 
   # PWA event handlers
   @impl true
-  # def handle_event("pwa-update-available", %{"updateAvailable" => true}, socket) do
-  #   Logger.warning("PWA Update available")
-
-  #   {:noreply,
-  #    socket
-  #    |> assign(:update_available, true)
-  #    |> push_navigate(to: "/", replace: true)}
-  # end
+  def handle_event("pwa-error", %{"error" => error}, socket) do
+    Logger.warning("PWA on error")
+    {:noreply, put_flash(socket, :error, inspect(error))}
+  end
 
   def handle_event("pwa-ready", %{"ready" => true}, socket) do
     Logger.info("PWA offline ready")
     {:noreply, put_flash(socket, :info, "PWA ready")}
   end
-
-  # def handle_event("pwa-registration-error", %{"error" => error}, socket) do
-  #   {:noreply, put_flash(socket, :error, error)}
-  # end
 end
