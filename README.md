@@ -316,10 +316,12 @@ Once the list of successive coordinates are in JavaScript, `Leaflet` can use it 
 #### Airport dataset
 
 We use a dataset from <https://ourairports.com/>.
-We stream download a CSV file, parse it (`NimbleCSV`) and bulk insert into an SQLite table.
-When a user mounts, we read from the database an pass the data asynchronously to the client via the liveSocket.
-The socket "airports" assign is then pruned.
+
+We stream download a CSV file, parse it (`NimbleCSV`) and bulk insert into an SQLite table. Check <"/lib/solidyjs/db/Airports.ex">
+
+When a user mounts, we read from the database and pass the data asynchronously to the client via the liveSocket on te first mount.
 We persist the data in `localStorage` for client-side search.
+The socket "airports" assign is then pruned to free the server's socket.
 
 ### Navigation
 

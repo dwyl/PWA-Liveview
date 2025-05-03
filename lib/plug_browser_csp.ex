@@ -36,8 +36,8 @@ defmodule BrowserCSP do
   defp build_csp(nonce) do
     # case Mix.env() do
     # :prod ->
+    # require-trusted-types-for 'script';
     """
-      require-trusted-types-for 'script';
       script-src 'self' 'nonce-#{nonce}' 'strict-dynamic' 'wasm-unsafe-eval' https://cdn.maptiler.com/;
       object-src 'none';
       connect-src 'self' http://localhost:* https://solidyjs-lively-pine-4375.fly.dev wss://solidyjs-lively-pine-4375.fly.dev ws://solidyjs-lively-pine-4375.fly.dev ws://localhost:* https://api.maptiler.com/ https://*.maptiler.com/;
