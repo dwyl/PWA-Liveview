@@ -12,14 +12,15 @@ config :solidyjs, SolidyjsWeb.Endpoint,
   static_url: [path: "/"],
   url: [host: "localhost", port: 4000, scheme: "http"],
   # url: [host: "localhost"],
-  check_origin: true,
-  https: [
-    ip: {0, 0, 0, 0, 0, 0, 0, 0},
-    port: 4002,
-    cipher_suite: :strong,
-    certfile: "priv/cert/selfsigned.pem",
-    keyfile: "priv/cert/selfsigned_key.pem"
-  ]
+  check_origin: true
+
+# https: [
+#   ip: {0, 0, 0, 0, 0, 0, 0, 0},
+#   port: 4002,
+#   cipher_suite: :strong,
+#   certfile: "priv/cert/selfsigned.pem",
+#   keyfile: "priv/cert/selfsigned_key.pem"
+# ]
 
 # Do not print debug messages in production
 config :logger, level: :info
