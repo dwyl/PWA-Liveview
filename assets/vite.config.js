@@ -32,7 +32,7 @@ const manifestOpts = {
   scope: "/",
   start_url: "/",
   id: "/",
-  description: "A demo LiveView webapp with offline enabled",
+  description: "A demo collaborative LiveView webapp offline ready",
   theme_color: "#000000",
   background_color: "#FFFFFF",
   icons: [
