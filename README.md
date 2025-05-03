@@ -571,6 +571,51 @@ The Service Worker has different cache strategies:
 The application implements security CSP headers set by a plug: `BrowserCSP`.
 
 We mainly protect the "main.js" file - run as a script in the "root.html" template - is protected with a **dynamic nonce**.
+
+<details>
+<summary>Detail of dynamic nonce</summary>
+
+```elixir
+defmodule SoldiyjsWeb.BrowserCSP do
+  @behaviour Plug
+
+  def init(opts), do: opts
+
+  def call(conn, _opts) do
+    nonce = :crypto.strong_rand_bytes(16) |> Base.encode16(case: :lower)
+    Plug.Conn.assign(conn, :csp_nonce, nonce)
+  end
+end
+```
+
+````elixir
+# root.html.heex
+<script nonce="<%= assigns[:csp_nonce] %>">
+  // Your inline script here
+</script>
+
+```elixir
+defp put_csp_headers(conn) do
+  nonce = conn.assigns[:csp_nonce] || ""
+
+  csp_policy = """
+  script-src 'self' 'nonce-#{nonce}' 'wasm-unsafe-eval' https://cdn.maptiler.com;
+  object-src 'none';
+  connect-src 'self' http://localhost:* ws://localhost:* https://api.maptiler.com https://*.maptiler.com;
+  img-src 'self' data: https://*.maptiler.com https://api.maptiler.com;
+  worker-src 'self' blob:;
+  style-src 'self' 'unsafe-inline';
+  default-src 'self';
+  frame-ancestors 'self' http://localhost:*;
+  base-uri 'self'
+  """
+  |> String.replace("\n", " ")
+
+  put_resp_header(conn, "content-security-policy", csp_policy)
+end
+````
+
+</Details>
 The nonce-xxx attribute is an assign populated in the plug BrowserCSP.
 Indeed, the "root" template is rendered on the first mount, and has access to the `conn.assigns`.
 

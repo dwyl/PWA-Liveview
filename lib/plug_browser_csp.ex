@@ -34,7 +34,7 @@ defmodule BrowserCSP do
   end
 
   defp build_csp(nonce) do
-    case MIX_ENV do
+    case config_env() do
       :prod ->
         """
           require-trusted-types-for 'script';
@@ -52,6 +52,7 @@ defmodule BrowserCSP do
 
       _ ->
         """
+          require-trusted-types-for 'script';
           script-src 'self' 'nonce-#{nonce}' 'strict-dynamic' 'wasm-unsafe-eval' https://cdn.maptiler.com/;
           object-src 'none';
           connect-src 'self' http://localhost:* ws://localhost:* https://api.maptiler.com/ https://*.maptiler.com/;img-src 'self' data: https://*.maptiler.com/ https://api.maptiler.com/;worker-src 'self' blob:;
