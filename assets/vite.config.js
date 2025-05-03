@@ -5,9 +5,7 @@ import wasm from "vite-plugin-wasm";
 import path from "path";
 import fg from "fast-glob"; // for recursive file scanning
 import viteCompression from "vite-plugin-compression";
-
-// do not use @tailwindcss/vite
-import tailwindcss from "tailwindcss";
+import tailwindcss from "tailwindcss"; // <--- do not use @tailwindcss/vite
 
 const APPVERSION = "0.1.0"; // Update this when you change the app version
 
@@ -19,8 +17,12 @@ const srcImgDir = path.resolve(rootDir, "images");
 const staticDir = path.resolve(rootDir, "../priv/static/");
 const tailwindConfigPath = path.resolve(rootDir, "tailwind.config.js");
 
-const Icon192 = "assets/icon-192.png";
-const Icon512 = "assets/icon-512.png";
+const Icon64 = "assets/pwa-64x64.png";
+const Icon192 = "assets/pwa-192x192.png";
+const Icon512 = "assets/pwa-512x512.png";
+
+const IconMaskable192 = "assets/pwa-maskable-192.png";
+const IconMaskable512 = "assets/pwa-maskable-512.png";
 
 // https://web.dev/articles/add-manifest
 const manifestOpts = {
@@ -29,18 +31,40 @@ const manifestOpts = {
   display: "standalone",
   scope: "/",
   start_url: "/",
+  id: "/",
   description: "A demo LiveView webapp with offline enabled",
   theme_color: "#000000",
+  background_color: "#FFFFFF",
   icons: [
+    {
+      src: Icon64,
+      sizes: "64x64",
+      type: "image/png",
+      purpose: "any",
+    },
     {
       src: Icon192,
       sizes: "192x192",
       type: "image/png",
+      purpose: "any",
     },
     {
       src: Icon512,
       sizes: "512x512",
       type: "image/png",
+      purpose: "any",
+    },
+    {
+      src: IconMaskable192,
+      sizes: "192x192",
+      type: "image/png",
+      purpose: "maskable",
+    },
+    {
+      src: IconMaskable512,
+      sizes: "512x512",
+      type: "image/png",
+      purpose: "maskable",
     },
   ],
 };

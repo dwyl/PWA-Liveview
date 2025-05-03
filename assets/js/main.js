@@ -163,7 +163,6 @@ async function initLiveSocket(hooks) {
             detail: { ready: e.detail.ready },
           })
         );
-        // [TODO]: send a flash
       });
       document.addEventListener("pwa-registration-error", (e) => {
         console.error(

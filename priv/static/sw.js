@@ -4890,12 +4890,6 @@ precacheAndRoute([{
   "url": "assets/hookYStock.js",
   "revision": null
 }, {
-  "url": "assets/icon-192.png",
-  "revision": null
-}, {
-  "url": "assets/icon-512.png",
-  "revision": null
-}, {
   "url": "assets/initMap.css",
   "revision": null
 }, {
@@ -4963,6 +4957,21 @@ precacheAndRoute([{
   "revision": null
 }, {
   "url": "assets/preload-helper.js",
+  "revision": null
+}, {
+  "url": "assets/pwa-192x192.png",
+  "revision": null
+}, {
+  "url": "assets/pwa-512x512.png",
+  "revision": null
+}, {
+  "url": "assets/pwa-64x64.png",
+  "revision": null
+}, {
+  "url": "assets/pwa-maskable-192.png",
+  "revision": null
+}, {
+  "url": "assets/pwa-maskable-512.png",
   "revision": null
 }, {
   "url": "assets/pwaRegistration.js",
@@ -5038,7 +5047,7 @@ precacheAndRoute([{
   "revision": "0.1.0"
 }, {
   "url": "manifest.webmanifest",
-  "revision": "276c4d20c7f2bd804e0cc176dd735d3e"
+  "revision": "c7e554eb840e16e157ba1bfb3391d94e"
 }], {
   "ignoreURLParametersMatching": [/^vsn$/, /^_csrf$/]
 });

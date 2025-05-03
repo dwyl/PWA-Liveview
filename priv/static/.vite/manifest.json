@@ -61,14 +61,6 @@
     "file": "assets/airplane.svg",
     "src": "images/airplane.svg"
   },
-  "images/icon-192.png": {
-    "file": "assets/icon-192.png",
-    "src": "images/icon-192.png"
-  },
-  "images/icon-512.png": {
-    "file": "assets/icon-512.png",
-    "src": "images/icon-512.png"
-  },
   "images/layers-2x.png": {
     "file": "assets/layers-2x.png",
     "src": "images/layers-2x.png"
@@ -116,6 +108,26 @@
   "images/p404.webp": {
     "file": "assets/p404.webp",
     "src": "images/p404.webp"
+  },
+  "images/pwa-192x192.png": {
+    "file": "assets/pwa-192x192.png",
+    "src": "images/pwa-192x192.png"
+  },
+  "images/pwa-512x512.png": {
+    "file": "assets/pwa-512x512.png",
+    "src": "images/pwa-512x512.png"
+  },
+  "images/pwa-64x64.png": {
+    "file": "assets/pwa-64x64.png",
+    "src": "images/pwa-64x64.png"
+  },
+  "images/pwa-maskable-192.png": {
+    "file": "assets/pwa-maskable-192.png",
+    "src": "images/pwa-maskable-192.png"
+  },
+  "images/pwa-maskable-512.png": {
+    "file": "assets/pwa-maskable-512.png",
+    "src": "images/pwa-maskable-512.png"
   },
   "images/solidjs.svg": {
     "file": "assets/solidjs.svg",

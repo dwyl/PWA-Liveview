@@ -841,7 +841,7 @@ The "manifest.webmanifest" file will be generated from "vite.config.js".
 Through aggressive caching, code splitting strategies and compression (to limit `MapTiler` and `Leaflet` sizes), we get:
 
 - First Contentful Paint (FCP): **0.3s**
-- Full Page Render (with map and WASM): **1s**
+- Full Page Render (with map and WASM): **0.5s**
 
 These metrics are achieved through:
 

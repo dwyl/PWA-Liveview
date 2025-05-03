@@ -56,7 +56,17 @@ defmodule SolidyjsWeb.Endpoint do
     at: "/",
     from: :solidyjs,
     encoding: :brotli,
-    only: ~w(assets images favicon.ico robots.txt  sw.js manifest.webmanifest),
+    only: ~w(
+      assets
+      favicon.ico
+      favicon-16x16.png
+      favicon-32x32.png
+      robots.txt
+      apple-touch-icon-180x180.png
+      sw.js
+      manifest.webmanifest
+      sitemap.xml
+      ),
     headers: %{"cache-control" => "public, max-age=31536000"}
 
   # Code reloading can be explicitly enabled under the
