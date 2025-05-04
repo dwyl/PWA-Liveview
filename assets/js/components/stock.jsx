@@ -16,10 +16,10 @@ export const Stock = (props) => {
 
   /**
   Central state observer to update the UI:
-  `observer` will trigger when the Y.js state changes wether:
+  `observer` will trigger when the Yjs state changes wether:
   - from local user  (in Stock.handleUpdate) or 
   - from "init" or "remote" user (in the hook StockHook.js)
-  The UI will eventually update with the signal
+  The signal setter will eventually update the UI
   */
   ymap.observe(updateStockSignal);
 

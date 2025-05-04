@@ -6,12 +6,12 @@ An example of a Progressive Web App (PWA) combining Phoenix LiveView's real-time
 
 - [Phoenix LiveView + SolidJS PWA](#phoenix-liveview--solidjs-pwa)
   - [Table of Contents](#table-of-contents)
-  - [Context](#context)
+  - [What?](#what)
   - [Why?](#why)
   - [Key points for offline collaborative](#key-points-for-offline-collaborative)
     - [Design goals](#design-goals)
     - [Architecture](#architecture)
-    - [Implementation highlights](#implementation-highlights)
+    - [Implementation highlights (stock page)](#implementation-highlights-stock-page)
   - [Usage](#usage)
   - [Tech overview](#tech-overview)
   - [Diagrams](#diagrams)
@@ -47,9 +47,13 @@ An example of a Progressive Web App (PWA) combining Phoenix LiveView's real-time
   - [Resources](#resources)
   - [License](#license)
 
-## Context
+## What?
 
-We mimic a shopping cart where users can pick items until stock is depleted, at which point the stock is replenished.
+Context: we want to experiment PWA webapps using Phoenix LiveView.
+
+What are we building? A two pages webapp.
+On the first page, we mimic a shopping cart where users can pick items until stock is depleted, at which point the stock is replenished.
+On the second page, we propose an interactive map with a form where two users can edit collaboratively a form to display markers on the map.
 
 ## Why?
 
@@ -75,7 +79,7 @@ Traditional Phoenix LiveView applications face several challenges in offline sce
 
 - **collaborative** (online): Clients sync via _pubsub updates_ when connected, ensuring real-time consistency.
 - **Offline-First**: The app remains functional offline (through reactive JS components), with clients converging to the correct state on reconnection.
-- **Business Rules**: When users resync, the server enforces a "lowest stock count" rule: if two clients pick items offline, the server selects the lowest remaining stock post-merge, rather that summing te reduction, for simplicity.
+- **Business Rules for the stock page**: When users resync, the server enforces a "lowest stock count" rule: if two clients pick items offline, the server selects the lowest remaining stock post-merge, rather that summing te reduction, for simplicity.
 
 ### Architecture
 
@@ -91,7 +95,7 @@ We have two Layers of Authority:
    The server is authoritative: it validates updates upon the business logic (e.g., stock validation), and broadcasts the canonical state to all clients.
    Clients propose changes, but the server decides the final state (e.g., rejecting overflows, enforcing stock limits).
 
-### Implementation highlights
+### Implementation highlights (stock page)
 
 - **Offline capabilities**:
   Edits are saved to `y-indexeddb` and sent later
@@ -118,14 +122,6 @@ We have two Layers of Authority:
   - offline: hydrate the cached HTML documents with reactive JavaScript components
 
 ## Usage
-
-Besides `Elixir/Phoenix/LiveView` and a browser with Service Worker, you need in dev mode:
-
-- preferably `pnpm`.
-
-> `bun` has a problem with the `Valtio` dependency
-
-You can also run a `Docker` container in _mode=prod_. It is one - big - step closer to the deployed version on `Fly.io`.
 
 1/ **IEX session** dev setup
 

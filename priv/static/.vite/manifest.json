@@ -348,8 +348,7 @@
       "js/hooks/hookForm.js",
       "node_modules/.pnpm/phoenix_live_view@file+..+deps+phoenix_live_view/node_modules/phoenix_live_view/priv/static/phoenix_live_view.esm.js",
       "node_modules/.pnpm/phoenix@file+..+deps+phoenix/node_modules/phoenix/priv/static/phoenix.mjs",
-      "js/components/renderers.js",
-      "js/components/renderers.js"
+      "js/utilities/navigate.js"
     ],
     "css": [
       "assets/app.css"
@@ -415,6 +414,24 @@
     "src": "js/utilities/loadWasm.js",
     "isEntry": true,
     "isDynamicEntry": true
+  },
+  "js/utilities/navigate.js": {
+    "file": "assets/navigate.js",
+    "name": "navigate",
+    "src": "js/utilities/navigate.js",
+    "isEntry": true,
+    "isDynamicEntry": true,
+    "imports": [
+      "_preload-helper.js",
+      "js/main.js"
+    ],
+    "dynamicImports": [
+      "js/components/renderers.js",
+      "js/components/renderers.js"
+    ],
+    "css": [
+      "assets/app.css"
+    ]
   },
   "js/utilities/pwaRegistration.js": {
     "file": "assets/pwaRegistration.js",

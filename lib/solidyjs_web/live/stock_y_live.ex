@@ -55,7 +55,6 @@ defmodule SolidyjsWeb.StockYLive do
   end
 
   def handle_event("pwa-ready", %{"ready" => true}, socket) do
-    Logger.info("PWA offline ready")
     {:noreply, put_flash(socket, :info, "PWA ready")}
   end
 end

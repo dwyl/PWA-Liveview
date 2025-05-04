@@ -4,7 +4,6 @@ import "@css/app.css";
 import "phoenix_html";
 
 const CONFIG = {
-  ROUTES: Object.freeze(["/", "/map"]),
   MAIN_CONTENT_SELECTOR: "#main-content",
   POLL_INTERVAL: 5_000,
   ON_ICON: "/assets/online.svg",
@@ -16,16 +15,9 @@ window.AppState = window.AppState || {
   isOnline: true,
   interval: null,
   globalYdoc: null,
-  lastSuccessfulConnection: Date.now(),
 };
 
-export { AppState };
-
-const offlineComponents = {
-  stock: null,
-  map: null,
-  form: null,
-};
+export { AppState, CONFIG };
 
 async function startApp() {
   console.log("App started");
@@ -38,7 +30,7 @@ async function startApp() {
     AppState.status = AppState.isOnline ? "online" : "offline";
 
     updateConnectionStatus(AppState.isOnline);
-    await init(AppState.isOnline);
+    return await init(AppState.isOnline);
   } catch (error) {
     console.error("Initialization error:", error);
   }
@@ -149,32 +141,7 @@ async function initLiveSocket(hooks) {
 
     liveSocket.getSocket().onOpen(() => {
       console.log("liveSocket connected", liveSocket?.socket.isConnected());
-      document.addEventListener("pwa-update-available", (e) => {
-        console.log(
-          "[PWA] update available event received",
-          e.detail.updateAvailable
-        );
-        // [TODO]: send a flash
-      });
-      document.addEventListener("pwa-offline-ready", (e) => {
-        console.log("[PWA] offline ready: ", e.detail.ready);
-        window.dispatchEvent(
-          new CustomEvent("pwa-ready", {
-            detail: { ready: e.detail.ready },
-          })
-        );
-      });
-      document.addEventListener("pwa-registration-error", (e) => {
-        console.error(
-          "[PWA] registration error event received",
-          e.detail.error
-        );
-        window.dispatchEvent(
-          new CustomEvent("pwa-error", {
-            detail: { error: e.detail.error },
-          })
-        );
-      });
+      setPwaListeners();
     });
     return liveSocket;
   } catch (error) {
@@ -183,157 +150,47 @@ async function initLiveSocket(hooks) {
   }
 }
 
-// old way, no need for cleanups as full page reload.....
-// const offline_routes = {
-//   "/": async () => {
-//     const { displayStock } = await import("@js/components/renderers");
-//     return await displayStock(AppState.globalYdoc);
-//   },
-//   "/map": async () => {
-//     const { displayMap } = await import("@js/components/renderers");
-//     const { displayForm } = await import("@js/components/renderers");
-//     await displayForm();
-//     await displayMap();
-//     return;
-//   },
-// };
+function setPwaListeners() {
+  document.addEventListener("pwa-update-available", (e) => {
+    console.log(
+      "[PWA] update available event received",
+      e.detail.updateAvailable
+    );
+    // [TODO]: send a flash
+  });
+  document.addEventListener("pwa-offline-ready", (e) => {
+    console.log("[PWA] offline ready: ", e.detail.ready);
+    window.dispatchEvent(
+      new CustomEvent("pwa-ready", {
+        detail: { ready: e.detail.ready },
+      })
+    );
+  });
+  document.addEventListener("pwa-registration-error", (e) => {
+    console.error("[PWA] registration error event received", e.detail.error);
+    window.dispatchEvent(
+      new CustomEvent("pwa-error", {
+        detail: { error: e.detail.error },
+      })
+    );
+  });
+}
 
 document.addEventListener("connection-status-changed", async (e) => {
   console.log("Connection status changed to:", e.detail.status);
   if (e.detail.status === "offline") {
-    console.log("Offline mode activated-----------");
     return await initOfflineComponents();
   } else if (e.detail.status === "online") {
     window.location.reload();
-  }
-
-  console.log("Online mode activated-----------");
-  await cleanupOfflineComponents();
-  // Let Phoenix LiveView take over again - you may need to reload or reconnect
-  if (window.liveSocket) {
-    return window.liveSocket.connect();
   }
 });
 
 async function initOfflineComponents() {
   if (AppState.isOnline) return;
   console.log("initOfflineComponents---------");
+  const { renderCurrentView, attachNavigationListeners } = await import(
+    "@js/utilities/navigate"
+  );
   await renderCurrentView();
   return attachNavigationListeners();
 }
-
-function attachNavigationListeners() {
-  const navLinks = document.querySelectorAll("nav a");
-  navLinks.forEach((link) => {
-    link.removeEventListener("click", handleOfflineNavigation);
-    link.addEventListener("click", handleOfflineNavigation);
-  });
-}
-
-async function renderCurrentView() {
-  await cleanupOfflineComponents();
-
-  const el = document.getElementById("stock_y");
-  if (el) {
-    const { displayStock } = await import("@js/components/renderers");
-    offlineComponents.stock = await displayStock({
-      ydoc: AppState.globalYdoc,
-      el,
-    });
-  }
-
-  const elMap = document.getElementById("mapform");
-  const elForm = document.getElementById("select_form");
-
-  if (elMap && elForm) {
-    const { displayMap, displayForm } = await import(
-      "@js/components/renderers"
-    );
-    const mapResult = await displayMap();
-    offlineComponents.map = mapResult;
-    offlineComponents.form = await displayForm(elForm);
-  }
-  return;
-}
-
-async function cleanupOfflineComponents() {
-  // Cleanup Stock SolidJS component
-  if (offlineComponents.stock) {
-    try {
-      offlineComponents.stock();
-    } catch (error) {
-      console.error("Error cleaning up Stock component:", error);
-    }
-    offlineComponents.stock = null;
-  }
-
-  // Cleanup Leaflet map
-  if (offlineComponents.map) {
-    try {
-      offlineComponents.map();
-    } catch (error) {
-      console.error("Error cleaning up Map component:", error);
-    }
-    offlineComponents.map = null;
-  }
-
-  // Cleanup Form SolidJS component
-  if (offlineComponents.form) {
-    try {
-      offlineComponents.form();
-    } catch (error) {
-      console.error("Error cleaning up Form component:", error);
-    }
-    offlineComponents.form = null;
-  }
-}
-
-/*
-Clean up existing components (to prevent memory leaks)
-Update the DOM structure with the cached HTML
-Render the new components into the updated DOM
-Reattach navigation listeners to handle future navigation
-*/
-async function handleOfflineNavigation(event) {
-  try {
-    event.preventDefault();
-    const link = event.currentTarget;
-    const path = link.getAttribute("data-path") || link.getAttribute("href");
-
-    // Update URL without page reload
-    window.history.pushState({ path }, "", path);
-
-    // Try to get the page from cache via fetch
-    const response = await fetch(path);
-    if (!response.ok)
-      throw new Error(`Failed to fetch ${path}: ${response.status}`);
-
-    const html = await response.text();
-    // Parse the HTML
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
-    const newContent = doc.querySelector(CONFIG.MAIN_CONTENT_SELECTOR);
-    if (!newContent)
-      throw new Error(`Main content element not found in fetched HTML`);
-
-    // Replace only the main content, not the entire body
-    const currentContent = document.querySelector(CONFIG.MAIN_CONTENT_SELECTOR);
-    if (currentContent) {
-      currentContent.innerHTML = newContent.innerHTML;
-      await renderCurrentView();
-      attachNavigationListeners();
-    }
-  } catch (error) {
-    console.error("Offline navigation error:", error);
-    return false;
-  }
-}
-
-//
-//--------------
-// Enable server log streaming to client. Disable with reloader.disableServerLogs()
-// window.addEventListener("phx:live_reload:attached", ({ detail: reloader }) => {
-//   reloader.enableServerLogs();
-//   // reloader.disableServerLogs();
-//   window.liveReloader = reloader;
-// });

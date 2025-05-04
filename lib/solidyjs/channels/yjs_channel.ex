@@ -64,7 +64,7 @@ defmodule Solidyjs.YjsChannel do
   end
 
   def handle_in("yjs-update", {:binary, update}, socket) when is_binary(update) do
-    Logger.info("Received binary Yjs update from client")
+    Logger.debug("Received binary Yjs update from client")
     # build an ydoc from the database
     with {:ok, {ydoc, db_doc}} <-
            build_ydoc_from_db(),
@@ -80,7 +80,7 @@ defmodule Solidyjs.YjsChannel do
       # Check if the update would decrease the counter value
 
       if apply_if_lower?(old_value, new_value) do
-        Logger.info("Accepting update: old=#{inspect(old_value)}, new=#{inspect(new_value)}")
+        Logger.debug("Accepting update: old=#{inspect(old_value)}, new=#{inspect(new_value)}")
         {:ok, merged_doc} = Yex.encode_state_as_update(ydoc)
 
         case DocHandler.update_doc(merged_doc) do
@@ -93,7 +93,7 @@ defmodule Solidyjs.YjsChannel do
             {:stop, :shutdown, {:error, %{"error" => "Failed to save Yjs update"}}, socket}
         end
       else
-        Logger.info(
+        Logger.debug(
           "Rejecting update: Keeping lower value #{inspect(old_value)} vs #{inspect(new_value)}"
         )
 
@@ -115,10 +115,10 @@ defmodule Solidyjs.YjsChannel do
     if db_doc && byte_size(db_doc) > 0 do
       # Apply the stored state first
       Yex.apply_update(ydoc, db_doc)
-      Logger.info("Applied stored document state")
+      Logger.debug("Applied stored document state")
       {:ok, {ydoc, db_doc}}
     else
-      Logger.info("No stored document state found")
+      Logger.debug("No stored document state found")
       {:error, :no_ydoc}
     end
   end

@@ -34,7 +34,7 @@ export const StockYHook = ({ ydoc, ydocSocket }) => ({
       }
     }, 500);
 
-    // Sync updates (local or via remote) -> Server
+    // Sync local updates
     ydoc.on("update", this.handleYUpdate);
   },
 
@@ -43,12 +43,11 @@ export const StockYHook = ({ ydoc, ydocSocket }) => ({
     if (ydoc) {
       ydoc.off("update", this.handleYUpdate);
     }
-    // window.removeEventListener("connection-status-changed", this.doSync);
 
     if (this.cleanupSolid) {
       this.cleanupSolid();
       this.cleanupSolid = null;
-      console.log("[cleanupSolid]~~~~~~> Stock");
+      console.log("[Stock]~~~~~~>  cleanupSolid");
     }
     // cleanup channel
     if (this.channel) {
@@ -81,7 +80,6 @@ export const StockYHook = ({ ydoc, ydocSocket }) => ({
     });
 
     this.channel.on("pub-update", (payload) => {
-      console.log("remote pub-update", payload);
       Y.applyUpdate(ydoc, new Uint8Array(payload), "remote");
     });
 
@@ -92,10 +90,11 @@ export const StockYHook = ({ ydoc, ydocSocket }) => ({
     return this.channel.state;
   },
 
+  //  sync with server if online and:
+  // - this is a local change
+  // - not on initial load
   async handleYUpdate(update, origin) {
     console.log("handleYUpdate", origin);
-    // Only sync with server if this is a local change (not from server)
-    // and we're online
     if (origin !== "remote" && origin !== "init") {
       this.isOnline = await checkServer();
       if (this.isOnline) {
@@ -105,10 +104,11 @@ export const StockYHook = ({ ydoc, ydocSocket }) => ({
     }
   },
 
+  // fetch the server state when "init"
   syncWithServer() {
     if (!this.channel) return;
 
-    // Get the current state and send it to server
+    // sync local state with server on init
     const update = Y.encodeStateAsUpdate(ydoc);
     console.log("[syncWithServer]--------", update.length);
     if (update.length == 2) {

@@ -55,7 +55,7 @@ export async function createFlightObserver({ L, map, group }) {
           if (idx >= latLngs.length - 1) {
             clearInterval(currentAnimationInterval);
             currentAnimationInterval = null;
-            resolve();
+            return resolve();
           } else {
             marker.setLatLng(latLngs[idx]);
             idx++;

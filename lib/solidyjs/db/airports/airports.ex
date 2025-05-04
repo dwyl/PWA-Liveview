@@ -81,7 +81,7 @@ defmodule Airports do
 
   # debug function to check the CSV file
   def stream_download do
-    Logger.info("Starting airports database download into a file...")
+    Logger.info("Starting dwonload of airports database into a file...")
     path = "./priv/static/airports.csv"
 
     func = fn {:data, data}, {req, resp} ->

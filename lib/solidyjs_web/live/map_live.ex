@@ -97,14 +97,11 @@ defmodule SolidyjsWeb.MapLive do
   end
 
   def handle_event("pwa-ready", %{"ready" => true}, socket) do
-    Logger.info("PWA offline ready")
     {:noreply, put_flash(socket, :info, "PWA ready")}
   end
 
   # Clients Flight events callbacks
   def handle_event("fly", %{"userID" => userID} = payload, socket) do
-    Logger.debug("handle_event, from: #{userID}, #{inspect(payload)}")
-
     :ok =
       PubSub.broadcast(
         :pubsub,
@@ -148,10 +145,8 @@ defmodule SolidyjsWeb.MapLive do
   # Generic PubSub callback: pushes response to other clients
   @impl true
   def handle_info(%{"action" => action} = payload, socket) do
-    # user_id = Integer.to_string(socket.assigns.user_id)
     user_id = socket.assigns.user_id
     from = Map.get(payload, "origin_user_id")
-    Logger.debug("handle_info: #{inspect({user_id, from, action})}")
 
     if user_id != from do
       {:noreply, push_event(socket, action, payload)}

@@ -4941,6 +4941,9 @@ precacheAndRoute([{
   "url": "assets/marker-shadow.png",
   "revision": null
 }, {
+  "url": "assets/navigate.js",
+  "revision": null
+}, {
   "url": "assets/offline.svg",
   "revision": null
 }, {

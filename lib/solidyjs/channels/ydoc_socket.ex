@@ -8,7 +8,7 @@ defmodule Solidyjs.YdocSocket do
   def connect(%{"userToken" => user_token}, socket) do
     case Phoenix.Token.verify(SolidyjsWeb.Endpoint, "user token", user_token, max_age: 86_400) do
       {:ok, user_id} ->
-        Logger.info("User token verified")
+        Logger.debug("User token verified")
         {:ok, assign(socket, :user_id, user_id)}
 
       {:error, _reason} ->
