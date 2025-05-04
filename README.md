@@ -1,10 +1,10 @@
-# Phoenix LiveView + SolidJS PWA
+# Phoenix LiveView PWA
 
-An example of a Progressive Web App (PWA) combining Phoenix LiveView's real-time collaborative capabilities with a reactive UI (SolidJS) offline-first ready.
+An example of a real-time, collaborative web app built with Phoenix LiveView, packaged as a PWA with CRDTs and reactive components offline-first ready.
 
 ## Table of Contents
 
-- [Phoenix LiveView + SolidJS PWA](#phoenix-liveview--solidjs-pwa)
+- [Phoenix LiveView PWA](#phoenix-liveview-pwa)
   - [Table of Contents](#table-of-contents)
   - [What?](#what)
   - [Why?](#why)

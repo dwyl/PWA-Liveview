@@ -2,9 +2,7 @@ import "leaflet/dist/leaflet.css";
 
 export async function initMap() {
   const { default: L } = await import("leaflet");
-  const { MaptilerLayer, MapStyle } = await import(
-    "@maptiler/leaflet-maptilersdk"
-  );
+  const { MaptilerLayer } = await import("@maptiler/leaflet-maptilersdk");
   const map = L.map("map", {
     renderer: L.canvas(),
     minzoom: 1,
@@ -20,7 +18,9 @@ export async function initMap() {
     //   mode: "cors",
     //   credentials: "omit",
     // },
-    style: MapStyle.STREETS,
+    style:
+      "https://api.maptiler.com/maps/streets-v2/style.json?key=${import.meta.env.VITE_API_KEY}",
+    // style: MapStyle.STREETS,
   });
   maptLayer.addTo(map);
 
