@@ -2,7 +2,9 @@ import "leaflet/dist/leaflet.css";
 
 export async function initMap() {
   const { default: L } = await import("leaflet");
-  const { MaptilerLayer } = await import("@maptiler/leaflet-maptilersdk");
+  const { MaptilerLayer, MapStyle } = await import(
+    "@maptiler/leaflet-maptilersdk"
+  );
   const map = L.map("map", {
     renderer: L.canvas(),
     minzoom: 1,
@@ -14,10 +16,8 @@ export async function initMap() {
   const maptLayer = new MaptilerLayer({
     apiKey: import.meta.env.VITE_API_KEY,
     crossOrigin: "anonymous",
-    style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${
-      import.meta.env.VITE_API_KEY
-    }`,
-    // style: MapStyle.STREETS,
+    style: MapStyle.STREETS,
+    attribution: "© MapTiler © OpenStreetMap contributors",
   });
   maptLayer.addTo(map);
 
