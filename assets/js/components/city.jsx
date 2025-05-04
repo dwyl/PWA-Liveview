@@ -123,7 +123,7 @@ export default function City(props) {
   });
 
   return (
-    <div class="relative mb-4">
+    <div class="relative mb-4 mt-4">
       <input
         type="text"
         value={inputValue()}

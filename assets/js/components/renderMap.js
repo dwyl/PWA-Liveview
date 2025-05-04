@@ -1,6 +1,6 @@
 export async function renderMap() {
   const { initMap } = await import("@js/components/initMap.js");
-  const { L, map, group } = await initMap();
+  const { L, map, group, maptLayer } = await initMap();
   const userID = localStorage.getItem("userID");
   const params = { L, map, group, _this: null, userID };
 
@@ -18,11 +18,14 @@ export async function renderMap() {
     selectionObserver.cleanup();
 
     if (map) {
-      map.eachLayer((layer) => map.removeLayer(layer));
+      group.clearLayers();
+      map.removeLayer(group);
+      map.removeLayer(maptLayer);
+      maptLayer.remove();
       map.remove();
     }
 
-    console.log("Map resources cleaned up");
+    console.log("[Map] ---> resources cleaned up");
   };
   return cleanup;
 }

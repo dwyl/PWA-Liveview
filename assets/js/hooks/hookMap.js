@@ -18,20 +18,24 @@ export const MapHook = {
     }
 
     if (this.map) {
-      this.map.eachLayer((layer) => {
-        this.map.removeLayer(layer);
-      });
+      this.group.clearLayers();
+      this.map.removeLayer(this.group);
+      this.map.removeLayer(this.maptLayer);
+      this.maptLayer.remove();
       this.map.remove();
+      this.group = null;
       this.map = null;
     }
 
-    console.log("[MapVHook] destroyed-----");
+    console.log("[MapVHook] resources destroyed-----");
   },
   async mounted() {
     try {
       const { initMap } = await import("@js/components/initMap");
-      const { L, map, group } = await initMap();
+      const { L, map, group, maptLayer } = await initMap();
       this.map = map;
+      this.group = group;
+      this.maptLayer = maptLayer;
 
       this.userID = Number(this.el.dataset.userid);
       // we need to set the userID in localStorage

@@ -183,10 +183,8 @@ export function createSelectionObserver({ L, group, userID, _this }) {
       if (unsubscribeSelection) unsubscribeSelection();
       if (unsubscribeDeletion) unsubscribeDeletion();
       markersMap.clear();
-      group.clearLayers(); // remove from map
-      console.log(
-        "unsubscribed from selection and deletion and clearLayers and markersMap"
-      );
+      group.clearLayers();
+      console.log("unsubscribed from selection and deletion and markersMap");
     },
   };
 }

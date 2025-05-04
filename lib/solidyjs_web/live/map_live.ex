@@ -148,6 +148,8 @@ defmodule SolidyjsWeb.MapLive do
     user_id = socket.assigns.user_id
     from = Map.get(payload, "origin_user_id")
 
+    Logger.info("#{user_id} Received PubSub event: #{action} from #{from}")
+
     if user_id != from do
       {:noreply, push_event(socket, action, payload)}
     else

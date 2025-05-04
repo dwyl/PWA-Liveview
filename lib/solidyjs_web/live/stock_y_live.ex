@@ -44,7 +44,7 @@ defmodule SolidyjsWeb.StockYLive do
       :ok = PubSub.subscribe(:pubsub, "ystock")
     end
 
-    {:ok, assign(socket, %{max: 20, page_title: "Counter"})}
+    {:ok, assign(socket, %{max: 20, page_title: "Stock"})}
   end
 
   # PWA event handlers
