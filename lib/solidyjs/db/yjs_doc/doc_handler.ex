@@ -40,6 +40,17 @@ defmodule Solidyjs.DocHandler do
   ##################################################################
   # GenServer callbacks
   ##################################################################
+
+  # Note on PRAGAM settings:
+  # - The WAL journal mode provides a Write-Ahead Log provides more concurrency
+  # as readers do not block writers and a writer does not block readers,
+  # contrary to the default mode where readers block writers and vice versa.
+
+  # - When synchronous is NORMAL, the SQLite database engine will still sync
+  # at the most critical moments, but less often than in FULL mode.
+  # WAL mode is safe from corruption with synchronous=NORMAL".
+  #  It provides the best performance with the WAL mode.
+
   @impl true
   def init([db, max]) do
     # Set pragmas for better performance

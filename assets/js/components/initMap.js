@@ -15,7 +15,7 @@ export async function initMap() {
   map.setView([0, 0], 0);
   const maptLayer = new MaptilerLayer({
     apiKey: import.meta.env.VITE_API_KEY,
-    crossOrigin: "anonymous",
+    crossOrigin: "anonymous", // make a CROS request without crendentials
     style: MapStyle.STREETS,
     attribution: "© MapTiler © OpenStreetMap contributors",
   });

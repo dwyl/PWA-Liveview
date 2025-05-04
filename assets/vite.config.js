@@ -96,6 +96,7 @@ const buildOps = (mode) => ({
   // Specify the directory to nest generated assets under (relative to build.outDir
   outDir: staticDir,
   cssCodeSplit: true, // Split CSS for better caching
+  cssMinify: "lightningcss", // Use lightningcss for CSS minification
   rollupOptions: {
     input: getEntryPoints(),
     output: {

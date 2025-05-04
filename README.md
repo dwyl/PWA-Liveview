@@ -52,8 +52,11 @@ An example of a real-time, collaborative web app built with Phoenix LiveView, pa
 Context: we want to experiment PWA webapps using Phoenix LiveView.
 
 What are we building? A two pages webapp.
-On the first page, we mimic a shopping cart where users can pick items until stock is depleted, at which point the stock is replenished.
-On the second page, we propose an interactive map with a form where two users can edit collaboratively a form to display markers on the map.
+
+- On the first page, we mimic a shopping cart where users can pick items until stock is depleted, at which point the stock is replenished. Every user will see and can interact with this counter
+- On the second page, we propose an interactive map with a form with two inputs where **two** users can edit collaboratively a form to display markers on the map and then draw a great circle between the two points.
+
+The first page uses CRDT-backed persistencewhilst the second one a local store with ephemeral sync.
 
 ## Why?
 
@@ -61,7 +64,7 @@ Traditional Phoenix LiveView applications face several challenges in offline sce
 
 1. **no Offline Interactivity**: Some applications need to maintain interactivity even when offline, preventing a degraded user experience.
 
-2. **no Offline Navigation**: UI may need to navigate through pages.
+2. **no Offline Navigation**: user may need to navigate through pages.
 
 3. **WebSocket Limitations**: LiveView's WebSocket architecture isn't naturally suited for PWAs, as it requires constant connection for functionality. When online, we use `Phoenix.Channel` for real-time collaboration.
 
@@ -78,6 +81,7 @@ Traditional Phoenix LiveView applications face several challenges in offline sce
 ### Design goals
 
 - **collaborative** (online): Clients sync via _pubsub updates_ when connected, ensuring real-time consistency.
+- **optimistic UI** the function "click on stock" assumes success and will reconciliate later.
 - **Offline-First**: The app remains functional offline (through reactive JS components), with clients converging to the correct state on reconnection.
 - **Business Rules for the stock page**: When users resync, the server enforces a "lowest stock count" rule: if two clients pick items offline, the server selects the lowest remaining stock post-merge, rather that summing te reduction, for simplicity.
 
@@ -348,7 +352,8 @@ Available at `/`.
 
 Available at `/map`.
 
-It displays an _interactive_ and _collaborative_ (two-user input) route planning with vector tiles.
+It displays an _interactive_ and _collaborative_ (two-user input) route planning with vector tiles. It uses a local store (`Valtio`).
+We choosed not to use a lightweight CRDT like [automerge.org](https://www.npmjs.com/package/@automerge/automerge).
 
 ![Flight Map Screenshot](https://github.com/user-attachments/assets/2eb459e6-29fb-4dbb-a101-841cbad5af95)
 

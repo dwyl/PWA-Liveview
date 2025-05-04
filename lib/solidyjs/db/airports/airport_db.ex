@@ -88,7 +88,7 @@ defmodule AirportDB do
     with {:ok, rows} <-
            Airports.stream_and_parse_airports_csv(),
          :ok <-
-           Sqlite3.execute(conn, "BEGIN TRANSACTION"),
+           Sqlite3.execute(conn, "BEGIN IMMEDIATE TRANSACTION"),
          {:ok, stmt} <-
            prepare_insert_statement(conn),
          :ok <-
