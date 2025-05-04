@@ -14,12 +14,9 @@ export async function initMap() {
   const maptLayer = new MaptilerLayer({
     apiKey: import.meta.env.VITE_API_KEY,
     crossOrigin: "anonymous",
-    // fetchOptions: {
-    //   mode: "cors",
-    //   credentials: "omit",
-    // },
-    style:
-      "https://api.maptiler.com/maps/streets-v2/style.json?key=${import.meta.env.VITE_API_KEY}",
+    style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${
+      import.meta.env.VITE_API_KEY
+    }`,
     // style: MapStyle.STREETS,
   });
   maptLayer.addTo(map);
