@@ -206,10 +206,54 @@ flowchart TD
     class YDoc,YEx highlight
 ```
 
-</Details>
+</details>
+<br/>
 
 <details>
-<summary>Sync flow sequence</summary>
+<summary>Server Authority in collaborative mode
+</summary>
+
+```mermaid
+sequenceDiagram
+    participant ClientA
+    participant ClientB
+    participant Server
+    participant DB
+
+    Note over ClientA,ClientB: Online Scenario
+    ClientA->>Server: "init-client" (join channel)
+    Server->>DB: Fetch Y-Doc state
+    DB-->>Server: Y-Doc (current counter)
+    Server-->>ClientA: "init" (binary update)
+    ClientA->>ClientA: Apply update (Yjs)
+    ClientA->>Server: "yjs-update" (local edit, e.g., counter=5)
+    Server->>DB: Load Y-Doc
+    Server->>Server: apply_if_lower?(old, new)
+    alt Business Rule Passes (new ≤ old)
+        Server->>DB: Save merged Y-Doc
+        Server->>ClientA: "pub-update" (ack)
+        Server->>ClientB: "pub-update" (broadcast)
+    else Reject (new > old)
+        Server->>ClientA: "pub-update" (revert to server state)
+    end
+
+    Note over ClientA,ClientB: Offline Scenario
+    ClientB->>ClientB: Local edit (counter=3, offline)
+    ClientB->>ClientB: Save to y-indexeddb
+    ClientB->>Server: Reconnect
+    ClientB->>Server: "yjs-update" (queued offline edits)
+    Server->>DB: Load Y-Doc
+    Server->>Server: apply_if_lower?(old=5, new=3)
+    Server->>DB: Save merged Y-Doc (counter=3)
+    Server->>ClientA: "pub-update" (counter=3)
+    Server->>ClientB: "pub-update" (ack)
+```
+
+</details>
+<br/>
+
+<details>
+<summary>Detailled Sync flow sequence</summary>
 
 ```mermaid
 sequenceDiagram
@@ -293,8 +337,8 @@ sequenceDiagram
     end
 ```
 
-</Details>
-<br\>
+</details>
+<br/>
 
 ## Demo Pages
 
