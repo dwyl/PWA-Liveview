@@ -6,26 +6,24 @@ An example of a Progressive Web App (PWA) combining Phoenix LiveView's real-time
 
 - [Phoenix LiveView + SolidJS PWA](#phoenix-liveview--solidjs-pwa)
   - [Table of Contents](#table-of-contents)
-  - [Key points](#key-points)
+  - [Context](#context)
   - [Why?](#why)
+  - [Key points for offline collaborative](#key-points-for-offline-collaborative)
+    - [Design goals](#design-goals)
+    - [Architecture](#architecture)
+    - [Implementation highlights](#implementation-highlights)
   - [Usage](#usage)
   - [Tech overview](#tech-overview)
-  - [State management](#state-management)
-    - [What is `Yjs`?](#what-is-yjs)
-    - [Phoenix.Channel and CRDT state merge conflicts](#phoenixchannel-and-crdt-state-merge-conflicts)
-    - [Yjs data flow](#yjs-data-flow)
+  - [Diagrams](#diagrams)
   - [Demo Pages](#demo-pages)
     - [Stock Manager](#stock-manager)
     - [Flight Map](#flight-map)
+      - [Mapping](#mapping)
       - [Collaborative input](#collaborative-input)
       - [Client state management](#client-state-management)
       - [Great circle computation with a WASM module](#great-circle-computation-with-a-wasm-module)
       - [Airport dataset](#airport-dataset)
-    - [Navigation](#navigation)
-  - [Implementation](#implementation)
-    - [Build Tool: `Vite` vs `Esbuild`](#build-tool-vite-vs-esbuild)
-    - [WebAssembly Integration](#webassembly-integration)
-    - [Vector Tiles](#vector-tiles)
+  - [Navigation](#navigation)
     - [\[Optional\] Page Caching](#optional-page-caching)
     - [Configuration and settings](#configuration-and-settings)
       - [PWA and Workbox Caching Strategies](#pwa-and-workbox-caching-strategies)
@@ -49,48 +47,81 @@ An example of a Progressive Web App (PWA) combining Phoenix LiveView's real-time
   - [Resources](#resources)
   - [License](#license)
 
-## Key points
+## Context
 
-The webapp works offline with a Service Worker (features [Workbox](https://developer.chrome.com/docs/workbox)). It is built with the `Vite` plugin [VitePWA](https://vite-pwa-org.netlify.app/).
-
-We used `Vite` to bundle the client code (which uses `esbuild` and `RoluUp`).
-
-We used `Y.js` with `y-indexeddb` to manage the authoritative state client-side.
-We used `y_ex` to manage the mirrored state server-side, and `SQLite3` to persist the state to be retrieved when a client reconnects or mounts.
-
-The client-server communication uses a `Phoenix.Channel` to support binary payloads and decouple this flow from the LiveSocket.
-
-We used the repo <https://github.com/satoren/y-phoenix-channel/tree/main/lib> of the author of `y_ex`.
-
-Source for `y_ex` integration: <https://github.com/satoren/y-phoenix-channel>, by the same author of the Elixir port.
+We mimic a shopping cart where users can pick items until stock is depleted, at which point the stock is replenished.
 
 ## Why?
 
 Traditional Phoenix LiveView applications face several challenges in offline scenarios:
 
-1. **Offline Interactivity**: Some applications need to maintain interactivity even when offline, preventing a degraded user experience.
+1. **no Offline Interactivity**: Some applications need to maintain interactivity even when offline, preventing a degraded user experience.
 
-2. **Offline Navigation**: UI may need to navigate through pages.
+2. **no Offline Navigation**: UI may need to navigate through pages.
 
 3. **WebSocket Limitations**: LiveView's WebSocket architecture isn't naturally suited for PWAs, as it requires constant connection for functionality. When online, we use `Phoenix.Channel` for real-time collaboration.
 
 4. **State Management**: Challenging to maintain consistent state across network interruptions between the client and the server. We use different approaches based on the page requirements:
 
-   - CRDT-based synchronization (`Y.js` featuring `IndexedDB` and `y_ex`) for Stock Manager page
+   - CRDT-based synchronization (`Y.js` featuring `IndexedDB` and `y_ex`) for Stock Manager page and `SQLite` for server-side state management synchronization
    - Local state management (`Valtio`) for Flight Map page
-   - `SQLite` for server-side state management synchronization
-   -
 
 5. **Build tool**: We need to build a Service Worker to cache HTML pages and static assets as WebSocket-rendered pages require special handling for offline access.
    We use `Vite` as the build tool to bundle and optimize the application and enable PWA features seamlessly
 
-This project demonstrates it is possible to offer a solution to these challenges while using `Phoenix LiveView`. You need a reactive JavaScript framework, client-side state managers (`Yjs` or `Valtio`) and the counter part `y_ex` package for the first one with persistence in a database, and use `Vite` as the build tool to produce the Service Worker.
+## Key points for offline collaborative
+
+### Design goals
+
+- **collaborative** (online): Clients sync via _pubsub updates_ when connected, ensuring real-time consistency.
+- **Offline-First**: The app remains functional offline (through reactive JS components), with clients converging to the correct state on reconnection.
+- **Business Rules**: When users resync, the server enforces a "lowest stock count" rule: if two clients pick items offline, the server selects the lowest remaining stock post-merge, rather that summing te reduction, for simplicity.
+
+### Architecture
+
+You have both CRDT-based synchronization (for convergence) and server-enforced business rules (for consistency).
+
+We have two Layers of Authority:
+
+1. CRDT Sync Layer (Collaborative).
+   Clients and server synchronize using Yjs’s CRDTs to merge concurrent edits _deterministically_.
+   Clients can modify their local Y-Doc freely (offline or online).
+
+2. Business Rules Layer (Authoritative).
+   The server is authoritative: it validates updates upon the business logic (e.g., stock validation), and broadcasts the canonical state to all clients.
+   Clients propose changes, but the server decides the final state (e.g., rejecting overflows, enforcing stock limits).
+
+### Implementation highlights
+
+- **Offline capabilities**:
+  Edits are saved to `y-indexeddb` and sent later
+  `Service Worker` caches assets via `VitePWA` for full offline functionality.
+
+- **Synchronization Flow**:
+  Client sends all pending `Yjs` updates on (re)connection.
+  The client updates his local `Y-Doc` with the server responses.
+  `Y-Doc` mutations trigger UI rendering, and reciprocally, UI modifications update the `Y -Doc` and propagate mutations to the server.
+
+- **Server Processing**::
+  Merges updates into the `SQLite3`-stored `Y-Doc` (using `y_ex`).
+  Applies business rules (e.g., "stock cannot be negative").Broadcasts the approved state.
+  Clients reconcile local state with the server's authoritative version
+
+- **Data Transport**:
+  Use `Phoenix.Channel` to transmit the `Y-Doc` state as binary.
+  This minimizes bandwith usage
+  It decouples CRDT synchronization from the LiveSocket.
+  Implementation heavily inspired by the repo <https://github.com/satoren/y-phoenix-channel> made by the author of `y_ex`.
+
+- **Component Rendering Strategy**:
+  - online: use LiveView hooks
+  - offline: hydrate the cached HTML documents with reactive JavaScript components
 
 ## Usage
 
 Besides `Elixir/Phoenix/LiveView` and a browser with Service Worker, you need in dev mode:
 
-- `Node.js` and preferably `pnpm`
+- preferably `pnpm`.
 
 > `bun` has a problem with the `Valtio` dependency
 
@@ -114,161 +145,156 @@ docker compose up --build
 
 ## Tech overview
 
-- **Build tool**: `Vite`
-- **Reactive UI**: lightweight framework (`SolidJS`) components via LiveView hooks (online mode) or standalone (offline mode)
-- **Offline navigation**: `Workbox`
-- **Offline-First Architecture**: Reactive without internet connection
-- **Real-time Collaboration**:
-  - client-side CRDT-based synchronization (`Y.js`) with conflict resolution backed with a server persistence via `y_ex` and `SQLite`,
-  - or local client state management (`Valtio`) without server persistence,
-- **Real-time communication**: `Phoenix.Channel` for data flow between server and client
-- **Map rendering** `Leaflet.js`
-- **Vector tiles**: Rendered on `Leaflet` canvas with `MapTiler` for lightweight tiles (not png)
-- **WebAssembly powered**: high-performance calculations use `Zig` code compiled to `WASM` for map "great-circle" routes
+| Component                  | Role                                                                                           |
+| -------------------------- | ---------------------------------------------------------------------------------------------- |
+| Vite                       | Build tool                                                                                     |
+| SQLite                     | Persistent storage of latest Yjs document                                                      |
+| Phoenix LiveView           | UI rendering, incuding hooks                                                                   |
+| PubSub / Phoenix.Channel   | Broadcast/notifies other clients of updates / conveys CRDTs binaries                           |
+| Yjs / Y.Map                | Holds the CRDT state client-side (shared)                                                      |
+| y-indexeddb                | Persists state locally for offline mode                                                        |
+| SolidJS                    | renders reactive UI using signals, driven by Yjs observers                                     |
+| Hooks                      | Injects communication primitives and controls JavaScript code                                  |
+| Service Worker / Cache API | Enable offline UI rendering and navigation by caching HTML pages and static assets             |
+| Leaflet                    | Map rendering                                                                                  |
+| MapTiler                   | enable vector tiles                                                                            |
+| WebAssembly container      |  high-performance calculations for map "great-circle" routes use `Zig` code compiled to `WASM` |
 
-| Component                  | Role                                                                               |
-| -------------------------- | ---------------------------------------------------------------------------------- |
-| Vite                       | Build tool                                                                         |
-| SQLite                     | Persistent storage of latest Yjs document                                          |
-| Phoenix LiveView           | UI rendering, incuding hooks                                                       |
-| PubSub                     | Broadcast/notifies other clients of updates                                        |
-| Y.Doc / Y.Map              | Holds the CRDT state client-side (shared)                                          |
-| y-indexeddb                | Persists state locally for offline mode                                            |
-| SolidJS                    | renders reactive UI using signals, driven by Yjs observers                         |
-| Hooks                      | Injects communication primitives and controls JavaScript code                      |
-| Service Worker / Cache API | Enable offline UI rendering and navigation by caching HTML pages and static assets |
+## Diagrams
 
-## State management
+<details>
+<summary>Architecture diagram</summary>
 
-### What is `Yjs`?
+```mermaid
+flowchart TD
+    subgraph "Client"
+        UI["UI Components\n(SolidJS)"]
+        YDoc["Local Y-Doc\n(CRDT State)"]
+        IndexedDB["IndexedDB\n(Offline Storage)"]
+        ServiceWorker["Service Worker\n(Asset Caching)"]
+        YObserver["Y.js Observer\n(State Change Listener)"]
 
-`Yjs` is a state-based CRDT: each document has a "state vector" (SV) and an "update" history.
+        UI <--> YDoc
+        YDoc <--> IndexedDB
+        YObserver --> UI
+        YDoc --> YObserver
+    end
 
-It ensures eventual consistency by:
+    subgraph "Communication Layer"
+        PhoenixChannel["Phoenix Channel\n(Binary Updates Transport)"]
+        ConnectionCheck["Connection Status\nMonitoring"]
+    end
 
-- Merging changes via `doc.applyUpdate(update)` or `doc.mergeUpdates([a, b])`.
+    subgraph "Server (Elixir)"
+        YjsChannel["Yjs Channel\n(YjsChannel Module)"]
+        DocHandler["DocHandler\n(Database Interface)"]
+        YEx["Yex (y-crdt)\n(CRDT Processing)"]
+        BusinessRules["Business Rules\n(apply_if_lower?)"]
+        DB["SQLite\n(Persisted Y-Doc)"]
 
-- Using `Y.encodeStateAsUpdate(doc, remoteStateVector)` to generate a diff.
+        YjsChannel <--> DocHandler
+        YjsChannel <--> YEx
+        YjsChannel <--> BusinessRules
+        DocHandler <--> DB
+    end
 
-- Encoding and decoding state as binary.
+    YDoc <--> PhoenixChannel
+    PhoenixChannel <--> YjsChannel
+    ConnectionCheck --> PhoenixChannel
 
-Yjs handles structural conflicts automatically:
+    class BusinessRules highlight
+    class YDoc,YEx highlight
+```
 
-- When two clients modify the same Y.Map simultaneously
-- When clients add/remove items from Y.Arrays
-- When clients edit the same Y.Text document concurrently
-- and Y.Map??
+</Details>
 
-When you call `Y.applyUpdate(ydoc, update)`, `Yjs` merges those changes with your local document in a conflict-free way.
-
-‼️ `Yjs` does not automatically implement specific application-level logic like "take the lowest value when conflicting changes occur". No “last write wins” or “who’s right”.
-Instead, all updates get merged, and it’s **up to the app** to decide what that means semantically.
-This is a **business rule specific** to your application.
-We implement a "lowest win" logic here.
-
-### Phoenix.Channel and CRDT state merge conflicts
-
-The **authorative source of truth** is the **client**.
-
-Each client saves the Yjs document state in `y-indexeddb`.
-
-We use `Phoenix.Channel` to push data between the server and the client.
-
-The data is sent as binary to lower bandwidth overhead and CPU usage of using base64 strings encoding/decoding.
-
-The server gets the corresponding update, merges it with the SQLite database (SQLite) current state with `y_ex` and persists the merge back it into the database.
-
-Indeed, a client may work offline or simply connects. The server - and therefor the other online users - and the offline user, resp mounting user, may be out of sync (resp void) when the offline-user reconnects.
-
-Therefor, on each (re)connection, the client gets the last saved YDoc.
-
-It compares it to the local state and the result is then broadcasted. This may or not update other connected users state.
-
-### Yjs data flow
-
-The data is send as binary via a Phoenix.Channel.
+<details>
+<summary>Sync flow sequence</summary>
 
 ```mermaid
 sequenceDiagram
-  participant C as Client (Browser)
-  participant S as Server (Channel)
-  participant D as Database (SQLite)
-  C->>S: yjs-update (binary)
-  S->>D: build_ydoc_from_db
-  D-->>S: current doc state
-  S->>S: apply_update, check lower value alt Accept update
-  S->>D: update_doc
-  S->>C: broadcast update else Reject update
-  S->>C: init-yjs-state (binary)
+    participant Client
+    participant Channel as Phoenix.Channel
+    participant YEx as Yex (y-crdt)
+    participant DocHandler as DocHandler
+    participant DB as SQLite
+
+    Note over Client,DB: Initial Connection Flow
+    Client->>Channel: join("yjs-state", {userID, max})
+    Channel->>Channel: handle_info(:after_join)
+    opt If no doc exists
+        Channel->>YEx: Yex.Doc.new()
+        Channel->>YEx: Set initial counter value (max)
+        Channel->>DocHandler: update_doc(update)
+        DocHandler->>DB: Store initial Y-Doc
+    end
+
+    Client->>Channel: "init-client"
+    Channel->>DocHandler: get_y_doc()
+    DocHandler->>DB: Fetch stored Y-Doc
+    DB-->>DocHandler: Binary Y-Doc state
+    DocHandler-->>Channel: Binary Y-Doc state
+    Channel->>YEx: Build ydoc from DB state
+    YEx-->>Channel: Y-Doc object
+    Channel->>YEx: encode_state_as_update(ydoc)
+    YEx-->>Channel: Binary update
+    Channel-->>Client: "init" with binary update
+    Client->>Client: Y.applyUpdate(ydoc, update, "init")
+    Client->>Client: Update UI via ymap.observe
+
+    Note over Client,DB: Update Flow (Client to Server)
+    Client->>Client: Local UI action
+    Client->>Client: handleUpdate(newValue)
+    Client->>Client: ydoc.transact()
+    Client->>Client: ymap.set("counter", newValue)
+    Client->>Client: Y-Doc generates update
+    Client->>Client: handleYUpdate triggered (origin: local)
+    alt If online
+        Client->>Channel: "yjs-update" with binary update
+        Channel->>DocHandler: get_y_doc()
+        DocHandler->>DB: Fetch current state
+        DB-->>DocHandler: Current binary state
+        DocHandler-->>Channel: Current binary state
+        Channel->>YEx: Build ydoc from DB state
+        YEx-->>Channel: Y-Doc object
+        Channel->>YEx: Get current counter value
+        YEx-->>Channel: old_value
+        Channel->>YEx: Apply client update
+        YEx-->>Channel: Updated Y-Doc
+        Channel->>YEx: Get new counter value
+        YEx-->>Channel: new_value
+
+        alt If apply_if_lower?(old_value, new_value)
+            Channel->>YEx: encode_state_as_update(ydoc)
+            YEx-->>Channel: Merged binary update
+            Channel->>DocHandler: update_doc(merged_doc)
+            DocHandler->>DB: Store updated Y-Doc
+            Channel-->>Client: "ok" response
+            Channel->>Channel: broadcast "pub-update" to other clients
+        else Reject update (business rule)
+            Channel-->>Client: "pub-update" with current server state
+            Client->>Client: Y.applyUpdate(ydoc, serverState, "remote")
+            Client->>Client: UI updates via ymap.observe
+        end
+    else If offline
+        Client->>Client: Changes stored in IndexedDB
+    end
+
+    Note over Client,DB: Reconnection Flow
+    Client->>Client: Detect reconnection
+    Client->>Client: syncWithServer()
+    Client->>Client: Y.encodeStateAsUpdate(ydoc)
+    alt If empty state
+        Client->>Channel: "init-client"
+        Channel-->>Client: "init" with current state
+    else Send local changes
+        Client->>Channel: "yjs-update" with local changes
+        Note right of Channel: Same flow as Update Flow
+    end
 ```
 
-```mermaid
-sequenceDiagram
-    participant UI as SolidJS UI (Stock)
-    participant Y as Yjs Document (Y.Doc)
-    participant CH as Phoenix Channel
-    participant Srv as Server (Yex + DocHandler)
-
-    %% Component Mount and Initialization
-    UI->>Y: Mount component, read initial "counter" from ymap
-    Y->>UI: Create observer on Y.Map ("data")\n(updateStockSignal)
-    Note right of UI: setLocalStock initialized\nwith ymap.get("counter") or props.max
-    UI->>UI: Render UI based on SolidJS signal
-
-    %% Local Update Flow
-    UI->>UI: User triggers update (clicks + or -)
-    UI->>Y: handleUpdate(newValue) \n→ ydoc.transact(() => ymap.set("counter", newValue))
-    Y->>UI: Observer (updateStockSignal) fires\n(setLocalStock(newValue))
-    UI->>UI: UI re-renders with updated counter
-
-    %% Remote Update Flow
-    Srv->>CH: Broadcast remote update ("pub-update")
-    CH->>Y: Y.applyUpdate(ydoc, remoteUpdate)
-    Y->>UI: Observer (updateStockSignal) fires\n(setLocalStock(remoteValue))
-    UI->>UI: UI re-renders with remote updated counter
-```
-
-- **Initialization:**  
-  When the component mounts, it reads the current counter value from `Yjs` and sets up an observer on the `Y.Map`. The observer function (`updateStockSignal`) updates the `SolidJS` signal using `setLocalStock`.
-
-- **Local Updates:**  
-  When a user triggers an update via a button click, `handleUpdate(newValue)` executes a Yjs transaction. The update to the Y.Map triggers the observer, which refreshes the UI.
-
-- **Remote Updates:**  
-  When the server broadcasts a remote update (via the Phoenix Channel), the client applies this update with `Y.applyUpdate()`. Again, this triggers the observer to update the SolidJS signal, ensuring the UI reflects the remote change.
-
-```mermaid
-sequenceDiagram
-    participant Client as Client (SolidJS)
-    participant Server as Server (Phoenix)
-    participant Yjs as Yjs Doc
-    participant YMap as Yjs Map
-
-    %% Initialization Sequence
-    Client->>Server: Request "init-yjs-state"
-    Server->>Yjs: Get current state from DB
-    Yjs->>Server: Return stored Yjs update
-    Server->>Client: Send "init-yjs-state" with Yjs data
-    Client->>YMap: Apply Yjs update
-    Client->>Client: Initialize local state using YMap ("counter")
-
-    %% User Updates Counter (Local Action)
-    Client->>YMap: Set "counter" value via handleUpdate(newValue)
-    YMap->>Yjs: Apply update (transact)
-    Yjs->>Client: Trigger observer (updateStockSignal)
-    Client->>Client: Update UI with new counter value
-
-    %% Remote Update from Another Client (or Server Broadcast)
-    Server->>Client: Send "pub-update" with new Yjs update
-    Client->>YMap: Apply remote update (set "counter")
-    YMap->>Yjs: Trigger observer (updateStockSignal)
-    Client->>Client: Update UI with new counter value
-
-    %% Yjs Sync Across Clients
-    Client->>Server: Sync local changes when back online
-    Server->>Yjs: Store updated state
-    Server->>Client: Confirm state update
-```
+</Details>
+<br\>
 
 ## Demo Pages
 
@@ -276,19 +302,13 @@ sequenceDiagram
 
 Available at `/`.
 
-Real-time collaborative inventory management (!) with offline persistence and synchronisation.
-
 ![Stock Manager Screenshot](https://github.com/user-attachments/assets/f5e68b4d-6229-4736-a4b3-a60fc813b6bf)
-
-Todo: add mermaids, general architecture, online, offline...
 
 ### Flight Map
 
 Available at `/map`.
 
-It is a client component, meaning offline capable.
-
-It displays an _interactive_ and _collaborative_ (multi-user input) route planning with vector tiles.
+It displays an _interactive_ and _collaborative_ (two-user input) route planning with vector tiles.
 
 ![Flight Map Screenshot](https://github.com/user-attachments/assets/2eb459e6-29fb-4dbb-a101-841cbad5af95)
 
@@ -299,7 +319,12 @@ Key features:
 - Efficient map rendering with MapTiler and vector tiles
 - Works offline for CPU-intensive calculations
 
-Todo: add mermaids, general architecture, online, offline...
+#### Mapping
+
+- Uses vector tiles instead of raster tiles for efficient caching
+- Significantly smaller cache size (vector data vs. image files)
+- Better offline performance with less storage usage
+- Smooth rendering at any zoom level without pixelation
 
 #### Collaborative input
 
@@ -316,6 +341,9 @@ It is lightweight perfect for _ephemeral_ UI state when complex conflict resolut
 `Zig` is used to compute a "great circle" between two points, as a list of `[lat, long]` spaced by 100km.
 The `Zig` code is compiled to WASM and available for the client JavaScript to run it.
 Once the list of successive coordinates are in JavaScript, `Leaflet` can use it to produce a polyline and draw it into a canvas.
+We added a WASM module to implement great circle route calculation as a showcase of WASM integration:
+
+> check the folder "/zig-wasm"
 
 #### Airport dataset
 
@@ -327,7 +355,7 @@ When a user mounts, we read from the database and pass the data asynchronously t
 We persist the data in `localStorage` for client-side search.
 The socket "airports" assign is then pruned to free the server's socket.
 
-### Navigation
+## Navigation
 
 The user navigates between two pages which use the same _live_session_, with no full page reload.
 
@@ -429,43 +457,6 @@ flowchart TD
     end
 ```
 
-## Implementation
-
-### Build Tool: `Vite` vs `Esbuild`
-
-While `Esbuild` is standard for Phoenix, `Vite` provides more, especially the `PWA` plugin and this is what we target: we want `Vite` to build the Service Worker for us based on the config we pass.
-
-`Esbuild` is still used by `Vite` for transpilation and minification during build, but bundling is left to `Rollup`.
-
-- Fast HMR for both LiveView and SolidJS
-- JSX is supported out-of-the-box, and we have a pugin for `SolidJS`
-- Dynamic imports for code splitting
-- PWA plugin with Workbox integration
-- WASM support out of the box
-
-- Production Optimization wit RollUp
-  - Efficient chunking and tree-shaking
-  - Automatic vendor chunk splitting
-  - Asset optimization and compression (`Brotli`)
-
-### WebAssembly Integration
-
-We added a WASM module to implement great circle route calculation as a showcase of WASM integration:
-
-> check the folder "/zig-wasm"
-
-- Implemented in Zig, compiled to WASM with `.ReleaseSmall` (13kB).
-- Uses `Haversine` formula to compute lat/long every 1° along great circle
-- Rendered as polyline with `Leaflet`
-- Cached as static asset by Service Worker
-
-### Vector Tiles
-
-- Uses vector tiles instead of raster tiles for efficient caching
-- Significantly smaller cache size (vector data vs. image files)
-- Better offline performance with less storage usage
-- Smooth rendering at any zoom level without pixelation
-
 ### [Optional] Page Caching
 
 <details>
@@ -515,34 +506,7 @@ navigation.addEventListener("navigate", async ({ destination: { url } }) => {
 
 #### PWA and Workbox Caching Strategies
 
-`Vite` generates the Service Worker based on the `workbox` config and the _manifest_ in **"vite.config.js"**.
-
-The Service Worker has different cache strategies:
-
-1. **NetworkOnly 🔄**
-
-   - Use for: WebSocket connections
-   - Example: LiveView real-time updates
-
-2. **CacheFirst 💾**
-
-   - Use for: Static assets, images
-   - Benefits: Fastest load time, reduced bandwidth
-
-3. **StaleWhileRevalidate ⚡️**
-
-   - Use for: Frequently updated resources
-   - Benefits: Quick load with background refresh
-
-4. **NetworkFirst 🌐**
-
-   - Use for: Dynamic pages, API calls
-   - Benefits: Fresh content with offline fallback
-
-5. **CacheOnly 📦**
-
-   - Use for: Offline-first content
-   - Benefits: Guaranteed offline access
+`Vite` generates the Service Worker - based on the `workbox` config - and the _manifest_ in the **"vite.config.js"** file.
 
 #### Server configuration
 

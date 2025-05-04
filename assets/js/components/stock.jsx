@@ -6,11 +6,10 @@ let dispose = null;
 export const Stock = (props) => {
   if (dispose) dispose();
 
-  console.log("Stock");
   const max = Number(sessionStorage.getItem("max"));
   const ymap = props.ydoc.getMap("data");
   const [localStock, setLocalStock] = createSignal(
-    ymap.get("counter") || props.max
+    Math.round(Number(ymap.get("counter"))) || props.max
   );
   const [range, setRange] = createSignal([]);
   const Counter = lazy(() => import("@jsx/components/counter"));
@@ -27,7 +26,8 @@ export const Stock = (props) => {
   function updateStockSignal(event, { origin }) {
     console.log("origin: ", origin);
     if (event.keysChanged.has("counter")) {
-      setLocalStock(ymap.get("counter"));
+      // y_ex sends BigInt so we convert it into an integer
+      setLocalStock(Math.round(Number(ymap.get("counter"))));
     }
   }
 

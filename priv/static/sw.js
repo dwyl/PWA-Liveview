@@ -5047,7 +5047,7 @@ precacheAndRoute([{
   "revision": "0.1.0"
 }, {
   "url": "manifest.webmanifest",
-  "revision": "c7e554eb840e16e157ba1bfb3391d94e"
+  "revision": "22361b01882dc431e12949a02e93567d"
 }], {
   "ignoreURLParametersMatching": [/^vsn$/, /^_csrf$/]
 });

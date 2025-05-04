@@ -6,7 +6,7 @@ import "phoenix_html";
 const CONFIG = {
   ROUTES: Object.freeze(["/", "/map"]),
   MAIN_CONTENT_SELECTOR: "#main-content",
-  POLL_INTERVAL: 2_000,
+  POLL_INTERVAL: 5_000,
   ON_ICON: "/assets/online.svg",
   OFF_ICON: "/assets/offline.svg",
 };

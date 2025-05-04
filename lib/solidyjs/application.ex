@@ -18,7 +18,7 @@ defmodule Solidyjs.Application do
       {Phoenix.PubSub, name: :pubsub},
       Solidyjs.Repo,
       SolidyjsWeb.Endpoint,
-      {AirportDB, [db]},
+      # {AirportDB, [db]},
       {Solidyjs.DocHandler, [db, @max]}
     ]
 

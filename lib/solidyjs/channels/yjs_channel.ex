@@ -22,69 +22,111 @@ defmodule Solidyjs.YjsChannel do
 
   @impl true
   def handle_info(:after_join, socket) do
-    db_doc = DocHandler.get_y_doc()
-    :ok = push(socket, "init-yjs-state", {:binary, db_doc})
-    {:noreply, socket}
-  end
-
-  @impl true
-  def handle_in("yjs-update", {:binary, update}, socket) when is_binary(update) do
-    Logger.info("Received binary Yjs update from client")
-
-    # build an ydoc from the database
-    {ydoc, db_doc} = build_ydoc_from_db()
-
-    # Get existing counter value before applying updates
-    old_value = get_current_value_from(ydoc)
-    Yex.apply_update(ydoc, update)
-    # Get the new counter value after applying updates
-    new_value = get_current_value_from(ydoc)
-
-    # Check if the update would decrease the counter value
-
-    if apply_if_lower?(old_value, new_value) do
-      Logger.info("Accepting update: old=#{inspect(old_value)}, new=#{inspect(new_value)}")
-      {:ok, merged_doc} = Yex.encode_state_as_update(ydoc)
-
-      case DocHandler.update_doc(merged_doc) do
+    if DocHandler.get_y_doc() == {:ok, ""} do
+      case instantiate_db(socket.assigns.max) do
         :done ->
-          :ok = broadcast_from(socket, "pub-update", {:binary, update})
           {:noreply, socket}
 
         :error ->
-          Logger.error("Failed to save Yjs update")
-          {:noreply, socket}
+          Logger.error("Failed to instantiate yjs_documents")
+
+          {:stop, :shutdown, {:error, %{"error" => "Failed to instantiate yjs_documents"}},
+           socket}
       end
     else
-      Logger.info(
-        "Rejecting update: Keeping lower value #{inspect(old_value)} vs #{inspect(new_value)}"
-      )
-
-      # Send the current server state back to the client
-      push(socket, "init-yjs-state", {:binary, db_doc})
       {:noreply, socket}
+    end
+  end
+
+  defp instantiate_db(max) do
+    # no error guard, todo
+    ydoc = Yex.Doc.new()
+    map = Yex.Doc.get_map(ydoc, "data")
+    :ok = Yex.Map.set(map, "counter", max)
+    {:ok, update} = Yex.encode_state_as_update(ydoc)
+    DocHandler.update_doc(update)
+  end
+
+  @impl true
+  def handle_in("init-client", %{}, socket) do
+    with {:ok, {ydoc, _}} <-
+           build_ydoc_from_db(),
+         {:ok, bin} <-
+           Yex.encode_state_as_update(ydoc),
+         :ok <-
+           push(socket, "init", {:binary, bin}) do
+      {:reply, :ok, socket}
+    else
+      err ->
+        Logger.error("Failed to encode Yjs state: #{inspect(err)}")
+        {:stop, :shutdown, {:error, %{"error" => "Failed to encode Yjs state"}}, socket}
+    end
+  end
+
+  def handle_in("yjs-update", {:binary, update}, socket) when is_binary(update) do
+    Logger.info("Received binary Yjs update from client")
+    # build an ydoc from the database
+    with {:ok, {ydoc, db_doc}} <-
+           build_ydoc_from_db(),
+
+         # Get existing counter value before applying updates
+         {:ok, old_value} <-
+           get_current_value_from(ydoc),
+         :ok <-
+           Yex.apply_update(ydoc, update),
+         # Get the new counter value after applying updates
+         {:ok, new_value} <-
+           get_current_value_from(ydoc) do
+      # Check if the update would decrease the counter value
+
+      if apply_if_lower?(old_value, new_value) do
+        Logger.info("Accepting update: old=#{inspect(old_value)}, new=#{inspect(new_value)}")
+        {:ok, merged_doc} = Yex.encode_state_as_update(ydoc)
+
+        case DocHandler.update_doc(merged_doc) do
+          :done ->
+            :ok = broadcast_from(socket, "pub-update", {:binary, update})
+            {:reply, :ok, socket}
+
+          :error ->
+            Logger.error("Failed to save Yjs update")
+            {:stop, :shutdown, {:error, %{"error" => "Failed to save Yjs update"}}, socket}
+        end
+      else
+        Logger.info(
+          "Rejecting update: Keeping lower value #{inspect(old_value)} vs #{inspect(new_value)}"
+        )
+
+        # Send the current server state back to the client
+        :ok = push(socket, "pub-update", {:binary, db_doc})
+        {:noreply, socket}
+      end
+    else
+      err ->
+        Logger.error("Failed to apply Yjs update: #{inspect(err)}")
+        {:stop, :shutdown, {:error, %{"error" => "Failed to apply Yjs update"}}, socket}
     end
   end
 
   defp build_ydoc_from_db() do
     ydoc = Yex.Doc.new()
-    db_doc = DocHandler.get_y_doc()
+    {:ok, db_doc} = DocHandler.get_y_doc()
 
     if db_doc && byte_size(db_doc) > 0 do
       # Apply the stored state first
       Yex.apply_update(ydoc, db_doc)
       Logger.info("Applied stored document state")
+      {:ok, {ydoc, db_doc}}
     else
       Logger.info("No stored document state found")
+      {:error, :no_ydoc}
     end
-
-    {ydoc, db_doc}
   end
 
   defp get_current_value_from(ydoc) do
     case Yex.Doc.get_map(ydoc, "data") |> Yex.Map.fetch("counter") do
-      {:ok, value} -> value
-      :error -> nil
+      {:ok, value} -> {:ok, value}
+      :error -> {:error, nil}
     end
   end
 

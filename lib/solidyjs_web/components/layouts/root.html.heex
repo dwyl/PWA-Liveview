@@ -3,26 +3,28 @@
   <head>
     <meta charset="utf-8" />
 
-    <meta
-      name="description"
-      content="a real-time collaborative webapp offline ready"
-    />
-    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)"/>
-    <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+    <meta name="description" content="a real-time collaborative webapp offline ready" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
     <.live_title suffix=" · Phoenix Framework">
       {assigns[:page_title] || "Solidyjs"}
     </.live_title>
     <%!-- -------------------%>
-    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" type="image/png" sizes="180x180"/>
-    <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
-    <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
-    <link rel="icon" href="/favicon.ico" type="image/png" sizes="48x48"  />
+    <link
+      rel="apple-touch-icon"
+      href="/apple-touch-icon-180x180.png"
+      type="image/png"
+      sizes="180x180"
+    />
+    <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16" />
+    <link rel="icon" href="/favicon.ico" type="image/png" sizes="48x48" />
     <%!-- <link rel="icon-192" href={~p"/images/pwa-192x192.png"} type="image/png" /> --%>
     <%!-- <link rel="icon-512" href={~p"/images/pwa-512x512.png"} type="image/png" /> --%>
-    <link rel="mask-icon" href={~p"/images/pwa-maskable-192.png"} color="#FFFFFF">
-    <link rel="mask-icon" href={~p"/images/pwa-maskable-512.png"} color="#FFFFFF">
+    <link rel="mask-icon" href={~p"/images/pwa-maskable-192.png"} color="#FFFFFF" />
+    <link rel="mask-icon" href={~p"/images/pwa-maskable-512.png"} color="#FFFFFF" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <%!-- -------------------%>
     <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} crossorigin="anonymous" />

@@ -28,10 +28,12 @@ defmodule Solidyjs.DocHandler do
   end
 
   def update_doc(new_doc) do
+    Logger.debug("Updating Yjs document in database")
     GenServer.call(__MODULE__, {:update_doc, new_doc})
   end
 
   def get_y_doc do
+    Logger.debug("Fetching Yjs document from database")
     GenServer.call(__MODULE__, :get_y_doc)
   end
 
@@ -97,11 +99,11 @@ defmodule Solidyjs.DocHandler do
            Sqlite3.step(conn, stmt),
          :ok <-
            Sqlite3.release(conn, stmt) do
-      current_doc
+      {:ok, current_doc}
     else
       err ->
         Logger.error("Failed to fetch yjs-doc: #{inspect(err)}")
-        <<>>
+        {:error, <<>>}
     end
   end
 end
