@@ -18,32 +18,26 @@ An example of a real-time, collaborative web app built with Phoenix LiveView, pa
   - [Demo Pages](#demo-pages)
     - [Stock Manager](#stock-manager)
     - [Flight Map](#flight-map)
-      - [Mapping](#mapping)
-      - [Collaborative input](#collaborative-input)
-      - [Client state management](#client-state-management)
-      - [Great circle computation with a WASM module](#great-circle-computation-with-a-wasm-module)
-      - [Airport dataset](#airport-dataset)
   - [Navigation](#navigation)
-    - [\[Optional\] Page Caching](#optional-page-caching)
-    - [Configuration and settings](#configuration-and-settings)
-      - [PWA and Workbox Caching Strategies](#pwa-and-workbox-caching-strategies)
-      - [Server configuration](#server-configuration)
-        - [Phoenix settings: dev build and watcher](#phoenix-settings-dev-build-and-watcher)
-        - [CSP rules and evaluation](#csp-rules-and-evaluation)
-        - [WASM CSP rule](#wasm-csp-rule)
-        - [User token](#user-token)
+  - [Configuration and settings](#configuration-and-settings)
+    - [PWA and Workbox Caching Strategies](#pwa-and-workbox-caching-strategies)
+    - [Server configuration](#server-configuration)
+      - [Phoenix settings: dev build and watcher](#phoenix-settings-dev-build-and-watcher)
+      - [CSP rules and evaluation](#csp-rules-and-evaluation)
+      - [WASM CSP rule](#wasm-csp-rule)
+      - [User token](#user-token)
     - [Yjs](#yjs)
       - [Documentation source](#documentation-source)
       - [Yjs initialization](#yjs-initialization)
       - [**UI layer**: a `SolidJS` component](#ui-layer-a-solidjs-component)
-    - [Server-Side Implementation](#server-side-implementation)
-    - [State Synchronization Flow](#state-synchronization-flow)
+  - [State Synchronization Flow](#state-synchronization-flow)
     - [Misc](#misc)
       - [Common pitfall of combining LiveView with CSR components](#common-pitfall-of-combining-liveview-with-csr-components)
       - ["Important" `Workbox` settings](#important-workbox-settings)
       - [Icons](#icons)
       - [Manifest](#manifest)
-    - [Performance](#performance)
+      - [Performance](#performance)
+      - [\[Optional\] Page Caching](#optional-page-caching)
   - [Resources](#resources)
   - [License](#license)
 
@@ -352,53 +346,23 @@ Available at `/`.
 
 Available at `/map`.
 
-It displays an _interactive_ and _collaborative_ (two-user input) route planning with vector tiles. It uses a local store (`Valtio`).
-We choosed not to use a lightweight CRDT like [automerge.org](https://www.npmjs.com/package/@automerge/automerge).
+It displays an _interactive_ and _collaborative_ (two-user input) route planning with vector tiles.
+The UI displays a form with two inputs, which are pushed to Phoenix and broadcasted via Phoenix PubSub. A marker is drawn by `Leaflet` to display the choosen airport on a vector-tiled map using `MapTiler`.
 
 ![Flight Map Screenshot](https://github.com/user-attachments/assets/2eb459e6-29fb-4dbb-a101-841cbad5af95)
 
 Key features:
 
-- Valtio-based local state management
-- WebAssembly-powered great circle calculations
-- Efficient map rendering with MapTiler and vector tiles
-- Works offline for CPU-intensive calculations
+- collaborative input
+- `Valtio`-based _local_ (browser only) ephemeral state management (no complex conflict resolution needed)
+- WebAssembly-powered great circle calculations: CPU-intensive calculations works offline
+- Efficient map rendering with MapTiler and _vector tiles_ with smaller cache size (vector data vs. raster image files)
 
-#### Mapping
-
-- Uses vector tiles instead of raster tiles for efficient caching
-- Significantly smaller cache size (vector data vs. image files)
-- Better offline performance with less storage usage
-- Smooth rendering at any zoom level without pixelation
-
-#### Collaborative input
-
-The UI displays a form with two inputs, which are pushed to Phoenix and broadcasted via Phoenix PubSub.
-A marker is drawn by `Leaflet` to display the choosen airport on a vector-tiled map using `MapTiler`.
-
-#### Client state management
-
-We used `Valtio`, a browser-only state manager for the geographical points based on proxies.
-It is lightweight perfect for _ephemeral_ UI state when complex conflict resolution isn't needed.
-
-#### Great circle computation with a WASM module
-
-`Zig` is used to compute a "great circle" between two points, as a list of `[lat, long]` spaced by 100km.
-The `Zig` code is compiled to WASM and available for the client JavaScript to run it.
-Once the list of successive coordinates are in JavaScript, `Leaflet` can use it to produce a polyline and draw it into a canvas.
-We added a WASM module to implement great circle route calculation as a showcase of WASM integration:
-
+> [**Great circle computation**] It uses a WASM module. `Zig` is used to compute a "great circle" between two points, as a list of `[lat, long]` spaced by 100km. The `Zig` code is compiled to WASM and available for the client JavaScript to run it. Once the list of successive coordinates are in JavaScript, `Leaflet` can use it to produce a polyline and draw it into a canvas. We added a WASM module to implement great circle route calculation as a showcase of WASM integration. A JAvascript alternative would be to use [turf.js](https://turfjs.org/docs/api/greatCircle).
 > check the folder "/zig-wasm"
 
-#### Airport dataset
-
-We use a dataset from <https://ourairports.com/>.
-
-We stream download a CSV file, parse it (`NimbleCSV`) and bulk insert into an SQLite table. Check <"/lib/solidyjs/db/Airports.ex">
-
-When a user mounts, we read from the database and pass the data asynchronously to the client via the liveSocket on te first mount.
-We persist the data in `localStorage` for client-side search.
-The socket "airports" assign is then pruned to free the server's socket.
+> [**Airport dataset**] We use a dataset from <https://ourairports.com/>. We stream download a CSV file, parse it (`NimbleCSV`) and bulk insert into an SQLite table. When a user mounts, we read from the database and pass the data asynchronously to the client via the liveSocket on te first mount. We persist the data in `localStorage` for client-side search. The socket "airports" assign is then pruned to free the server's socket.
+> Check <"/lib/solidyjs/db/Airports.ex">
 
 ## Navigation
 
@@ -502,60 +466,15 @@ flowchart TD
     end
 ```
 
-### [Optional] Page Caching
+## Configuration and settings
 
-<details>
-<summary>Direct usage of Cache API instead of Workbox</summary>
-
-We can use the `Cache API` as an alternative to `Workbox` to cache pages. The important part is to calculate the "Content-Length" to be able to cache it.
-
-> Note: we cache a page only once by using a `Set`
-
-```javascript
-// Cache current page if it's in the configured routes
-async function addCurrentPageToCache({ current, routes }) {
-  await navigator.serviceWorker.ready;
-  const newPath = new URL(current).pathname;
-
-  // Only cache configured routes once
-  if (!routes.includes(newPath) || AppState.paths.has(newPath)) return;
-
-  if (newPath === window.location.pathname) {
-    AppState.paths.add(newPath);
-    const htmlContent = document.documentElement.outerHTML;
-    const contentLength = new TextEncoder().encode(htmlContent).length;
-
-    const response = new Response(htmlContent, {
-      headers: {
-        "Content-Type": "text/html",
-        "Content-Length": contentLength,
-      },
-      status: 200,
-    });
-
-    const cache = await caches.open(CONFIG.CACHE_NAME);
-    return cache.put(current, response);
-  }
-}
-
-// Monitor navigation events
-navigation.addEventListener("navigate", async ({ destination: { url } }) => {
-  return addCurrentPageToCache({ current: url, routes: CONFIG.ROUTES });
-});
-```
-
-</Details>
-</br>
-
-### Configuration and settings
-
-#### PWA and Workbox Caching Strategies
+### PWA and Workbox Caching Strategies
 
 `Vite` generates the Service Worker - based on the `workbox` config - and the _manifest_ in the **"vite.config.js"** file.
 
-#### Server configuration
+### Server configuration
 
-##### Phoenix settings: dev build and watcher
+#### Phoenix settings: dev build and watcher
 
 ```elixir
 # endpoint.ex
@@ -583,7 +502,7 @@ The watcher config is:
    ]
 ```
 
-##### CSP rules and evaluation
+#### CSP rules and evaluation
 
 The application implements security CSP headers set by a plug: `BrowserCSP`.
 
@@ -643,11 +562,11 @@ Indeed, the "root" template is rendered on the first mount, and has access to th
 <img width="581" alt="Screenshot 2025-05-02 at 21 18 09" src="https://github.com/user-attachments/assets/f80d2c0e-0f2f-460c-bec6-e0b5ff884120" />
 <br/>
 
-##### WASM CSP rule
+#### WASM CSP rule
 
 The WASM module needs `'wasm-unsafe-eval'` as the browser runs `eval`.
 
-##### User token
+#### User token
 
 We also protect the custom socket with a "user_token", generated by the server with `Phoenix.Token`.
 
@@ -741,16 +660,7 @@ render(...)
 </details>
 </br>
 
-### Server-Side Implementation
-
-The server-side implementation uses:
-
-- the Elixir port [`y_ex`](https://github.com/satoren/y_ex) of [`y-cdrt`](https://github.com/y-crdt/y-crdt), the Rust port of `Yjs` server-side.
-- an SQlite3 database to persist the `Yjs` document.
-
-It uses `Phoenix.Channel` to convey data between the server and the client. This is because we pass directly _binary data_: this removes the need to encode/decode in Base64 with the `LiveSocket`, thus lowers the data flow, but also decouples UI related work from data flow.
-
-### State Synchronization Flow
+## State Synchronization Flow
 
 ```mermaid
 sequenceDiagram
@@ -845,7 +755,7 @@ The "manifest.webmanifest" file will be generated from "vite.config.js".
 </head>
 ```
 
-### Performance
+#### Performance
 
 Through aggressive caching, code splitting strategies and compression (to limit `MapTiler` and `Leaflet` sizes), we get:
 
@@ -862,6 +772,51 @@ These metrics are achieved through:
 - Optimized bundling with Vite
 
 <div align="center"><img width="619" alt="Screenshot 2024-12-28 at 04 45 26" src="https://github.com/user-attachments/assets/e6244e79-2d31-47df-9bce-a2d2a4984a33" /></div>
+
+#### [Optional] Page Caching
+
+<details>
+<summary>Direct usage of Cache API instead of Workbox</summary>
+
+We can use the `Cache API` as an alternative to `Workbox` to cache pages. The important part is to calculate the "Content-Length" to be able to cache it.
+
+> Note: we cache a page only once by using a `Set`
+
+```javascript
+// Cache current page if it's in the configured routes
+async function addCurrentPageToCache({ current, routes }) {
+  await navigator.serviceWorker.ready;
+  const newPath = new URL(current).pathname;
+
+  // Only cache configured routes once
+  if (!routes.includes(newPath) || AppState.paths.has(newPath)) return;
+
+  if (newPath === window.location.pathname) {
+    AppState.paths.add(newPath);
+    const htmlContent = document.documentElement.outerHTML;
+    const contentLength = new TextEncoder().encode(htmlContent).length;
+
+    const response = new Response(htmlContent, {
+      headers: {
+        "Content-Type": "text/html",
+        "Content-Length": contentLength,
+      },
+      status: 200,
+    });
+
+    const cache = await caches.open(CONFIG.CACHE_NAME);
+    return cache.put(current, response);
+  }
+}
+
+// Monitor navigation events
+navigation.addEventListener("navigate", async ({ destination: { url } }) => {
+  return addCurrentPageToCache({ current: url, routes: CONFIG.ROUTES });
+});
+```
+
+</Details>
+</br>
 
 ## Resources
 
