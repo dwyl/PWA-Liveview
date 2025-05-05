@@ -59,7 +59,7 @@ defmodule Solidyjs.DocHandler do
          :ok <- Sqlite3.execute(conn, "PRAGMA busy_timeout = 5000"),
          :ok <- Sqlite3.execute(conn, "PRAGMA journal_mode = WAL"),
          :ok <- Sqlite3.execute(conn, "PRAGMA synchronous = NORMAL") do
-      state = %{conn: conn, db: db, name: "yjs_documents", max: max}
+      state = %{conn: conn, db: db, name: "yjs_documents", max: max, cached: nil}
       {:ok, state}
     else
       msg ->
@@ -74,27 +74,48 @@ defmodule Solidyjs.DocHandler do
 
     sql = "UPDATE #{name} SET y_doc = (?1) WHERE id = 'yjs-doc'"
 
-    with {:ok, statement} <-
+    with :ok <-
+           Sqlite3.execute(conn, "BEGIN IMMEDIATE TRANSACTION"),
+         {:ok, stmt} <-
            Sqlite3.prepare(conn, sql),
          :ok <-
-           Sqlite3.bind(statement, [new_doc]),
+           Sqlite3.bind(stmt, [new_doc]),
          :done <-
-           Sqlite3.step(conn, statement),
+           Sqlite3.step(conn, stmt),
          :ok <-
-           Sqlite3.release(conn, statement) do
-      Logger.info("Updated yjs-doc")
-      {:reply, :done, state}
+           Sqlite3.release(conn, stmt),
+         :ok <-
+           Sqlite3.execute(conn, "COMMIT") do
+      Logger.debug("Updated yjs-doc")
+      {:reply, :done, %{state | cached: new_doc}}
     else
       msg ->
         Logger.error("Failed to update yjs-doc: #{inspect(msg)}")
+        :ok = Sqlite3.execute(conn, "ROLLBACK")
         {:reply, :error, state}
     end
   end
 
   @impl true
-  def handle_call(:get_y_doc, _from, state) do
+  # implement a cache read for YDoc as the update will save YDoc in state
+  # Cache miss
+  def handle_call(:get_y_doc, _from, %{cached: nil} = state) do
     %{conn: conn, name: name} = state
-    {:reply, get_current_y_doc(conn, name), state}
+
+    case get_current_y_doc(conn, name) do
+      {:ok, cached} ->
+        state = %{state | cached: cached}
+        {:reply, {:ok, cached}, state}
+
+      {:error, <<>>} ->
+        Logger.error("Failed to fetch yjs-doc from database")
+        {:reply, {:error, <<>>}, state}
+    end
+  end
+
+  # Cache hit
+  def handle_call(:get_y_doc, _from, %{cached: cached} = state) when cached != nil do
+    {:reply, {:ok, cached}, state}
   end
 
   # the table is initialized with a single row containing the Yjs document state
@@ -116,5 +137,10 @@ defmodule Solidyjs.DocHandler do
         Logger.error("Failed to fetch yjs-doc: #{inspect(err)}")
         {:error, <<>>}
     end
+  end
+
+  @impl true
+  def terminate(_reason, state) do
+    Sqlite3.close(state.conn)
   end
 end
