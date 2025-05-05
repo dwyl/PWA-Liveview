@@ -2,6 +2,14 @@ import * as Y from "yjs";
 import { checkServer } from "@js/utilities/checkServer";
 
 export const StockYHook = ({ ydoc, ydocSocket }) => ({
+  isOnline: false,
+  wasOffline: true,
+  connectionCheckInterval: null,
+  channel: null,
+  userID: null,
+  max: null,
+  stockComponent: null,
+  cleanupSolid: null,
   async mounted() {
     this.userID = Number(this.el.dataset.userid);
     if (!localStorage.getItem("userID")) {
@@ -24,17 +32,27 @@ export const StockYHook = ({ ydoc, ydocSocket }) => ({
     const channelState = await this.setupChannel(ydocSocket);
     console.log("channel: ", channelState);
 
+    // start the state syncing process with the server
     this.connectionCheckInterval = setInterval(async () => {
-      const wasOffline = this.isOnline;
+      // this.wasOffline = this.isOnline;
       this.isOnline = await checkServer();
+      console.log(
+        "hook checkServer",
+        this.wasOffline,
+        this.isOnline,
+        new Error().stack
+      );
 
       // If we were offline and now we're online, sync with server
-      if (!wasOffline && this.isOnline) {
-        channelState == "joined" && this.syncWithServer();
+      if (this.wasOffline && this.isOnline) {
+        this.wasOffline = false;
+        return channelState == "joined" && this.syncWithServer();
+      } else {
+        clearInterval(this.connectionCheckInterval);
       }
     }, 500);
 
-    // Sync local updates
+    // Sync local updates from the Stock component to the server
     ydoc.on("update", this.handleYUpdate);
   },
 
@@ -79,27 +97,26 @@ export const StockYHook = ({ ydoc, ydocSocket }) => ({
       max: this.max,
     });
 
+    // apply updates from the server
     this.channel.on("pub-update", (payload) => {
       Y.applyUpdate(ydoc, new Uint8Array(payload), "remote");
-    });
-
-    this.channel.on("init", (payload) => {
-      Y.applyUpdate(ydoc, new Uint8Array(payload), "init");
     });
 
     return this.channel.state;
   },
 
-  //  sync with server if online and:
-  // - this is a local change
-  // - not on initial load
+  //  sync with server if local change and not initial load
   async handleYUpdate(update, origin) {
-    console.log("handleYUpdate", origin);
+    console.log("handleYUpdate", origin, this.connectionCheckInterval);
     if (origin !== "remote" && origin !== "init") {
       this.isOnline = await checkServer();
       if (this.isOnline) {
         // Send update to server
-        this.channel.push("yjs-update", update.buffer);
+        return this.channel
+          .push("yjs-update", update.buffer)
+          .receive("ok", () => {
+            console.log("Successfully pushed to server");
+          });
       }
     }
   },
@@ -112,14 +129,17 @@ export const StockYHook = ({ ydoc, ydocSocket }) => ({
     const update = Y.encodeStateAsUpdate(ydoc);
     console.log("[syncWithServer]--------", update.length);
     if (update.length == 2) {
-      return this.channel.push("init-client", {});
+      return this.channel.push("init-client", {}).receive("ok", () => {
+        console.log("Successfully instantiated sync with server");
+        clearInterval(this.connectionCheckInterval);
+        this.connectionCheckInterval = null;
+      });
     }
 
-    this.channel
+    return this.channel
       .push("yjs-update", update.buffer)
       .receive("ok", () => {
         console.log("Successfully synced with server");
-        clearInterval(this.connectionCheckInterval);
       })
       .receive("error", (err) =>
         console.error("Failed to sync with server:", err)

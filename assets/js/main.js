@@ -15,6 +15,7 @@ window.AppState = window.AppState || {
   isOnline: true,
   interval: null,
   globalYdoc: null,
+  ydocSocket: null,
 };
 
 export { AppState, CONFIG };
@@ -43,6 +44,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const { registerServiceWorker } = await import(
     "@js/utilities/pwaRegistration"
   );
+
   return await registerServiceWorker();
 });
 
@@ -53,6 +55,7 @@ function startPolling(interval = CONFIG.POLL_INTERVAL) {
   console.log("start Polling______");
 
   AppState.interval = setInterval(async () => {
+    console.log("checkServer", new Error().stack);
     const { checkServer } = await import("@js/utilities/checkServer");
     const isOnline = await checkServer();
     return updateConnectionStatus(isOnline);
@@ -77,7 +80,7 @@ function updateConnectionStatus(isOnline) {
     console.log(
       `Connection status: ${wasOnline ? "online->offline" : "offline->online"}`
     );
-    document.dispatchEvent(
+    window.dispatchEvent(
       new CustomEvent("connection-status-changed", {
         detail: { status: AppState.status },
       })
@@ -99,9 +102,10 @@ async function init(lineStatus) {
       const { default: ydocSocket } = await import(
         "@js/ydoc_socket/ydocSocket"
       );
+      AppState.ydocSocket = ydocSocket;
 
       const { StockYHook } = await import("@js/hooks/hookYStock.js"),
-        { PwaFlash } = await import("@js/hooks/hookPwaFlash.js"),
+        { PwaHook } = await import("@js/hooks/hookPwa.js"),
         { MapHook } = await import("@js/hooks/hookMap.js"),
         { FormHook } = await import("@js/hooks/hookForm.js");
 
@@ -109,9 +113,11 @@ async function init(lineStatus) {
       window.liveSocket = await initLiveSocket({
         MapHook,
         FormHook,
-        PwaFlash,
+        PwaHook,
         StockYHook: StockYHook({ ydoc: AppState.globalYdoc, ydocSocket }),
       });
+      // window.liveSocket = await initLiveSocket(ydocSocket);
+
       // offline mode
     } else {
       await initOfflineComponents();
@@ -123,6 +129,7 @@ async function init(lineStatus) {
 }
 
 async function initLiveSocket(hooks) {
+  // async function initLiveSocket() {
   try {
     const { LiveSocket } = await import("phoenix_live_view");
     const { Socket } = await import("phoenix");
@@ -134,9 +141,11 @@ async function initLiveSocket(hooks) {
       // longPollFallbackMs: 2000,
       params: { _csrf_token: csrfToken },
       hooks,
+      // hooks: { MapHook: {}, FormHook: {}, StockYHook: {}, PwaHook: {} },
     });
 
     liveSocket.connect();
+    console.log(liveSocket.hooks);
     // liveSocket.enableDebug();
 
     liveSocket.getSocket().onOpen(() => {
@@ -150,26 +159,76 @@ async function initLiveSocket(hooks) {
   }
 }
 
+navigation.addEventListener("navigate", async (event) => {
+  if (!window.liveSocket) return;
+  const {
+    destination: { url },
+  } = event;
+  const path = new URL(url).pathname;
+  console.log("navigate", { url }, { path }, event);
+
+  // if (path == "/") {
+  //   const { StockYHook } = await import("@js/hooks/hookYStock.js"),
+  //     { PwaHook } = await import("@js/hooks/hookPwa.js");
+
+  //   window.liveSocket.getSocket().onOpen((e) => {
+  //     console.log(e);
+  //   });
+
+  //   window.liveSocket.hooks = {
+  //     ...window.liveSocket.hooks,
+  //     StockYHook: StockYHook({
+  //       ydoc: AppState.globalYdoc,
+  //       ydocSocket: AppState.ydocSocket,
+  //     }),
+  //     PwaHook,
+  //   };
+  //   return window.liveSocket.connect();
+  // } else if (path == "/map") {
+  //   const { MapHook } = await import("@js/hooks/hookMap.js"),
+  //     { FormHook } = await import("@js/hooks/hookForm.js");
+  //   window.liveSocket.getSocket().onOpen((e) => {
+  //     console.log(e);
+  //   });
+  //   window.liveSocket.hooks = { ...window.liveSocket.hooks, MapHook, FormHook };
+  //   return window.liveSocket.connect();
+  // }
+});
+
 function setPwaListeners() {
-  window.addEventListener("pwa-update-available", (e) => {
-    console.log(
-      "[PWA] update available event received",
-      e.detail.updateAvailable
-    );
-    // [TODO]: send a flash
-  });
   window.addEventListener("pwa-offline-ready", (e) => {
     console.log("[PWA] offline ready: ", e.detail.ready);
     window.dispatchEvent(
-      new CustomEvent("pwa-ready", {
+      new CustomEvent("sw-ready", {
         detail: { ready: e.detail.ready },
       })
     );
   });
+
+  window.addEventListener("pwa-update-available", async (e) => {
+    console.log(
+      "[PWA] update available event received",
+      e.detail.update_available
+    );
+
+    // const { updateServiceWorker } = await import(
+    //   "@js/utilities/pwaRegistration"
+    // );
+    // updateServiceWorker();
+    window.dispatchEvent(
+      new CustomEvent("sw-update", {
+        detail: { update_available: e.detail.update_available },
+      })
+    );
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      console.log("[PWA] controller change event received");
+    });
+  });
+
   window.addEventListener("pwa-registration-error", (e) => {
     console.error("[PWA] registration error event received", e.detail.error);
     window.dispatchEvent(
-      new CustomEvent("pwa-error", {
+      new CustomEvent("sw-error", {
         detail: { error: e.detail.error },
       })
     );

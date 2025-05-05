@@ -7,7 +7,7 @@ import fg from "fast-glob"; // for recursive file scanning
 import viteCompression from "vite-plugin-compression";
 import tailwindcss from "tailwindcss"; // <--- do not use @tailwindcss/vite
 
-const APPVERSION = "0.1.0"; // Update this when you change the app version
+const APPVERSION = process.env.APP_VERSION; // Update this when you change the app version
 
 const rootDir = path.resolve(__dirname);
 const cssDir = path.resolve(rootDir, "css");
@@ -271,9 +271,10 @@ const PWAConfig = (mode) => ({
   },
   suppressWarnings: true,
   injectRegister: null, // Do not nject the SW registration script as "index.html" does not exist
-  registerType: "autoUpdate", // Auto-update service worker
+  // registerType: "autoUpdate", // Auto-update service worker
   filename: "sw.js", // Service worker filename
   strategies: "generateSW", // Generate service worker
+  // registerType: "autoUpdate", // Let browser handle updates
   includeAssets: ["favicon.ico", "robots.txt"],
   manifest: manifestOpts,
   outDir: staticDir,
@@ -281,36 +282,52 @@ const PWAConfig = (mode) => ({
   // injectManifest: false,
   injectManifest: false, // Do not inject the SW registration script as "index.html" does not exist
   // injectRegister: "auto", // Automatically inject the SW registration script
+
+  // Cache exceptions
+  ignoreURLParametersMatching: [
+    /^vsn$/,
+    /^_csrf$/,
+    /^t$/, // Timestamp params
+  ],
+
   workbox: {
     navigationPreload: false, // Ensure WebSocket connections aren't cached
+
     navigateFallback: null, // ⚠️ Critical for LiveView
     navigateFallbackDenylist: [/^\/websocket/, /^\/live/],
-    //   /^\/live/, // Don't use fallback for LiveView websocket connections
-    //   /^\/phoenix/,
-    // ],
-    // globDirectory: staticDir,
-    globPatterns: ["assets/**/*.*"],
     swDest: path.resolve(staticDir, "sw.js"),
-    // Ensure HTML responses are cached correctly
-    cleanupOutdatedCaches: true,
+
     // ⚠️  Inline the Workbox runtime into the service worker.
     // You can't serve timestamped URLs with Phoenix
     inlineWorkboxRuntime: true,
-    // tells Workbox which URL parameters to ignore
+
+    // -> Cache control
+    globPatterns: ["assets/**/*.*"],
+    maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10MB
+
+    // -> Cache exceptions: tells Workbox which URL parameters to ignore
     // when determining if a request matches a cached resource.
     ignoreURLParametersMatching: [
       /^vsn$/, // Phoenix asset versioning
       /^_csrf$/, // CSRF tokens ],
     ],
+
     additionalManifestEntries: [
-      { url: "/", revision: `${APPVERSION}` },
-      { url: "/map", revision: `${APPVERSION}` },
+      { url: "/", revision: `${APPVERSION} || ${Date.now()}` },
+      { url: "/map", revision: `${APPVERSION} || ${Date.now()}` },
     ],
-    runtimeCaching, // Apply our caching strategies defined above
+    runtimeCaching: mode === "development" ? [] : runtimeCaching, // Apply our caching strategies defined above
+
+    // Update behaviour
     clientsClaim: true, // take control of all open pages as soon as the service worker activates
-    skipWaiting: true, // New service worker versions activate immediately
+    skipWaiting: false, // let UI control when updates apply, not immediately
     // Without these settings, you might have some pages using old service worker versions
     // while others use new ones, which could lead to inconsistent behavior in your offline capabilities.
+    // Ensure HTML responses are cached correctly
+    cleanupOutdatedCaches: true,
+
+    dontCacheBustURLsMatching: /^\/assets\/.*\.\w{20}\./, // Phoenix hashed assets
+
     mode: mode === "development" ? "development" : "production", // workbox own mode
   },
 });

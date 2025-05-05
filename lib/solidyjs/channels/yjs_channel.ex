@@ -54,7 +54,7 @@ defmodule Solidyjs.YjsChannel do
          {:ok, bin} <-
            Yex.encode_state_as_update(ydoc),
          :ok <-
-           push(socket, "init", {:binary, bin}) do
+           push(socket, "pub-update", {:binary, bin}) do
       {:reply, :ok, socket}
     else
       err ->

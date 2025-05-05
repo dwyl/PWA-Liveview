@@ -304,10 +304,10 @@
       "js/stores/mapObservers.js"
     ]
   },
-  "js/hooks/hookPwaFlash.js": {
-    "file": "assets/hookPwaFlash.js",
-    "name": "hookPwaFlash",
-    "src": "js/hooks/hookPwaFlash.js",
+  "js/hooks/hookPwa.js": {
+    "file": "assets/hookPwa.js",
+    "name": "hookPwa",
+    "src": "js/hooks/hookPwa.js",
     "isEntry": true,
     "isDynamicEntry": true
   },
@@ -343,7 +343,7 @@
       "js/utilities/configureTopbar.js",
       "js/ydoc_socket/ydocSocket.js",
       "js/hooks/hookYStock.js",
-      "js/hooks/hookPwaFlash.js",
+      "js/hooks/hookPwa.js",
       "js/hooks/hookMap.js",
       "js/hooks/hookForm.js",
       "node_modules/.pnpm/phoenix_live_view@file+..+deps+phoenix_live_view/node_modules/phoenix_live_view/priv/static/phoenix_live_view.esm.js",

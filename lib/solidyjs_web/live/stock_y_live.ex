@@ -12,17 +12,18 @@ defmodule SolidyjsWeb.StockYLive do
   def render(assigns) do
     ~H"""
     <div>
-      <span id="pwa-flash" phx-hook="PwaFlash"></span>
-      <.link
-        :if={@update_available}
-        href="/"
-        class="px-4 mb-4 mt-4 py-2 border-2 rounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300"
-        id="refresh-btn"
-      >
-        Refresh needed
-      </.link>
+      <p id="stock-pwa" phx-hook="PwaHook">
+        <.link
+          :if={@update_available}
+          href="/"
+          class="px-4 mb-4 mt-4 py-2 border-2 rounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300"
+          id="refresh-btn"
+        >
+          Refresh needed
+        </.link>
+      </p>
       <%!-- </div> --%>
-      <p class="text-sm text-gray-600 mt-4 mb-2">User ID: {@user_id}</p>
+      <p class="text-sm text-gray-600 mt-4 mb-4">User ID: {@user_id}</p>
       <Menu.display />
 
       <br />
@@ -47,14 +48,18 @@ defmodule SolidyjsWeb.StockYLive do
     {:ok, assign(socket, %{max: 20, page_title: "Stock"})}
   end
 
-  # PWA event handlers
+  # PWA event handlers ----------------->
   @impl true
-  def handle_event("pwa-error", %{"error" => error}, socket) do
+  def handle_event("sw-lv-error", %{"error" => error}, socket) do
     Logger.warning("PWA on error")
     {:noreply, put_flash(socket, :error, inspect(error))}
   end
 
-  def handle_event("pwa-ready", %{"ready" => true}, socket) do
+  def handle_event("sw-lv-ready", %{"ready" => true}, socket) do
     {:noreply, put_flash(socket, :info, "PWA ready")}
+  end
+
+  def handle_event("sw-lv-update", %{"update_available" => true}, socket) do
+    {:noreply, assign(socket, update_available: true)}
   end
 end

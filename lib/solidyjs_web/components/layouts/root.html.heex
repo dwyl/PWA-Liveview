@@ -7,7 +7,7 @@
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="csrf-token" content={get_csrf_token()} />
+    <meta name="csrf-token" content={Plug.CSRFProtection.get_csrf_token()} />
     <.live_title suffix=" · Phoenix Framework">
       {assigns[:page_title] || "Solidyjs"}
     </.live_title>
@@ -28,7 +28,6 @@
     <link rel="manifest" href="/manifest.webmanifest" />
     <%!-- -------------------%>
     <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} crossorigin="anonymous" />
-    <%!-- <link phx-track-static rel="stylesheet" href={@conn.private[:vite_app_css]} crossorigin="anonymous" /> --%>
 
     <script
       defer
@@ -39,7 +38,6 @@
       crossorigin="anonymous"
     >
     </script>
-    <%!-- nonce="mainappv1" --%>
   </head>
   <body class="bg-grey">
     {@inner_content}

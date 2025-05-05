@@ -19,7 +19,16 @@ defmodule SolidyjsWeb.MapLive do
   def render(assigns) do
     ~H"""
     <div>
-      <span id="pwa-flash" phx-hook="PwaFlash"></span>
+      <p id="map-pwa" phx-hook="PwaHook">
+        <.link
+          :if={@update_available}
+          href="/"
+          class="px-4 mb-4 mt-4 py-2 border-2 rounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300"
+          id="refresh-btn"
+        >
+          Refresh needed
+        </.link>
+      </p>
       <p class="text-sm text-gray-600 mt-4 mb-2">User ID: {@user_id}</p>
       <Menu.display />
       <div
@@ -89,18 +98,22 @@ defmodule SolidyjsWeb.MapLive do
 
   # <---------- airport list
 
-  # PWA event handlers
+  # PWA event handlers ----------------->
   @impl true
-  def handle_event("pwa-error", %{"error" => error}, socket) do
+  def handle_event("sw-lv-error", %{"error" => error}, socket) do
     Logger.warning("PWA on error")
     {:noreply, put_flash(socket, :error, inspect(error))}
   end
 
-  def handle_event("pwa-ready", %{"ready" => true}, socket) do
+  def handle_event("sw-lv-ready", %{"ready" => true}, socket) do
     {:noreply, put_flash(socket, :info, "PWA ready")}
   end
 
-  # Clients Flight events callbacks
+  def handle_event("lv-sw-update", %{"update_available" => true}, socket) do
+    {:noreply, assign(socket, update_available: true)}
+  end
+
+  # Clients Flight events callbacks ----------------->
   def handle_event("fly", %{"userID" => userID} = payload, socket) do
     :ok =
       PubSub.broadcast(
