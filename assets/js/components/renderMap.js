@@ -20,7 +20,7 @@ export async function renderMap() {
     if (map) {
       group.clearLayers();
       map.removeLayer(group);
-      map.removeLayer(maptLayer);
+      // map.removeLayer(maptLayer);
       maptLayer.remove();
       map.remove();
     }

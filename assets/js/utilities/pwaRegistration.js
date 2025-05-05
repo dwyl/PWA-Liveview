@@ -31,7 +31,7 @@ async function registerServiceWorker() {
         // If we're in a LiveView context, try to push an event
         if (window.liveSocket) {
           try {
-            document.dispatchEvent(
+            window.dispatchEvent(
               new CustomEvent("pwa-update-available", {
                 detail: { updateAvailable: true },
               })
@@ -54,7 +54,7 @@ async function registerServiceWorker() {
           // If we're in a LiveView context, try to push an event
           if (window.liveSocket) {
             try {
-              document.dispatchEvent(
+              window.dispatchEvent(
                 new CustomEvent("pwa-offline-ready", {
                   detail: { ready: true },
                 })
@@ -66,7 +66,7 @@ async function registerServiceWorker() {
         }
       },
       onRegistered: (registration) => {
-        console.log("[PWA] Service Worker registered");
+        console.log("[PWA] Service Worker registered", registration);
 
         // Set up message handler
         setupSWMessageHandler(registration);
@@ -77,7 +77,7 @@ async function registerServiceWorker() {
         }
       },
       onRegisterError: (error) => {
-        // console.error("[PWA] Registration failed:", error);
+        console.error("[PWA] Registration failed:", error);
 
         // Callback
         if (typeof callbacks.onRegistrationError === "function") {
@@ -87,7 +87,7 @@ async function registerServiceWorker() {
         // If we're in a LiveView context, try to push an event
         if (window.liveSocket) {
           try {
-            document.dispatchEvent(
+            window.dispatchEvent(
               new CustomEvent("pwa-registration-error", {
                 detail: { error: error.toString() },
               })
@@ -120,7 +120,7 @@ function setupSWMessageHandler(registration) {
 
       // Handle specific message types from SW
       if (event.data.type === "CACHE_UPDATED") {
-        document.dispatchEvent(
+        window.dispatchEvent(
           new CustomEvent("pwa-cache-updated", {
             detail: event.data.payload,
           })

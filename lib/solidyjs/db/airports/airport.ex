@@ -44,7 +44,7 @@ defmodule Airport do
       Enum.map(results, &format_line/1)
     else
       reason ->
-        Logger.error("Failed to open of fetch airports: #{inspect(reason)}")
+        Logger.error("Failed to open or fetch airports: #{inspect(reason)}")
         raise "Failed to open database connection"
     end
   end

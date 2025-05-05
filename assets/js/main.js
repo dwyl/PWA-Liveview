@@ -151,14 +151,14 @@ async function initLiveSocket(hooks) {
 }
 
 function setPwaListeners() {
-  document.addEventListener("pwa-update-available", (e) => {
+  window.addEventListener("pwa-update-available", (e) => {
     console.log(
       "[PWA] update available event received",
       e.detail.updateAvailable
     );
     // [TODO]: send a flash
   });
-  document.addEventListener("pwa-offline-ready", (e) => {
+  window.addEventListener("pwa-offline-ready", (e) => {
     console.log("[PWA] offline ready: ", e.detail.ready);
     window.dispatchEvent(
       new CustomEvent("pwa-ready", {
@@ -166,7 +166,7 @@ function setPwaListeners() {
       })
     );
   });
-  document.addEventListener("pwa-registration-error", (e) => {
+  window.addEventListener("pwa-registration-error", (e) => {
     console.error("[PWA] registration error event received", e.detail.error);
     window.dispatchEvent(
       new CustomEvent("pwa-error", {

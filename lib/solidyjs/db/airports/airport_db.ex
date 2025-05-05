@@ -50,7 +50,7 @@ defmodule AirportDB do
       {:ok, state, {:continue, :get_airports}}
     else
       {:error, reason} ->
-        Logger.warning("Failed to open db: #{inspect(reason)}")
+        Logger.error("Failed to open db: #{inspect(reason)}")
         {:stop, reason}
     end
   end
@@ -73,7 +73,7 @@ defmodule AirportDB do
       {:noreply, state}
     else
       {:error, reason} ->
-        Logger.warning("Failed to prepare statement: #{inspect(reason)}")
+        Logger.error("Failed to prepare statement: #{inspect(reason)}")
         {:stop, reason}
 
       count ->

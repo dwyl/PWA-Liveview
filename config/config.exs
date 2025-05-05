@@ -12,7 +12,8 @@ config :solidyjs, Solidyjs.Repo,
   adapter: Ecto.Adapters.SQLite3,
   database: Path.expand("../db/main.db", Path.dirname(__ENV__.file)),
   pool_size: 5,
-  show_sensitive_data_on_connection_error: true
+  show_sensitive_data_on_connection_error: true,
+  default_transaction_mode: :immediate
 
 config :exqlite, force_build: true
 

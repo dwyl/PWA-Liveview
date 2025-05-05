@@ -17,7 +17,6 @@ export async function initMap() {
     apiKey: import.meta.env.VITE_API_KEY,
     crossOrigin: "anonymous", // make a CROS request without crendentials
     style: MapStyle.STREETS,
-    attribution: "© MapTiler © OpenStreetMap contributors",
   });
   maptLayer.addTo(map);
 
