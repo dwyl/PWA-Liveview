@@ -46,9 +46,7 @@ erl_crash.dump
 /assets/logo.png
 /assets/oldjs/
 /priv/static/assets/
-/priv/static/cache_manifest.json
 /priv.static/sw.js*
-/priv/static/.vite/
 /priv/static/airpors.csv
 /lib/old_files/
 /old/
