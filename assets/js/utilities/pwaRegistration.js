@@ -22,7 +22,7 @@ export async function registerServiceWorker() {
             const updateSWButton = document.getElementById("refresh-button");
             if (updateSWButton) {
               updateSWButton.addEventListener("click", () => {
-                console.log("[PWA] update button clicked", AppState);
+                console.log("[PWA] update button is clicked", AppState);
                 if (AppState.updateServiceWorker) {
                   AppState.updateServiceWorker();
                 }

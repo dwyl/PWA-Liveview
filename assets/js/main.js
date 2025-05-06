@@ -154,10 +154,6 @@ async function initLiveSocket() {
     liveSocket.getSocket().onOpen(async () => {
       console.log("liveSocket connected", liveSocket?.socket.isConnected());
     });
-    // const { setPwaListeners } = await import(
-    //   "@js/utilities/pwaRegistration.js"
-    // );
-    // setPwaListeners();
     return liveSocket;
   } catch (error) {
     console.error("Error initializing LiveSocket:", error);
