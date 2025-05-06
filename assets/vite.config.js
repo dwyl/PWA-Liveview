@@ -8,7 +8,7 @@ import viteCompression from "vite-plugin-compression";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 import tailwindcss from "tailwindcss"; // <--- do not use @tailwindcss/vite
 
-const APPVERSION = process.env.APP_VERSION; // Update this when you change the app version
+const APPVERSION = process.env.VITE_APP_VERSION; // Update this when you change the app version
 
 const rootDir = path.resolve(__dirname);
 const cssDir = path.resolve(rootDir, "css");
