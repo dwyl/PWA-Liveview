@@ -11,6 +11,7 @@ erl_crash.dump
 # Also ignore archive artifacts (built via "mix archive.build").
 
 # Ignore assets that are produced by build tools.
+/priv/static/
 /priv/static/assets/
 # Ignore digested assets cache.
 /priv/static/sw.js*
