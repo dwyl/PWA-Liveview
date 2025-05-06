@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /$
+Allow: /map$
+Allow: /manifest.webmanifest
+Disallow: /sw.js
+Sitemap: https://solidyjs-lively-pine-4375.fly.dev/sitemap.xml

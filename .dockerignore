@@ -25,10 +25,7 @@
 !.git/refs
 
 # Common development/test artifacts
-/cover/
-/doc/
 /test/
-/tmp/
 .elixir_ls
 .vscode
 
@@ -45,11 +42,11 @@ erl_crash.dump
 /assets/node_modules/
 /assets/logo.png
 /assets/oldjs/
+
 /priv/static/assets/
-/priv.static/sw.js*
+/priv/static/sw.js*
 /priv/static/airpors.csv
-/lib/old_files/
-/old/
+
 README.md
 /test/
 docker-compose.yml

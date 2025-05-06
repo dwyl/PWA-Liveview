@@ -1,6 +1,4 @@
 defmodule ViteHelper do
-  @manifest_path Path.join(:code.priv_dir(:solidyjs), "static/.vite/manifest.json")
-
   def path(asset) do
     manifest = get_manifest()
 
@@ -11,7 +9,7 @@ defmodule ViteHelper do
   end
 
   defp get_manifest do
-    @manifest_path
+    Path.join(:code.priv_dir(:solidyjs), "/static/.vite/manifest.json")
     |> File.read!()
     |> Jason.decode!()
   end
