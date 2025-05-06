@@ -7,38 +7,55 @@ defmodule SolidyjsWeb.Menu do
   A menu component that displays navigation links for the application.
   """
 
+  # class="flex flex-col items-center"
+
   def display(assigns) do
     ~H"""
-    <nav
-      id="navbar"
-      class="bg-gradient-to-r from-blue-200 to-purple-200 p-4 rounded-lg shadow-md flex justify-between items-center"
-    >
-      <%!-- <div class="flex justify-between items-center"> --%>
+    <div id="menu">
       <.link
-        id="countdown"
-        data-path="/"
-        navigate={~p"/"}
-        replace
-        class="px-4 py-2 border-2 rounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300"
+        :if={@update_available}
+        class="px-4 mb-4 mt-4 py-2 border-2 rounded-md text-bisque  bg-midnightblue hover:text-midnightblue hover:bg-bisque transition-colors duration-300"
+        id="refresh-button"
+        href="/"
       >
-        <%!-- <span> --%>
-        <.icon name="hero-home-solid" /> &nbsp Stock_Y &nbsp <.icon name="hero-chart-bar" />
-        <%!-- </span> --%>
+        Refesh needed: {@update_available}
       </.link>
 
-      <.link
-        id="mapform"
-        data-path="/map"
-        navigate={~p"/map"}
-        replace
-        class="px-4 py-2 border-2 rounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300"
+      <%!-- <div class="flex justify-between items-center" > --%>
+      <nav
+        id="navbar"
+        phx-hook="PwaHook"
+        class="mt-4 bg-gradient-to-r from-blue-200 to-purple-200 p-4 rounded-lg shadow-md flex justify-between items-center"
       >
-        <%!-- <span> --%>
-        <.icon name="hero-cpu-chip" /> &nbsp Leaflet &nbsp <.icon name="hero-globe-alt" />
-        <%!-- </span> --%>
-      </.link>
+        <%!-- <div class="flex justify-between items-center"> --%>
+
+        <.link
+          id="countdown"
+          data-path="/"
+          patch={~p"/"}
+          replace
+          class="px-4 py-2 border-2 rounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300"
+        >
+          <%!-- <span> --%>
+          <.icon name="hero-home-solid" /> &nbsp Stock_Y &nbsp <.icon name="hero-chart-bar" />
+          <%!-- </span> --%>
+        </.link>
+
+        <.link
+          id="mapform"
+          data-path="/map"
+          patch={~p"/map"}
+          replace
+          class="px-4 py-2 border-2 rounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300"
+        >
+          <%!-- <span> --%>
+          <.icon name="hero-cpu-chip" /> &nbsp Leaflet &nbsp <.icon name="hero-globe-alt" />
+          <%!-- </span> --%>
+        </.link>
+        <%!-- </div> --%>
+      </nav>
       <%!-- </div> --%>
-    </nav>
+    </div>
     """
   end
 end

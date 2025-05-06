@@ -1,20 +1,56 @@
+import { AppState } from "@js/main";
+
 export const PwaHook = {
-  desroyed() {},
-  mounted() {
-    window.addEventListener("sw-ready", (event) => {
-      this.pushEvent("sw-lv-ready", {
+  destroyed() {
+    window.removeEventListener("sw-ready", this.handleReady);
+    window.removeEventListener("sw-error", this.handleError);
+    window.removeEventListener("sw-update", this.handleUpdate);
+    window.removeEventListener(
+      "sw-controller-change",
+      this.handleControllerChange
+    );
+    console.log("[PwaHook] ------> destroyed");
+  },
+  async mounted() {
+    console.log("[PwaHook] ------> mounted");
+    const _this = this;
+
+    this.handleReady = (event) => {
+      _this.pushEvent("sw-lv-ready", {
         ready: event.detail.ready,
       });
-    });
-    window.addEventListener("sw-error", (event) => {
-      this.pushEvent("sw-lv-error", {
-        ready: event.detail.error,
+    };
+
+    this.handleError = (event) => {
+      _this.pushEvent("sw-lv-error", {
+        error: event.detail.error,
       });
-    });
-    window.addEventListener("sw-update", (event) => {
-      this.pushEvent("sw-lv-update", {
-        update_available: event.detail.update_available,
+    };
+
+    this.handleUpdate = (event) => {
+      _this.pushEvent("sw-lv-update", {
+        update: event.detail.update,
       });
-    });
+    };
+    this.handleControllerChange = (event) => {
+      _this.pushEvent("sw-lv-change", {
+        changed: event.detail.changed,
+      });
+    };
+
+    window.addEventListener("sw-ready", this.handleReady);
+    window.addEventListener("sw-error", this.handleError);
+    window.addEventListener("sw-update", this.handleUpdate);
+    window.addEventListener("sw-change", this.handleControllerChange);
+
+    // const updateSWButton = document.getElementById("refresh-button");
+    // if (updateSWButton) {
+    //   updateSWButton.addEventListener("click", () => {
+    //     console.log("[PWA] update button clicked", AppState);
+    //     if (AppState.updateServiceWorker) {
+    //       AppState.updateServiceWorker();
+    //     }
+    //   });
+    // }
   },
 };

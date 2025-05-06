@@ -11,9 +11,7 @@ export default function Counter(props) {
 
   return (
     <>
-      <h1 class="mt-4 mb-4 text-2xl text-gray-600">
-        Reactive Framework - SolidJS
-      </h1>
+      <h1 class="mt-4 mb-4 text-2xl text-gray-600">Reactive Component</h1>
       {/* <div class="text-sm text-gray-600 mt-4 mb-2">User ID: {props.userID}</div> */}
       <button
         id="takeFromStock"

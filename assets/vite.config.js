@@ -5,6 +5,7 @@ import wasm from "vite-plugin-wasm";
 import path from "path";
 import fg from "fast-glob"; // for recursive file scanning
 import viteCompression from "vite-plugin-compression";
+import { viteStaticCopy } from "vite-plugin-static-copy";
 import tailwindcss from "tailwindcss"; // <--- do not use @tailwindcss/vite
 
 const APPVERSION = process.env.APP_VERSION; // Update this when you change the app version
@@ -12,9 +13,10 @@ const APPVERSION = process.env.APP_VERSION; // Update this when you change the a
 const rootDir = path.resolve(__dirname);
 const cssDir = path.resolve(rootDir, "css");
 const jsDir = path.resolve(rootDir, "js");
+const otherDir = path.resolve(rootDir, "other");
 const wasmDir = path.resolve(rootDir, "wasm");
 const srcImgDir = path.resolve(rootDir, "images");
-const staticDir = path.resolve(rootDir, "../priv/static/");
+const staticDir = path.resolve(rootDir, "../priv/static");
 const tailwindConfigPath = path.resolve(rootDir, "tailwind.config.js");
 
 const Icon64 = "assets/pwa-64x64.png";
@@ -99,10 +101,15 @@ const buildOps = (mode) => ({
   cssMinify: "lightningcss", // Use lightningcss for CSS minification
   rollupOptions: {
     input: getEntryPoints(),
+    // output: {
+    //   assetFileNames: "assets/[name][extname]",
+    //   chunkFileNames: "assets/[name].js",
+    //   entryFileNames: "assets/[name].js",
+    // },
     output: {
-      assetFileNames: "assets/[name][extname]",
-      chunkFileNames: "assets/[name].js",
-      entryFileNames: "assets/[name].js",
+      assetFileNames: "assets/[name]-[hash][extname]",
+      chunkFileNames: "assets/[name]-[hash].js",
+      entryFileNames: "assets/[name]-[hash].js",
     },
   },
   // generate a manifest file that contains a mapping of non-hashed asset filenames
@@ -110,7 +117,7 @@ const buildOps = (mode) => ({
   // to render the correct asset links.
   manifest: true, // When true, the path would be .vite/manifest.json.
   minify: mode === "production",
-  emptyOutDir: false,
+  emptyOutDir: true,
   reportCompressedSize: mode === "production",
 });
 
@@ -269,13 +276,19 @@ const PWAConfig = (mode) => ({
     enabled: mode === "development",
     type: "module",
   },
-  suppressWarnings: true,
-  injectRegister: null, // Do not nject the SW registration script as "index.html" does not exist
+  suppressWarnings: false,
+  injectRegister: "auto", // Do not nject the SW registration script as "index.html" does not exist
   // registerType: "autoUpdate", // Auto-update service worker
   filename: "sw.js", // Service worker filename
   strategies: "generateSW", // Generate service worker
+  registerType: "prompt", // default value
   // registerType: "autoUpdate", // Let browser handle updates
-  includeAssets: ["favicon.ico", "robots.txt"],
+  includeAssets: [
+    "favicon.ico",
+    "favicon-16x16.png",
+    "favicon-23x32.png",
+    "robots.txt",
+  ],
   manifest: manifestOpts,
   outDir: staticDir,
   manifestFilename: "manifest.webmanifest",
@@ -295,6 +308,7 @@ const PWAConfig = (mode) => ({
 
     navigateFallback: null, // ⚠️ Critical for LiveView
     navigateFallbackDenylist: [/^\/websocket/, /^\/live/],
+
     swDest: path.resolve(staticDir, "sw.js"),
 
     // ⚠️  Inline the Workbox runtime into the service worker.
@@ -302,7 +316,9 @@ const PWAConfig = (mode) => ({
     inlineWorkboxRuntime: true,
 
     // -> Cache control
+    // globPatterns: ["assets/**/*.*"],
     globPatterns: ["assets/**/*.*"],
+
     maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10MB
 
     // -> Cache exceptions: tells Workbox which URL parameters to ignore
@@ -313,20 +329,21 @@ const PWAConfig = (mode) => ({
     ],
 
     additionalManifestEntries: [
-      { url: "/", revision: `${APPVERSION} || ${Date.now()}` },
-      { url: "/map", revision: `${APPVERSION} || ${Date.now()}` },
+      { url: "/", revision: `${Date.now()}` },
+      { url: "/map", revision: `${Date.now()}` },
     ],
-    runtimeCaching: mode === "development" ? [] : runtimeCaching, // Apply our caching strategies defined above
+    runtimeCaching,
+    // mode === "development" ? [] : runtimeCaching, // Apply our caching strategies defined above
 
     // Update behaviour
     clientsClaim: true, // take control of all open pages as soon as the service worker activates
-    skipWaiting: false, // let UI control when updates apply, not immediately
+    skipWaiting: true, // let UI control when updates apply, not immediately
     // Without these settings, you might have some pages using old service worker versions
     // while others use new ones, which could lead to inconsistent behavior in your offline capabilities.
     // Ensure HTML responses are cached correctly
     cleanupOutdatedCaches: true,
 
-    dontCacheBustURLsMatching: /^\/assets\/.*\.\w{20}\./, // Phoenix hashed assets
+    // dontCacheBustURLsMatching: /^\/assets\/.*\.\w{20}\./, // Phoenix hashed assets
 
     mode: mode === "development" ? "development" : "production", // workbox own mode
   },
@@ -350,6 +367,14 @@ const resolveConfig = {
   extensions: [".js", ".jsx", "png", ".css", "webp", "jpg", "svg"],
 };
 
+const staticCopy = {
+  targets: [
+    {
+      src: path.resolve(otherDir, "**", "*"),
+      dest: path.resolve(staticDir),
+    },
+  ],
+};
 // =============================================
 // Main Configuration Export
 // =============================================
@@ -370,6 +395,7 @@ export default defineConfig(({ command, mode }) => {
       wasm(),
       solidPlugin(),
       VitePWA(PWAConfig(mode)),
+      viteStaticCopy(staticCopy),
       mode == "production"
         ? viteCompression({ algorithm: "brotliCompress" })
         : null,

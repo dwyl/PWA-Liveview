@@ -19,18 +19,8 @@ defmodule SolidyjsWeb.MapLive do
   def render(assigns) do
     ~H"""
     <div>
-      <p id="map-pwa" phx-hook="PwaHook">
-        <.link
-          :if={@update_available}
-          href="/"
-          class="px-4 mb-4 mt-4 py-2 border-2 rounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300"
-          id="refresh-btn"
-        >
-          Refresh needed
-        </.link>
-      </p>
       <p class="text-sm text-gray-600 mt-4 mb-2">User ID: {@user_id}</p>
-      <Menu.display />
+      <Menu.display update_available={@update_available} />
       <div
         id="map"
         phx-hook="MapHook"
@@ -56,11 +46,13 @@ defmodule SolidyjsWeb.MapLive do
       :ok = PubSub.subscribe(:pubsub, "do_fly")
     end
 
-    {:ok, assign(socket, page_title: "Map")}
+    {:ok, assign(socket, %{page_title: "Map"})}
   end
 
   @impl true
   def handle_params(_, uri, socket) do
+    Logger.debug("MapLive handle_params: #{inspect(uri)}")
+
     case URI.parse(uri).path do
       "/map" ->
         {:noreply,
@@ -70,6 +62,11 @@ defmodule SolidyjsWeb.MapLive do
            :fetch_airports,
            fn -> Airport.municipalities() end
          )}
+
+      #  |> push_event("navigate", %{path: "/map"})}
+
+      _ ->
+        {:noreply, socket}
     end
   end
 
@@ -109,8 +106,17 @@ defmodule SolidyjsWeb.MapLive do
     {:noreply, put_flash(socket, :info, "PWA ready")}
   end
 
-  def handle_event("lv-sw-update", %{"update_available" => true}, socket) do
+  def handle_event("lv-sw-update", %{"update" => true}, socket) do
     {:noreply, assign(socket, update_available: true)}
+  end
+
+  def handle_event("sw-lv-change", %{"changed" => true}, socket) do
+    Logger.debug("PWA on change")
+
+    {:noreply,
+     socket
+     |> put_flash(:info, "PWA changed")
+     |> assign(update_available: true)}
   end
 
   # Clients Flight events callbacks ----------------->

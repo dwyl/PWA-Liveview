@@ -1,189 +1,189 @@
 {
   "../../../../../../@vite-plugin-pwa/virtual:pwa-register": {
-    "file": "assets/virtual_pwa-register.js",
+    "file": "assets/virtual_pwa-register-D1FVgKWo.js",
     "name": "virtual_pwa-register",
     "src": "../../../../../../@vite-plugin-pwa/virtual:pwa-register",
     "isDynamicEntry": true,
     "imports": [
-      "_preload-helper.js"
+      "_preload-helper-JtXPSb2r.js"
     ],
     "dynamicImports": [
       "node_modules/.pnpm/workbox-window@7.3.0/node_modules/workbox-window/build/workbox-window.prod.es5.mjs"
     ]
   },
-  "__commonjsHelpers.js": {
-    "file": "assets/_commonjsHelpers.js",
+  "__commonjsHelpers-CUmg6egw.js": {
+    "file": "assets/_commonjsHelpers-CUmg6egw.js",
     "name": "_commonjsHelpers"
   },
-  "_leaflet-src.js": {
-    "file": "assets/leaflet-src.js",
+  "_leaflet-src-wS-Ip0dR.js": {
+    "file": "assets/leaflet-src-wS-Ip0dR.js",
     "name": "leaflet-src",
     "isDynamicEntry": true,
     "imports": [
-      "__commonjsHelpers.js"
+      "__commonjsHelpers-CUmg6egw.js"
     ]
   },
-  "_preload-helper.js": {
-    "file": "assets/preload-helper.js",
+  "_preload-helper-JtXPSb2r.js": {
+    "file": "assets/preload-helper-JtXPSb2r.js",
     "name": "preload-helper"
   },
-  "_topbar.min.js": {
-    "file": "assets/topbar.min.js",
+  "_topbar.min-DYPmkus3.js": {
+    "file": "assets/topbar.min-DYPmkus3.js",
     "name": "topbar.min",
     "isDynamicEntry": true,
     "imports": [
-      "__commonjsHelpers.js"
+      "__commonjsHelpers-CUmg6egw.js"
     ]
   },
-  "_web.js": {
-    "file": "assets/web.js",
+  "_web-BvP70Tlv.js": {
+    "file": "assets/web-BvP70Tlv.js",
     "name": "web"
   },
-  "_yjs3.js": {
-    "file": "assets/yjs3.js",
+  "_yjs-DnUKYNJo.js": {
+    "file": "assets/yjs-DnUKYNJo.js",
     "name": "yjs",
     "isDynamicEntry": true
   },
   "css/app.css": {
-    "file": "assets/app.css",
+    "file": "assets/app-47SzjArH.css",
     "src": "css/app.css",
     "isEntry": true
   },
   "images/Elixir.svg": {
-    "file": "assets/Elixir.svg",
+    "file": "assets/Elixir-R0alryBi.svg",
     "src": "images/Elixir.svg"
   },
   "images/airplan.png": {
-    "file": "assets/airplan.png",
+    "file": "assets/airplan-NTaR33Fi.png",
     "src": "images/airplan.png"
   },
   "images/airplane.svg": {
-    "file": "assets/airplane.svg",
+    "file": "assets/airplane-BkgCgM31.svg",
     "src": "images/airplane.svg"
   },
   "images/layers-2x.png": {
-    "file": "assets/layers-2x.png",
+    "file": "assets/layers-2x-3G2oAliM.png",
     "src": "images/layers-2x.png"
   },
   "images/layers.png": {
-    "file": "assets/layers.png",
+    "file": "assets/layers-B1Zc6cCI.png",
     "src": "images/layers.png"
   },
   "images/leafletjs.svg": {
-    "file": "assets/leafletjs.svg",
+    "file": "assets/leafletjs-BAjWkSNT.svg",
     "src": "images/leafletjs.svg"
   },
   "images/logo.svg": {
-    "file": "assets/logo.svg",
+    "file": "assets/logo-B3lxOvWk.svg",
     "src": "images/logo.svg"
   },
   "images/maptiler.png": {
-    "file": "assets/maptiler.png",
+    "file": "assets/maptiler-C1BBZwUs.png",
     "src": "images/maptiler.png"
   },
   "images/maptiler.webp": {
-    "file": "assets/maptiler.webp",
+    "file": "assets/maptiler-DL3I3KOG.webp",
     "src": "images/maptiler.webp"
   },
   "images/marker-icon-2x.png": {
-    "file": "assets/marker-icon-2x.png",
+    "file": "assets/marker-icon-2x-CzKzz6Gh.png",
     "src": "images/marker-icon-2x.png"
   },
   "images/marker-icon.png": {
-    "file": "assets/marker-icon.png",
+    "file": "assets/marker-icon-DQzRqhDP.png",
     "src": "images/marker-icon.png"
   },
   "images/marker-shadow.png": {
-    "file": "assets/marker-shadow.png",
+    "file": "assets/marker-shadow-CW7ZUlH-.png",
     "src": "images/marker-shadow.png"
   },
   "images/offline.svg": {
-    "file": "assets/offline.svg",
+    "file": "assets/offline-X9zsCH7A.svg",
     "src": "images/offline.svg"
   },
   "images/online.svg": {
-    "file": "assets/online.svg",
+    "file": "assets/online-CvgfumRL.svg",
     "src": "images/online.svg"
   },
   "images/p404.webp": {
-    "file": "assets/p404.webp",
+    "file": "assets/p404-DNVU9_e8.webp",
     "src": "images/p404.webp"
   },
   "images/pwa-192x192.png": {
-    "file": "assets/pwa-192x192.png",
+    "file": "assets/pwa-192x192-BXfPcQkJ.png",
     "src": "images/pwa-192x192.png"
   },
   "images/pwa-512x512.png": {
-    "file": "assets/pwa-512x512.png",
+    "file": "assets/pwa-512x512-O-xNp87B.png",
     "src": "images/pwa-512x512.png"
   },
   "images/pwa-64x64.png": {
-    "file": "assets/pwa-64x64.png",
+    "file": "assets/pwa-64x64-D0wUV14c.png",
     "src": "images/pwa-64x64.png"
   },
   "images/pwa-maskable-192.png": {
-    "file": "assets/pwa-maskable-192.png",
+    "file": "assets/pwa-maskable-192-B0lzOWVr.png",
     "src": "images/pwa-maskable-192.png"
   },
   "images/pwa-maskable-512.png": {
-    "file": "assets/pwa-maskable-512.png",
+    "file": "assets/pwa-maskable-512-BnwPwp6i.png",
     "src": "images/pwa-maskable-512.png"
   },
   "images/solidjs.svg": {
-    "file": "assets/solidjs.svg",
+    "file": "assets/solidjs-C0BJmlq-.svg",
     "src": "images/solidjs.svg"
   },
   "images/sqlite.svg": {
-    "file": "assets/sqlite.svg",
+    "file": "assets/sqlite-4Z5jIKTW.svg",
     "src": "images/sqlite.svg"
   },
   "images/valtio2.webp": {
-    "file": "assets/valtio2.webp",
+    "file": "assets/valtio2-DoUcr8EZ.webp",
     "src": "images/valtio2.webp"
   },
   "images/vitejs.svg": {
-    "file": "assets/vitejs.svg",
+    "file": "assets/vitejs-D3em5OdU.svg",
     "src": "images/vitejs.svg"
   },
   "images/webassembly.svg": {
-    "file": "assets/webassembly.svg",
+    "file": "assets/webassembly-t-UGM2ed.svg",
     "src": "images/webassembly.svg"
   },
   "images/workbox.svg": {
-    "file": "assets/workbox.svg",
+    "file": "assets/workbox-CzRkI05K.svg",
     "src": "images/workbox.svg"
   },
   "images/yjs.png": {
-    "file": "assets/yjs.png",
+    "file": "assets/yjs-Ced00jRb.png",
     "src": "images/yjs.png"
   },
   "images/yjs.webp": {
-    "file": "assets/yjs.webp",
+    "file": "assets/yjs-C2hqBrYm.webp",
     "src": "images/yjs.webp"
   },
   "images/zig.svg": {
-    "file": "assets/zig.svg",
+    "file": "assets/zig-CbvnhDWz.svg",
     "src": "images/zig.svg"
   },
   "js/components/bins.jsx": {
-    "file": "assets/bins.js",
+    "file": "assets/bins-lkJmJGDs.js",
     "name": "bins",
     "src": "js/components/bins.jsx",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
-      "_web.js"
+      "_web-BvP70Tlv.js"
     ]
   },
   "js/components/citiesForm.jsx": {
-    "file": "assets/citiesForm.js",
+    "file": "assets/citiesForm-CvcPpEQN.js",
     "name": "citiesForm",
     "src": "js/components/citiesForm.jsx",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
-      "_preload-helper.js",
-      "_web.js",
+      "_preload-helper-JtXPSb2r.js",
+      "_web-BvP70Tlv.js",
       "js/stores/vStore.js"
     ],
     "dynamicImports": [
@@ -191,55 +191,55 @@
     ]
   },
   "js/components/city.jsx": {
-    "file": "assets/city.js",
+    "file": "assets/city-XOvC9Jsc.js",
     "name": "city",
     "src": "js/components/city.jsx",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
-      "_web.js",
+      "_web-BvP70Tlv.js",
       "js/stores/vStore.js"
     ]
   },
   "js/components/counter.jsx": {
-    "file": "assets/counter.js",
+    "file": "assets/counter-C1fbzPR0.js",
     "name": "counter",
     "src": "js/components/counter.jsx",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
-      "_preload-helper.js",
-      "_web.js"
+      "_preload-helper-JtXPSb2r.js",
+      "_web-BvP70Tlv.js"
     ],
     "dynamicImports": [
       "js/components/bins.jsx"
     ]
   },
   "js/components/initMap.js": {
-    "file": "assets/initMap.js",
+    "file": "assets/initMap-AVsbaiXP.js",
     "name": "initMap",
     "src": "js/components/initMap.js",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
-      "_preload-helper.js"
+      "_preload-helper-JtXPSb2r.js"
     ],
     "dynamicImports": [
-      "_leaflet-src.js",
+      "_leaflet-src-wS-Ip0dR.js",
       "node_modules/.pnpm/@maptiler+leaflet-maptilersdk@4.0.3/node_modules/@maptiler/leaflet-maptilersdk/dist/leaflet-maptilersdk.js"
     ],
     "css": [
-      "assets/initMap.css"
+      "assets/initMap-B5X3Zrco.css"
     ]
   },
   "js/components/renderMap.js": {
-    "file": "assets/renderMap.js",
+    "file": "assets/renderMap-08HNqxRE.js",
     "name": "renderMap",
     "src": "js/components/renderMap.js",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
-      "_preload-helper.js"
+      "_preload-helper-JtXPSb2r.js"
     ],
     "dynamicImports": [
       "js/components/initMap.js",
@@ -247,13 +247,13 @@
     ]
   },
   "js/components/renderers.js": {
-    "file": "assets/renderers.js",
+    "file": "assets/renderers-DfhDq_Eo.js",
     "name": "renderers",
     "src": "js/components/renderers.js",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
-      "_preload-helper.js"
+      "_preload-helper-JtXPSb2r.js"
     ],
     "dynamicImports": [
       "js/components/renderMap.js",
@@ -262,27 +262,27 @@
     ]
   },
   "js/components/stock.jsx": {
-    "file": "assets/stock.js",
+    "file": "assets/stock-DGTICsjy.js",
     "name": "stock",
     "src": "js/components/stock.jsx",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
-      "_preload-helper.js",
-      "_web.js"
+      "_preload-helper-JtXPSb2r.js",
+      "_web-BvP70Tlv.js"
     ],
     "dynamicImports": [
       "js/components/counter.jsx"
     ]
   },
   "js/hooks/hookForm.js": {
-    "file": "assets/hookForm.js",
+    "file": "assets/hookForm-Bbh_3D73.js",
     "name": "hookForm",
     "src": "js/hooks/hookForm.js",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
-      "_preload-helper.js",
+      "_preload-helper-JtXPSb2r.js",
       "js/stores/vStore.js"
     ],
     "dynamicImports": [
@@ -290,13 +290,13 @@
     ]
   },
   "js/hooks/hookMap.js": {
-    "file": "assets/hookMap.js",
+    "file": "assets/hookMap-DggxLFhR.js",
     "name": "hookMap",
     "src": "js/hooks/hookMap.js",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
-      "_preload-helper.js",
+      "_preload-helper-JtXPSb2r.js",
       "js/stores/vStore.js"
     ],
     "dynamicImports": [
@@ -305,21 +305,28 @@
     ]
   },
   "js/hooks/hookPwa.js": {
-    "file": "assets/hookPwa.js",
+    "file": "assets/hookPwa-2UUnkFtv.js",
     "name": "hookPwa",
     "src": "js/hooks/hookPwa.js",
     "isEntry": true,
-    "isDynamicEntry": true
+    "isDynamicEntry": true,
+    "imports": [
+      "js/main.js",
+      "_preload-helper-JtXPSb2r.js"
+    ],
+    "css": [
+      "assets/app-47SzjArH.css"
+    ]
   },
   "js/hooks/hookYStock.js": {
-    "file": "assets/hookYStock.js",
+    "file": "assets/hookYStock-BmZRDgTZ.js",
     "name": "hookYStock",
     "src": "js/hooks/hookYStock.js",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
-      "_preload-helper.js",
-      "_yjs3.js",
+      "_preload-helper-JtXPSb2r.js",
+      "_yjs-DnUKYNJo.js",
       "js/utilities/checkServer.js"
     ],
     "dynamicImports": [
@@ -328,12 +335,12 @@
     ]
   },
   "js/main.js": {
-    "file": "assets/main.js",
+    "file": "assets/main-B8TMYN7g.js",
     "name": "main",
     "src": "js/main.js",
     "isEntry": true,
     "imports": [
-      "_preload-helper.js"
+      "_preload-helper-JtXPSb2r.js"
     ],
     "dynamicImports": [
       "js/utilities/checkServer.js",
@@ -351,31 +358,31 @@
       "js/utilities/navigate.js"
     ],
     "css": [
-      "assets/app.css"
+      "assets/app-47SzjArH.css"
     ]
   },
   "js/stores/initYJS.js": {
-    "file": "assets/initYJS.js",
+    "file": "assets/initYJS-BvswDKqU.js",
     "name": "initYJS",
     "src": "js/stores/initYJS.js",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
-      "_preload-helper.js"
+      "_preload-helper-JtXPSb2r.js"
     ],
     "dynamicImports": [
-      "_yjs3.js",
+      "_yjs-DnUKYNJo.js",
       "node_modules/.pnpm/y-indexeddb@9.0.12_yjs@13.6.26/node_modules/y-indexeddb/src/y-indexeddb.js"
     ]
   },
   "js/stores/mapObservers.js": {
-    "file": "assets/mapObservers.js",
+    "file": "assets/mapObservers-C6ZIDqcO.js",
     "name": "mapObservers",
     "src": "js/stores/mapObservers.js",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
-      "_preload-helper.js",
+      "_preload-helper-JtXPSb2r.js",
       "js/stores/vStore.js"
     ],
     "dynamicImports": [
@@ -383,46 +390,46 @@
     ]
   },
   "js/stores/vStore.js": {
-    "file": "assets/vStore.js",
+    "file": "assets/vStore-CSzc6wQU.js",
     "name": "vStore",
     "src": "js/stores/vStore.js",
     "isEntry": true
   },
   "js/utilities/checkServer.js": {
-    "file": "assets/checkServer.js",
+    "file": "assets/checkServer-BE6SOl20.js",
     "name": "checkServer",
     "src": "js/utilities/checkServer.js",
     "isEntry": true,
     "isDynamicEntry": true
   },
   "js/utilities/configureTopbar.js": {
-    "file": "assets/configureTopbar.js",
+    "file": "assets/configureTopbar-DiXHpRl0.js",
     "name": "configureTopbar",
     "src": "js/utilities/configureTopbar.js",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
-      "_preload-helper.js"
+      "_preload-helper-JtXPSb2r.js"
     ],
     "dynamicImports": [
-      "_topbar.min.js"
+      "_topbar.min-DYPmkus3.js"
     ]
   },
   "js/utilities/loadWasm.js": {
-    "file": "assets/loadWasm.js",
+    "file": "assets/loadWasm-DQh53FZd.js",
     "name": "loadWasm",
     "src": "js/utilities/loadWasm.js",
     "isEntry": true,
     "isDynamicEntry": true
   },
   "js/utilities/navigate.js": {
-    "file": "assets/navigate.js",
+    "file": "assets/navigate-x5d29y7q.js",
     "name": "navigate",
     "src": "js/utilities/navigate.js",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
-      "_preload-helper.js",
+      "_preload-helper-JtXPSb2r.js",
       "js/main.js"
     ],
     "dynamicImports": [
@@ -430,31 +437,35 @@
       "js/components/renderers.js"
     ],
     "css": [
-      "assets/app.css"
+      "assets/app-47SzjArH.css"
     ]
   },
   "js/utilities/pwaRegistration.js": {
-    "file": "assets/pwaRegistration.js",
+    "file": "assets/pwaRegistration-DfQwfAyf.js",
     "name": "pwaRegistration",
     "src": "js/utilities/pwaRegistration.js",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
-      "_preload-helper.js"
+      "_preload-helper-JtXPSb2r.js",
+      "js/main.js"
     ],
     "dynamicImports": [
       "../../../../../../@vite-plugin-pwa/virtual:pwa-register"
+    ],
+    "css": [
+      "assets/app-47SzjArH.css"
     ]
   },
   "js/ydoc_socket/useChannel.js": {
-    "file": "assets/useChannel.js",
+    "file": "assets/useChannel-OuTvA_g8.js",
     "name": "useChannel",
     "src": "js/ydoc_socket/useChannel.js",
     "isEntry": true,
     "isDynamicEntry": true
   },
   "js/ydoc_socket/ydocSocket.js": {
-    "file": "assets/ydocSocket.js",
+    "file": "assets/ydocSocket-aGMgS8nA.js",
     "name": "ydocSocket",
     "src": "js/ydoc_socket/ydocSocket.js",
     "isEntry": true,
@@ -464,49 +475,49 @@
     ]
   },
   "node_modules/.pnpm/@maptiler+leaflet-maptilersdk@4.0.3/node_modules/@maptiler/leaflet-maptilersdk/dist/leaflet-maptilersdk.js": {
-    "file": "assets/leaflet-maptilersdk.js",
+    "file": "assets/leaflet-maptilersdk-CP06ZjwP.js",
     "name": "leaflet-maptilersdk",
     "src": "node_modules/.pnpm/@maptiler+leaflet-maptilersdk@4.0.3/node_modules/@maptiler/leaflet-maptilersdk/dist/leaflet-maptilersdk.js",
     "isDynamicEntry": true,
     "imports": [
-      "_leaflet-src.js",
-      "__commonjsHelpers.js"
+      "_leaflet-src-wS-Ip0dR.js",
+      "__commonjsHelpers-CUmg6egw.js"
     ]
   },
   "node_modules/.pnpm/phoenix@file+..+deps+phoenix/node_modules/phoenix/priv/static/phoenix.mjs": {
-    "file": "assets/phoenix.js",
+    "file": "assets/phoenix-3wNmjgti.js",
     "name": "phoenix",
     "src": "node_modules/.pnpm/phoenix@file+..+deps+phoenix/node_modules/phoenix/priv/static/phoenix.mjs",
     "isDynamicEntry": true
   },
   "node_modules/.pnpm/phoenix_live_view@file+..+deps+phoenix_live_view/node_modules/phoenix_live_view/priv/static/phoenix_live_view.esm.js": {
-    "file": "assets/phoenix_live_view.esm.js",
+    "file": "assets/phoenix_live_view.esm-l-O8UmfT.js",
     "name": "phoenix_live_view.esm",
     "src": "node_modules/.pnpm/phoenix_live_view@file+..+deps+phoenix_live_view/node_modules/phoenix_live_view/priv/static/phoenix_live_view.esm.js",
     "isDynamicEntry": true
   },
   "node_modules/.pnpm/workbox-window@7.3.0/node_modules/workbox-window/build/workbox-window.prod.es5.mjs": {
-    "file": "assets/workbox-window.prod.es5.js",
+    "file": "assets/workbox-window.prod.es5-BJ8mGsQ1.js",
     "name": "workbox-window.prod.es5",
     "src": "node_modules/.pnpm/workbox-window@7.3.0/node_modules/workbox-window/build/workbox-window.prod.es5.mjs",
     "isDynamicEntry": true
   },
   "node_modules/.pnpm/y-indexeddb@9.0.12_yjs@13.6.26/node_modules/y-indexeddb/src/y-indexeddb.js": {
-    "file": "assets/y-indexeddb.js",
+    "file": "assets/y-indexeddb-DSl5sSY_.js",
     "name": "y-indexeddb",
     "src": "node_modules/.pnpm/y-indexeddb@9.0.12_yjs@13.6.26/node_modules/y-indexeddb/src/y-indexeddb.js",
     "isDynamicEntry": true,
     "imports": [
-      "_yjs3.js"
+      "_yjs-DnUKYNJo.js"
     ]
   },
   "wasm/great_circle.wasm": {
-    "file": "assets/great_circle.js",
+    "file": "assets/great_circle-Ccl76Ny3.js",
     "name": "great_circle",
     "src": "wasm/great_circle.wasm",
     "isEntry": true,
     "assets": [
-      "assets/great_circle.wasm"
+      "assets/great_circle-I9n9C97F.wasm"
     ]
   }
 }

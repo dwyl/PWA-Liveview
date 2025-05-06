@@ -49,7 +49,7 @@ RUN pnpm vite build --mode production --config vite.config.js
 
 # fingerprint assets and compile Elixir modules
 WORKDIR /app
-RUN mix phx.digest
+# RUN mix phx.digest <-- use Vite to fingerprint assets
 RUN mix compile
 
 COPY config/runtime.exs config/

@@ -1,64 +1,76 @@
 // pwa-registration.js
 // Central module for PWA and Service Worker registration
-
+import { AppState } from "@js/main";
 let updateSWFunction = null;
 
 export async function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return false;
+
   try {
     const { registerSW } = await import("virtual:pwa-register");
-    const swOptions = {
-      // immediate: true, // Register immediately in the app.js context
+    updateSWFunction = registerSW({
+      immediate: true, // Register immediately in the app.js context
       onNeedRefresh: () => {
-        console.log("[PWA] New version available");
+        console.log("[SW] New version available");
         if (window.liveSocket) {
           try {
             window.dispatchEvent(
-              new CustomEvent("pwa-update-available", {
-                detail: { update_available: true },
+              new CustomEvent("sw-update", {
+                detail: { update: true },
               })
             );
+            const updateSWButton = document.getElementById("refresh-button");
+            if (updateSWButton) {
+              updateSWButton.addEventListener("click", () => {
+                console.log("[PWA] update button clicked", AppState);
+                if (AppState.updateServiceWorker) {
+                  AppState.updateServiceWorker();
+                }
+              });
+            }
           } catch (e) {
-            console.error("[PWA] Failed to dispatch update event:", e);
+            console.error("[SW] Failed to dispatch update event:", e);
           }
         }
       },
       onOfflineReady: () => {
-        console.log("[PWA] App now works offline");
+        console.log(
+          "[SW] Ready, app now works offline",
+          window.liveSocket.isConnected()
+        );
         if (window.liveSocket) {
           try {
             window.dispatchEvent(
-              new CustomEvent("pwa-offline-ready", {
+              new CustomEvent("sw-ready", {
                 detail: { ready: true },
               })
             );
           } catch (e) {
-            console.error("[PWA] Failed to dispatch offline ready event:", e);
+            console.error("[SW] Failed to dispatch offline ready event:", e);
           }
           // }
         }
       },
       onRegisterError: (error) => {
-        console.error("[PWA] Registration failed:", error);
+        console.error("[SW] Registration failed:", error);
         if (window.liveSocket) {
           try {
             window.dispatchEvent(
-              new CustomEvent("pwa-registration-error", {
+              new CustomEvent("sw-error", {
                 detail: { error: error.toString() },
               })
             );
           } catch (e) {
             console.error(
-              "[PWA] Failed to dispatch registration error event:",
+              "[SW] Failed to dispatch registration error event:",
               e
             );
           }
         }
       },
-    };
+    });
 
-    updateSWFunction = registerSW(swOptions);
-    return true;
+    return updateSWFunction;
   } catch (error) {
     console.error("[PWA] Failed to load PWA module:", error);
     return false;
@@ -66,5 +78,7 @@ export async function registerServiceWorker() {
 }
 
 export function updateServiceWorker() {
-  return updateSWFunction?.();
+  if (updateSWFunction) {
+    updateSWFunction();
+  }
 }

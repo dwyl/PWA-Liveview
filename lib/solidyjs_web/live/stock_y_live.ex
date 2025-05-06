@@ -12,19 +12,8 @@ defmodule SolidyjsWeb.StockYLive do
   def render(assigns) do
     ~H"""
     <div>
-      <p id="stock-pwa" phx-hook="PwaHook">
-        <.link
-          :if={@update_available}
-          href="/"
-          class="px-4 mb-4 mt-4 py-2 border-2 rounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300"
-          id="refresh-btn"
-        >
-          Refresh needed
-        </.link>
-      </p>
-      <%!-- </div> --%>
       <p class="text-sm text-gray-600 mt-4 mb-4">User ID: {@user_id}</p>
-      <Menu.display />
+      <Menu.display update_available={@update_available} />
 
       <br />
       <div
@@ -48,6 +37,13 @@ defmodule SolidyjsWeb.StockYLive do
     {:ok, assign(socket, %{max: 20, page_title: "Stock"})}
   end
 
+  @impl true
+  def handle_params(_params, _url, socket) do
+    # uri = URI.new!(url)
+    {:noreply, socket}
+    # {:noreply, push_event(socket, "navigate", %{path: uri.path})}
+  end
+
   # PWA event handlers ----------------->
   @impl true
   def handle_event("sw-lv-error", %{"error" => error}, socket) do
@@ -59,7 +55,16 @@ defmodule SolidyjsWeb.StockYLive do
     {:noreply, put_flash(socket, :info, "PWA ready")}
   end
 
-  def handle_event("sw-lv-update", %{"update_available" => true}, socket) do
+  def handle_event("sw-lv-update", %{"update" => true}, socket) do
     {:noreply, assign(socket, update_available: true)}
+  end
+
+  def handle_event("sw-lv-change", %{"changed" => true}, socket) do
+    Logger.debug("PWA on change")
+
+    {:noreply,
+     socket
+     |> put_flash(:info, "PWA changed")
+     |> assign(update_available: true)}
   end
 end

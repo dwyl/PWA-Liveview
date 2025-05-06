@@ -34,15 +34,7 @@ export const StockYHook = ({ ydoc, ydocSocket }) => ({
 
     // start the state syncing process with the server
     this.connectionCheckInterval = setInterval(async () => {
-      // this.wasOffline = this.isOnline;
       this.isOnline = await checkServer();
-      console.log(
-        "hook checkServer",
-        this.wasOffline,
-        this.isOnline,
-        new Error().stack
-      );
-
       // If we were offline and now we're online, sync with server
       if (this.wasOffline && this.isOnline) {
         this.wasOffline = false;

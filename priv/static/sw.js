@@ -5,23 +5,6 @@ try {
 
 /*
   Copyright 2019 Google LLC
-
-  Use of this source code is governed by an MIT-style
-  license that can be found in the LICENSE file or at
-  https://opensource.org/licenses/MIT.
-*/
-/**
- * Claim any currently available clients once the service worker
- * becomes active. This is normally used in conjunction with `skipWaiting()`.
- *
- * @memberof workbox-core
- */
-function clientsClaim() {
-  self.addEventListener('activate', () => self.clients.claim());
-}
-
-/*
-  Copyright 2019 Google LLC
   Use of this source code is governed by an MIT-style
   license that can be found in the LICENSE file or at
   https://opensource.org/licenses/MIT.
@@ -83,7 +66,7 @@ const logger = (() => {
   license that can be found in the LICENSE file or at
   https://opensource.org/licenses/MIT.
 */
-const messages = {
+const messages$1 = {
   'invalid-value': ({
     paramName,
     validValueDescription,
@@ -357,7 +340,7 @@ const messages = {
   https://opensource.org/licenses/MIT.
 */
 const generatorFunction = (code, details = {}) => {
-  const message = messages[code];
+  const message = messages$1[code];
   if (!message) {
     throw new Error(`Unable to find message for code '${code}'.`);
   }
@@ -1245,29 +1228,319 @@ const cacheNames = {
 };
 
 /*
-  Copyright 2020 Google LLC
+  Copyright 2019 Google LLC
   Use of this source code is governed by an MIT-style
   license that can be found in the LICENSE file or at
   https://opensource.org/licenses/MIT.
 */
 /**
- * A utility method that makes it easier to use `event.waitUntil` with
- * async functions and return the result.
+ * A helper function that prevents a promise from being flagged as unused.
  *
- * @param {ExtendableEvent} event
- * @param {Function} asyncFn
- * @return {Function}
  * @private
- */
-function waitUntil(event, asyncFn) {
-  const returnPromise = asyncFn();
-  event.waitUntil(returnPromise);
-  return returnPromise;
+ **/
+function dontWaitFor(promise) {
+  // Effective no-op.
+  void promise.then(() => {});
 }
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+// Callbacks to be executed whenever there's a quota error.
+// Can't change Function type right now.
+// eslint-disable-next-line @typescript-eslint/ban-types
+const quotaErrorCallbacks = new Set();
+
+/*
+  Copyright 2019 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * Adds a function to the set of quotaErrorCallbacks that will be executed if
+ * there's a quota error.
+ *
+ * @param {Function} callback
+ * @memberof workbox-core
+ */
+// Can't change Function type
+// eslint-disable-next-line @typescript-eslint/ban-types
+function registerQuotaErrorCallback(callback) {
+  {
+    finalAssertExports.isType(callback, 'function', {
+      moduleName: 'workbox-core',
+      funcName: 'register',
+      paramName: 'callback'
+    });
+  }
+  quotaErrorCallbacks.add(callback);
+  {
+    logger.log('Registered a callback to respond to quota errors.', callback);
+  }
+}
+
+function _extends() {
+  return _extends = Object.assign ? Object.assign.bind() : function (n) {
+    for (var e = 1; e < arguments.length; e++) {
+      var t = arguments[e];
+      for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]);
+    }
+    return n;
+  }, _extends.apply(null, arguments);
+}
+
+const instanceOfAny = (object, constructors) => constructors.some(c => object instanceof c);
+let idbProxyableTypes;
+let cursorAdvanceMethods;
+// This is a function to prevent it throwing up in node environments.
+function getIdbProxyableTypes() {
+  return idbProxyableTypes || (idbProxyableTypes = [IDBDatabase, IDBObjectStore, IDBIndex, IDBCursor, IDBTransaction]);
+}
+// This is a function to prevent it throwing up in node environments.
+function getCursorAdvanceMethods() {
+  return cursorAdvanceMethods || (cursorAdvanceMethods = [IDBCursor.prototype.advance, IDBCursor.prototype.continue, IDBCursor.prototype.continuePrimaryKey]);
+}
+const cursorRequestMap = new WeakMap();
+const transactionDoneMap = new WeakMap();
+const transactionStoreNamesMap = new WeakMap();
+const transformCache = new WeakMap();
+const reverseTransformCache = new WeakMap();
+function promisifyRequest(request) {
+  const promise = new Promise((resolve, reject) => {
+    const unlisten = () => {
+      request.removeEventListener('success', success);
+      request.removeEventListener('error', error);
+    };
+    const success = () => {
+      resolve(wrap(request.result));
+      unlisten();
+    };
+    const error = () => {
+      reject(request.error);
+      unlisten();
+    };
+    request.addEventListener('success', success);
+    request.addEventListener('error', error);
+  });
+  promise.then(value => {
+    // Since cursoring reuses the IDBRequest (*sigh*), we cache it for later retrieval
+    // (see wrapFunction).
+    if (value instanceof IDBCursor) {
+      cursorRequestMap.set(value, request);
+    }
+    // Catching to avoid "Uncaught Promise exceptions"
+  }).catch(() => {});
+  // This mapping exists in reverseTransformCache but doesn't doesn't exist in transformCache. This
+  // is because we create many promises from a single IDBRequest.
+  reverseTransformCache.set(promise, request);
+  return promise;
+}
+function cacheDonePromiseForTransaction(tx) {
+  // Early bail if we've already created a done promise for this transaction.
+  if (transactionDoneMap.has(tx)) return;
+  const done = new Promise((resolve, reject) => {
+    const unlisten = () => {
+      tx.removeEventListener('complete', complete);
+      tx.removeEventListener('error', error);
+      tx.removeEventListener('abort', error);
+    };
+    const complete = () => {
+      resolve();
+      unlisten();
+    };
+    const error = () => {
+      reject(tx.error || new DOMException('AbortError', 'AbortError'));
+      unlisten();
+    };
+    tx.addEventListener('complete', complete);
+    tx.addEventListener('error', error);
+    tx.addEventListener('abort', error);
+  });
+  // Cache it for later retrieval.
+  transactionDoneMap.set(tx, done);
+}
+let idbProxyTraps = {
+  get(target, prop, receiver) {
+    if (target instanceof IDBTransaction) {
+      // Special handling for transaction.done.
+      if (prop === 'done') return transactionDoneMap.get(target);
+      // Polyfill for objectStoreNames because of Edge.
+      if (prop === 'objectStoreNames') {
+        return target.objectStoreNames || transactionStoreNamesMap.get(target);
+      }
+      // Make tx.store return the only store in the transaction, or undefined if there are many.
+      if (prop === 'store') {
+        return receiver.objectStoreNames[1] ? undefined : receiver.objectStore(receiver.objectStoreNames[0]);
+      }
+    }
+    // Else transform whatever we get back.
+    return wrap(target[prop]);
+  },
+  set(target, prop, value) {
+    target[prop] = value;
+    return true;
+  },
+  has(target, prop) {
+    if (target instanceof IDBTransaction && (prop === 'done' || prop === 'store')) {
+      return true;
+    }
+    return prop in target;
+  }
+};
+function replaceTraps(callback) {
+  idbProxyTraps = callback(idbProxyTraps);
+}
+function wrapFunction(func) {
+  // Due to expected object equality (which is enforced by the caching in `wrap`), we
+  // only create one new func per func.
+  // Edge doesn't support objectStoreNames (booo), so we polyfill it here.
+  if (func === IDBDatabase.prototype.transaction && !('objectStoreNames' in IDBTransaction.prototype)) {
+    return function (storeNames, ...args) {
+      const tx = func.call(unwrap(this), storeNames, ...args);
+      transactionStoreNamesMap.set(tx, storeNames.sort ? storeNames.sort() : [storeNames]);
+      return wrap(tx);
+    };
+  }
+  // Cursor methods are special, as the behaviour is a little more different to standard IDB. In
+  // IDB, you advance the cursor and wait for a new 'success' on the IDBRequest that gave you the
+  // cursor. It's kinda like a promise that can resolve with many values. That doesn't make sense
+  // with real promises, so each advance methods returns a new promise for the cursor object, or
+  // undefined if the end of the cursor has been reached.
+  if (getCursorAdvanceMethods().includes(func)) {
+    return function (...args) {
+      // Calling the original function with the proxy as 'this' causes ILLEGAL INVOCATION, so we use
+      // the original object.
+      func.apply(unwrap(this), args);
+      return wrap(cursorRequestMap.get(this));
+    };
+  }
+  return function (...args) {
+    // Calling the original function with the proxy as 'this' causes ILLEGAL INVOCATION, so we use
+    // the original object.
+    return wrap(func.apply(unwrap(this), args));
+  };
+}
+function transformCachableValue(value) {
+  if (typeof value === 'function') return wrapFunction(value);
+  // This doesn't return, it just creates a 'done' promise for the transaction,
+  // which is later returned for transaction.done (see idbObjectHandler).
+  if (value instanceof IDBTransaction) cacheDonePromiseForTransaction(value);
+  if (instanceOfAny(value, getIdbProxyableTypes())) return new Proxy(value, idbProxyTraps);
+  // Return the same value back if we're not going to transform it.
+  return value;
+}
+function wrap(value) {
+  // We sometimes generate multiple promises from a single IDBRequest (eg when cursoring), because
+  // IDB is weird and a single IDBRequest can yield many responses, so these can't be cached.
+  if (value instanceof IDBRequest) return promisifyRequest(value);
+  // If we've already transformed this value before, reuse the transformed value.
+  // This is faster, but it also provides object equality.
+  if (transformCache.has(value)) return transformCache.get(value);
+  const newValue = transformCachableValue(value);
+  // Not all types are transformed.
+  // These may be primitive types, so they can't be WeakMap keys.
+  if (newValue !== value) {
+    transformCache.set(value, newValue);
+    reverseTransformCache.set(newValue, value);
+  }
+  return newValue;
+}
+const unwrap = value => reverseTransformCache.get(value);
+
+/**
+ * Open a database.
+ *
+ * @param name Name of the database.
+ * @param version Schema version.
+ * @param callbacks Additional callbacks.
+ */
+function openDB(name, version, {
+  blocked,
+  upgrade,
+  blocking,
+  terminated
+} = {}) {
+  const request = indexedDB.open(name, version);
+  const openPromise = wrap(request);
+  if (upgrade) {
+    request.addEventListener('upgradeneeded', event => {
+      upgrade(wrap(request.result), event.oldVersion, event.newVersion, wrap(request.transaction), event);
+    });
+  }
+  if (blocked) {
+    request.addEventListener('blocked', event => blocked(
+    // Casting due to https://github.com/microsoft/TypeScript-DOM-lib-generator/pull/1405
+    event.oldVersion, event.newVersion, event));
+  }
+  openPromise.then(db => {
+    if (terminated) db.addEventListener('close', () => terminated());
+    if (blocking) {
+      db.addEventListener('versionchange', event => blocking(event.oldVersion, event.newVersion, event));
+    }
+  }).catch(() => {});
+  return openPromise;
+}
+/**
+ * Delete a database.
+ *
+ * @param name Name of the database.
+ */
+function deleteDB(name, {
+  blocked
+} = {}) {
+  const request = indexedDB.deleteDatabase(name);
+  if (blocked) {
+    request.addEventListener('blocked', event => blocked(
+    // Casting due to https://github.com/microsoft/TypeScript-DOM-lib-generator/pull/1405
+    event.oldVersion, event));
+  }
+  return wrap(request).then(() => undefined);
+}
+const readMethods = ['get', 'getKey', 'getAll', 'getAllKeys', 'count'];
+const writeMethods = ['put', 'add', 'delete', 'clear'];
+const cachedMethods = new Map();
+function getMethod(target, prop) {
+  if (!(target instanceof IDBDatabase && !(prop in target) && typeof prop === 'string')) {
+    return;
+  }
+  if (cachedMethods.get(prop)) return cachedMethods.get(prop);
+  const targetFuncName = prop.replace(/FromIndex$/, '');
+  const useIndex = prop !== targetFuncName;
+  const isWrite = writeMethods.includes(targetFuncName);
+  if (
+  // Bail if the target doesn't exist on the target. Eg, getAll isn't in Edge.
+  !(targetFuncName in (useIndex ? IDBIndex : IDBObjectStore).prototype) || !(isWrite || readMethods.includes(targetFuncName))) {
+    return;
+  }
+  const method = async function (storeName, ...args) {
+    // isWrite ? 'readwrite' : undefined gzipps better, but fails in Edge :(
+    const tx = this.transaction(storeName, isWrite ? 'readwrite' : 'readonly');
+    let target = tx.store;
+    if (useIndex) target = target.index(args.shift());
+    // Must reject if op rejects.
+    // If it's a write operation, must reject if tx.done rejects.
+    // Must reject with op rejection first.
+    // Must resolve with op value.
+    // Must handle both promises (no unhandled rejections)
+    return (await Promise.all([target[targetFuncName](...args), isWrite && tx.done]))[0];
+  };
+  cachedMethods.set(prop, method);
+  return method;
+}
+replaceTraps(oldTraps => _extends({}, oldTraps, {
+  get: (target, prop, receiver) => getMethod(target, prop) || oldTraps.get(target, prop, receiver),
+  has: (target, prop) => !!getMethod(target, prop) || oldTraps.has(target, prop)
+}));
 
 // @ts-ignore
 try {
-  self['workbox:precaching:7.2.0'] && _();
+  self['workbox:expiration:7.2.0'] && _();
 } catch (e) {}
 
 /*
@@ -1277,307 +1550,785 @@ try {
   license that can be found in the LICENSE file or at
   https://opensource.org/licenses/MIT.
 */
-// Name of the search parameter used to store revision info.
-const REVISION_SEARCH_PARAM = '__WB_REVISION__';
+const DB_NAME = 'workbox-expiration';
+const CACHE_OBJECT_STORE = 'cache-entries';
+const normalizeURL = unNormalizedUrl => {
+  const url = new URL(unNormalizedUrl, location.href);
+  url.hash = '';
+  return url.href;
+};
 /**
- * Converts a manifest entry into a versioned URL suitable for precaching.
- *
- * @param {Object|string} entry
- * @return {string} A URL with versioning info.
+ * Returns the timestamp model.
  *
  * @private
- * @memberof workbox-precaching
  */
-function createCacheKey(entry) {
-  if (!entry) {
-    throw new WorkboxError('add-to-cache-list-unexpected-type', {
-      entry
+class CacheTimestampsModel {
+  /**
+   *
+   * @param {string} cacheName
+   *
+   * @private
+   */
+  constructor(cacheName) {
+    this._db = null;
+    this._cacheName = cacheName;
+  }
+  /**
+   * Performs an upgrade of indexedDB.
+   *
+   * @param {IDBPDatabase<CacheDbSchema>} db
+   *
+   * @private
+   */
+  _upgradeDb(db) {
+    // TODO(philipwalton): EdgeHTML doesn't support arrays as a keyPath, so we
+    // have to use the `id` keyPath here and create our own values (a
+    // concatenation of `url + cacheName`) instead of simply using
+    // `keyPath: ['url', 'cacheName']`, which is supported in other browsers.
+    const objStore = db.createObjectStore(CACHE_OBJECT_STORE, {
+      keyPath: 'id'
+    });
+    // TODO(philipwalton): once we don't have to support EdgeHTML, we can
+    // create a single index with the keyPath `['cacheName', 'timestamp']`
+    // instead of doing both these indexes.
+    objStore.createIndex('cacheName', 'cacheName', {
+      unique: false
+    });
+    objStore.createIndex('timestamp', 'timestamp', {
+      unique: false
     });
   }
-  // If a precache manifest entry is a string, it's assumed to be a versioned
-  // URL, like '/app.abcd1234.js'. Return as-is.
-  if (typeof entry === 'string') {
-    const urlObject = new URL(entry, location.href);
-    return {
-      cacheKey: urlObject.href,
-      url: urlObject.href
-    };
+  /**
+   * Performs an upgrade of indexedDB and deletes deprecated DBs.
+   *
+   * @param {IDBPDatabase<CacheDbSchema>} db
+   *
+   * @private
+   */
+  _upgradeDbAndDeleteOldDbs(db) {
+    this._upgradeDb(db);
+    if (this._cacheName) {
+      void deleteDB(this._cacheName);
+    }
   }
-  const {
-    revision,
-    url
-  } = entry;
-  if (!url) {
-    throw new WorkboxError('add-to-cache-list-unexpected-type', {
-      entry
+  /**
+   * @param {string} url
+   * @param {number} timestamp
+   *
+   * @private
+   */
+  async setTimestamp(url, timestamp) {
+    url = normalizeURL(url);
+    const entry = {
+      url,
+      timestamp,
+      cacheName: this._cacheName,
+      // Creating an ID from the URL and cache name won't be necessary once
+      // Edge switches to Chromium and all browsers we support work with
+      // array keyPaths.
+      id: this._getId(url)
+    };
+    const db = await this.getDb();
+    const tx = db.transaction(CACHE_OBJECT_STORE, 'readwrite', {
+      durability: 'relaxed'
     });
+    await tx.store.put(entry);
+    await tx.done;
   }
-  // If there's just a URL and no revision, then it's also assumed to be a
-  // versioned URL.
-  if (!revision) {
-    const urlObject = new URL(url, location.href);
-    return {
-      cacheKey: urlObject.href,
-      url: urlObject.href
-    };
+  /**
+   * Returns the timestamp stored for a given URL.
+   *
+   * @param {string} url
+   * @return {number | undefined}
+   *
+   * @private
+   */
+  async getTimestamp(url) {
+    const db = await this.getDb();
+    const entry = await db.get(CACHE_OBJECT_STORE, this._getId(url));
+    return entry === null || entry === void 0 ? void 0 : entry.timestamp;
   }
-  // Otherwise, construct a properly versioned URL using the custom Workbox
-  // search parameter along with the revision info.
-  const cacheKeyURL = new URL(url, location.href);
-  const originalURL = new URL(url, location.href);
-  cacheKeyURL.searchParams.set(REVISION_SEARCH_PARAM, revision);
-  return {
-    cacheKey: cacheKeyURL.href,
-    url: originalURL.href
-  };
+  /**
+   * Iterates through all the entries in the object store (from newest to
+   * oldest) and removes entries once either `maxCount` is reached or the
+   * entry's timestamp is less than `minTimestamp`.
+   *
+   * @param {number} minTimestamp
+   * @param {number} maxCount
+   * @return {Array<string>}
+   *
+   * @private
+   */
+  async expireEntries(minTimestamp, maxCount) {
+    const db = await this.getDb();
+    let cursor = await db.transaction(CACHE_OBJECT_STORE).store.index('timestamp').openCursor(null, 'prev');
+    const entriesToDelete = [];
+    let entriesNotDeletedCount = 0;
+    while (cursor) {
+      const result = cursor.value;
+      // TODO(philipwalton): once we can use a multi-key index, we
+      // won't have to check `cacheName` here.
+      if (result.cacheName === this._cacheName) {
+        // Delete an entry if it's older than the max age or
+        // if we already have the max number allowed.
+        if (minTimestamp && result.timestamp < minTimestamp || maxCount && entriesNotDeletedCount >= maxCount) {
+          // TODO(philipwalton): we should be able to delete the
+          // entry right here, but doing so causes an iteration
+          // bug in Safari stable (fixed in TP). Instead we can
+          // store the keys of the entries to delete, and then
+          // delete the separate transactions.
+          // https://github.com/GoogleChrome/workbox/issues/1978
+          // cursor.delete();
+          // We only need to return the URL, not the whole entry.
+          entriesToDelete.push(cursor.value);
+        } else {
+          entriesNotDeletedCount++;
+        }
+      }
+      cursor = await cursor.continue();
+    }
+    // TODO(philipwalton): once the Safari bug in the following issue is fixed,
+    // we should be able to remove this loop and do the entry deletion in the
+    // cursor loop above:
+    // https://github.com/GoogleChrome/workbox/issues/1978
+    const urlsDeleted = [];
+    for (const entry of entriesToDelete) {
+      await db.delete(CACHE_OBJECT_STORE, entry.id);
+      urlsDeleted.push(entry.url);
+    }
+    return urlsDeleted;
+  }
+  /**
+   * Takes a URL and returns an ID that will be unique in the object store.
+   *
+   * @param {string} url
+   * @return {string}
+   *
+   * @private
+   */
+  _getId(url) {
+    // Creating an ID from the URL and cache name won't be necessary once
+    // Edge switches to Chromium and all browsers we support work with
+    // array keyPaths.
+    return this._cacheName + '|' + normalizeURL(url);
+  }
+  /**
+   * Returns an open connection to the database.
+   *
+   * @private
+   */
+  async getDb() {
+    if (!this._db) {
+      this._db = await openDB(DB_NAME, 1, {
+        upgrade: this._upgradeDbAndDeleteOldDbs.bind(this)
+      });
+    }
+    return this._db;
+  }
 }
 
 /*
-  Copyright 2020 Google LLC
+  Copyright 2018 Google LLC
 
   Use of this source code is governed by an MIT-style
   license that can be found in the LICENSE file or at
   https://opensource.org/licenses/MIT.
 */
 /**
- * A plugin, designed to be used with PrecacheController, to determine the
- * of assets that were updated (or not updated) during the install event.
+ * The `CacheExpiration` class allows you define an expiration and / or
+ * limit on the number of responses stored in a
+ * [`Cache`](https://developer.mozilla.org/en-US/docs/Web/API/Cache).
  *
- * @private
+ * @memberof workbox-expiration
  */
-class PrecacheInstallReportPlugin {
-  constructor() {
-    this.updatedURLs = [];
-    this.notUpdatedURLs = [];
-    this.handlerWillStart = async ({
-      request,
-      state
-    }) => {
-      // TODO: `state` should never be undefined...
-      if (state) {
-        state.originalRequest = request;
+class CacheExpiration {
+  /**
+   * To construct a new CacheExpiration instance you must provide at least
+   * one of the `config` properties.
+   *
+   * @param {string} cacheName Name of the cache to apply restrictions to.
+   * @param {Object} config
+   * @param {number} [config.maxEntries] The maximum number of entries to cache.
+   * Entries used the least will be removed as the maximum is reached.
+   * @param {number} [config.maxAgeSeconds] The maximum age of an entry before
+   * it's treated as stale and removed.
+   * @param {Object} [config.matchOptions] The [`CacheQueryOptions`](https://developer.mozilla.org/en-US/docs/Web/API/Cache/delete#Parameters)
+   * that will be used when calling `delete()` on the cache.
+   */
+  constructor(cacheName, config = {}) {
+    this._isRunning = false;
+    this._rerunRequested = false;
+    {
+      finalAssertExports.isType(cacheName, 'string', {
+        moduleName: 'workbox-expiration',
+        className: 'CacheExpiration',
+        funcName: 'constructor',
+        paramName: 'cacheName'
+      });
+      if (!(config.maxEntries || config.maxAgeSeconds)) {
+        throw new WorkboxError('max-entries-or-age-required', {
+          moduleName: 'workbox-expiration',
+          className: 'CacheExpiration',
+          funcName: 'constructor'
+        });
       }
-    };
+      if (config.maxEntries) {
+        finalAssertExports.isType(config.maxEntries, 'number', {
+          moduleName: 'workbox-expiration',
+          className: 'CacheExpiration',
+          funcName: 'constructor',
+          paramName: 'config.maxEntries'
+        });
+      }
+      if (config.maxAgeSeconds) {
+        finalAssertExports.isType(config.maxAgeSeconds, 'number', {
+          moduleName: 'workbox-expiration',
+          className: 'CacheExpiration',
+          funcName: 'constructor',
+          paramName: 'config.maxAgeSeconds'
+        });
+      }
+    }
+    this._maxEntries = config.maxEntries;
+    this._maxAgeSeconds = config.maxAgeSeconds;
+    this._matchOptions = config.matchOptions;
+    this._cacheName = cacheName;
+    this._timestampModel = new CacheTimestampsModel(cacheName);
+  }
+  /**
+   * Expires entries for the given cache and given criteria.
+   */
+  async expireEntries() {
+    if (this._isRunning) {
+      this._rerunRequested = true;
+      return;
+    }
+    this._isRunning = true;
+    const minTimestamp = this._maxAgeSeconds ? Date.now() - this._maxAgeSeconds * 1000 : 0;
+    const urlsExpired = await this._timestampModel.expireEntries(minTimestamp, this._maxEntries);
+    // Delete URLs from the cache
+    const cache = await self.caches.open(this._cacheName);
+    for (const url of urlsExpired) {
+      await cache.delete(url, this._matchOptions);
+    }
+    {
+      if (urlsExpired.length > 0) {
+        logger.groupCollapsed(`Expired ${urlsExpired.length} ` + `${urlsExpired.length === 1 ? 'entry' : 'entries'} and removed ` + `${urlsExpired.length === 1 ? 'it' : 'them'} from the ` + `'${this._cacheName}' cache.`);
+        logger.log(`Expired the following ${urlsExpired.length === 1 ? 'URL' : 'URLs'}:`);
+        urlsExpired.forEach(url => logger.log(`    ${url}`));
+        logger.groupEnd();
+      } else {
+        logger.debug(`Cache expiration ran and found no entries to remove.`);
+      }
+    }
+    this._isRunning = false;
+    if (this._rerunRequested) {
+      this._rerunRequested = false;
+      dontWaitFor(this.expireEntries());
+    }
+  }
+  /**
+   * Update the timestamp for the given URL. This ensures the when
+   * removing entries based on maximum entries, most recently used
+   * is accurate or when expiring, the timestamp is up-to-date.
+   *
+   * @param {string} url
+   */
+  async updateTimestamp(url) {
+    {
+      finalAssertExports.isType(url, 'string', {
+        moduleName: 'workbox-expiration',
+        className: 'CacheExpiration',
+        funcName: 'updateTimestamp',
+        paramName: 'url'
+      });
+    }
+    await this._timestampModel.setTimestamp(url, Date.now());
+  }
+  /**
+   * Can be used to check if a URL has expired or not before it's used.
+   *
+   * This requires a look up from IndexedDB, so can be slow.
+   *
+   * Note: This method will not remove the cached entry, call
+   * `expireEntries()` to remove indexedDB and Cache entries.
+   *
+   * @param {string} url
+   * @return {boolean}
+   */
+  async isURLExpired(url) {
+    if (!this._maxAgeSeconds) {
+      {
+        throw new WorkboxError(`expired-test-without-max-age`, {
+          methodName: 'isURLExpired',
+          paramName: 'maxAgeSeconds'
+        });
+      }
+    } else {
+      const timestamp = await this._timestampModel.getTimestamp(url);
+      const expireOlderThan = Date.now() - this._maxAgeSeconds * 1000;
+      return timestamp !== undefined ? timestamp < expireOlderThan : true;
+    }
+  }
+  /**
+   * Removes the IndexedDB object store used to keep track of cache expiration
+   * metadata.
+   */
+  async delete() {
+    // Make sure we don't attempt another rerun if we're called in the middle of
+    // a cache expiration.
+    this._rerunRequested = false;
+    await this._timestampModel.expireEntries(Infinity); // Expires all.
+  }
+}
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * This plugin can be used in a `workbox-strategy` to regularly enforce a
+ * limit on the age and / or the number of cached requests.
+ *
+ * It can only be used with `workbox-strategy` instances that have a
+ * [custom `cacheName` property set](/web/tools/workbox/guides/configure-workbox#custom_cache_names_in_strategies).
+ * In other words, it can't be used to expire entries in strategy that uses the
+ * default runtime cache name.
+ *
+ * Whenever a cached response is used or updated, this plugin will look
+ * at the associated cache and remove any old or extra responses.
+ *
+ * When using `maxAgeSeconds`, responses may be used *once* after expiring
+ * because the expiration clean up will not have occurred until *after* the
+ * cached response has been used. If the response has a "Date" header, then
+ * a light weight expiration check is performed and the response will not be
+ * used immediately.
+ *
+ * When using `maxEntries`, the entry least-recently requested will be removed
+ * from the cache first.
+ *
+ * @memberof workbox-expiration
+ */
+class ExpirationPlugin {
+  /**
+   * @param {ExpirationPluginOptions} config
+   * @param {number} [config.maxEntries] The maximum number of entries to cache.
+   * Entries used the least will be removed as the maximum is reached.
+   * @param {number} [config.maxAgeSeconds] The maximum age of an entry before
+   * it's treated as stale and removed.
+   * @param {Object} [config.matchOptions] The [`CacheQueryOptions`](https://developer.mozilla.org/en-US/docs/Web/API/Cache/delete#Parameters)
+   * that will be used when calling `delete()` on the cache.
+   * @param {boolean} [config.purgeOnQuotaError] Whether to opt this cache in to
+   * automatic deletion if the available storage quota has been exceeded.
+   */
+  constructor(config = {}) {
+    /**
+     * A "lifecycle" callback that will be triggered automatically by the
+     * `workbox-strategies` handlers when a `Response` is about to be returned
+     * from a [Cache](https://developer.mozilla.org/en-US/docs/Web/API/Cache) to
+     * the handler. It allows the `Response` to be inspected for freshness and
+     * prevents it from being used if the `Response`'s `Date` header value is
+     * older than the configured `maxAgeSeconds`.
+     *
+     * @param {Object} options
+     * @param {string} options.cacheName Name of the cache the response is in.
+     * @param {Response} options.cachedResponse The `Response` object that's been
+     *     read from a cache and whose freshness should be checked.
+     * @return {Response} Either the `cachedResponse`, if it's
+     *     fresh, or `null` if the `Response` is older than `maxAgeSeconds`.
+     *
+     * @private
+     */
     this.cachedResponseWillBeUsed = async ({
       event,
-      state,
+      request,
+      cacheName,
       cachedResponse
     }) => {
-      if (event.type === 'install') {
-        if (state && state.originalRequest && state.originalRequest instanceof Request) {
-          // TODO: `state` should never be undefined...
-          const url = state.originalRequest.url;
-          if (cachedResponse) {
-            this.notUpdatedURLs.push(url);
-          } else {
-            this.updatedURLs.push(url);
+      if (!cachedResponse) {
+        return null;
+      }
+      const isFresh = this._isResponseDateFresh(cachedResponse);
+      // Expire entries to ensure that even if the expiration date has
+      // expired, it'll only be used once.
+      const cacheExpiration = this._getCacheExpiration(cacheName);
+      dontWaitFor(cacheExpiration.expireEntries());
+      // Update the metadata for the request URL to the current timestamp,
+      // but don't `await` it as we don't want to block the response.
+      const updateTimestampDone = cacheExpiration.updateTimestamp(request.url);
+      if (event) {
+        try {
+          event.waitUntil(updateTimestampDone);
+        } catch (error) {
+          {
+            // The event may not be a fetch event; only log the URL if it is.
+            if ('request' in event) {
+              logger.warn(`Unable to ensure service worker stays alive when ` + `updating cache entry for ` + `'${getFriendlyURL(event.request.url)}'.`);
+            }
           }
         }
       }
-      return cachedResponse;
+      return isFresh ? cachedResponse : null;
     };
-  }
-}
-
-/*
-  Copyright 2020 Google LLC
-
-  Use of this source code is governed by an MIT-style
-  license that can be found in the LICENSE file or at
-  https://opensource.org/licenses/MIT.
-*/
-/**
- * A plugin, designed to be used with PrecacheController, to translate URLs into
- * the corresponding cache key, based on the current revision info.
- *
- * @private
- */
-class PrecacheCacheKeyPlugin {
-  constructor({
-    precacheController
-  }) {
-    this.cacheKeyWillBeUsed = async ({
-      request,
-      params
+    /**
+     * A "lifecycle" callback that will be triggered automatically by the
+     * `workbox-strategies` handlers when an entry is added to a cache.
+     *
+     * @param {Object} options
+     * @param {string} options.cacheName Name of the cache that was updated.
+     * @param {string} options.request The Request for the cached entry.
+     *
+     * @private
+     */
+    this.cacheDidUpdate = async ({
+      cacheName,
+      request
     }) => {
-      // Params is type any, can't change right now.
-      /* eslint-disable */
-      const cacheKey = (params === null || params === void 0 ? void 0 : params.cacheKey) || this._precacheController.getCacheKeyForURL(request.url);
-      /* eslint-enable */
-      return cacheKey ? new Request(cacheKey, {
-        headers: request.headers
-      }) : request;
+      {
+        finalAssertExports.isType(cacheName, 'string', {
+          moduleName: 'workbox-expiration',
+          className: 'Plugin',
+          funcName: 'cacheDidUpdate',
+          paramName: 'cacheName'
+        });
+        finalAssertExports.isInstance(request, Request, {
+          moduleName: 'workbox-expiration',
+          className: 'Plugin',
+          funcName: 'cacheDidUpdate',
+          paramName: 'request'
+        });
+      }
+      const cacheExpiration = this._getCacheExpiration(cacheName);
+      await cacheExpiration.updateTimestamp(request.url);
+      await cacheExpiration.expireEntries();
     };
-    this._precacheController = precacheController;
-  }
-}
-
-/*
-  Copyright 2018 Google LLC
-
-  Use of this source code is governed by an MIT-style
-  license that can be found in the LICENSE file or at
-  https://opensource.org/licenses/MIT.
-*/
-/**
- * @param {string} groupTitle
- * @param {Array<string>} deletedURLs
- *
- * @private
- */
-const logGroup = (groupTitle, deletedURLs) => {
-  logger.groupCollapsed(groupTitle);
-  for (const url of deletedURLs) {
-    logger.log(url);
-  }
-  logger.groupEnd();
-};
-/**
- * @param {Array<string>} deletedURLs
- *
- * @private
- * @memberof workbox-precaching
- */
-function printCleanupDetails(deletedURLs) {
-  const deletionCount = deletedURLs.length;
-  if (deletionCount > 0) {
-    logger.groupCollapsed(`During precaching cleanup, ` + `${deletionCount} cached ` + `request${deletionCount === 1 ? ' was' : 's were'} deleted.`);
-    logGroup('Deleted Cache Requests', deletedURLs);
-    logger.groupEnd();
-  }
-}
-
-/*
-  Copyright 2018 Google LLC
-
-  Use of this source code is governed by an MIT-style
-  license that can be found in the LICENSE file or at
-  https://opensource.org/licenses/MIT.
-*/
-/**
- * @param {string} groupTitle
- * @param {Array<string>} urls
- *
- * @private
- */
-function _nestedGroup(groupTitle, urls) {
-  if (urls.length === 0) {
-    return;
-  }
-  logger.groupCollapsed(groupTitle);
-  for (const url of urls) {
-    logger.log(url);
-  }
-  logger.groupEnd();
-}
-/**
- * @param {Array<string>} urlsToPrecache
- * @param {Array<string>} urlsAlreadyPrecached
- *
- * @private
- * @memberof workbox-precaching
- */
-function printInstallDetails(urlsToPrecache, urlsAlreadyPrecached) {
-  const precachedCount = urlsToPrecache.length;
-  const alreadyPrecachedCount = urlsAlreadyPrecached.length;
-  if (precachedCount || alreadyPrecachedCount) {
-    let message = `Precaching ${precachedCount} file${precachedCount === 1 ? '' : 's'}.`;
-    if (alreadyPrecachedCount > 0) {
-      message += ` ${alreadyPrecachedCount} ` + `file${alreadyPrecachedCount === 1 ? ' is' : 's are'} already cached.`;
-    }
-    logger.groupCollapsed(message);
-    _nestedGroup(`View newly precached URLs.`, urlsToPrecache);
-    _nestedGroup(`View previously precached URLs.`, urlsAlreadyPrecached);
-    logger.groupEnd();
-  }
-}
-
-/*
-  Copyright 2019 Google LLC
-
-  Use of this source code is governed by an MIT-style
-  license that can be found in the LICENSE file or at
-  https://opensource.org/licenses/MIT.
-*/
-let supportStatus;
-/**
- * A utility function that determines whether the current browser supports
- * constructing a new `Response` from a `response.body` stream.
- *
- * @return {boolean} `true`, if the current browser can successfully
- *     construct a `Response` from a `response.body` stream, `false` otherwise.
- *
- * @private
- */
-function canConstructResponseFromBodyStream() {
-  if (supportStatus === undefined) {
-    const testResponse = new Response('');
-    if ('body' in testResponse) {
-      try {
-        new Response(testResponse.body);
-        supportStatus = true;
-      } catch (error) {
-        supportStatus = false;
+    {
+      if (!(config.maxEntries || config.maxAgeSeconds)) {
+        throw new WorkboxError('max-entries-or-age-required', {
+          moduleName: 'workbox-expiration',
+          className: 'Plugin',
+          funcName: 'constructor'
+        });
+      }
+      if (config.maxEntries) {
+        finalAssertExports.isType(config.maxEntries, 'number', {
+          moduleName: 'workbox-expiration',
+          className: 'Plugin',
+          funcName: 'constructor',
+          paramName: 'config.maxEntries'
+        });
+      }
+      if (config.maxAgeSeconds) {
+        finalAssertExports.isType(config.maxAgeSeconds, 'number', {
+          moduleName: 'workbox-expiration',
+          className: 'Plugin',
+          funcName: 'constructor',
+          paramName: 'config.maxAgeSeconds'
+        });
       }
     }
-    supportStatus = false;
+    this._config = config;
+    this._maxAgeSeconds = config.maxAgeSeconds;
+    this._cacheExpirations = new Map();
+    if (config.purgeOnQuotaError) {
+      registerQuotaErrorCallback(() => this.deleteCacheAndMetadata());
+    }
   }
-  return supportStatus;
+  /**
+   * A simple helper method to return a CacheExpiration instance for a given
+   * cache name.
+   *
+   * @param {string} cacheName
+   * @return {CacheExpiration}
+   *
+   * @private
+   */
+  _getCacheExpiration(cacheName) {
+    if (cacheName === cacheNames.getRuntimeName()) {
+      throw new WorkboxError('expire-custom-caches-only');
+    }
+    let cacheExpiration = this._cacheExpirations.get(cacheName);
+    if (!cacheExpiration) {
+      cacheExpiration = new CacheExpiration(cacheName, this._config);
+      this._cacheExpirations.set(cacheName, cacheExpiration);
+    }
+    return cacheExpiration;
+  }
+  /**
+   * @param {Response} cachedResponse
+   * @return {boolean}
+   *
+   * @private
+   */
+  _isResponseDateFresh(cachedResponse) {
+    if (!this._maxAgeSeconds) {
+      // We aren't expiring by age, so return true, it's fresh
+      return true;
+    }
+    // Check if the 'date' header will suffice a quick expiration check.
+    // See https://github.com/GoogleChromeLabs/sw-toolbox/issues/164 for
+    // discussion.
+    const dateHeaderTimestamp = this._getDateHeaderTimestamp(cachedResponse);
+    if (dateHeaderTimestamp === null) {
+      // Unable to parse date, so assume it's fresh.
+      return true;
+    }
+    // If we have a valid headerTime, then our response is fresh iff the
+    // headerTime plus maxAgeSeconds is greater than the current time.
+    const now = Date.now();
+    return dateHeaderTimestamp >= now - this._maxAgeSeconds * 1000;
+  }
+  /**
+   * This method will extract the data header and parse it into a useful
+   * value.
+   *
+   * @param {Response} cachedResponse
+   * @return {number|null}
+   *
+   * @private
+   */
+  _getDateHeaderTimestamp(cachedResponse) {
+    if (!cachedResponse.headers.has('date')) {
+      return null;
+    }
+    const dateHeader = cachedResponse.headers.get('date');
+    const parsedDate = new Date(dateHeader);
+    const headerTime = parsedDate.getTime();
+    // If the Date header was invalid for some reason, parsedDate.getTime()
+    // will return NaN.
+    if (isNaN(headerTime)) {
+      return null;
+    }
+    return headerTime;
+  }
+  /**
+   * This is a helper method that performs two operations:
+   *
+   * - Deletes *all* the underlying Cache instances associated with this plugin
+   * instance, by calling caches.delete() on your behalf.
+   * - Deletes the metadata from IndexedDB used to keep track of expiration
+   * details for each Cache instance.
+   *
+   * When using cache expiration, calling this method is preferable to calling
+   * `caches.delete()` directly, since this will ensure that the IndexedDB
+   * metadata is also cleanly removed and open IndexedDB instances are deleted.
+   *
+   * Note that if you're *not* using cache expiration for a given cache, calling
+   * `caches.delete()` and passing in the cache's name should be sufficient.
+   * There is no Workbox-specific method needed for cleanup in that case.
+   */
+  async deleteCacheAndMetadata() {
+    // Do this one at a time instead of all at once via `Promise.all()` to
+    // reduce the chance of inconsistency if a promise rejects.
+    for (const [cacheName, cacheExpiration] of this._cacheExpirations) {
+      await self.caches.delete(cacheName);
+      await cacheExpiration.delete();
+    }
+    // Reset this._cacheExpirations to its initial state.
+    this._cacheExpirations = new Map();
+  }
 }
 
+// @ts-ignore
+try {
+  self['workbox:cacheable-response:7.2.0'] && _();
+} catch (e) {}
+
 /*
-  Copyright 2019 Google LLC
+  Copyright 2018 Google LLC
 
   Use of this source code is governed by an MIT-style
   license that can be found in the LICENSE file or at
   https://opensource.org/licenses/MIT.
 */
 /**
- * Allows developers to copy a response and modify its `headers`, `status`,
- * or `statusText` values (the values settable via a
- * [`ResponseInit`]{@link https://developer.mozilla.org/en-US/docs/Web/API/Response/Response#Syntax}
- * object in the constructor).
- * To modify these values, pass a function as the second argument. That
- * function will be invoked with a single object with the response properties
- * `{headers, status, statusText}`. The return value of this function will
- * be used as the `ResponseInit` for the new `Response`. To change the values
- * either modify the passed parameter(s) and return it, or return a totally
- * new object.
+ * This class allows you to set up rules determining what
+ * status codes and/or headers need to be present in order for a
+ * [`Response`](https://developer.mozilla.org/en-US/docs/Web/API/Response)
+ * to be considered cacheable.
  *
- * This method is intentionally limited to same-origin responses, regardless of
- * whether CORS was used or not.
- *
- * @param {Response} response
- * @param {Function} modifier
- * @memberof workbox-core
+ * @memberof workbox-cacheable-response
  */
-async function copyResponse(response, modifier) {
-  let origin = null;
-  // If response.url isn't set, assume it's cross-origin and keep origin null.
-  if (response.url) {
-    const responseURL = new URL(response.url);
-    origin = responseURL.origin;
+class CacheableResponse {
+  /**
+   * To construct a new CacheableResponse instance you must provide at least
+   * one of the `config` properties.
+   *
+   * If both `statuses` and `headers` are specified, then both conditions must
+   * be met for the `Response` to be considered cacheable.
+   *
+   * @param {Object} config
+   * @param {Array<number>} [config.statuses] One or more status codes that a
+   * `Response` can have and be considered cacheable.
+   * @param {Object<string,string>} [config.headers] A mapping of header names
+   * and expected values that a `Response` can have and be considered cacheable.
+   * If multiple headers are provided, only one needs to be present.
+   */
+  constructor(config = {}) {
+    {
+      if (!(config.statuses || config.headers)) {
+        throw new WorkboxError('statuses-or-headers-required', {
+          moduleName: 'workbox-cacheable-response',
+          className: 'CacheableResponse',
+          funcName: 'constructor'
+        });
+      }
+      if (config.statuses) {
+        finalAssertExports.isArray(config.statuses, {
+          moduleName: 'workbox-cacheable-response',
+          className: 'CacheableResponse',
+          funcName: 'constructor',
+          paramName: 'config.statuses'
+        });
+      }
+      if (config.headers) {
+        finalAssertExports.isType(config.headers, 'object', {
+          moduleName: 'workbox-cacheable-response',
+          className: 'CacheableResponse',
+          funcName: 'constructor',
+          paramName: 'config.headers'
+        });
+      }
+    }
+    this._statuses = config.statuses;
+    this._headers = config.headers;
   }
-  if (origin !== self.location.origin) {
-    throw new WorkboxError('cross-origin-copy-response', {
-      origin
-    });
+  /**
+   * Checks a response to see whether it's cacheable or not, based on this
+   * object's configuration.
+   *
+   * @param {Response} response The response whose cacheability is being
+   * checked.
+   * @return {boolean} `true` if the `Response` is cacheable, and `false`
+   * otherwise.
+   */
+  isResponseCacheable(response) {
+    {
+      finalAssertExports.isInstance(response, Response, {
+        moduleName: 'workbox-cacheable-response',
+        className: 'CacheableResponse',
+        funcName: 'isResponseCacheable',
+        paramName: 'response'
+      });
+    }
+    let cacheable = true;
+    if (this._statuses) {
+      cacheable = this._statuses.includes(response.status);
+    }
+    if (this._headers && cacheable) {
+      cacheable = Object.keys(this._headers).some(headerName => {
+        return response.headers.get(headerName) === this._headers[headerName];
+      });
+    }
+    {
+      if (!cacheable) {
+        logger.groupCollapsed(`The request for ` + `'${getFriendlyURL(response.url)}' returned a response that does ` + `not meet the criteria for being cached.`);
+        logger.groupCollapsed(`View cacheability criteria here.`);
+        logger.log(`Cacheable statuses: ` + JSON.stringify(this._statuses));
+        logger.log(`Cacheable headers: ` + JSON.stringify(this._headers, null, 2));
+        logger.groupEnd();
+        const logFriendlyHeaders = {};
+        response.headers.forEach((value, key) => {
+          logFriendlyHeaders[key] = value;
+        });
+        logger.groupCollapsed(`View response status and headers here.`);
+        logger.log(`Response status: ${response.status}`);
+        logger.log(`Response headers: ` + JSON.stringify(logFriendlyHeaders, null, 2));
+        logger.groupEnd();
+        logger.groupCollapsed(`View full response details here.`);
+        logger.log(response.headers);
+        logger.log(response);
+        logger.groupEnd();
+        logger.groupEnd();
+      }
+    }
+    return cacheable;
   }
-  const clonedResponse = response.clone();
-  // Create a fresh `ResponseInit` object by cloning the headers.
-  const responseInit = {
-    headers: new Headers(clonedResponse.headers),
-    status: clonedResponse.status,
-    statusText: clonedResponse.statusText
-  };
-  // Apply any user modifications.
-  const modifiedResponseInit = modifier ? modifier(responseInit) : responseInit;
-  // Create the new response from the body stream and `ResponseInit`
-  // modifications. Note: not all browsers support the Response.body stream,
-  // so fall back to reading the entire body into memory as a blob.
-  const body = canConstructResponseFromBodyStream() ? clonedResponse.body : await clonedResponse.blob();
-  return new Response(body, modifiedResponseInit);
 }
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * A class implementing the `cacheWillUpdate` lifecycle callback. This makes it
+ * easier to add in cacheability checks to requests made via Workbox's built-in
+ * strategies.
+ *
+ * @memberof workbox-cacheable-response
+ */
+class CacheableResponsePlugin {
+  /**
+   * To construct a new CacheableResponsePlugin instance you must provide at
+   * least one of the `config` properties.
+   *
+   * If both `statuses` and `headers` are specified, then both conditions must
+   * be met for the `Response` to be considered cacheable.
+   *
+   * @param {Object} config
+   * @param {Array<number>} [config.statuses] One or more status codes that a
+   * `Response` can have and be considered cacheable.
+   * @param {Object<string,string>} [config.headers] A mapping of header names
+   * and expected values that a `Response` can have and be considered cacheable.
+   * If multiple headers are provided, only one needs to be present.
+   */
+  constructor(config) {
+    /**
+     * @param {Object} options
+     * @param {Response} options.response
+     * @return {Response|null}
+     * @private
+     */
+    this.cacheWillUpdate = async ({
+      response
+    }) => {
+      if (this._cacheableResponse.isResponseCacheable(response)) {
+        return response;
+      }
+      return null;
+    };
+    this._cacheableResponse = new CacheableResponse(config);
+  }
+}
+
+// @ts-ignore
+try {
+  self['workbox:strategies:7.2.0'] && _();
+} catch (e) {}
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+const cacheOkAndOpaquePlugin = {
+  /**
+   * Returns a valid response (to allow caching) if the status is 200 (OK) or
+   * 0 (opaque).
+   *
+   * @param {Object} options
+   * @param {Response} options.response
+   * @return {Response|null}
+   *
+   * @private
+   */
+  cacheWillUpdate: async ({
+    response
+  }) => {
+    if (response.status === 200 || response.status === 0) {
+      return response;
+    }
+    return null;
+  }
+};
 
 /*
   Copyright 2020 Google LLC
@@ -1658,18 +2409,6 @@ class Deferred {
   license that can be found in the LICENSE file or at
   https://opensource.org/licenses/MIT.
 */
-// Callbacks to be executed whenever there's a quota error.
-// Can't change Function type right now.
-// eslint-disable-next-line @typescript-eslint/ban-types
-const quotaErrorCallbacks = new Set();
-
-/*
-  Copyright 2018 Google LLC
-
-  Use of this source code is governed by an MIT-style
-  license that can be found in the LICENSE file or at
-  https://opensource.org/licenses/MIT.
-*/
 /**
  * Runs all of the callback functions, one at a time sequentially, in the order
  * in which they were registered.
@@ -1709,11 +2448,6 @@ async function executeQuotaErrorCallbacks() {
 function timeout(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
-
-// @ts-ignore
-try {
-  self['workbox:strategies:7.2.0'] && _();
-} catch (e) {}
 
 /*
   Copyright 2020 Google LLC
@@ -2441,6 +3175,860 @@ class Strategy {
  *
  * @memberof workbox-strategies.Strategy
  */
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+const messages = {
+  strategyStart: (strategyName, request) => `Using ${strategyName} to respond to '${getFriendlyURL(request.url)}'`,
+  printFinalResponse: response => {
+    if (response) {
+      logger.groupCollapsed(`View the final response here.`);
+      logger.log(response || '[No response returned]');
+      logger.groupEnd();
+    }
+  }
+};
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * An implementation of a
+ * [network first](https://developer.chrome.com/docs/workbox/caching-strategies-overview/#network-first-falling-back-to-cache)
+ * request strategy.
+ *
+ * By default, this strategy will cache responses with a 200 status code as
+ * well as [opaque responses](https://developer.chrome.com/docs/workbox/caching-resources-during-runtime/#opaque-responses).
+ * Opaque responses are are cross-origin requests where the response doesn't
+ * support [CORS](https://enable-cors.org/).
+ *
+ * If the network request fails, and there is no cache match, this will throw
+ * a `WorkboxError` exception.
+ *
+ * @extends workbox-strategies.Strategy
+ * @memberof workbox-strategies
+ */
+class NetworkFirst extends Strategy {
+  /**
+   * @param {Object} [options]
+   * @param {string} [options.cacheName] Cache name to store and retrieve
+   * requests. Defaults to cache names provided by
+   * {@link workbox-core.cacheNames}.
+   * @param {Array<Object>} [options.plugins] [Plugins]{@link https://developers.google.com/web/tools/workbox/guides/using-plugins}
+   * to use in conjunction with this caching strategy.
+   * @param {Object} [options.fetchOptions] Values passed along to the
+   * [`init`](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch#Parameters)
+   * of [non-navigation](https://github.com/GoogleChrome/workbox/issues/1796)
+   * `fetch()` requests made by this strategy.
+   * @param {Object} [options.matchOptions] [`CacheQueryOptions`](https://w3c.github.io/ServiceWorker/#dictdef-cachequeryoptions)
+   * @param {number} [options.networkTimeoutSeconds] If set, any network requests
+   * that fail to respond within the timeout will fallback to the cache.
+   *
+   * This option can be used to combat
+   * "[lie-fi]{@link https://developers.google.com/web/fundamentals/performance/poor-connectivity/#lie-fi}"
+   * scenarios.
+   */
+  constructor(options = {}) {
+    super(options);
+    // If this instance contains no plugins with a 'cacheWillUpdate' callback,
+    // prepend the `cacheOkAndOpaquePlugin` plugin to the plugins list.
+    if (!this.plugins.some(p => 'cacheWillUpdate' in p)) {
+      this.plugins.unshift(cacheOkAndOpaquePlugin);
+    }
+    this._networkTimeoutSeconds = options.networkTimeoutSeconds || 0;
+    {
+      if (this._networkTimeoutSeconds) {
+        finalAssertExports.isType(this._networkTimeoutSeconds, 'number', {
+          moduleName: 'workbox-strategies',
+          className: this.constructor.name,
+          funcName: 'constructor',
+          paramName: 'networkTimeoutSeconds'
+        });
+      }
+    }
+  }
+  /**
+   * @private
+   * @param {Request|string} request A request to run this strategy for.
+   * @param {workbox-strategies.StrategyHandler} handler The event that
+   *     triggered the request.
+   * @return {Promise<Response>}
+   */
+  async _handle(request, handler) {
+    const logs = [];
+    {
+      finalAssertExports.isInstance(request, Request, {
+        moduleName: 'workbox-strategies',
+        className: this.constructor.name,
+        funcName: 'handle',
+        paramName: 'makeRequest'
+      });
+    }
+    const promises = [];
+    let timeoutId;
+    if (this._networkTimeoutSeconds) {
+      const {
+        id,
+        promise
+      } = this._getTimeoutPromise({
+        request,
+        logs,
+        handler
+      });
+      timeoutId = id;
+      promises.push(promise);
+    }
+    const networkPromise = this._getNetworkPromise({
+      timeoutId,
+      request,
+      logs,
+      handler
+    });
+    promises.push(networkPromise);
+    const response = await handler.waitUntil((async () => {
+      // Promise.race() will resolve as soon as the first promise resolves.
+      return (await handler.waitUntil(Promise.race(promises))) || (
+      // If Promise.race() resolved with null, it might be due to a network
+      // timeout + a cache miss. If that were to happen, we'd rather wait until
+      // the networkPromise resolves instead of returning null.
+      // Note that it's fine to await an already-resolved promise, so we don't
+      // have to check to see if it's still "in flight".
+      await networkPromise);
+    })());
+    {
+      logger.groupCollapsed(messages.strategyStart(this.constructor.name, request));
+      for (const log of logs) {
+        logger.log(log);
+      }
+      messages.printFinalResponse(response);
+      logger.groupEnd();
+    }
+    if (!response) {
+      throw new WorkboxError('no-response', {
+        url: request.url
+      });
+    }
+    return response;
+  }
+  /**
+   * @param {Object} options
+   * @param {Request} options.request
+   * @param {Array} options.logs A reference to the logs array
+   * @param {Event} options.event
+   * @return {Promise<Response>}
+   *
+   * @private
+   */
+  _getTimeoutPromise({
+    request,
+    logs,
+    handler
+  }) {
+    let timeoutId;
+    const timeoutPromise = new Promise(resolve => {
+      const onNetworkTimeout = async () => {
+        {
+          logs.push(`Timing out the network response at ` + `${this._networkTimeoutSeconds} seconds.`);
+        }
+        resolve(await handler.cacheMatch(request));
+      };
+      timeoutId = setTimeout(onNetworkTimeout, this._networkTimeoutSeconds * 1000);
+    });
+    return {
+      promise: timeoutPromise,
+      id: timeoutId
+    };
+  }
+  /**
+   * @param {Object} options
+   * @param {number|undefined} options.timeoutId
+   * @param {Request} options.request
+   * @param {Array} options.logs A reference to the logs Array.
+   * @param {Event} options.event
+   * @return {Promise<Response>}
+   *
+   * @private
+   */
+  async _getNetworkPromise({
+    timeoutId,
+    request,
+    logs,
+    handler
+  }) {
+    let error;
+    let response;
+    try {
+      response = await handler.fetchAndCachePut(request);
+    } catch (fetchError) {
+      if (fetchError instanceof Error) {
+        error = fetchError;
+      }
+    }
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    {
+      if (response) {
+        logs.push(`Got response from network.`);
+      } else {
+        logs.push(`Unable to get a response from the network. Will respond ` + `with a cached response.`);
+      }
+    }
+    if (error || !response) {
+      response = await handler.cacheMatch(request);
+      {
+        if (response) {
+          logs.push(`Found a cached response in the '${this.cacheName}'` + ` cache.`);
+        } else {
+          logs.push(`No response found in the '${this.cacheName}' cache.`);
+        }
+      }
+    }
+    return response;
+  }
+}
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * An implementation of a
+ * [network-only](https://developer.chrome.com/docs/workbox/caching-strategies-overview/#network-only)
+ * request strategy.
+ *
+ * This class is useful if you want to take advantage of any
+ * [Workbox plugins](https://developer.chrome.com/docs/workbox/using-plugins/).
+ *
+ * If the network request fails, this will throw a `WorkboxError` exception.
+ *
+ * @extends workbox-strategies.Strategy
+ * @memberof workbox-strategies
+ */
+class NetworkOnly extends Strategy {
+  /**
+   * @param {Object} [options]
+   * @param {Array<Object>} [options.plugins] [Plugins]{@link https://developers.google.com/web/tools/workbox/guides/using-plugins}
+   * to use in conjunction with this caching strategy.
+   * @param {Object} [options.fetchOptions] Values passed along to the
+   * [`init`](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch#Parameters)
+   * of [non-navigation](https://github.com/GoogleChrome/workbox/issues/1796)
+   * `fetch()` requests made by this strategy.
+   * @param {number} [options.networkTimeoutSeconds] If set, any network requests
+   * that fail to respond within the timeout will result in a network error.
+   */
+  constructor(options = {}) {
+    super(options);
+    this._networkTimeoutSeconds = options.networkTimeoutSeconds || 0;
+  }
+  /**
+   * @private
+   * @param {Request|string} request A request to run this strategy for.
+   * @param {workbox-strategies.StrategyHandler} handler The event that
+   *     triggered the request.
+   * @return {Promise<Response>}
+   */
+  async _handle(request, handler) {
+    {
+      finalAssertExports.isInstance(request, Request, {
+        moduleName: 'workbox-strategies',
+        className: this.constructor.name,
+        funcName: '_handle',
+        paramName: 'request'
+      });
+    }
+    let error = undefined;
+    let response;
+    try {
+      const promises = [handler.fetch(request)];
+      if (this._networkTimeoutSeconds) {
+        const timeoutPromise = timeout(this._networkTimeoutSeconds * 1000);
+        promises.push(timeoutPromise);
+      }
+      response = await Promise.race(promises);
+      if (!response) {
+        throw new Error(`Timed out the network response after ` + `${this._networkTimeoutSeconds} seconds.`);
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        error = err;
+      }
+    }
+    {
+      logger.groupCollapsed(messages.strategyStart(this.constructor.name, request));
+      if (response) {
+        logger.log(`Got response from network.`);
+      } else {
+        logger.log(`Unable to get a response from the network.`);
+      }
+      messages.printFinalResponse(response);
+      logger.groupEnd();
+    }
+    if (!response) {
+      throw new WorkboxError('no-response', {
+        url: request.url,
+        error
+      });
+    }
+    return response;
+  }
+}
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * An implementation of a
+ * [stale-while-revalidate](https://developer.chrome.com/docs/workbox/caching-strategies-overview/#stale-while-revalidate)
+ * request strategy.
+ *
+ * Resources are requested from both the cache and the network in parallel.
+ * The strategy will respond with the cached version if available, otherwise
+ * wait for the network response. The cache is updated with the network response
+ * with each successful request.
+ *
+ * By default, this strategy will cache responses with a 200 status code as
+ * well as [opaque responses](https://developer.chrome.com/docs/workbox/caching-resources-during-runtime/#opaque-responses).
+ * Opaque responses are cross-origin requests where the response doesn't
+ * support [CORS](https://enable-cors.org/).
+ *
+ * If the network request fails, and there is no cache match, this will throw
+ * a `WorkboxError` exception.
+ *
+ * @extends workbox-strategies.Strategy
+ * @memberof workbox-strategies
+ */
+class StaleWhileRevalidate extends Strategy {
+  /**
+   * @param {Object} [options]
+   * @param {string} [options.cacheName] Cache name to store and retrieve
+   * requests. Defaults to cache names provided by
+   * {@link workbox-core.cacheNames}.
+   * @param {Array<Object>} [options.plugins] [Plugins]{@link https://developers.google.com/web/tools/workbox/guides/using-plugins}
+   * to use in conjunction with this caching strategy.
+   * @param {Object} [options.fetchOptions] Values passed along to the
+   * [`init`](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch#Parameters)
+   * of [non-navigation](https://github.com/GoogleChrome/workbox/issues/1796)
+   * `fetch()` requests made by this strategy.
+   * @param {Object} [options.matchOptions] [`CacheQueryOptions`](https://w3c.github.io/ServiceWorker/#dictdef-cachequeryoptions)
+   */
+  constructor(options = {}) {
+    super(options);
+    // If this instance contains no plugins with a 'cacheWillUpdate' callback,
+    // prepend the `cacheOkAndOpaquePlugin` plugin to the plugins list.
+    if (!this.plugins.some(p => 'cacheWillUpdate' in p)) {
+      this.plugins.unshift(cacheOkAndOpaquePlugin);
+    }
+  }
+  /**
+   * @private
+   * @param {Request|string} request A request to run this strategy for.
+   * @param {workbox-strategies.StrategyHandler} handler The event that
+   *     triggered the request.
+   * @return {Promise<Response>}
+   */
+  async _handle(request, handler) {
+    const logs = [];
+    {
+      finalAssertExports.isInstance(request, Request, {
+        moduleName: 'workbox-strategies',
+        className: this.constructor.name,
+        funcName: 'handle',
+        paramName: 'request'
+      });
+    }
+    const fetchAndCachePromise = handler.fetchAndCachePut(request).catch(() => {
+      // Swallow this error because a 'no-response' error will be thrown in
+      // main handler return flow. This will be in the `waitUntil()` flow.
+    });
+    void handler.waitUntil(fetchAndCachePromise);
+    let response = await handler.cacheMatch(request);
+    let error;
+    if (response) {
+      {
+        logs.push(`Found a cached response in the '${this.cacheName}'` + ` cache. Will update with the network response in the background.`);
+      }
+    } else {
+      {
+        logs.push(`No response found in the '${this.cacheName}' cache. ` + `Will wait for the network response.`);
+      }
+      try {
+        // NOTE(philipwalton): Really annoying that we have to type cast here.
+        // https://github.com/microsoft/TypeScript/issues/20006
+        response = await fetchAndCachePromise;
+      } catch (err) {
+        if (err instanceof Error) {
+          error = err;
+        }
+      }
+    }
+    {
+      logger.groupCollapsed(messages.strategyStart(this.constructor.name, request));
+      for (const log of logs) {
+        logger.log(log);
+      }
+      messages.printFinalResponse(response);
+      logger.groupEnd();
+    }
+    if (!response) {
+      throw new WorkboxError('no-response', {
+        url: request.url,
+        error
+      });
+    }
+    return response;
+  }
+}
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * An implementation of a [cache-first](https://developer.chrome.com/docs/workbox/caching-strategies-overview/#cache-first-falling-back-to-network)
+ * request strategy.
+ *
+ * A cache first strategy is useful for assets that have been revisioned,
+ * such as URLs like `/styles/example.a8f5f1.css`, since they
+ * can be cached for long periods of time.
+ *
+ * If the network request fails, and there is no cache match, this will throw
+ * a `WorkboxError` exception.
+ *
+ * @extends workbox-strategies.Strategy
+ * @memberof workbox-strategies
+ */
+class CacheFirst extends Strategy {
+  /**
+   * @private
+   * @param {Request|string} request A request to run this strategy for.
+   * @param {workbox-strategies.StrategyHandler} handler The event that
+   *     triggered the request.
+   * @return {Promise<Response>}
+   */
+  async _handle(request, handler) {
+    const logs = [];
+    {
+      finalAssertExports.isInstance(request, Request, {
+        moduleName: 'workbox-strategies',
+        className: this.constructor.name,
+        funcName: 'makeRequest',
+        paramName: 'request'
+      });
+    }
+    let response = await handler.cacheMatch(request);
+    let error = undefined;
+    if (!response) {
+      {
+        logs.push(`No response found in the '${this.cacheName}' cache. ` + `Will respond with a network request.`);
+      }
+      try {
+        response = await handler.fetchAndCachePut(request);
+      } catch (err) {
+        if (err instanceof Error) {
+          error = err;
+        }
+      }
+      {
+        if (response) {
+          logs.push(`Got response from network.`);
+        } else {
+          logs.push(`Unable to get a response from the network.`);
+        }
+      }
+    } else {
+      {
+        logs.push(`Found a cached response in the '${this.cacheName}' cache.`);
+      }
+    }
+    {
+      logger.groupCollapsed(messages.strategyStart(this.constructor.name, request));
+      for (const log of logs) {
+        logger.log(log);
+      }
+      messages.printFinalResponse(response);
+      logger.groupEnd();
+    }
+    if (!response) {
+      throw new WorkboxError('no-response', {
+        url: request.url,
+        error
+      });
+    }
+    return response;
+  }
+}
+
+/*
+  Copyright 2019 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * Claim any currently available clients once the service worker
+ * becomes active. This is normally used in conjunction with `skipWaiting()`.
+ *
+ * @memberof workbox-core
+ */
+function clientsClaim() {
+  self.addEventListener('activate', () => self.clients.claim());
+}
+
+/*
+  Copyright 2020 Google LLC
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * A utility method that makes it easier to use `event.waitUntil` with
+ * async functions and return the result.
+ *
+ * @param {ExtendableEvent} event
+ * @param {Function} asyncFn
+ * @return {Function}
+ * @private
+ */
+function waitUntil(event, asyncFn) {
+  const returnPromise = asyncFn();
+  event.waitUntil(returnPromise);
+  return returnPromise;
+}
+
+// @ts-ignore
+try {
+  self['workbox:precaching:7.2.0'] && _();
+} catch (e) {}
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+// Name of the search parameter used to store revision info.
+const REVISION_SEARCH_PARAM = '__WB_REVISION__';
+/**
+ * Converts a manifest entry into a versioned URL suitable for precaching.
+ *
+ * @param {Object|string} entry
+ * @return {string} A URL with versioning info.
+ *
+ * @private
+ * @memberof workbox-precaching
+ */
+function createCacheKey(entry) {
+  if (!entry) {
+    throw new WorkboxError('add-to-cache-list-unexpected-type', {
+      entry
+    });
+  }
+  // If a precache manifest entry is a string, it's assumed to be a versioned
+  // URL, like '/app.abcd1234.js'. Return as-is.
+  if (typeof entry === 'string') {
+    const urlObject = new URL(entry, location.href);
+    return {
+      cacheKey: urlObject.href,
+      url: urlObject.href
+    };
+  }
+  const {
+    revision,
+    url
+  } = entry;
+  if (!url) {
+    throw new WorkboxError('add-to-cache-list-unexpected-type', {
+      entry
+    });
+  }
+  // If there's just a URL and no revision, then it's also assumed to be a
+  // versioned URL.
+  if (!revision) {
+    const urlObject = new URL(url, location.href);
+    return {
+      cacheKey: urlObject.href,
+      url: urlObject.href
+    };
+  }
+  // Otherwise, construct a properly versioned URL using the custom Workbox
+  // search parameter along with the revision info.
+  const cacheKeyURL = new URL(url, location.href);
+  const originalURL = new URL(url, location.href);
+  cacheKeyURL.searchParams.set(REVISION_SEARCH_PARAM, revision);
+  return {
+    cacheKey: cacheKeyURL.href,
+    url: originalURL.href
+  };
+}
+
+/*
+  Copyright 2020 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * A plugin, designed to be used with PrecacheController, to determine the
+ * of assets that were updated (or not updated) during the install event.
+ *
+ * @private
+ */
+class PrecacheInstallReportPlugin {
+  constructor() {
+    this.updatedURLs = [];
+    this.notUpdatedURLs = [];
+    this.handlerWillStart = async ({
+      request,
+      state
+    }) => {
+      // TODO: `state` should never be undefined...
+      if (state) {
+        state.originalRequest = request;
+      }
+    };
+    this.cachedResponseWillBeUsed = async ({
+      event,
+      state,
+      cachedResponse
+    }) => {
+      if (event.type === 'install') {
+        if (state && state.originalRequest && state.originalRequest instanceof Request) {
+          // TODO: `state` should never be undefined...
+          const url = state.originalRequest.url;
+          if (cachedResponse) {
+            this.notUpdatedURLs.push(url);
+          } else {
+            this.updatedURLs.push(url);
+          }
+        }
+      }
+      return cachedResponse;
+    };
+  }
+}
+
+/*
+  Copyright 2020 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * A plugin, designed to be used with PrecacheController, to translate URLs into
+ * the corresponding cache key, based on the current revision info.
+ *
+ * @private
+ */
+class PrecacheCacheKeyPlugin {
+  constructor({
+    precacheController
+  }) {
+    this.cacheKeyWillBeUsed = async ({
+      request,
+      params
+    }) => {
+      // Params is type any, can't change right now.
+      /* eslint-disable */
+      const cacheKey = (params === null || params === void 0 ? void 0 : params.cacheKey) || this._precacheController.getCacheKeyForURL(request.url);
+      /* eslint-enable */
+      return cacheKey ? new Request(cacheKey, {
+        headers: request.headers
+      }) : request;
+    };
+    this._precacheController = precacheController;
+  }
+}
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * @param {string} groupTitle
+ * @param {Array<string>} deletedURLs
+ *
+ * @private
+ */
+const logGroup = (groupTitle, deletedURLs) => {
+  logger.groupCollapsed(groupTitle);
+  for (const url of deletedURLs) {
+    logger.log(url);
+  }
+  logger.groupEnd();
+};
+/**
+ * @param {Array<string>} deletedURLs
+ *
+ * @private
+ * @memberof workbox-precaching
+ */
+function printCleanupDetails(deletedURLs) {
+  const deletionCount = deletedURLs.length;
+  if (deletionCount > 0) {
+    logger.groupCollapsed(`During precaching cleanup, ` + `${deletionCount} cached ` + `request${deletionCount === 1 ? ' was' : 's were'} deleted.`);
+    logGroup('Deleted Cache Requests', deletedURLs);
+    logger.groupEnd();
+  }
+}
+
+/*
+  Copyright 2018 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * @param {string} groupTitle
+ * @param {Array<string>} urls
+ *
+ * @private
+ */
+function _nestedGroup(groupTitle, urls) {
+  if (urls.length === 0) {
+    return;
+  }
+  logger.groupCollapsed(groupTitle);
+  for (const url of urls) {
+    logger.log(url);
+  }
+  logger.groupEnd();
+}
+/**
+ * @param {Array<string>} urlsToPrecache
+ * @param {Array<string>} urlsAlreadyPrecached
+ *
+ * @private
+ * @memberof workbox-precaching
+ */
+function printInstallDetails(urlsToPrecache, urlsAlreadyPrecached) {
+  const precachedCount = urlsToPrecache.length;
+  const alreadyPrecachedCount = urlsAlreadyPrecached.length;
+  if (precachedCount || alreadyPrecachedCount) {
+    let message = `Precaching ${precachedCount} file${precachedCount === 1 ? '' : 's'}.`;
+    if (alreadyPrecachedCount > 0) {
+      message += ` ${alreadyPrecachedCount} ` + `file${alreadyPrecachedCount === 1 ? ' is' : 's are'} already cached.`;
+    }
+    logger.groupCollapsed(message);
+    _nestedGroup(`View newly precached URLs.`, urlsToPrecache);
+    _nestedGroup(`View previously precached URLs.`, urlsAlreadyPrecached);
+    logger.groupEnd();
+  }
+}
+
+/*
+  Copyright 2019 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+let supportStatus;
+/**
+ * A utility function that determines whether the current browser supports
+ * constructing a new `Response` from a `response.body` stream.
+ *
+ * @return {boolean} `true`, if the current browser can successfully
+ *     construct a `Response` from a `response.body` stream, `false` otherwise.
+ *
+ * @private
+ */
+function canConstructResponseFromBodyStream() {
+  if (supportStatus === undefined) {
+    const testResponse = new Response('');
+    if ('body' in testResponse) {
+      try {
+        new Response(testResponse.body);
+        supportStatus = true;
+      } catch (error) {
+        supportStatus = false;
+      }
+    }
+    supportStatus = false;
+  }
+  return supportStatus;
+}
+
+/*
+  Copyright 2019 Google LLC
+
+  Use of this source code is governed by an MIT-style
+  license that can be found in the LICENSE file or at
+  https://opensource.org/licenses/MIT.
+*/
+/**
+ * Allows developers to copy a response and modify its `headers`, `status`,
+ * or `statusText` values (the values settable via a
+ * [`ResponseInit`]{@link https://developer.mozilla.org/en-US/docs/Web/API/Response/Response#Syntax}
+ * object in the constructor).
+ * To modify these values, pass a function as the second argument. That
+ * function will be invoked with a single object with the response properties
+ * `{headers, status, statusText}`. The return value of this function will
+ * be used as the `ResponseInit` for the new `Response`. To change the values
+ * either modify the passed parameter(s) and return it, or return a totally
+ * new object.
+ *
+ * This method is intentionally limited to same-origin responses, regardless of
+ * whether CORS was used or not.
+ *
+ * @param {Response} response
+ * @param {Function} modifier
+ * @memberof workbox-core
+ */
+async function copyResponse(response, modifier) {
+  let origin = null;
+  // If response.url isn't set, assume it's cross-origin and keep origin null.
+  if (response.url) {
+    const responseURL = new URL(response.url);
+    origin = responseURL.origin;
+  }
+  if (origin !== self.location.origin) {
+    throw new WorkboxError('cross-origin-copy-response', {
+      origin
+    });
+  }
+  const clonedResponse = response.clone();
+  // Create a fresh `ResponseInit` object by cloning the headers.
+  const responseInit = {
+    headers: new Headers(clonedResponse.headers),
+    status: clonedResponse.status,
+    statusText: clonedResponse.statusText
+  };
+  // Apply any user modifications.
+  const modifiedResponseInit = modifier ? modifier(responseInit) : responseInit;
+  // Create the new response from the body stream and `ResponseInit`
+  // modifications. Note: not all browsers support the Response.body stream,
+  // so fall back to reading the entire body into memory as a blob.
+  const body = canConstructResponseFromBodyStream() ? clonedResponse.body : await clonedResponse.blob();
+  return new Response(body, modifiedResponseInit);
+}
 
 /*
   Copyright 2020 Google LLC
@@ -3242,11 +4830,7 @@ function cleanupOutdatedCaches() {
   });
 }
 
-self.addEventListener('message', event => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-});
+self.skipWaiting();
 clientsClaim();
 
 /**
@@ -3255,218 +4839,215 @@ clientsClaim();
  * See https://goo.gl/S9QRab
  */
 precacheAndRoute([{
-  "url": "assets/_commonjsHelpers.js",
-  "revision": "730f5f79a7fd187f129c1baa5a7e0efc"
+  "url": "assets/_commonjsHelpers-CUmg6egw.js",
+  "revision": null
 }, {
-  "url": "assets/airplan.png",
-  "revision": "f84740bb1b3a55e58a9e4d51ebded79f"
+  "url": "assets/airplan-NTaR33Fi.png",
+  "revision": null
 }, {
-  "url": "assets/airplane.svg",
-  "revision": "b5acaa9e8da6786db718600935f5bcbe"
+  "url": "assets/airplane-BkgCgM31.svg",
+  "revision": null
 }, {
-  "url": "assets/app.css",
-  "revision": "c04cb53833572e9dd12d2eb29b666894"
+  "url": "assets/app-47SzjArH.css",
+  "revision": null
 }, {
-  "url": "assets/bins.js",
-  "revision": "3dd9cd53b01097cfc1576887168488f1"
+  "url": "assets/bins-lkJmJGDs.js",
+  "revision": null
 }, {
-  "url": "assets/checkServer.js",
-  "revision": "4e85ca28cd5505a1f2df735d1d1cd906"
+  "url": "assets/checkServer-BE6SOl20.js",
+  "revision": null
 }, {
-  "url": "assets/citiesForm.js",
-  "revision": "e486de25275484ff189a39d51c268b67"
+  "url": "assets/citiesForm-CvcPpEQN.js",
+  "revision": null
 }, {
-  "url": "assets/city.js",
-  "revision": "bdd5ff07cdfbaa507d488211dd590740"
+  "url": "assets/city-XOvC9Jsc.js",
+  "revision": null
 }, {
-  "url": "assets/configureTopbar.js",
-  "revision": "dfdc5d917c72b89ae205e120b45d433d"
+  "url": "assets/configureTopbar-DiXHpRl0.js",
+  "revision": null
 }, {
-  "url": "assets/counter.js",
-  "revision": "231ae2fba8b593ba6cf4bca37e6532a0"
+  "url": "assets/counter-C1fbzPR0.js",
+  "revision": null
 }, {
-  "url": "assets/Elixir.svg",
-  "revision": "dc5e47f5c026d9a15c63d2e7d17e2364"
+  "url": "assets/Elixir-R0alryBi.svg",
+  "revision": null
 }, {
-  "url": "assets/great_circle.js",
-  "revision": "84f53a8a2e838a5cf826ab9dd7826cd8"
+  "url": "assets/great_circle-Ccl76Ny3.js",
+  "revision": null
 }, {
-  "url": "assets/great_circle.wasm",
-  "revision": "f86201d57b5f5087d44f10fab05f53a3"
+  "url": "assets/great_circle-I9n9C97F.wasm",
+  "revision": null
 }, {
-  "url": "assets/hookForm.js",
-  "revision": "22bc2b2dc9a80ac89a33980ec9cbf01a"
+  "url": "assets/hookForm-Bbh_3D73.js",
+  "revision": null
 }, {
-  "url": "assets/hookMap.js",
-  "revision": "bda5d179b4e2fe9bdbae3b05434e3f56"
+  "url": "assets/hookMap-DggxLFhR.js",
+  "revision": null
 }, {
-  "url": "assets/hookPwa.js",
-  "revision": "eaebeb376e920acd5b811e95fea7a9c5"
+  "url": "assets/hookPwa-2UUnkFtv.js",
+  "revision": null
 }, {
-  "url": "assets/hookPwaFlash.js",
-  "revision": "68b329da9893e34099c7d8ad5cb9c940"
+  "url": "assets/hookYStock-BmZRDgTZ.js",
+  "revision": null
 }, {
-  "url": "assets/hookYStock.js",
-  "revision": "ac6735db872775e81eb2907c733f420e"
+  "url": "assets/initMap-AVsbaiXP.js",
+  "revision": null
 }, {
-  "url": "assets/initMap.css",
-  "revision": "bbf9ea7eb68c4b562b1bf436f8ea754c"
+  "url": "assets/initMap-B5X3Zrco.css",
+  "revision": null
 }, {
-  "url": "assets/initMap.js",
-  "revision": "b97aa91d766fdbbfc9bb03229e87a9bd"
+  "url": "assets/initYJS-BvswDKqU.js",
+  "revision": null
 }, {
-  "url": "assets/initYJS.js",
-  "revision": "cc4317626a662c70260fefaf2d8caa7b"
+  "url": "assets/layers-2x-3G2oAliM.png",
+  "revision": null
 }, {
-  "url": "assets/layers-2x.png",
-  "revision": "324b4fcaf164735c627269504b7bc28e"
+  "url": "assets/layers-B1Zc6cCI.png",
+  "revision": null
 }, {
-  "url": "assets/layers.png",
-  "revision": "7cb0d2482ecadc1b80eb0abe457371b6"
+  "url": "assets/leaflet-maptilersdk-CP06ZjwP.js",
+  "revision": null
 }, {
-  "url": "assets/leaflet-maptilersdk.js",
-  "revision": "ef35033c622467ee62f5042f7461c689"
+  "url": "assets/leaflet-src-wS-Ip0dR.js",
+  "revision": null
 }, {
-  "url": "assets/leaflet-src.js",
-  "revision": "28215cad301b3bf3ec274a6028f79f67"
+  "url": "assets/leafletjs-BAjWkSNT.svg",
+  "revision": null
 }, {
-  "url": "assets/leafletjs.svg",
-  "revision": "2475a5ad63a8615ea2ce910f3a37b009"
+  "url": "assets/loadWasm-DQh53FZd.js",
+  "revision": null
 }, {
-  "url": "assets/loadWasm.js",
-  "revision": "46256ea82824d3861cbceb588d184f03"
+  "url": "assets/logo-B3lxOvWk.svg",
+  "revision": null
 }, {
-  "url": "assets/logo.svg",
-  "revision": "06a11be1f2cdde2c851763d00bdd2e80"
+  "url": "assets/main-B8TMYN7g.js",
+  "revision": null
 }, {
-  "url": "assets/main.js",
-  "revision": "5a700345ed8242a22d958cce1fc652f8"
+  "url": "assets/mapObservers-C6ZIDqcO.js",
+  "revision": null
 }, {
-  "url": "assets/mapObservers.js",
-  "revision": "6d8a2e86bfcd5895ee7bfff2dd0d1c55"
+  "url": "assets/maptiler-C1BBZwUs.png",
+  "revision": null
 }, {
-  "url": "assets/maptiler.png",
-  "revision": "d6d45a67e8821be4e8a98f2eef6bc659"
+  "url": "assets/maptiler-DL3I3KOG.webp",
+  "revision": null
 }, {
-  "url": "assets/maptiler.webp",
-  "revision": "db5cfd4710c784d7b2a9130db7d14cfd"
+  "url": "assets/marker-icon-2x-CzKzz6Gh.png",
+  "revision": null
 }, {
-  "url": "assets/marker-icon-2x.png",
-  "revision": "1c824216f354218b04b25a57e0f7ab1f"
+  "url": "assets/marker-icon-DQzRqhDP.png",
+  "revision": null
 }, {
-  "url": "assets/marker-icon.png",
-  "revision": "87f6ca46ac356e81dc438589630ae107"
+  "url": "assets/marker-shadow-CW7ZUlH-.png",
+  "revision": null
 }, {
-  "url": "assets/marker-shadow.png",
-  "revision": "e7bd5e4b8dbbc3dfbe3ed88c098bc61e"
+  "url": "assets/navigate-x5d29y7q.js",
+  "revision": null
 }, {
-  "url": "assets/navigate.js",
-  "revision": "e436c81f29f30ce438bed66d24bcd910"
+  "url": "assets/offline-X9zsCH7A.svg",
+  "revision": null
 }, {
-  "url": "assets/offline.svg",
-  "revision": "c762c7f6c34083953b4ab13baadbcd3c"
+  "url": "assets/online-CvgfumRL.svg",
+  "revision": null
 }, {
-  "url": "assets/online.svg",
-  "revision": "24d7a14413944ebda517dfcb88a0c081"
+  "url": "assets/p404-DNVU9_e8.webp",
+  "revision": null
 }, {
-  "url": "assets/p404.webp",
-  "revision": "e7e93406dc7f0f98ddfb31bac72520f6"
+  "url": "assets/phoenix_live_view.esm-l-O8UmfT.js",
+  "revision": null
 }, {
-  "url": "assets/phoenix_live_view.esm.js",
-  "revision": "be5a5e46ccd5bb40af2be7ab65fdcd85"
+  "url": "assets/phoenix-3wNmjgti.js",
+  "revision": null
 }, {
-  "url": "assets/phoenix.js",
-  "revision": "2c43a872a367f6f8dfa2abcbe39c400a"
+  "url": "assets/preload-helper-JtXPSb2r.js",
+  "revision": null
 }, {
-  "url": "assets/preload-helper.js",
-  "revision": "3dd9c4397ae47bd8cf8358e412671c9e"
+  "url": "assets/pwa-192x192-BXfPcQkJ.png",
+  "revision": null
 }, {
-  "url": "assets/pwa-192x192.png",
-  "revision": "2496a818985ecd372ee979360a4c8bc1"
+  "url": "assets/pwa-512x512-O-xNp87B.png",
+  "revision": null
 }, {
-  "url": "assets/pwa-512x512.png",
-  "revision": "70089c4b1b246aca5f0394afe11fa3d9"
+  "url": "assets/pwa-64x64-D0wUV14c.png",
+  "revision": null
 }, {
-  "url": "assets/pwa-64x64.png",
-  "revision": "c99003aca8cb4a3dacae28a8b801f579"
+  "url": "assets/pwa-maskable-192-B0lzOWVr.png",
+  "revision": null
 }, {
-  "url": "assets/pwa-maskable-192.png",
-  "revision": "45aa5faa2b18667d797882a4785712b6"
+  "url": "assets/pwa-maskable-512-BnwPwp6i.png",
+  "revision": null
 }, {
-  "url": "assets/pwa-maskable-512.png",
-  "revision": "0a3ef560e64f373ac2787fe942ef4bb6"
+  "url": "assets/pwaRegistration-DfQwfAyf.js",
+  "revision": null
 }, {
-  "url": "assets/pwaRegistration.js",
-  "revision": "14a85685717fa5f4fa557afaca5e432a"
+  "url": "assets/renderers-DfhDq_Eo.js",
+  "revision": null
 }, {
-  "url": "assets/renderers.js",
-  "revision": "38aa8a344727aa2a2804615c67c02388"
+  "url": "assets/renderMap-08HNqxRE.js",
+  "revision": null
 }, {
-  "url": "assets/renderMap.js",
-  "revision": "c0f33933aa4c2f000df87e60b19bea7f"
+  "url": "assets/solidjs-C0BJmlq-.svg",
+  "revision": null
 }, {
-  "url": "assets/solidjs.svg",
-  "revision": "8a66d423b9275303b51ab275e94e929e"
+  "url": "assets/sqlite-4Z5jIKTW.svg",
+  "revision": null
 }, {
-  "url": "assets/sqlite.svg",
-  "revision": "332417a7f4156fbd6f81615a48286092"
+  "url": "assets/stock-DGTICsjy.js",
+  "revision": null
 }, {
-  "url": "assets/stock.js",
-  "revision": "db5667c7681d67288aa466cb40c574f1"
+  "url": "assets/topbar.min-DYPmkus3.js",
+  "revision": null
 }, {
-  "url": "assets/topbar.min.js",
-  "revision": "c0fccef58ec2f409cf0fc9202c521597"
+  "url": "assets/useChannel-OuTvA_g8.js",
+  "revision": null
 }, {
-  "url": "assets/useChannel.js",
-  "revision": "f0158cbe18d75ef1405d52b8b267f768"
+  "url": "assets/valtio2-DoUcr8EZ.webp",
+  "revision": null
 }, {
-  "url": "assets/valtio2.webp",
-  "revision": "1b8dc90169f4548cea9ef31f1918fc61"
+  "url": "assets/virtual_pwa-register-D1FVgKWo.js",
+  "revision": null
 }, {
-  "url": "assets/virtual_pwa-register.js",
-  "revision": "c6c69aa256d32a6a2e267a49364dc6e5"
+  "url": "assets/vitejs-D3em5OdU.svg",
+  "revision": null
 }, {
-  "url": "assets/vitejs.svg",
-  "revision": "0bd2a9d3f5cd646993e1872565bf36f6"
+  "url": "assets/vStore-CSzc6wQU.js",
+  "revision": null
 }, {
-  "url": "assets/vStore.js",
-  "revision": "6c3bbb84edca1d8f4c69738e90f319be"
+  "url": "assets/web-BvP70Tlv.js",
+  "revision": null
 }, {
-  "url": "assets/web.js",
-  "revision": "63acf6b2bdf58858c7df3c924f4e2c2c"
+  "url": "assets/webassembly-t-UGM2ed.svg",
+  "revision": null
 }, {
-  "url": "assets/webassembly.svg",
-  "revision": "dd6350fa543ebb11bb99a6f131c7f5de"
+  "url": "assets/workbox-CzRkI05K.svg",
+  "revision": null
 }, {
-  "url": "assets/workbox-window.prod.es5.js",
-  "revision": "0e34a66faa74934576279e950f602601"
+  "url": "assets/workbox-window.prod.es5-BJ8mGsQ1.js",
+  "revision": null
 }, {
-  "url": "assets/workbox.svg",
-  "revision": "5f606ed19b38382cde3ddcc1aad1c246"
+  "url": "assets/y-indexeddb-DSl5sSY_.js",
+  "revision": null
 }, {
-  "url": "assets/y-indexeddb.js",
-  "revision": "54dd813c860b17059941899efc83e344"
+  "url": "assets/ydocSocket-aGMgS8nA.js",
+  "revision": null
 }, {
-  "url": "assets/ydocSocket.js",
-  "revision": "7f8a47d6e27150bcb876695e87c55d9a"
+  "url": "assets/yjs-C2hqBrYm.webp",
+  "revision": null
 }, {
-  "url": "assets/yjs.png",
-  "revision": "caace6cafaec00a57d71a4f8cc52132c"
+  "url": "assets/yjs-Ced00jRb.png",
+  "revision": null
 }, {
-  "url": "assets/yjs.webp",
-  "revision": "e51539acd5f6d01d14eebe6029a05c08"
+  "url": "assets/yjs-DnUKYNJo.js",
+  "revision": null
 }, {
-  "url": "assets/yjs3.js",
-  "revision": "68f1dfbf3d0265b5e14db0c2508b6d93"
-}, {
-  "url": "assets/zig.svg",
-  "revision": "7431b66e11d689c489b28abdf312dfec"
+  "url": "assets/zig-CbvnhDWz.svg",
+  "revision": null
 }, {
   "url": "/",
-  "revision": "undefined || 1746477097233"
+  "revision": "1746552324291"
 }, {
   "url": "/map",
-  "revision": "undefined || 1746477097233"
+  "revision": "1746552324291"
 }, {
   "url": "manifest.webmanifest",
   "revision": "22361b01882dc431e12949a02e93567d"
@@ -3474,3 +5055,93 @@ precacheAndRoute([{
   "ignoreURLParametersMatching": [/^vsn$/, /^_csrf$/]
 });
 cleanupOutdatedCaches();
+registerRoute(({
+  request
+}) => request.mode === "navigate", new NetworkFirst({
+  "fetchOptions": {
+    "credentials": "same-origin"
+  },
+  "cacheName": "pages-cache",
+  plugins: [new ExpirationPlugin({
+    maxEntries: 50,
+    maxAgeSeconds: 86400
+  }), new CacheableResponsePlugin({
+    statuses: [0, 200]
+  })]
+}), 'GET');
+registerRoute(({
+  url
+}) => {
+  return url.pathname.startsWith("/live/longpoll");
+}, new NetworkOnly({
+  "fetchOptions": {
+    "credentials": "same-origin"
+  },
+  plugins: []
+}), 'GET');
+registerRoute(({
+  url
+}) => url.pathname.startsWith("/phoenix/live_reload/"), new NetworkOnly({
+  "fetchOptions": {
+    "credentials": "same-origin"
+  },
+  plugins: []
+}), 'GET');
+registerRoute(({
+  url
+}) => url.pathname.startsWith("/ydoc/"), new NetworkOnly({
+  "fetchOptions": {
+    "credentials": "same-origin"
+  },
+  plugins: []
+}), 'GET');
+registerRoute(({
+  url
+}) => url.hostname === "api.maptiler.com" && (url.pathname.startsWith("/maps/") ||
+// Style configs
+url.pathname.startsWith("/resources/")) ||
+// SDK assets
+url.pathname.startsWith("/tiles/") ||
+// Raster/vector tiles
+url.pathname.startsWith("/data/"), new StaleWhileRevalidate({
+  "cacheName": "maptiler",
+  plugins: [new CacheableResponsePlugin({
+    statuses: [0, 200]
+  }), new ExpirationPlugin({
+    maxEntries: 10,
+    maxAgeSeconds: 604800
+  })]
+}), 'GET');
+registerRoute(({
+  url
+}) => /\.(png|jpg|jpeg|gif|svg|ico|webp|woff2)$/i.test(url.pathname), new CacheFirst({
+  "cacheName": "static",
+  "matchOptions": {
+    "ignoreSearch": true,
+    "ignoreVary": true
+  },
+  plugins: [new ExpirationPlugin({
+    maxEntries: 200,
+    maxAgeSeconds: 2592000
+  }), new CacheableResponsePlugin({
+    statuses: [0, 200]
+  })]
+}), 'GET');
+registerRoute(({
+  url
+}) => {
+  return url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com" || url.pathname.match(/\.(woff|woff2|ttf|otf)$/);
+}, new CacheFirst({
+  "cacheName": "fonts",
+  "matchOptions": {
+    "ignoreVary": true,
+    "ignoreSearch": true
+  },
+  "fetchOptions": {
+    "mode": "cors"
+  },
+  plugins: [new ExpirationPlugin({
+    maxAgeSeconds: 31536000,
+    maxEntries: 20
+  })]
+}), 'GET');
