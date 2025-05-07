@@ -97,10 +97,8 @@ window.addEventListener("connection-status-changed", async (e) => {
 async function init(isOnline) {
   console.log("Start Init online? :", isOnline);
   try {
-    // const { configureTopbar } = await import(
-    //   "@js/utilities/configureTopbar.js"
-    // );
-    // configureTopbar();
+    const { configureTopbar } = await import("@js/utilities/configureTopbar");
+    configureTopbar();
 
     if (isOnline) {
       window.liveSocket = await initLiveSocket();
@@ -115,39 +113,38 @@ async function init(isOnline) {
 
 async function initLiveSocket() {
   try {
-    const {
-      configureTopbar,
-      default: ydocSocket,
-      StockYHook,
-      PwaHook,
-      MapHook,
-      FormHook,
-    } = await Promise.all([
-      import("@js/utilities/configureTopbar.js"),
+    const [
+      { ydocSocket },
+      { StockYHook },
+      { PwaHook },
+      { MapHook },
+      { FormHook },
+      { LiveSocket },
+      { Socket },
+    ] = await Promise.all([
       import("@js/ydoc_socket/ydocSocket"),
       import("@js/hooks/hookYStock.js"),
       import("@js/hooks/hookPwa.js"),
       import("@js/hooks/hookMap.js"),
       import("@js/hooks/hookForm.js"),
+      import("phoenix_live_view"),
+      import("phoenix"),
     ]);
+
     // custom websocket for the Yjs document channel transfer
-    // const { default: ydocSocket } = await import("@js/ydoc_socket/ydocSocket");
     AppState.ydocSocket = ydocSocket;
-    configureTopbar();
 
-    // const { StockYHook } = await import("@js/hooks/hookYStock.js"),
-    //   { PwaHook } = await import("@js/hooks/hookPwa.js"),
-    //   { MapHook } = await import("@js/hooks/hookMap.js"),
-    //   { FormHook } = await import("@js/hooks/hookForm.js");
-
-    const { LiveSocket } = await import("phoenix_live_view");
-    const { Socket } = await import("phoenix");
+    // const { LiveSocket } = await import("phoenix_live_view");
+    // const { Socket } = await import("phoenix");
     const csrfToken = document
       .querySelector("meta[name='csrf-token']")
       .getAttribute("content");
 
     const hooks = {
-      StockYHook: StockYHook({ ydoc: AppState.globalYdoc, ydocSocket }),
+      StockYHook: StockYHook({
+        ydoc: AppState.globalYdoc,
+        ydocSocket: AppState.ydocSocket,
+      }),
       MapHook,
       FormHook,
       PwaHook,

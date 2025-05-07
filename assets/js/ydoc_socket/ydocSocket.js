@@ -9,4 +9,4 @@ const ydocSocket = new Socket("/ydoc", {
 });
 ydocSocket.connect();
 
-export default ydocSocket;
+export { ydocSocket };
