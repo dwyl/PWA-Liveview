@@ -14,17 +14,20 @@ const rootDir = path.resolve(__dirname);
 const cssDir = path.resolve(rootDir, "css");
 const jsDir = path.resolve(rootDir, "js");
 const otherDir = path.resolve(rootDir, "other");
+const iconsDir = path.resolve(rootDir, "icons");
 const wasmDir = path.resolve(rootDir, "wasm");
 const srcImgDir = path.resolve(rootDir, "images");
 const staticDir = path.resolve(rootDir, "../priv/static");
 const tailwindConfigPath = path.resolve(rootDir, "tailwind.config.js");
 
-const Icon64 = "assets/pwa-64x64.png";
-const Icon192 = "assets/pwa-192x192.png";
-const Icon512 = "assets/pwa-512x512.png";
+const Icon16 = "favicon-16.png";
+const Icon32 = "favicon-32.png";
+const Icon64 = "favicon-64.png";
+const Icon192 = "favicon-192.png";
+const Icon512 = "favicon-512.png";
 
-const IconMaskable192 = "assets/pwa-maskable-192.png";
-const IconMaskable512 = "assets/pwa-maskable-512.png";
+const IconMaskable192 = "pwa-maskable-192.png";
+const IconMaskable512 = "pwa-maskable-512.png";
 
 // https://web.dev/articles/add-manifest
 const manifestOpts = {
@@ -38,6 +41,18 @@ const manifestOpts = {
   theme_color: "#000000",
   background_color: "#FFFFFF",
   icons: [
+    {
+      src: Icon16,
+      sizes: "16x16",
+      type: "image/png",
+      purpose: "any",
+    },
+    {
+      src: Icon32,
+      sizes: "32x32",
+      type: "image/png",
+      purpose: "any",
+    },
     {
       src: Icon64,
       sizes: "64x64",
@@ -74,8 +89,8 @@ const manifestOpts = {
 // fg will scan JS directory recursively - update to match your actual file structure
 const getEntryPoints = () => {
   const entries = [];
-  fg.sync([`${jsDir}/**/*.{js,jsx}`]).forEach((file) => {
-    if (/\.(js|jsx)$/.test(file)) {
+  fg.sync([`${jsDir}/**/*.{js,jsx,ts,tsx}`]).forEach((file) => {
+    if (/\.(js|jsx|ts|tsx)$/.test(file)) {
       entries.push(path.resolve(rootDir, file));
     }
   });
@@ -247,23 +262,8 @@ const runtimeCaching = [
   Navigation,
   ...LiveView,
   MapTiler, // Add the SDK route before Tiles
-  OtherStaticAsset,
   Fonts,
-  // Catch-all for other resources - stale while revalidate
-  // {
-  //   urlPattern: /.*/,
-  //   handler: "StaleWhileRevalidate",
-  //   options: {
-  //     cacheName: "others",
-  //     expiration: {
-  //       maxEntries: 50,
-  //       maxAgeSeconds: 24 * 60 * 60, // 1 day
-  //     },
-  //     cacheableResponse: {
-  //       statuses: [0, 200],
-  //     },
-  //   },
-  // },
+  OtherStaticAsset,
 ];
 
 // =============================================
@@ -285,9 +285,15 @@ const PWAConfig = (mode) => ({
   // registerType: "autoUpdate", // Let browser handle updates
   includeAssets: [
     "favicon.ico",
-    "favicon-16x16.png",
-    "favicon-23x32.png",
+    "favicon-16.png",
+    "favicon-32.png",
+    "favicon-64.png",
+    "favicon-192.png",
+    "favicon-512.png",
+    "pwa-maskable-192.png",
+    "pwa-maskable-512.png",
     "robots.txt",
+    "sitemap.xml",
   ],
   manifest: manifestOpts,
   outDir: staticDir,
@@ -337,7 +343,7 @@ const PWAConfig = (mode) => ({
 
     // Update behaviour
     clientsClaim: true, // take control of all open pages as soon as the service worker activates
-    skipWaiting: true, // let UI control when updates apply, not immediately
+    skipWaiting: false, // let UI control when updates apply, not immediately
     // Without these settings, you might have some pages using old service worker versions
     // while others use new ones, which could lead to inconsistent behavior in your offline capabilities.
     // Ensure HTML responses are cached correctly
@@ -371,6 +377,10 @@ const staticCopy = {
   targets: [
     {
       src: path.resolve(otherDir, "**", "*"),
+      dest: path.resolve(staticDir),
+    },
+    {
+      src: path.resolve(iconsDir, "**", "*"),
       dest: path.resolve(staticDir),
     },
   ],

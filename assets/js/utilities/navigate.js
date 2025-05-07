@@ -81,6 +81,7 @@ Render the new components into the updated DOM
 Reattach navigation listeners to handle future navigation
 */
 async function handleOfflineNavigation(event) {
+  console.log("handleOfflineNavigation");
   try {
     event.preventDefault();
     const link = event.currentTarget;

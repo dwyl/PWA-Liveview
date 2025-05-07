@@ -12,15 +12,6 @@ defmodule SolidyjsWeb.Menu do
   def display(assigns) do
     ~H"""
     <div id="menu">
-      <.link
-        :if={@update_available}
-        class="px-4 mb-4 mt-4 py-2 border-2 rounded-md text-bisque  bg-midnightblue hover:text-midnightblue hover:bg-bisque transition-colors duration-300"
-        id="refresh-button"
-        href="/"
-      >
-        Refesh needed: {@update_available}
-      </.link>
-
       <%!-- <div class="flex justify-between items-center" > --%>
       <nav
         id="navbar"

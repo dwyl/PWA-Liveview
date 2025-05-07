@@ -12,8 +12,18 @@ export const PwaHook = {
     console.log("[PwaHook] ------> destroyed");
   },
   async mounted() {
-    console.log("[PwaHook] ------> mounted");
+    console.log("[PwaHook] -----> mounted");
     const _this = this;
+
+    this.handleEvent("sw-lv-skip-waiting", () => {
+      console.log("skipped waiting");
+      const updateServiceWorker = AppState.updateServiceWorker;
+      if (updateServiceWorker) {
+        updateServiceWorker();
+
+        // window.location.reload();
+      }
+    });
 
     this.handleReady = (event) => {
       _this.pushEvent("sw-lv-ready", {

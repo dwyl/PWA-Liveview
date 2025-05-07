@@ -59,10 +59,14 @@ defmodule SolidyjsWeb.Endpoint do
     only: ~w(
       assets
       favicon.ico
-      favicon-16x16.png
-      favicon-32x32.png
+      favicon-16.png
+      favicon-32.png
+      favicon-64.png
+      favicon-192.png
+      favicon-512.png
+      pwa-maskable-192.png
+      pwa-maskable-512.png
       robots.txt
-      apple-touch-icon-180x180.png
       sw.js
       manifest.webmanifest
       sitemap.xml

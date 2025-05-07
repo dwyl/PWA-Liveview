@@ -12,6 +12,8 @@ An example of a real-time, collaborative web app built with Phoenix LiveView, pa
     - [Design goals](#design-goals)
     - [Architecture](#architecture)
     - [Implementation highlights (stock page)](#implementation-highlights-stock-page)
+  - [About PWA](#about-pwa)
+    - [Updates life-cycle](#updates-life-cycle)
   - [Usage](#usage)
   - [Tech overview](#tech-overview)
   - [Diagrams](#diagrams)
@@ -50,7 +52,9 @@ What are we building? A two pages webapp.
 - On the first page, we mimic a shopping cart where users can pick items until stock is depleted, at which point the stock is replenished. Every user will see and can interact with this counter
 - On the second page, we propose an interactive map with a form with two inputs where **two** users can edit collaboratively a form to display markers on the map and then draw a great circle between the two points.
 
-The first page uses CRDT-backed persistencewhilst the second one a local store with ephemeral sync.
+The first page uses CRDT-backed persistence whilst the second one uses a local store with ephemeral sync.
+
+It is a PWA, meaning you can detach it from the browser and run it from an icon.
 
 ## Why?
 
@@ -78,6 +82,7 @@ Traditional Phoenix LiveView applications face several challenges in offline sce
 - **optimistic UI** the function "click on stock" assumes success and will reconciliate later.
 - **Offline-First**: The app remains functional offline (through reactive JS components), with clients converging to the correct state on reconnection.
 - **Business Rules for the stock page**: When users resync, the server enforces a "lowest stock count" rule: if two clients pick items offline, the server selects the lowest remaining stock post-merge, rather that summing te reduction, for simplicity.
+- **PWA**: it fullfills the full PWA features, meaning instalable and updatable when new client code is pushed.
 
 ### Architecture
 
@@ -119,9 +124,79 @@ We have two Layers of Authority:
   - online: use LiveView hooks
   - offline: hydrate the cached HTML documents with reactive JavaScript components
 
+## About PWA
+
+A Progressive Web App (PWA) is a type of web application that provides an app-like experience directly in the browser.
+
+It has:
+
+- offline support
+- is "instalable"
+
+The core components are:
+
+- **Service Worker**:
+  A background script that intercepts network requests and enables offline caching and background sync.
+
+- Web App **Manifest** (manifest.webmanifest)
+  A JSON file that defines the app’s name, icons, theme color, start URL, etc., used for installability.
+
+- HTTPS:
+  Required for secure context — enables Service Workers and trust.
+
+We generate the Service Worker and inject the Manifest with `Vite` via in the "vite.config.js" file.
+
+We use the `VitePWA` plugin to enable the Service Worker life-cycle (manage updates)
+
+### Updates life-cycle
+
+A Service Worker (SW) runs in a _separate thread_ from the main JS and has a unique lifecycle made of 3 key phases:
+
+- install
+- activate
+- fetch
+
+Service Workers don't automatically update unless:
+
+- The sw.js file has changed (based on byte comparison).
+
+- The browser checks periodically (usually every 24 hours).
+
+- When a new SW is detected:
+
+  - New SW enters installing state.
+
+  - It waits until no existing clients are using the old SW.
+
+  - Then it activates.
+
+You must call `skipWaiting()` to activate it immediately. This is done via the UI here.
+
+```mermaid
+sequenceDiagram
+  participant User
+  participant Browser
+  participant App
+  participant OldSW as Old Service Worker
+  participant NewSW as New Service Worker
+
+  Browser->>OldSW: Control App
+  App->>Browser: registerSW()
+
+  App->>App: code changes
+  Browser->>NewSW: Downloads New SW
+  NewSW->>Browser: waiting phase
+  NewSW-->>App: message: onNeedRefresh()
+  App->>User: Show <button> onNeedRefresh()
+  User->>App: Clicks Update Button
+  App->>NewSW: skipWaiting()
+  NewSW->>Browser: Activates
+  NewSW->>App: Takes control (via clients.claim())
+```
+
 ## Usage
 
-1/ **IEX session** dev setup
+1/ IEX session **dev** setup
 
 ```sh
 # install all dependencies including Vite
@@ -131,7 +206,7 @@ cd assets && pnpm install
 cd .. && iex -S mix phx.server
 ```
 
-2/ **Docker container** in local mode=prod
+2/ Docker container in local **mode=prod**
 
 ```sh
 docker compose up --build
@@ -146,6 +221,7 @@ docker compose up --build
 | Phoenix LiveView           | UI rendering, incuding hooks                                                                   |
 | PubSub / Phoenix.Channel   | Broadcast/notifies other clients of updates / conveys CRDTs binaries                           |
 | Yjs / Y.Map                | Holds the CRDT state client-side (shared)                                                      |
+| Valtio                     | Holds local ephemeral state                                                                    |
 | y-indexeddb                | Persists state locally for offline mode                                                        |
 | SolidJS                    | renders reactive UI using signals, driven by Yjs observers                                     |
 | Hooks                      | Injects communication primitives and controls JavaScript code                                  |

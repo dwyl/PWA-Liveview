@@ -1,17 +1,19 @@
-// import "../css/app.css";
 import "@css/app.css";
 // Include phoenix_html to handle method=PUT/DELETE in forms and buttons.
 import "phoenix_html";
 
+const ON_ICON = new URL("/images/online.svg", import.meta.url).href;
+const OFF_ICON = new URL("/images/offline.svg", import.meta.url).href;
+
 const CONFIG = {
   MAIN_CONTENT_SELECTOR: "#main-content",
-  POLL_INTERVAL: 5_000,
-  ON_ICON: "/assets/online.svg",
-  OFF_ICON: "/assets/offline.svg",
+  POLL_INTERVAL: 3_000,
+  ON_ICON,
+  OFF_ICON,
 };
 
 const AppState = {
-  status: "checking",
+  status: null,
   isOnline: true,
   interval: null,
   globalYdoc: null,
@@ -33,22 +35,23 @@ async function startApp() {
     AppState.isOnline = await checkServer();
     AppState.status = AppState.isOnline ? "online" : "offline";
 
-    updateConnectionStatus(AppState.isOnline);
     return await init(AppState.isOnline);
   } catch (error) {
     console.error("Initialization error:", error);
   }
 }
 
-startApp();
+startApp().then(() => {
+  !AppState.interval && startPolling();
+});
 
 // Register service worker early ----------------
 document.addEventListener("DOMContentLoaded", async () => {
   const { registerServiceWorker } = await import(
     "@js/utilities/pwaRegistration"
   );
-
   AppState.updateServiceWorker = await registerServiceWorker();
+  return true;
 });
 
 // Polling for connection status ----------
@@ -66,20 +69,15 @@ function startPolling(interval = CONFIG.POLL_INTERVAL) {
 
 // Update connection status ----------------
 function updateConnectionStatus(isOnline) {
-  const wasOnline = AppState.isOnline;
-  AppState.isOnline = isOnline;
+  const prevStatus = AppState.status;
   AppState.status = isOnline ? "online" : "offline";
+  AppState.isOnline = isOnline;
 
   // Only update UI and log if status actually changed
-  if (wasOnline !== isOnline) {
+  if (prevStatus !== AppState.status) {
     const statusIcon = document.getElementById("online-status");
-    if (!statusIcon) return;
-
     statusIcon.src =
       AppState.status === "online" ? CONFIG.ON_ICON : CONFIG.OFF_ICON;
-    console.log(
-      `Connection status: ${wasOnline ? "online->offline" : "offline->online"}`
-    );
     window.dispatchEvent(
       new CustomEvent("connection-status-changed", {
         detail: { status: AppState.status },
@@ -89,31 +87,33 @@ function updateConnectionStatus(isOnline) {
 }
 
 //---------------
-document.addEventListener("connection-status-changed", async (e) => {
+window.addEventListener("connection-status-changed", async (e) => {
   console.log("Connection status changed to:", e.detail.status);
   if (e.detail.status === "offline") {
-    return await initOfflineComponents();
-  } else if (e.detail.status === "online") {
+    return initOfflineComponents();
+  } else {
     window.location.reload();
   }
 });
 
-// Initialize the hooks and components
-async function init(lineStatus) {
+// Initialize the hooks and component
+async function init(isOnline) {
+  console.log("init", isOnline);
   try {
     const { configureTopbar } = await import(
       "@js/utilities/configureTopbar.js"
     );
     configureTopbar();
 
-    if (lineStatus) {
+    if (isOnline) {
       // Online mode
       window.liveSocket = await initLiveSocket();
     } else {
       // offline mode
       await initOfflineComponents();
     }
-    return !AppState.interval && startPolling();
+    return true;
+    // return !AppState.interval && startPolling();
   } catch (error) {
     console.error("Init failed:", error);
   }
@@ -157,17 +157,20 @@ async function initLiveSocket() {
     return liveSocket;
   } catch (error) {
     console.error("Error initializing LiveSocket:", error);
-    return initOfflineComponents();
+    return await initOfflineComponents();
   }
 }
 
 async function initOfflineComponents() {
-  console.log(AppState);
   if (AppState.isOnline) return;
-  console.log("initOfflineComponents---------");
+  console.log("Init Offline Components---------");
   const { renderCurrentView, attachNavigationListeners } = await import(
     "@js/utilities/navigate"
   );
-  await renderCurrentView();
-  return attachNavigationListeners();
+  attachNavigationListeners();
+  return await renderCurrentView();
 }
+
+// start -> {status: 'offline', isOnline: false, wasOnline: true
+// stop -> {status: 'offline', isOnline: false, wasOnline: true,
+// navigate off -> {status: 'offline', isOnline: false, wasOnline: false,

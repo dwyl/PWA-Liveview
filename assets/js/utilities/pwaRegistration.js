@@ -19,15 +19,6 @@ export async function registerServiceWorker() {
                 detail: { update: true },
               })
             );
-            const updateSWButton = document.getElementById("refresh-button");
-            if (updateSWButton) {
-              updateSWButton.addEventListener("click", () => {
-                console.log("[PWA] update button is clicked", AppState);
-                if (AppState.updateServiceWorker) {
-                  AppState.updateServiceWorker();
-                }
-              });
-            }
           } catch (e) {
             console.error("[SW] Failed to dispatch update event:", e);
           }

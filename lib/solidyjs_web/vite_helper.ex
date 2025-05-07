@@ -1,4 +1,6 @@
 defmodule ViteHelper do
+  require Logger
+
   def path(asset) do
     manifest = get_manifest()
 
@@ -8,6 +10,7 @@ defmodule ViteHelper do
     end
   end
 
+  # !!! this can possibly crash if the manifest is not found
   defp get_manifest do
     Path.join(:code.priv_dir(:solidyjs), "/static/.vite/manifest.json")
     |> File.read!()
