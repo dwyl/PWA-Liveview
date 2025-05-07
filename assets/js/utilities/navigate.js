@@ -1,4 +1,4 @@
-import { CONFIG } from "@js/main";
+import { CONFIG, AppState } from "@js/main";
 
 const offlineComponents = {
   stock: null,
@@ -81,7 +81,7 @@ Render the new components into the updated DOM
 Reattach navigation listeners to handle future navigation
 */
 async function handleOfflineNavigation(event) {
-  console.log("handleOfflineNavigation");
+  console.log("handling Offline Navigation");
   try {
     event.preventDefault();
     const link = event.currentTarget;

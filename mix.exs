@@ -39,7 +39,6 @@ defmodule Solidyjs.MixProject do
       {:exqlite, "0.30.1"},
       {:ecto_sqlite3, "~> 0.19.0"},
       {:y_ex, "~> 0.7.3"},
-      # {:ecto_sqlite3_extras, "~> 1.2"},
       {:phoenix_live_dashboard, "~> 0.8.3"},
       {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},

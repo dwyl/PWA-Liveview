@@ -2,14 +2,11 @@ import "@css/app.css";
 // Include phoenix_html to handle method=PUT/DELETE in forms and buttons.
 import "phoenix_html";
 
-const ON_ICON = new URL("/images/online.svg", import.meta.url).href;
-const OFF_ICON = new URL("/images/offline.svg", import.meta.url).href;
-
 const CONFIG = {
-  MAIN_CONTENT_SELECTOR: "#main-content",
+  MAIN_CONTENT_SELECTOR: "#main-content", // used in navigate.js
   POLL_INTERVAL: 3_000,
-  ON_ICON,
-  OFF_ICON,
+  ON_ICON: new URL("/images/online.svg", import.meta.url).href,
+  OFF_ICON: new URL("/images/offline.svg", import.meta.url).href,
 };
 
 const AppState = {
@@ -21,12 +18,12 @@ const AppState = {
   updateServiceWorker: null,
 };
 
-window.AppState = AppState;
+// window.AppState = AppState; <- debugging only
 
 export { AppState, CONFIG };
 
 async function startApp() {
-  console.log("App started");
+  console.log(" **** App started ****");
   try {
     const { checkServer } = await import("@js/utilities/checkServer");
     const { default: initYdoc } = await import("@js/stores/initYJS.js");
@@ -98,7 +95,7 @@ window.addEventListener("connection-status-changed", async (e) => {
 
 // Initialize the hooks and component
 async function init(isOnline) {
-  console.log("init", isOnline);
+  console.log("Start Init online? :", isOnline);
   try {
     const { configureTopbar } = await import(
       "@js/utilities/configureTopbar.js"
@@ -106,14 +103,11 @@ async function init(isOnline) {
     configureTopbar();
 
     if (isOnline) {
-      // Online mode
       window.liveSocket = await initLiveSocket();
     } else {
-      // offline mode
       await initOfflineComponents();
     }
     return true;
-    // return !AppState.interval && startPolling();
   } catch (error) {
     console.error("Init failed:", error);
   }
@@ -121,6 +115,7 @@ async function init(isOnline) {
 
 async function initLiveSocket() {
   try {
+    // custom websocket for the Yjs document channel transfer
     const { default: ydocSocket } = await import("@js/ydoc_socket/ydocSocket");
     AppState.ydocSocket = ydocSocket;
 
@@ -136,10 +131,10 @@ async function initLiveSocket() {
       .getAttribute("content");
 
     const hooks = {
+      StockYHook: StockYHook({ ydoc: AppState.globalYdoc, ydocSocket }),
       MapHook,
       FormHook,
       PwaHook,
-      StockYHook: StockYHook({ ydoc: AppState.globalYdoc, ydocSocket }),
     };
 
     const liveSocket = new LiveSocket("/live", Socket, {
@@ -152,7 +147,10 @@ async function initLiveSocket() {
     // liveSocket.enableDebug();
 
     liveSocket.getSocket().onOpen(async () => {
-      console.log("liveSocket connected", liveSocket?.socket.isConnected());
+      console.log(
+        "Is the LiveSocket connected ? ",
+        liveSocket?.socket.isConnected()
+      );
     });
     return liveSocket;
   } catch (error) {
@@ -167,10 +165,8 @@ async function initOfflineComponents() {
   const { renderCurrentView, attachNavigationListeners } = await import(
     "@js/utilities/navigate"
   );
+  // first highjack the navigation to avoid the page reload
   attachNavigationListeners();
+  // and then render the current view
   return await renderCurrentView();
 }
-
-// start -> {status: 'offline', isOnline: false, wasOnline: true
-// stop -> {status: 'offline', isOnline: false, wasOnline: true,
-// navigate off -> {status: 'offline', isOnline: false, wasOnline: false,

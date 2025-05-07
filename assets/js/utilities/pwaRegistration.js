@@ -69,7 +69,7 @@ export async function registerServiceWorker() {
 }
 
 export function updateServiceWorker() {
-  if (updateSWFunction) {
-    updateSWFunction();
+  if (AppState.updateSWFunction) {
+    AppState.updateSWFunction();
   }
 }

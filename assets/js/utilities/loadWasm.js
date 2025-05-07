@@ -18,9 +18,9 @@ export async function loadWasm() {
         
         */
     };
-
+    const wasmUrl = new URL("/wasm/great_circle.wasm", import.meta.url).href;
     const { instance } = await WebAssembly.instantiateStreaming(
-      fetch("/assets/great_circle.wasm"),
+      fetch(wasmUrl),
       importObject
     );
     return instance.exports;

@@ -1,5 +1,5 @@
 import { proxy } from "valtio/vanilla";
-import { proxyMap } from "valtio/utils";
+import { proxyMap } from "valtio/vanilla/utils";
 
 // Initialize state with airports from localStorage if available
 const initialAirports = () => {

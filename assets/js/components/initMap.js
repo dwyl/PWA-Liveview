@@ -1,4 +1,7 @@
 import "leaflet/dist/leaflet.css";
+import markerIconUrl from "leaflet/dist/images/marker-icon.png";
+import markerIconRetinaUrl from "leaflet/dist/images/marker-icon-2x.png";
+import markerShadowUrl from "leaflet/dist/images/marker-shadow.png";
 
 export async function initMap() {
   const { default: L } = await import("leaflet");
@@ -22,6 +25,10 @@ export async function initMap() {
 
   const group = L.layerGroup().addTo(map);
 
-  L.Icon.Default.imagePath = "assets/";
+  // L.Icon.Default.imagePath = "/";
+  L.Icon.Default.prototype.options.iconUrl = markerIconUrl;
+  L.Icon.Default.prototype.options.iconRetinaUrl = markerIconRetinaUrl;
+  L.Icon.Default.prototype.options.shadowUrl = markerShadowUrl;
+  L.Icon.Default.imagePath = "";
   return { L, map, group, maptLayer };
 }

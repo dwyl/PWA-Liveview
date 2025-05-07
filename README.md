@@ -10,8 +10,8 @@ An example of a real-time, collaborative web app built with Phoenix LiveView, pa
   - [Why?](#why)
   - [Key points for offline collaborative](#key-points-for-offline-collaborative)
     - [Design goals](#design-goals)
-    - [Architecture](#architecture)
-    - [Implementation highlights (stock page)](#implementation-highlights-stock-page)
+    - [Architecture - Stock page](#architecture---stock-page)
+    - [Implementation highlights - Stock page](#implementation-highlights---stock-page)
   - [About PWA](#about-pwa)
     - [Updates life-cycle](#updates-life-cycle)
   - [Usage](#usage)
@@ -69,7 +69,7 @@ Traditional Phoenix LiveView applications face several challenges in offline sce
 4. **State Management**: Challenging to maintain consistent state across network interruptions between the client and the server. We use different approaches based on the page requirements:
 
    - CRDT-based synchronization (`Y.js` featuring `IndexedDB` and `y_ex`) for Stock Manager page and `SQLite` for server-side state management synchronization
-   - Local state management (`Valtio`) for Flight Map page
+   - Local state management (`Valtio`) for the collaborative Flight Map page with no database persistence
 
 5. **Build tool**: We need to build a Service Worker to cache HTML pages and static assets as WebSocket-rendered pages require special handling for offline access.
    We use `Vite` as the build tool to bundle and optimize the application and enable PWA features seamlessly
@@ -82,9 +82,9 @@ Traditional Phoenix LiveView applications face several challenges in offline sce
 - **optimistic UI** the function "click on stock" assumes success and will reconciliate later.
 - **Offline-First**: The app remains functional offline (through reactive JS components), with clients converging to the correct state on reconnection.
 - **Business Rules for the stock page**: When users resync, the server enforces a "lowest stock count" rule: if two clients pick items offline, the server selects the lowest remaining stock post-merge, rather that summing te reduction, for simplicity.
-- **PWA**: it fullfills the full PWA features, meaning instalable and updatable when new client code is pushed.
+- **PWA**: full PWA features, meaning instalable and updatable.
 
-### Architecture
+### Architecture - Stock page
 
 You have both CRDT-based synchronization (for convergence) and server-enforced business rules (for consistency).
 
@@ -98,11 +98,11 @@ We have two Layers of Authority:
    The server is authoritative: it validates updates upon the business logic (e.g., stock validation), and broadcasts the canonical state to all clients.
    Clients propose changes, but the server decides the final state (e.g., rejecting overflows, enforcing stock limits).
 
-### Implementation highlights (stock page)
+### Implementation highlights - Stock page
 
 - **Offline capabilities**:
-  Edits are saved to `y-indexeddb` and sent later
-  `Service Worker` caches assets via `VitePWA` for full offline functionality.
+  Edits are saved to `y-indexeddb` and sent later.
+  `Service Worker` caches assets - setup with `VitePWA` - for full offline functionality.
 
 - **Synchronization Flow**:
   Client sends all pending `Yjs` updates on (re)connection.
@@ -196,17 +196,36 @@ sequenceDiagram
 
 ## Usage
 
-1/ IEX session **dev** setup
+```elixir
+# mix.exs
+
+# server component of Yjs to manage Y_Doc server-side
+{:y_ex, "~> 0.7.3"},
+# SQLite3
+{:exqlite, "0.30.1"},
+# fetching the CSV airports
+{:req, "~> 0.5.8"},
+# parsing the CSV airports
+{:nimble_csv, "~> 1.2"},
+# br compressed static assets
+{:ex_brotli, "~> 0.6.0"},
+```
+
+Client package are setup with `pnpm` (whilst `bun` did not like `Valtio`).
+
+Check _package.json_:
+
+1/ **dev** setup with _IEX_ session
 
 ```sh
 # install all dependencies including Vite
-mix deps.get
 cd assets && pnpm install
 # start Phoenix server, it will also compile the JS
-cd .. && iex -S mix phx.server
+cd .. && mix deps.get
+iex -S mix phx.server
 ```
 
-2/ Docker container in local **mode=prod**
+2/ Before deploy, run a local Docker container in **mode=prod**
 
 ```sh
 docker compose up --build
@@ -216,7 +235,7 @@ docker compose up --build
 
 | Component                  | Role                                                                                           |
 | -------------------------- | ---------------------------------------------------------------------------------------------- |
-| Vite                       | Build tool                                                                                     |
+| Vite                       | Build and bundling framework                                                                   |
 | SQLite                     | Persistent storage of latest Yjs document                                                      |
 | Phoenix LiveView           | UI rendering, incuding hooks                                                                   |
 | PubSub / Phoenix.Channel   | Broadcast/notifies other clients of updates / conveys CRDTs binaries                           |

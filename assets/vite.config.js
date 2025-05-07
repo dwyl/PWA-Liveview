@@ -130,10 +130,11 @@ const buildOps = (mode) => ({
   // generate a manifest file that contains a mapping of non-hashed asset filenames
   // to their hashed versions, which can then be used by a server framework
   // to render the correct asset links.
-  manifest: true, // When true, the path would be .vite/manifest.json.
+  manifest: true, // path  --> .vite/manifest.json.
   minify: mode === "production",
   emptyOutDir: true,
   reportCompressedSize: mode === "production",
+  assetsInlineLimit: 0,
 });
 
 // =============================================
@@ -259,7 +260,7 @@ const Fonts = {
  */
 
 const runtimeCaching = [
-  Navigation,
+  // Navigation,
   ...LiveView,
   MapTiler, // Add the SDK route before Tiles
   Fonts,
@@ -278,7 +279,6 @@ const PWAConfig = (mode) => ({
   },
   suppressWarnings: false,
   injectRegister: "auto", // Do not nject the SW registration script as "index.html" does not exist
-  // registerType: "autoUpdate", // Auto-update service worker
   filename: "sw.js", // Service worker filename
   strategies: "generateSW", // Generate service worker
   registerType: "prompt", // default value
@@ -295,10 +295,9 @@ const PWAConfig = (mode) => ({
     "robots.txt",
     "sitemap.xml",
   ],
-  manifest: manifestOpts,
   outDir: staticDir,
+  manifest: manifestOpts,
   manifestFilename: "manifest.webmanifest",
-  // injectManifest: false,
   injectManifest: false, // Do not inject the SW registration script as "index.html" does not exist
   // injectRegister: "auto", // Automatically inject the SW registration script
 
