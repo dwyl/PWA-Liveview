@@ -5,9 +5,12 @@ An example of a real-time, collaborative web app built with Phoenix LiveView, pa
 The CRDT based page (stock emulation) leverages `Yjs` and `y_ex` server-side.
 The local-state alternative (flight map emulation) is powered by `Valtio`.
 
-Offline first solutions naturally offloads most of the UI logic to JavaScript and uses `Vite` as the bundler.
+Offline first solutions naturally offloads most of the UI logic to JavaScript.
+LiveView renders "hooks".
 
-While it can be extended to support multiple pages, dynamic page handling has not yet been tested or implemented.
+It uses `Vite` as the bundler.
+
+> While it can be extended to support multiple pages, dynamic page handling has not yet been tested nor implemented.
 
 ## Table of Contents
 
@@ -143,13 +146,13 @@ It has:
 The core components are:
 
 - **Service Worker**:
-  A background script that intercepts network requests and enables offline caching and background sync.
+  A background script - separate thread - that acts as a proxy: intercepts network requests and enables offline caching and background sync.
 
 - Web App **Manifest** (manifest.webmanifest)
-  A JSON file that defines the app’s name, icons, theme color, start URL, etc., used for installability.
+  A JSON file that defines the app’s name, icons, theme color, start URL, etc., used to install the webapp.
 
 - HTTPS:
-  Required for secure context — enables Service Workers and trust.
+  Required for secure context: it enables Service Workers and trust.
 
 We generate the Service Worker and inject the Manifest with `Vite` via in the "vite.config.js" file.
 
@@ -157,11 +160,21 @@ We use the `VitePWA` plugin to enable the Service Worker life-cycle (manage upda
 
 ### Updates life-cycle
 
-A Service Worker (SW) runs in a _separate thread_ from the main JS and has a unique lifecycle made of 3 key phases:
+A Service Worker (SW) runs in a _separate thread_ from the main JS and has a unique lifecycle made of 3 key phases:  install / activate / fetch
 
-- install
-- activate
-- fetch
+
+In action:
+
+1) Make a change in the client code, git push/fly deploy:
+-> a button appears and the dev console shows a push and waiting stage:
+
+<img width="1413" alt="Screenshot 2025-05-08 at 09 40 28" src="https://github.com/user-attachments/assets/a4086fe3-4952-48de-818c-b12fe1819823" />
+<br/>
+2) Click the "refresh needed"
+-> the Service Worker and client claims are updated seamlessly, and the button is in the hidden "normal" state.
+   
+<img width="1414" alt="Screenshot 2025-05-08 at 09 41 55" src="https://github.com/user-attachments/assets/7687fd61-f5b8-4298-ab96-144cdb297e6e" />
+</br>
 
 Service Workers don't automatically update unless:
 
@@ -176,8 +189,6 @@ Service Workers don't automatically update unless:
   - It waits until no existing clients are using the old SW.
 
   - Then it activates.
-
-You must call `skipWaiting()` to activate it immediately. This is done via the UI here.
 
 ```mermaid
 sequenceDiagram
@@ -218,9 +229,9 @@ sequenceDiagram
 {:ex_brotli, "~> 0.6.0"},
 ```
 
-Client package are setup with `pnpm` (whilst `bun` did not like `Valtio`).
+Client package are setup with `pnpm` (or `bun`).
 
-Check _package.json_:
+Check [package.json](https://github.com/dwyl/PWA-Liveview/blob/main/assets/package.json)
 
 1/ **dev** setup with _IEX_ session
 
