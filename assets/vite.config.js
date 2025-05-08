@@ -197,7 +197,8 @@ const MapTiler = {
       (url.pathname.startsWith("/maps/") || // Style configs
         url.pathname.startsWith("/resources/"))) || // SDK assets
     url.pathname.startsWith("/tiles/") || // Raster/vector tiles
-    url.pathname.startsWith("/data/"), // Tile JSON
+    url.pathname.startsWith("/data/") || // Tile JSON
+    url.pathname.startsWith("/metrics"),
   handler: "StaleWhileRevalidate",
   options: {
     cacheName: "maptiler",
@@ -260,7 +261,7 @@ const Fonts = {
  */
 
 const runtimeCaching = [
-  // Navigation,
+  Navigation,
   ...LiveView,
   MapTiler, // Add the SDK route before Tiles
   Fonts,
