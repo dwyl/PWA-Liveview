@@ -57,7 +57,6 @@ defmodule SolidyjsWeb.Endpoint do
     gzip: true,
     at: "/",
     from: :solidyjs,
-    # encoding: :brotli,
     only: ~w(
       assets
       icons

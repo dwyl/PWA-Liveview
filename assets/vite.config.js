@@ -5,7 +5,9 @@ import wasm from "vite-plugin-wasm";
 import path from "path";
 import fs from "fs"; // for file system operations
 import fg from "fast-glob"; // for recursive file scanning
-import viteCompression from "vite-plugin-compression";
+import { compression } from "vite-plugin-compression2";
+import { compress } from "@mongodb-js/zstd";
+// import viteCompression from "vite-plugin-compression";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 import tailwindcss from "tailwindcss"; // <--- do not use @tailwindcss/vite
 
@@ -391,20 +393,29 @@ const staticCopy = {
   ],
 };
 
-const compressionOpts = {
+const compressOpts = {
+  // https://github.com/nonzzz/vite-plugin-compression/discussions/61#discussioncomment-10243200
   algorithm(buf, level) {
     return compress(buf, level);
   },
   level: 9,
-  filename: `[path][base].zst`,
-  deleteOriginFile: false,
-  // deleteOriginalAssets: true,
+  exclude: /\.(wasm)$/,
   threshold: 5240,
-  ext: "br",
-  filter: (file) => {
-    return /\.(js|jpg|webp|css|html|svg|json)$/.test(file);
-  },
+  filename: `[path][base].zstd`,
+  deleteOriginalAssets: false,
 };
+// const compressOpts = {
+//   algorithm: "zstd",
+//   deleteOriginFile: false,
+//   // deleteOriginalAssets: true,
+//   threshold: 5240,
+//   verbose: true,
+//   filter: /\.(js|jpg|webp|css|html|svg)$/,
+
+//   compressionOptions: {
+//     level: 3, // Try different compression levels (1-22)
+//   },
+// };
 
 // const compressionOpts = {
 //   algorithm: "brotliCompress",
@@ -437,8 +448,9 @@ export default defineConfig(({ command, mode }) => {
       solidPlugin(),
       VitePWA(PWAConfig(mode)),
       viteStaticCopy(staticCopy),
-      // csp(),
-      mode == "production" ? viteCompression(compressionOpts) : null,
+      compression(compressOpts),
+      // viteCompression(compressOpts),
+      // mode == "production" ? compression(compressionOpts) : null,
     ],
     resolve: resolveConfig,
     publicDir: false, // Disable default public dir (using Phoenix's)

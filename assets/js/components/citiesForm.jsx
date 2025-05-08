@@ -19,8 +19,15 @@ export const CitiesForm = (props) => {
   // this will run if Valtio detects a change in the airports state
   function setCitiesFromState() {
     const { airports } = state;
+    console.log(
+      "subscribe runs",
+      airports.length,
+      cities().length,
+      isInitialized()
+    );
     if (airports.length > 0) {
       setCities(airports);
+      setIsInitialized(true);
     }
   }
 
@@ -29,6 +36,7 @@ export const CitiesForm = (props) => {
     if (state.airports.length > 0 && cities().length === 0) {
       setCities(state.airports);
       setIsInitialized(true);
+      console.log("effect runs", isInitialized(), cities().length > 0);
     }
   });
 

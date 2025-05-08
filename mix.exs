@@ -35,7 +35,6 @@ defmodule Solidyjs.MixProject do
       {:bandit, "~> 1.6"},
       {:req, "~> 0.5.8"},
       {:nimble_csv, "~> 1.2"},
-      # {:ex_brotli, "~> 0.6.0"},
       {:exqlite, "0.30.1"},
       {:ecto_sqlite3, "~> 0.19.0"},
       {:y_ex, "~> 0.7.3"},
@@ -51,14 +50,11 @@ defmodule Solidyjs.MixProject do
        app: false,
        compile: false,
        depth: 1},
-      {:phoenix_bakery, "~> 0.1", runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:sobelow, "~> 0.13", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:floki, ">= 0.30.0", only: :test}
-      # {:tailwind, "~> 0.3", runtime: Mix.env() == :dev}
-      # {:esbuild, "~> 0.8", runtime: Mix.env() == :dev},
     ]
   end
 

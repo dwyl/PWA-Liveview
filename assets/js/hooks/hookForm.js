@@ -48,6 +48,7 @@ export const FormHook = {
       localStorage.setItem("airports", JSON.stringify(airports));
       localStorage.setItem("version", hash);
       state.airports.splice(0, state.airports.length, ...airports);
+      console.log(airports.length, state.airports.lenght);
     });
 
     // we return both "dispose" and "cleanup" functions
