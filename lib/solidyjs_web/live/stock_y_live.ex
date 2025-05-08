@@ -13,7 +13,7 @@ defmodule SolidyjsWeb.StockYLive do
   def render(assigns) do
     ~H"""
     <div>
-      <.button
+      <button
         :if={@update_available}
         type="button"
         class="px-4 mb-4 mt-4 py-2 border-2 rounded-md text-bisque  bg-midnightblue hover:text-midnightblue hover:bg-bisque transition-colors duration-300"
@@ -21,7 +21,7 @@ defmodule SolidyjsWeb.StockYLive do
         phx-click="skip-waiting"
       >
         Refesh needed: {@update_available}
-      </.button>
+      </button>
       <p class="text-sm text-gray-600 mt-4 mb-4">User ID: {@user_id}</p>
       <Menu.display update_available={@update_available} />
 
