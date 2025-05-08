@@ -4,7 +4,7 @@ defmodule SolidyjsWeb.MapLive do
   alias Phoenix.LiveView.AsyncResult
   alias Phoenix.PubSub
   alias SolidyjsWeb.Menu
-  import SolidyjsWeb.CoreComponents, only: [button: 1]
+  # import SolidyjsWeb.CoreComponents, only: [button: 1]
 
   @moduledoc """
   LiveView for the map page.

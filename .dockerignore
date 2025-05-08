@@ -29,25 +29,24 @@
 .elixir_ls
 .vscode
 
-# Mix artifacts
 /_build/
 /.elixir_ls/
 /deps/
 *.ez
 
-# Generated on crash by the VM
 erl_crash.dump
 
 # Static artifacts - These should be fetched and built inside the Docker image
 /assets/node_modules/
 /assets/logo.png
-/assets/oldjs/
+
 /priv/phx-static-resources/
-/priv/static/assets/
-/priv/static/sw.js*
-/priv/static/airpors.csv
+/priv/static/
+#/priv/static/assets/
+#/priv/static/sw.js*
+#/priv/static/airpors.csv
 
 README.md
 /test/
-docker-compose.yml
+#docker-compose.yml
 /zig-wasm/

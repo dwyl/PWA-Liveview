@@ -14,6 +14,7 @@ RUN apt-get update -y && apt-get install -y \
   apt-get install -y nodejs && \
   apt-get clean && rm -f /var/lib/apt/lists/*_*
 
+# Install pnpm
 RUN npm install -g pnpm 
 
 # Prepare build dir
@@ -33,11 +34,11 @@ COPY config/config.exs config/${MIX_ENV}.exs config/
 RUN mix deps.compile
 
 # Copy app server code---------
-COPY lib lib
 #### Note: 
 #  the server code may contain Tailwind classes
 # and Tailwind will read the server (and client code)
 # thus needs to be copied before the assets
+COPY lib lib
 
 # Copy, install & build assets--------
 COPY priv priv
@@ -47,9 +48,8 @@ RUN pnpm self-update && pnpm install --frozen-lockfile
 COPY assets ./
 RUN pnpm vite build --mode production --config vite.config.js
 
-# fingerprint assets and compile Elixir modules
 WORKDIR /app
-# RUN mix phx.digest <-- use Vite to fingerprint assets
+# RUN mix phx.digest <-- used Vite to fingerprint assets instead
 RUN mix compile
 
 COPY config/runtime.exs config/

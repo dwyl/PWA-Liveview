@@ -2,7 +2,7 @@ defmodule SolidyjsWeb.StockYLive do
   use SolidyjsWeb, :live_view
   alias Phoenix.PubSub
   alias SolidyjsWeb.Menu
-  import SolidyjsWeb.CoreComponents, only: [button: 1]
+  # import SolidyjsWeb.CoreComponents, only: [button: 1]
   require Logger
 
   @moduledoc """

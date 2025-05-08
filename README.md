@@ -234,8 +234,38 @@ iex -S mix phx.server
 
 2/ Before deploy, run a local Docker container in **mode=prod**
 
+<details><summary>docker-compose.yml file</summary>
+
+```dockerfile
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    volumes:
+      - db:/app/data
+    user: nobody
+    env_file:
+      - .env
+
+volumes:
+  db:
+    name: db
+```
+
+</details>
+<br/>
+
 ```sh
 docker compose up --build
+```
+
+You can take a look at the build artifacts by running into another terminal:
+
+```sh
+docker compose exec -it web cat  lib/solidyjs-0.1.0/priv/static/.vite/manifest.json
 ```
 
 ## Tech overview

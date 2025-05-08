@@ -4,21 +4,14 @@
 /deps/
 
 .vscode/
+.vite/
 
-# If the VM crashes, it generates a dump, let's ignore it too.
 erl_crash.dump
 *.ez
-# Also ignore archive artifacts (built via "mix archive.build").
-
-# Ignore assets that are produced by build tools.
-/priv/static/
-/priv/static/assets/
-# Ignore digested assets cache.
-/priv/static/sw.js*
-/priv/static/airports.csv
-/priv/static/.vite/
 
 /priv/cert/
+/priv/static/
+/priv/phx-static-resources/
 
 /test/
 
