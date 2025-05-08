@@ -32,11 +32,11 @@ export const CitiesForm = (props) => {
   }
 
   // this will always run and eventually set the cities
+  // if not already done on the subscription
   createEffect(() => {
     if (state.airports.length > 0 && cities().length === 0) {
       setCities(state.airports);
       setIsInitialized(true);
-      console.log("effect runs", isInitialized(), cities().length > 0);
     }
   });
 

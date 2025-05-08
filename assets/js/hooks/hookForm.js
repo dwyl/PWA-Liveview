@@ -34,7 +34,6 @@ export const FormHook = {
         // load to state
         state.airports.push(...JSON.parse(cached));
       } catch (e) {
-        console.log("error");
         console.warn("Failed to parse cached airports:", e);
       }
     }
@@ -48,7 +47,6 @@ export const FormHook = {
       localStorage.setItem("airports", JSON.stringify(airports));
       localStorage.setItem("version", hash);
       state.airports.splice(0, state.airports.length, ...airports);
-      console.log(airports.length, state.airports.lenght);
     });
 
     // we return both "dispose" and "cleanup" functions
