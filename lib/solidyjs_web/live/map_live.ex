@@ -98,7 +98,7 @@ defmodule SolidyjsWeb.MapLive do
   # Client events ----------------->
   @impl true
   def handle_event("cache-checked", %{"cached" => false}, socket) do
-    Logger.info("Client has airports data, no need to fetch from DB")
+    # Logger.debug("Client data empty, fetch from DB")
 
     {:noreply,
      socket
@@ -115,10 +115,10 @@ defmodule SolidyjsWeb.MapLive do
         socket
       ) do
     if [{:hash, current_hash}] == :ets.lookup(:hash, :hash) do
+      # all good, use cached data
       {:noreply, socket}
     else
-      Logger.info("No match: #{current_hash} --- #{:ets.lookup(:hash, :hash)}")
-
+      #  version does not match, fetch from DB
       {:noreply,
        socket
        |> assign(:airports, AsyncResult.loading())

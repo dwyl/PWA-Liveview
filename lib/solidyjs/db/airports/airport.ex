@@ -28,7 +28,7 @@ defmodule Airport do
     Simple query that returns all airports from the database.
   """
   def municipalities do
-    Logger.info("Fetching all airports from the database...........................")
+    Logger.info("Fetching all airports from the database................")
     db = Application.get_env(:solidyjs, Solidyjs.Repo)[:database]
     query = "SELECT airport_id,name,city,country,latitude, longitude FROM airports;"
 
