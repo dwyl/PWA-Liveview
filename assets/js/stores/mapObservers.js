@@ -2,6 +2,7 @@ import { state } from "./vStore.js";
 import { subscribe } from "valtio/vanilla";
 
 export async function createFlightObserver({ L, map, group }) {
+  console.log("createFlightObserver", state.airports);
   let currentAnimationInterval = null;
   let unFlight = null;
   const { loadWasm } = await import("@js/utilities/loadWasm");

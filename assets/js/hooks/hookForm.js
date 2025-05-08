@@ -5,8 +5,6 @@ export const FormHook = {
   state,
   destroyed() {
     state.selection.clear();
-    // if (this.unsubscribe) this.unsubscribe();
-    // if (this.dispose) this.dispose();
 
     if (this.cleanupSolid) {
       this.cleanupSolid();
@@ -30,8 +28,7 @@ export const FormHook = {
 
     // Load cached airports
     const cached = localStorage.getItem("airports");
-    console.log(cached?.length, cached?.length > 0, state.airports.length);
-    if (cached && state.airports) {
+    if (cached) {
       try {
         state.airports.push(...JSON.parse(cached));
       } catch (e) {
@@ -47,8 +44,6 @@ export const FormHook = {
     });
 
     this.handleEvent("airports", ({ airports, hash }) => {
-      // if (state.airports.length === 0) {
-      console.log("airports", hash);
       console.log("no airports in state, fetching from server");
       state.airports.push(...airports);
       localStorage.setItem("airports", JSON.stringify(airports));

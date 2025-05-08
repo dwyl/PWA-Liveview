@@ -142,7 +142,7 @@ defmodule SolidyjsWeb.MapLive do
     {:noreply, put_flash(socket, :info, "PWA ready")}
   end
 
-  def handle_event("lv-sw-update", %{"update" => true}, socket) do
+  def handle_event("sw-lv-update", %{"update" => true}, socket) do
     {:noreply, assign(socket, update_available: true)}
   end
 
@@ -153,6 +153,11 @@ defmodule SolidyjsWeb.MapLive do
      socket
      |> put_flash(:info, "PWA changed")
      |> assign(update_available: true)}
+  end
+
+  def handle_event("skip-waiting", _params, socket) do
+    Logger.debug("PWA skip waiting")
+    {:noreply, push_event(socket, "sw-lv-skip-waiting", %{})}
   end
 
   # Clients Flight events callbacks ----------------->

@@ -33,7 +33,7 @@ async function renderCurrentView() {
     const { displayMap, displayForm } = await import(
       "@js/components/renderers"
     );
-    offlineComponents.map = await displayMap("offline");
+    offlineComponents.map = await displayMap();
     offlineComponents.form = await displayForm(elForm);
   }
   return true;

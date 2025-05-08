@@ -463,8 +463,30 @@ Key features:
 > [**Great circle computation**] It uses a WASM module. `Zig` is used to compute a "great circle" between two points, as a list of `[lat, long]` spaced by 100km. The `Zig` code is compiled to WASM and available for the client JavaScript to run it. Once the list of successive coordinates are in JavaScript, `Leaflet` can use it to produce a polyline and draw it into a canvas. We added a WASM module to implement great circle route calculation as a showcase of WASM integration. A JAvascript alternative would be to use [turf.js](https://turfjs.org/docs/api/greatCircle).
 > check the folder "/zig-wasm"
 
-> [**Airport dataset**] We use a dataset from <https://ourairports.com/>. We stream download a CSV file, parse it (`NimbleCSV`) and bulk insert into an SQLite table. When a user mounts, we read from the database and pass the data asynchronously to the client via the liveSocket on te first mount. We persist the data in `localStorage` for client-side search. The socket "airports" assign is then pruned to free the server's socket.
-> Check <"/lib/solidyjs/db/Airports.ex">
+> [**Airport dataset**] We use a dataset from <https://ourairports.com/>. We stream download a CSV file, parse it (`NimbleCSV`) and bulk insert into an SQLite table. When a user mounts, we read from the database and pass the data asynchronously to the client via the liveSocket on the first mount. We persist the data in `localStorage` for client-side search. The socket "airports" assign is then pruned to free the server's socket.
+> Check </lib/solidyjs/db/Airports.ex>, </lib/solidyjsweb/live/live_map.ex>
+
+Below a diagram showing the flow between the database, the server and the client.
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant LiveView
+    participant Database
+
+    Client->>LiveView: mount (connected)
+    Client->>Client: check localStorage/Valtio
+    alt cached data exists and valid
+        Client->>LiveView: "cache-checked" (cached: true)
+        LiveView->>Client: verify hash
+    else no valid cache
+        Client->>LiveView: "cache-checked" (cached: false)
+        LiveView->>Database: fetch_airports()
+        Database-->>LiveView: airports data
+        LiveView->>Client: "airports" event with data
+        Client->>Client: update localStorage + Valtio
+    end
+```
 
 ## Navigation
 
