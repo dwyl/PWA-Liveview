@@ -52,27 +52,24 @@ defmodule SolidyjsWeb.Endpoint do
   # set brotli compression so phx.digest will
   # deploy compressed static files in production.
   plug Plug.Static,
+    encodings: [{"zstd", ".zstd"}],
     brotli: true,
     gzip: true,
     at: "/",
     from: :solidyjs,
-    encoding: :brotli,
+    # encoding: :brotli,
     only: ~w(
       assets
-      favicon.ico
-      favicon-16.png
-      favicon-32.png
-      favicon-64.png
-      favicon-192.png
-      favicon-512.png
-      pwa-maskable-192.png
-      pwa-maskable-512.png
+      icons
       robots.txt
       sw.js
       manifest.webmanifest
       sitemap.xml
       ),
-    headers: %{"cache-control" => "public, max-age=31536000"}
+    headers: %{
+      "cache-control" => "public, max-age=31536000",
+      "accept-encoding" => "*"
+    }
 
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.

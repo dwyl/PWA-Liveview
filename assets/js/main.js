@@ -26,9 +26,9 @@ async function startApp() {
   console.log(" **** App started ****");
   try {
     const { checkServer } = await import("@js/utilities/checkServer");
-    const { default: initYdoc } = await import("@js/stores/initYJS.js");
+    const { initYDoc } = await import("@js/stores/initYJS");
 
-    AppState.globalYdoc = await initYdoc();
+    AppState.globalYdoc = await initYDoc();
     AppState.isOnline = await checkServer();
     AppState.status = AppState.isOnline ? "online" : "offline";
 
@@ -38,6 +38,7 @@ async function startApp() {
   }
 }
 
+// we start the polling heartbeat when the app is loaded
 startApp().then(() => {
   !AppState.interval && startPolling();
 });
@@ -51,7 +52,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   return true;
 });
 
-// Polling for connection status ----------
+// Polling ----------
 function startPolling(interval = CONFIG.POLL_INTERVAL) {
   if (AppState.interval) return;
 
@@ -83,7 +84,7 @@ function updateConnectionStatus(isOnline) {
   }
 }
 
-//---------------
+// trigger offline rendering if offline ---------------
 window.addEventListener("connection-status-changed", async (e) => {
   console.log("Connection status changed to:", e.detail.status);
   if (e.detail.status === "offline") {
@@ -93,7 +94,7 @@ window.addEventListener("connection-status-changed", async (e) => {
   }
 });
 
-// Initialize the hooks and component
+// Selectively start
 async function init(isOnline) {
   console.log("Start Init online? :", isOnline);
   try {
@@ -176,7 +177,7 @@ async function initOfflineComponents() {
   const { renderCurrentView, attachNavigationListeners } = await import(
     "@js/utilities/navigate"
   );
-  // first highjack the navigation to avoid the page reload
+  // first hijack the navigation to avoid the page reload
   attachNavigationListeners();
   // and then render the current view
   return await renderCurrentView();

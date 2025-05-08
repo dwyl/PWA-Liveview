@@ -1,10 +1,11 @@
-import { createSignal, lazy } from "solid-js";
+import { createEffect, createSignal, lazy } from "solid-js";
 import { render } from "solid-js/web";
 import { subscribe } from "valtio/vanilla";
 import { state } from "@js/stores/vStore";
 
 let dispose = null;
 export const CitiesForm = (props) => {
+  console.log("CitiesForm component mounting");
   if (dispose) dispose();
 
   const [isInitialized, setIsInitialized] = createSignal(false);
@@ -12,18 +13,24 @@ export const CitiesForm = (props) => {
 
   const City = lazy(() => import("@jsx/components/city"));
 
-  const setCitiesFromState = () => {
-    if (state.airports.length > 0) {
-      setCities(state.airports);
-      setIsInitialized(true);
-    }
-  };
-
   // Subscribe to changes in the airports state on first hook mount
   const unsubscribe = subscribe(state.airports, setCitiesFromState);
 
-  // Initialize cities from state on each component mount
-  setCitiesFromState();
+  // this will run if Valtio detects a change in the airports state
+  function setCitiesFromState() {
+    const { airports } = state;
+    if (airports.length > 0) {
+      setCities(airports);
+    }
+  }
+
+  // this will always run and eventually set the cities
+  createEffect(() => {
+    if (state.airports.length > 0 && cities().length === 0) {
+      setCities(state.airports);
+      setIsInitialized(true);
+    }
+  });
 
   // update the stores
   function handleReset() {

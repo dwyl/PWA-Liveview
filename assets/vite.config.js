@@ -3,12 +3,13 @@ import { defineConfig, loadEnv } from "vite";
 import solidPlugin from "vite-plugin-solid";
 import wasm from "vite-plugin-wasm";
 import path from "path";
+import fs from "fs"; // for file system operations
 import fg from "fast-glob"; // for recursive file scanning
 import viteCompression from "vite-plugin-compression";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 import tailwindcss from "tailwindcss"; // <--- do not use @tailwindcss/vite
 
-// const APPVERSION = process.env.VITE_APP_VERSION; // Update this when you change the app version
+const APPVERSION = process.env.VITE_APP_VERSION; // Update this when you change the app version
 
 const rootDir = path.resolve(__dirname);
 const cssDir = path.resolve(rootDir, "css");
@@ -20,14 +21,22 @@ const srcImgDir = path.resolve(rootDir, "images");
 const staticDir = path.resolve(rootDir, "../priv/static");
 const tailwindConfigPath = path.resolve(rootDir, "tailwind.config.js");
 
-const Icon16 = "favicon-16.png";
-const Icon32 = "favicon-32.png";
-const Icon64 = "favicon-64.png";
-const Icon192 = "favicon-192.png";
-const Icon512 = "favicon-512.png";
+// / Create the "static/images" directory if it doesn't exist
+// it will hold all the icons
+const destIconsDir = path.resolve(staticDir, "icons");
+fs.existsSync(destIconsDir, (exists) => {
+  if (!exists) {
+    fs.mkdirSync(destIconsDir);
+  }
+});
 
-const IconMaskable192 = "pwa-maskable-192.png";
-const IconMaskable512 = "pwa-maskable-512.png";
+const Icon16 = "icons/favicon-16.png";
+const Icon32 = "icons/favicon-32.png";
+const Icon64 = "icons/favicon-64.png";
+const Icon192 = "icons/favicon-192.png";
+const Icon512 = "icons/favicon-512.png";
+const IconMaskable192 = "icons/pwa-maskable-192.png";
+const IconMaskable512 = "icons/pwa-maskable-512.png";
 
 // https://web.dev/articles/add-manifest
 const manifestOpts = {
@@ -116,11 +125,6 @@ const buildOps = (mode) => ({
   cssMinify: "lightningcss", // Use lightningcss for CSS minification
   rollupOptions: {
     input: getEntryPoints(),
-    // output: {
-    //   assetFileNames: "assets/[name][extname]",
-    //   chunkFileNames: "assets/[name].js",
-    //   entryFileNames: "assets/[name].js",
-    // },
     output: {
       assetFileNames: "assets/[name]-[hash][extname]",
       chunkFileNames: "assets/[name]-[hash].js",
@@ -141,23 +145,23 @@ const buildOps = (mode) => ({
 // Service Worker Caching Strategies
 // =============================================
 
-const Navigation = {
-  urlPattern: ({ request }) => request.mode === "navigate",
-  handler: "NetworkFirst",
-  options: {
-    fetchOptions: {
-      credentials: "same-origin",
-    },
-    cacheName: "pages-cache",
-    expiration: {
-      maxEntries: 50,
-      maxAgeSeconds: 24 * 60 * 60, // 1 day
-    },
-    cacheableResponse: {
-      statuses: [0, 200],
-    },
-  },
-};
+// const Navigation = {
+//   urlPattern: ({ request }) => request.mode === "navigate",
+//   handler: "NetworkFirst",
+//   options: {
+//     fetchOptions: {
+//       credentials: "same-origin",
+//     },
+//     cacheName: "pages-cache",
+//     expiration: {
+//       maxEntries: 50,
+//       maxAgeSeconds: 24 * 60 * 60, // 1 day
+//     },
+//     cacheableResponse: {
+//       statuses: [0, 200],
+//     },
+//   },
+// };
 
 const LiveView = [
   {
@@ -261,7 +265,7 @@ const Fonts = {
  */
 
 const runtimeCaching = [
-  Navigation,
+  // Navigation,
   ...LiveView,
   MapTiler, // Add the SDK route before Tiles
   Fonts,
@@ -279,23 +283,24 @@ const PWAConfig = (mode) => ({
     type: "module",
   },
   suppressWarnings: false,
-  injectRegister: "auto", // Do not nject the SW registration script as "index.html" does not exist
+  injectRegister: false,
+  // injectRegister: "auto", // Do not nject the SW registration script as "index.html" does not exist
   filename: "sw.js", // Service worker filename
   strategies: "generateSW", // Generate service worker
   registerType: "prompt", // default value
   // registerType: "autoUpdate", // Let browser handle updates
-  includeAssets: [
-    "favicon.ico",
-    "favicon-16.png",
-    "favicon-32.png",
-    "favicon-64.png",
-    "favicon-192.png",
-    "favicon-512.png",
-    "pwa-maskable-192.png",
-    "pwa-maskable-512.png",
-    "robots.txt",
-    "sitemap.xml",
-  ],
+  includeAssets: [...fs.readdirSync(iconsDir), ...fs.readdirSync(otherDir)],
+  // "favicon.ico",
+  // "favicon-16.png",
+  // "favicon-32.png",
+  // "favicon-64.png",
+  // "favicon-192.png",
+  // "favicon-512.png",
+  // "pwa-maskable-192.png",
+  // "pwa-maskable-512.png",
+  // "robots.txt",
+  // "sitemap.xml",
+  // ],
   outDir: staticDir,
   manifest: manifestOpts,
   manifestFilename: "manifest.webmanifest",
@@ -381,20 +386,36 @@ const staticCopy = {
     },
     {
       src: path.resolve(iconsDir, "**", "*"),
-      dest: path.resolve(staticDir),
+      dest: path.resolve(destIconsDir),
     },
   ],
 };
 
 const compressionOpts = {
-  algorithm: "brotliCompress",
+  algorithm(buf, level) {
+    return compress(buf, level);
+  },
+  level: 9,
+  filename: `[path][base].zst`,
   deleteOriginFile: false,
-  threshold: 10240,
+  // deleteOriginalAssets: true,
+  threshold: 5240,
   ext: "br",
   filter: (file) => {
-    return /\.(js|webp|css|html|svg|json)$/.test(file);
+    return /\.(js|jpg|webp|css|html|svg|json)$/.test(file);
   },
 };
+
+// const compressionOpts = {
+//   algorithm: "brotliCompress",
+//   deleteOriginFile: false,
+//   // deleteOriginalAssets: true,
+//   threshold: 5240,
+//   ext: "br",
+//   filter: (file) => {
+//     return /\.(js|jpg|webp|css|html|svg|json)$/.test(file);
+//   },
+// };
 // =============================================
 // Main Configuration Export
 // =============================================

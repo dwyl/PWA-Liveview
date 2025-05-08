@@ -21,6 +21,7 @@
     "yjs": "^13.6.26"
   },
   "devDependencies": {
+    "@mongodb-js/zstd": "^2.0.1",
     "@tailwindcss/forms": "^0.5.10",
     "@vite-pwa/assets-generator": "^1.0.0",
     "esbuild": "^0.25.4",

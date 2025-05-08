@@ -30,8 +30,11 @@ config :solidyjs, SolidyjsWeb.Endpoint,
 
 config :phoenix,
   static_compressors: [
-    Phoenix.Digester.Gzip,
-    ExBrotli.DigesterCompressor
+    # PhoenixBakery.Zstd,
+    # Phoenix.Digester.Gzip,
+    # ExBrotli.DigesterCompressor,
+    PhoenixBakery.Gzip
+    # PhoenixBakery.Brotli
   ]
 
 # Configures Elixir's Logger

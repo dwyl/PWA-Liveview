@@ -1,4 +1,4 @@
-export default async function initYJS() {
+export async function initYDoc() {
   const Y = await import("yjs");
   const { IndexeddbPersistence } = await import("y-indexeddb");
   const storeName = "app-store";
