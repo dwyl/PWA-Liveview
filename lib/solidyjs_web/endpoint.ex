@@ -66,8 +66,7 @@ defmodule SolidyjsWeb.Endpoint do
       sitemap.xml
       ),
     headers: %{
-      "cache-control" => "public, max-age=31536000",
-      "accept-encoding" => "*"
+      "cache-control" => "public, max-age=31536000"
     }
 
   # Code reloading can be explicitly enabled under the

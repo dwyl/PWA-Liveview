@@ -404,7 +404,7 @@ const compressOpts = {
   filename: `[path][base].zstd`,
   deleteOriginalAssets: false,
 };
-// const compressOpts = {
+// const compressionOpts = {
 //   algorithm: "zstd",
 //   deleteOriginFile: false,
 //   // deleteOriginalAssets: true,
@@ -449,8 +449,7 @@ export default defineConfig(({ command, mode }) => {
       VitePWA(PWAConfig(mode)),
       viteStaticCopy(staticCopy),
       compression(compressOpts),
-      // viteCompression(compressOpts),
-      // mode == "production" ? compression(compressionOpts) : null,
+      // mode == "production" ? viteCompression(compressionOpts) : null,
     ],
     resolve: resolveConfig,
     publicDir: false, // Disable default public dir (using Phoenix's)
