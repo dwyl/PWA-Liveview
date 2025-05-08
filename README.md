@@ -1,6 +1,13 @@
 # Phoenix LiveView PWA
 
-An example of a real-time, collaborative web app built with Phoenix LiveView, packaged as a PWA with CRDTs and reactive components offline-first ready.
+An example of a real-time, collaborative web app built with Phoenix LiveView, packaged as a PWA with CRDTs or local state and reactive components, designed for offline-first ready.
+
+The CRDT based page (stock emulation) leverages `Yjs` and `y_ex` server-side.
+The local-state alternative (flight map emulation) is powered by `Valtio`.
+
+Offline first solutions naturally offloads most of the UI logic to JavaScript and uses `Vite` as the bundler.
+
+While it can be extended to support multiple pages, dynamic page handling has not yet been tested or implemented.
 
 ## Table of Contents
 

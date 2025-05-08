@@ -4,7 +4,7 @@ import "phoenix_html";
 
 const CONFIG = {
   MAIN_CONTENT_SELECTOR: "#main-content", // used in navigate.js
-  POLL_INTERVAL: 3_000,
+  POLL_INTERVAL: 10_000,
   ON_ICON: new URL("/images/online.svg", import.meta.url).href,
   OFF_ICON: new URL("/images/offline.svg", import.meta.url).href,
 };
@@ -134,8 +134,6 @@ async function initLiveSocket() {
     // custom websocket for the Yjs document channel transfer
     AppState.ydocSocket = ydocSocket;
 
-    // const { LiveSocket } = await import("phoenix_live_view");
-    // const { Socket } = await import("phoenix");
     const csrfToken = document
       .querySelector("meta[name='csrf-token']")
       .getAttribute("content");

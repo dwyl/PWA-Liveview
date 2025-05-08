@@ -60,41 +60,33 @@ defmodule SolidyjsWeb.MapLive do
   end
 
   @impl true
-  def handle_params(_, uri, socket) do
-    Logger.debug("MapLive handle_params: #{inspect(uri)}")
-
-    case URI.parse(uri).path do
-      "/map" ->
-        {:noreply,
-         socket
-         |> assign(:airports, AsyncResult.loading())
-         |> start_async(
-           :fetch_airports,
-           fn -> Airport.municipalities() end
-         )}
-
-      #  |> push_event("navigate", %{path: "/map"})}
-
-      _ ->
-        {:noreply, socket}
-    end
+  def handle_params(_, _uri, socket) do
+    {:noreply, socket}
   end
 
   # airport list setup on mount ---------->
+
   @impl true
   def handle_async(:fetch_airports, {:ok, fetched_airports}, socket) do
     %{airports: airports} = socket.assigns
 
+    hash =
+      :crypto.hash(:sha256, :erlang.term_to_binary(fetched_airports))
+      |> Base.encode16()
+
+    true = :ets.insert(:hash, {:hash, hash})
+
     {:noreply,
      socket
      |> assign(:airports, AsyncResult.ok(airports, fetched_airports))
-     |> push_event("airports", %{airports: fetched_airports})
-     # empty the socket as client will handle the data because
-     # otherwise the server will have as much copies as the numbe of clients
-     |> assign(:airports, %{})}
+     |> push_event("airports", %{
+       airports: fetched_airports,
+       hash: hash
+     })
+     # memory cleanup
+     |> assign(%{airports: nil, hash: hash})}
   end
 
-  @impl true
   def handle_async(:airports, {:exit, reason}, socket) do
     %{airports: airports} = socket.assigns
 
@@ -103,10 +95,44 @@ defmodule SolidyjsWeb.MapLive do
      |> assign(:airports, AsyncResult.failed(airports, {:exit, reason}))}
   end
 
-  # <---------- airport list
+  # Client events ----------------->
+  @impl true
+  def handle_event("cache-checked", %{"cached" => false}, socket) do
+    Logger.info("Client has airports data, no need to fetch from DB")
+
+    {:noreply,
+     socket
+     |> assign(:airports, AsyncResult.loading())
+     |> start_async(
+       :fetch_airports,
+       &fetch_airports/0
+     )}
+  end
+
+  def handle_event(
+        "cache-checked",
+        %{"cached" => true, "version" => current_hash},
+        socket
+      ) do
+    if [{:hash, current_hash}] == :ets.lookup(:hash, :hash) do
+      {:noreply, socket}
+    else
+      Logger.info("No match: #{current_hash} --- #{:ets.lookup(:hash, :hash)}")
+
+      {:noreply,
+       socket
+       |> assign(:airports, AsyncResult.loading())
+       |> start_async(
+         :fetch_airports,
+         &fetch_airports/0
+       )}
+    end
+  end
+
+  # <---------- airport list logic
 
   # PWA event handlers ----------------->
-  @impl true
+
   def handle_event("sw-lv-error", %{"error" => error}, socket) do
     Logger.warning("PWA on error")
     {:noreply, put_flash(socket, :error, inspect(error))}
@@ -184,5 +210,10 @@ defmodule SolidyjsWeb.MapLive do
     else
       {:noreply, socket}
     end
+  end
+
+  # Helpers------------------------------>
+  defp fetch_airports do
+    Airport.municipalities()
   end
 end

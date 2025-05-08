@@ -1,7 +1,8 @@
-import state from "@js/stores/vStore";
+import { state } from "@js/stores/vStore";
 
 export const FormHook = {
   userID: null,
+  state,
   destroyed() {
     state.selection.clear();
     // if (this.unsubscribe) this.unsubscribe();
@@ -16,7 +17,7 @@ export const FormHook = {
   async mounted() {
     if (this.cleanupSolid) this.cleanupSolid(); // defensive cleanup
     this.cleanupSolid = null;
-
+    this.state = state;
     this.userID = Number(this.el.dataset.userid);
     // we need to set the userID in localStorage
     // so that the Solid component can access it when offline
@@ -28,22 +29,30 @@ export const FormHook = {
     console.log("[FormHook] ~~~~~~~~~~~> mounted");
 
     // Load cached airports
-    const cached = localStorage.getItem("flight_app_airports");
-    if (cached && state.airports.length === 0) {
+    const cached = localStorage.getItem("airports");
+    console.log(cached?.length, cached?.length > 0, state.airports.length);
+    if (cached && state.airports) {
       try {
         state.airports.push(...JSON.parse(cached));
       } catch (e) {
         console.warn("Failed to parse cached airports:", e);
       }
+    } else {
+      console.log("no cached airports");
     }
 
-    // Only fetch airports if we don't have them in state/localStorage
-    this.handleEvent("airports", ({ airports }) => {
-      if (state.airports.length === 0) {
-        console.log("no airports loaded");
-        state.airports.push(...airports);
-        localStorage.setItem("flight_app_airports", JSON.stringify(airports));
-      }
+    this.pushEvent("cache-checked", {
+      cached: cached?.length > 0,
+      version: localStorage.getItem("version"),
+    });
+
+    this.handleEvent("airports", ({ airports, hash }) => {
+      // if (state.airports.length === 0) {
+      console.log("airports", hash);
+      console.log("no airports in state, fetching from server");
+      state.airports.push(...airports);
+      localStorage.setItem("airports", JSON.stringify(airports));
+      localStorage.setItem("version", hash);
     });
 
     // we return both "dispose" and "cleanup" functions

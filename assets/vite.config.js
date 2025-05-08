@@ -8,7 +8,7 @@ import viteCompression from "vite-plugin-compression";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 import tailwindcss from "tailwindcss"; // <--- do not use @tailwindcss/vite
 
-const APPVERSION = process.env.VITE_APP_VERSION; // Update this when you change the app version
+// const APPVERSION = process.env.VITE_APP_VERSION; // Update this when you change the app version
 
 const rootDir = path.resolve(__dirname);
 const cssDir = path.resolve(rootDir, "css");
@@ -384,6 +384,16 @@ const staticCopy = {
     },
   ],
 };
+
+const compressionOpts = {
+  algorithm: "brotliCompress",
+  deleteOriginFile: false,
+  threshold: 10240,
+  ext: "br",
+  filter: (file) => {
+    return /\.(js|webp|css|html|svg|json)$/.test(file);
+  },
+};
 // =============================================
 // Main Configuration Export
 // =============================================
@@ -405,9 +415,8 @@ export default defineConfig(({ command, mode }) => {
       solidPlugin(),
       VitePWA(PWAConfig(mode)),
       viteStaticCopy(staticCopy),
-      mode == "production"
-        ? viteCompression({ algorithm: "brotliCompress" })
-        : null,
+      // csp(),
+      mode == "production" ? viteCompression(compressionOpts) : null,
     ],
     resolve: resolveConfig,
     publicDir: false, // Disable default public dir (using Phoenix's)

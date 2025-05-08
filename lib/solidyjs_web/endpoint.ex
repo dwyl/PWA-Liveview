@@ -29,14 +29,14 @@ defmodule SolidyjsWeb.Endpoint do
   ]
 
   socket "/live", Phoenix.LiveView.Socket,
-    websocket: [connect_info: [session: @session_options]],
-    longpoll: [connect_info: [session: @session_options]]
+    websocket: [connect_info: [session: @session_options], compress: true],
+    longpoll: [connect_info: [session: @session_options], compress: true]
 
   socket "/ydoc", Solidyjs.YdocSocket,
     websocket: [
       connect_info: [
-        session: @session_options
-        # check_origin: false
+        session: @session_options,
+        check_origin: true
         # :websocket_origins is set in config/runtime.exs
         # to the value of the environment variable PHX_HOST
         # which is set in the Dockerfile.
@@ -53,6 +53,7 @@ defmodule SolidyjsWeb.Endpoint do
   # deploy compressed static files in production.
   plug Plug.Static,
     brotli: true,
+    gzip: true,
     at: "/",
     from: :solidyjs,
     encoding: :brotli,

@@ -1,14 +1,7 @@
-import {
-  For,
-  Show,
-  createSignal,
-  createEffect,
-  onMount,
-  onCleanup,
-} from "solid-js";
+import { For, Show, createSignal, createEffect, onCleanup } from "solid-js";
 
 import { snapshot, subscribe } from "valtio/vanilla";
-import state from "@js/stores/vStore";
+import { state } from "@js/stores/vStore";
 
 export default function City(props) {
   // Create signals for input value, suggestions, dropdown visibility, and selection status

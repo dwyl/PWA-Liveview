@@ -1,3 +1,5 @@
+import { state } from "@js/stores/vStore.js";
+
 export async function renderMap() {
   const { initMap } = await import("@js/components/initMap.js");
   const { L, map, group, maptLayer } = await initMap();

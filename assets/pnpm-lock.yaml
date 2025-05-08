@@ -35,18 +35,6 @@ importers:
       valtio:
         specifier: ^2.1.4
         version: 2.1.4
-      workbox-precaching:
-        specifier: ^7.3.0
-        version: 7.3.0
-      workbox-routing:
-        specifier: ^7.3.0
-        version: 7.3.0
-      workbox-strategies:
-        specifier: ^7.3.0
-        version: 7.3.0
-      workbox-window:
-        specifier: ^7.3.0
-        version: 7.3.0
       y-indexeddb:
         specifier: ^9.0.12
         version: 9.0.12(yjs@13.6.26)
@@ -90,6 +78,18 @@ importers:
       vite-plugin-wasm:
         specifier: ^3.4.1
         version: 3.4.1(vite@6.3.5(jiti@2.4.2)(lightningcss@1.29.3)(terser@5.39.0)(yaml@2.7.1))
+      workbox-precaching:
+        specifier: ^7.3.0
+        version: 7.3.0
+      workbox-routing:
+        specifier: ^7.3.0
+        version: 7.3.0
+      workbox-strategies:
+        specifier: ^7.3.0
+        version: 7.3.0
+      workbox-window:
+        specifier: ^7.3.0
+        version: 7.3.0
 
 packages:
 

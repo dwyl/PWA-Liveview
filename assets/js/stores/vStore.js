@@ -4,7 +4,7 @@ import { proxyMap } from "valtio/vanilla/utils";
 // Initialize state with airports from localStorage if available
 const initialAirports = () => {
   try {
-    const stored = localStorage.getItem("flight_app_airports");
+    const stored = localStorage.getItem("airports");
     return stored ? JSON.parse(stored) : [];
   } catch (e) {
     console.error("Error reading airports from localStorage:", e);
@@ -23,4 +23,4 @@ const state = proxy({
   },
 });
 
-export default state;
+export { state };

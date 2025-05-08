@@ -17,10 +17,6 @@
     "solid-js": "^1.9.6",
     "topbar": "^3.0.0",
     "valtio": "^2.1.4",
-    "workbox-precaching": "^7.3.0",
-    "workbox-routing": "^7.3.0",
-    "workbox-strategies": "^7.3.0",
-    "workbox-window": "^7.3.0",
     "y-indexeddb": "^9.0.12",
     "yjs": "^13.6.26"
   },
@@ -36,7 +32,11 @@
     "vite-plugin-pwa": "^1.0.0",
     "vite-plugin-solid": "^2.11.6",
     "vite-plugin-static-copy": "^2.3.1",
-    "vite-plugin-wasm": "^3.4.1"
+    "vite-plugin-wasm": "^3.4.1",
+    "workbox-precaching": "^7.3.0",
+    "workbox-routing": "^7.3.0",
+    "workbox-strategies": "^7.3.0",
+    "workbox-window": "^7.3.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

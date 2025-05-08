@@ -42,7 +42,7 @@ erl_crash.dump
 /assets/node_modules/
 /assets/logo.png
 /assets/oldjs/
-
+/priv/phx-static-resources/
 /priv/static/assets/
 /priv/static/sw.js*
 /priv/static/airpors.csv

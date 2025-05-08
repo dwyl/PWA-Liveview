@@ -1,4 +1,4 @@
-import state from "./vStore.js";
+import { state } from "./vStore.js";
 import { subscribe } from "valtio/vanilla";
 
 export async function createFlightObserver({ L, map, group }) {
@@ -9,7 +9,7 @@ export async function createFlightObserver({ L, map, group }) {
   function airplaneMarker(L, latLngs) {
     return L.marker(latLngs[0], {
       icon: new L.Icon({
-        iconUrl: "/assets/airplane.svg",
+        iconUrl: new URL("/images/airplane.svg", import.meta.url).href,
         iconSize: [20, 20],
         iconAnchor: [10, 20],
       }),

@@ -1,7 +1,7 @@
 import { createSignal, lazy } from "solid-js";
 import { render } from "solid-js/web";
 import { subscribe } from "valtio/vanilla";
-import state from "@js/stores/vStore";
+import { state } from "@js/stores/vStore";
 
 let dispose = null;
 export const CitiesForm = (props) => {

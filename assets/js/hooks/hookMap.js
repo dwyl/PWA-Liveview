@@ -1,4 +1,4 @@
-import state from "@js/stores/vStore";
+import { state } from "@js/stores/vStore";
 
 export const MapHook = {
   map: null,

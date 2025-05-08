@@ -11,6 +11,7 @@ defmodule Solidyjs.Application do
   def start(_type, _args) do
     db = setupDbPath()
     [{:ok, _, _}] = Solidyjs.Release.migrate()
+    :hash = :ets.new(:hash, [:named_table, :public, read_concurrency: true])
 
     children = [
       SolidyjsWeb.Telemetry,
