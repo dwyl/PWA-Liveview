@@ -30,7 +30,8 @@ export const FormHook = {
     const cached = localStorage.getItem("airports");
     if (cached) {
       try {
-        state.airports.push(...JSON.parse(cached));
+        console.log("setup cached airports");
+        state.airports = JSON.parse(cached);
       } catch (e) {
         console.warn("Failed to parse cached airports:", e);
       }
@@ -45,9 +46,9 @@ export const FormHook = {
 
     this.handleEvent("airports", ({ airports, hash }) => {
       console.log("no airports in state, fetching from server");
-      state.airports.push(...airports);
       localStorage.setItem("airports", JSON.stringify(airports));
       localStorage.setItem("version", hash);
+      state.airports = airports;
     });
 
     // we return both "dispose" and "cleanup" functions

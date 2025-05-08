@@ -51,7 +51,6 @@ defmodule SolidyjsWeb.StockYLive do
   def handle_params(_params, _url, socket) do
     # uri = URI.new!(url)
     {:noreply, socket}
-    # {:noreply, push_event(socket, "navigate", %{path: uri.path})}
   end
 
   # PWA event handlers ----------------->
@@ -69,17 +68,7 @@ defmodule SolidyjsWeb.StockYLive do
     {:noreply, assign(socket, update_available: true)}
   end
 
-  def handle_event("sw-lv-change", %{"changed" => true}, socket) do
-    Logger.debug("PWA on change")
-
-    {:noreply,
-     socket
-     |> put_flash(:info, "PWA changed")
-     |> assign(update_available: true)}
-  end
-
   def handle_event("skip-waiting", _params, socket) do
-    Logger.debug("PWA skip waiting")
     {:noreply, push_event(socket, "sw-lv-skip-waiting", %{})}
   end
 end

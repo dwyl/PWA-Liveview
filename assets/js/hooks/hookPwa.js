@@ -5,10 +5,10 @@ export const PwaHook = {
     window.removeEventListener("sw-ready", this.handleReady);
     window.removeEventListener("sw-error", this.handleError);
     window.removeEventListener("sw-update", this.handleUpdate);
-    window.removeEventListener(
-      "sw-controller-change",
-      this.handleControllerChange
-    );
+    // window.removeEventListener(
+    //   "sw-controller-change",
+    //   this.handleControllerChange
+    // );
     console.log("[PwaHook] ------> destroyed");
   },
   async mounted() {
@@ -16,12 +16,9 @@ export const PwaHook = {
     const _this = this;
 
     this.handleEvent("sw-lv-skip-waiting", () => {
-      console.log("skipped waiting");
       const updateServiceWorker = AppState.updateServiceWorker;
       if (updateServiceWorker) {
         updateServiceWorker();
-
-        // window.location.reload();
       }
     });
 
@@ -42,25 +39,15 @@ export const PwaHook = {
         update: event.detail.update,
       });
     };
-    this.handleControllerChange = (event) => {
-      _this.pushEvent("sw-lv-change", {
-        changed: event.detail.changed,
-      });
-    };
+    // this.handleControllerChange = (event) => {
+    //   _this.pushEvent("sw-lv-change", {
+    //     changed: event.detail.changed,
+    //   });
+    // };
 
     window.addEventListener("sw-ready", this.handleReady);
     window.addEventListener("sw-error", this.handleError);
     window.addEventListener("sw-update", this.handleUpdate);
-    window.addEventListener("sw-change", this.handleControllerChange);
-
-    // const updateSWButton = document.getElementById("refresh-button");
-    // if (updateSWButton) {
-    //   updateSWButton.addEventListener("click", () => {
-    //     console.log("[PWA] update button clicked", AppState);
-    //     if (AppState.updateServiceWorker) {
-    //       AppState.updateServiceWorker();
-    //     }
-    //   });
-    // }
+    // window.addEventListener("sw-change", this.handleControllerChange);
   },
 };
