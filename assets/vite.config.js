@@ -401,6 +401,7 @@ const compressOpts = {
   threshold: 5240,
   filename: `[path][base].zstd`,
   deleteOriginalAssets: false,
+  verbose: true,
 };
 
 // const compressionOpts = {
