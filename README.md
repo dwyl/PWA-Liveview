@@ -142,6 +142,9 @@ It has:
 
 - offline support
 - is "instalable"
+  
+<img width="135" alt="Screenshot 2025-05-08 at 22 02 40" src="https://github.com/user-attachments/assets/dddaaac7-9255-419b-a5ad-44a2a891e93a" />
+<br/>
 
 The core components are:
 
@@ -169,6 +172,7 @@ In action:
 
 <img width="1413" alt="Screenshot 2025-05-08 at 09 40 28" src="https://github.com/user-attachments/assets/a4086fe3-4952-48de-818c-b12fe1819823" />
 <br/>
+
 2) Click the "refresh needed"
 -> the Service Worker and client claims are updated seamlessly, and the button is in the hidden "normal" state.
    
@@ -224,8 +228,6 @@ sequenceDiagram
 {:req, "~> 0.5.8"},
 # parsing the CSV airports
 {:nimble_csv, "~> 1.2"},
-# br compressed static assets
-{:ex_brotli, "~> 0.6.0"},
 ```
 
 Client package are setup with `pnpm` (or `bun`).
@@ -482,7 +484,8 @@ sequenceDiagram
 
 Available at `/`.
 
-![Stock Manager Screenshot](https://github.com/user-attachments/assets/f5e68b4d-6229-4736-a4b3-a60fc813b6bf)
+<img width="1404" alt="Screenshot 2025-05-08 at 22 05 15" src="https://github.com/user-attachments/assets/ba8373b5-defc-40f9-b497-d0086eb10ccc" />
+<br/>
 
 ### Flight Map
 
@@ -491,7 +494,8 @@ Available at `/map`.
 It displays an _interactive_ and _collaborative_ (two-user input) route planning with vector tiles.
 The UI displays a form with two inputs, which are pushed to Phoenix and broadcasted via Phoenix PubSub. A marker is drawn by `Leaflet` to display the choosen airport on a vector-tiled map using `MapTiler`.
 
-![Flight Map Screenshot](https://github.com/user-attachments/assets/2eb459e6-29fb-4dbb-a101-841cbad5af95)
+<img width="1398" alt="Screenshot 2025-05-08 at 22 06 29" src="https://github.com/user-attachments/assets/1c5a82b2-8302-44a4-93dd-87ac215105e3" />
+<br/>
 
 Key features:
 
