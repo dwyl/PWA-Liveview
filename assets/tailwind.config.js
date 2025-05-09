@@ -9,7 +9,7 @@ import path from "path";
 module.exports = {
   mode: "jit",
   content: [
-    "../js/**/*.js",
+    "./js/**/*.js",
     "../lib/solidyjs_web.ex",
     "../lib/solidyjs_web/**/*.*ex",
   ],

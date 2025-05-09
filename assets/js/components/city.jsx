@@ -10,18 +10,6 @@ export default function City(props) {
   const [isOpen, setIsOpen] = createSignal(false);
   const [hasSelection, setHasSelection] = createSignal(false); // New signal for tracking selection
 
-  // Initialize input from store on mount
-  // onMount(() => {
-  //   console.log("mounted City");
-  //   // Check if there's an existing value in the store for the input type
-  //   if (state.selection.has(props.inputType)) {
-  //     const airport = snapshot(state.selection.get(props.inputType));
-  //     if (airport && (airport.displayText || airport.name)) {
-  //       setInputValue(airport.displayText || airport.name);
-  //     }
-  //   }
-  // });
-
   // Create a subscription to the selection store to update the input value
   const unsubscribe = subscribe(state.selection, () => {
     if (state.selection.has(props.inputType)) {

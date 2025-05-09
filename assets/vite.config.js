@@ -1,17 +1,20 @@
+import fs from "fs"; // for file system operations
+import path from "path";
+import fg from "fast-glob"; // for recursive file scanning
+
 import { VitePWA } from "vite-plugin-pwa";
 import { defineConfig, loadEnv } from "vite";
 import solidPlugin from "vite-plugin-solid";
+
 import wasm from "vite-plugin-wasm";
-import path from "path";
-import fs from "fs"; // for file system operations
-import fg from "fast-glob"; // for recursive file scanning
 import { compression } from "vite-plugin-compression2";
 import { compress } from "@mongodb-js/zstd";
-// import viteCompression from "vite-plugin-compression";
 import { viteStaticCopy } from "vite-plugin-static-copy";
+
 import tailwindcss from "tailwindcss"; // <--- do not use @tailwindcss/vite
 
 const APPVERSION = process.env.VITE_APP_VERSION; // Update this when you change the app version
+console.log(APPVERSION);
 
 const rootDir = path.resolve(__dirname);
 const cssDir = path.resolve(rootDir, "css");
@@ -34,6 +37,10 @@ if (!fs.existsSync(assetsDir)) {
   fs.mkdirSync(assetsDir, { recursive: true });
 }
 
+// =============================================
+// Manifest options
+// https://developer.mozilla.org/en-US/docs/Web/Manifest
+// https://web.dev/articles/add-manifest
 const Icon16 = "icons/favicon-16.png";
 const Icon32 = "icons/favicon-32.png";
 const Icon64 = "icons/favicon-64.png";
@@ -42,10 +49,9 @@ const Icon512 = "icons/favicon-512.png";
 const IconMaskable192 = "icons/pwa-maskable-192.png";
 const IconMaskable512 = "icons/pwa-maskable-512.png";
 
-// https://web.dev/articles/add-manifest
 const manifestOpts = {
-  name: "SolidYjs",
-  short_name: "SolidYjs",
+  name: "LiveView PWA web app",
+  short_name: "LiveView PWA",
   display: "standalone",
   scope: "/",
   start_url: "/",
@@ -99,6 +105,8 @@ const manifestOpts = {
   ],
 };
 
+// =============================================
+// Rollup entry points file helper
 // fg will scan JS directory recursively - update to match your actual file structure
 const getEntryPoints = () => {
   const entries = [];
@@ -120,7 +128,10 @@ const getEntryPoints = () => {
   return entries;
 };
 
+// =============================================
+// Build options and Rollup options
 // source: <https://vite.dev/config/build-options>
+
 const buildOps = (mode) => ({
   target: ["esnext"],
   // Specify the directory to nest generated assets under (relative to build.outDir
@@ -146,8 +157,7 @@ const buildOps = (mode) => ({
 });
 
 // =============================================
-// Service Worker Caching Strategies
-// =============================================
+// Service Worker Rentime Caching Strategies
 
 // const Navigation = {
 //   urlPattern: ({ request }) => request.mode === "navigate",
@@ -250,48 +260,42 @@ const OtherStaticAsset = {
   },
 };
 
-// const Fonts = {
-//   urlPattern: ({ url }) => {
-//     return (
-//       url.hostname === "fonts.googleapis.com" ||
-//       url.hostname === "fonts.gstatic.com" ||
-//       url.pathname.match(/\.(woff|woff2|ttf|otf)$/)
-//     );
-//   },
-//   handler: "CacheFirst",
-//   options: {
-//     cacheName: "fonts",
-//     expiration: {
-//       maxAgeSeconds: 60 * 60 * 24 * 365, // 1 hours
-//       maxEntries: 20,
-//     },
-//     matchOptions: {
-//       ignoreVary: true, // Important for some external resources
-//       ignoreSearch: true, // Ignore query parameters
-//     },
-//     fetchOptions: {
-//       mode: "cors",
-//     },
-//   },
-// };
-
-/**
- * List of all caching strategies passed to Workbox
- * The order of the strategies matters! More specific ones should be listed first
- * to avoid conflicts with more general ones.
- */
+const Fonts = {
+  urlPattern: ({ url }) => {
+    return (
+      url.hostname === "fonts.googleapis.com" ||
+      url.hostname === "fonts.gstatic.com" ||
+      url.pathname.match(/\.(woff|woff2|ttf|otf)$/)
+    );
+  },
+  handler: "CacheFirst",
+  options: {
+    cacheName: "fonts",
+    expiration: {
+      maxAgeSeconds: 60 * 60 * 24 * 365, // 1 hours
+      maxEntries: 20,
+    },
+    matchOptions: {
+      ignoreVary: true, // Important for some external resources
+      ignoreSearch: true, // Ignore query parameters
+    },
+    fetchOptions: {
+      mode: "cors",
+    },
+  },
+};
 
 const runtimeCaching = [
   // Navigation,
   ...LiveView,
   MapTiler, // Add the SDK route before Tiles
-  // Fonts,
+  Fonts,
   OtherStaticAsset,
+  Fonts,
 ];
 
 // =============================================
 // PWA Configuration Generator
-// =============================================
 // <https://vite-pwa-org.netlify.app/guide/>
 
 const PWAConfig = (mode) => ({
@@ -305,12 +309,6 @@ const PWAConfig = (mode) => ({
   filename: "sw.js", // Service worker filename
   strategies: "generateSW", // Let Workbox auto-generate the service worker from config
   registerType: "prompt", // App manually prompts user to update SW when available
-
-  // These files are included in precache manifest (e.g., icons, robots.txt,...)
-  // includeAssets: [
-  //   ...fs.readdirSync(iconsDir).map((f) => path.join(destIconsDir, f)),
-  //   ...fs.readdirSync(seoDir).map((f) => path.join(staticDir, f)),
-  // ],
 
   outDir: staticDir,
   manifest: manifestOpts,
@@ -362,11 +360,11 @@ const PWAConfig = (mode) => ({
   },
 });
 
+// =============================================
+// Alias helpers
 /*
-Aliases (alias property):
-Creates shortcuts for directory paths, 
-so instead of writing relative paths 
-like ../../components/Button, 
+creates shortcuts for directory paths, so instead of 
+writing relative paths  like ../../components/Button, 
 you can use @js/components/Button
 */
 const resolveConfig = {
@@ -380,6 +378,12 @@ const resolveConfig = {
   extensions: [".js", ".jsx", "png", ".css", "webp", "jpg", "svg"],
 };
 
+// =============================================
+/* 
+Static Copy of icons and SEO files sitemap.xml, robots.txt
+to priv/static/icons and priv/static
+to not fingerprint them
+*/
 const targets = [
   {
     src: path.resolve(seoDir, "**", "*"),
@@ -391,6 +395,8 @@ const targets = [
   },
 ];
 
+// =============================================
+// ZSTD Compression of assets
 const compressOpts = {
   // https://github.com/nonzzz/vite-plugin-compression/discussions/61#discussioncomment-10243200
   algorithm(buf, level) {
@@ -404,20 +410,8 @@ const compressOpts = {
   verbose: true,
 };
 
-// const compressionOpts = {
-//   algorithm: "brotliCompress",
-//   deleteOriginFile: false,
-//   // deleteOriginalAssets: true,
-//   threshold: 5240,
-//   ext: "br",
-//   filter: (file) => {
-//     return /\.(js|jpg|webp|css|html|svg|json)$/.test(file);
-//   },
-// };
-
 // =============================================
 // Main Configuration Export
-// =============================================
 
 export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), "VITE_");
@@ -433,11 +427,10 @@ export default defineConfig(({ command, mode }) => {
     base: "/", // "https://cdn.example.com/assets/", // CDN base URL
     plugins: [
       wasm(),
-      solidPlugin(),
       VitePWA(PWAConfig(mode)),
+      solidPlugin(),
       viteStaticCopy({ targets }),
       compression(compressOpts),
-      // mode == "production" ? viteCompression(compressionOpts) : null,
     ],
     resolve: resolveConfig,
     // Disable default public dir (using Phoenix's)

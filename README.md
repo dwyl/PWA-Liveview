@@ -1,16 +1,24 @@
 # Phoenix LiveView PWA
 
-An example of a real-time, collaborative web app built with Phoenix LiveView, packaged as a PWA with CRDTs or local state and reactive components, designed for offline-first ready.
+An example of a real-time, collaborative multi-page web app built with `Phoenix LiveView`.
 
-The CRDT based page (stock emulation) leverages `Yjs` and `y_ex` server-side.
-The local-state alternative (flight map emulation) is powered by `Valtio`.
+It is designed for offline-first ready; it is packaged as a `PWA` and uses CRDTs or local state and reactive components.
 
-Offline first solutions naturally offloads most of the UI logic to JavaScript.
-LiveView renders "hooks".
+Offline first solutions naturally offloads most of the reactive UI logic to JavaScript.
+
+When online, we use LiveView "hooks", while when offline, we render the reactive components.
 
 It uses `Vite` as the bundler.
 
 > While it can be extended to support multiple pages, dynamic page handling has not yet been tested nor implemented.
+
+**Results**:
+
+- deployed on Fly.io at <https://solidyjs-lively-pine-4375.fly.dev/>
+- standalone Phoenix LiveView app of 2.3 Mb
+- memory usage: 210Mb
+- image weight: 53Mb (`Debian` based)
+- client code can be updated via the Service Worker lifecycle
 
 ## Table of Contents
 
@@ -18,21 +26,22 @@ It uses `Vite` as the bundler.
   - [Table of Contents](#table-of-contents)
   - [What?](#what)
   - [Why?](#why)
-  - [Key points for offline collaborative](#key-points-for-offline-collaborative)
-    - [Design goals](#design-goals)
-    - [Architecture - Stock page](#architecture---stock-page)
-    - [Implementation highlights - Stock page](#implementation-highlights---stock-page)
+  - [Design goals](#design-goals)
+  - [Architecture](#architecture)
+    - [Tech overview](#tech-overview)
+    - [LiveStock page](#livestock-page)
+    - [Implementation highlights](#implementation-highlights)
+    - [LiveFLight page](#liveflight-page)
   - [About PWA](#about-pwa)
     - [Updates life-cycle](#updates-life-cycle)
   - [Usage](#usage)
-  - [Tech overview](#tech-overview)
   - [Diagrams](#diagrams)
-  - [Demo Pages](#demo-pages)
-    - [Stock Manager](#stock-manager)
-    - [Flight Map](#flight-map)
+  - [Pages](#pages)
+    - [LiveStock Manager](#livestock-manager)
+    - [LiveFlight](#liveflight)
   - [Navigation](#navigation)
   - [Configuration and settings](#configuration-and-settings)
-    - [PWA and Workbox Caching Strategies](#pwa-and-workbox-caching-strategies)
+    - [Vite and Workbox Caching Strategies](#vite-and-workbox-caching-strategies)
     - [Server configuration](#server-configuration)
       - [Phoenix settings: dev build and watcher](#phoenix-settings-dev-build-and-watcher)
       - [CSP rules and evaluation](#csp-rules-and-evaluation)
@@ -59,65 +68,86 @@ Context: we want to experiment PWA webapps using Phoenix LiveView.
 
 What are we building? A two pages webapp.
 
-- On the first page, we mimic a shopping cart where users can pick items until stock is depleted, at which point the stock is replenished. Every user will see and can interact with this counter
-- On the second page, we propose an interactive map with a form with two inputs where **two** users can edit collaboratively a form to display markers on the map and then draw a great circle between the two points.
-
-The first page uses CRDT-backed persistence whilst the second one uses a local store with ephemeral sync.
-
-It is a PWA, meaning you can detach it from the browser and run it from an icon.
+- LiveStock. On the first page, we mimic a shopping cart where users can pick items until stock is depleted, at which point the stock is replenished. Every user will see and can interact with this counter
+- LiveFlight. On the second page, we propose an interactive map with a form with two inputs where **two** users can edit collaboratively a form to display markers on the map and then draw a great circle between the two points.
 
 ## Why?
 
 Traditional Phoenix LiveView applications face several challenges in offline scenarios:
 
-1. **no Offline Interactivity**: Some applications need to maintain interactivity even when offline, preventing a degraded user experience.
+1. **no Offline Interactivity**:
+   Some applications need to maintain interactivity even when offline, preventing a degraded user experience.
 
-2. **no Offline Navigation**: user may need to navigate through pages.
+2. **no Offline Navigation**:
+   User may need to navigate through pages.
 
-3. **WebSocket Limitations**: LiveView's WebSocket architecture isn't naturally suited for PWAs, as it requires constant connection for functionality. When online, we use `Phoenix.Channel` for real-time collaboration.
+3. **WebSocket Limitations**:
+   LiveView's WebSocket architecture isn't naturally suited for PWAs, as it requires constant connection for functionality. When online, we use `Phoenix.Channel` for real-time collaboration.
 
-4. **State Management**: Challenging to maintain consistent state across network interruptions between the client and the server. We use different approaches based on the page requirements:
+4. **State Management**:
+   It is challenging to maintain consistent state across network interruptions between the client and the server. We use different approaches based on the page requirements:
 
-   - CRDT-based synchronization (`Y.js` featuring `IndexedDB` and `y_ex`) for Stock Manager page and `SQLite` for server-side state management synchronization
-   - Local state management (`Valtio`) for the collaborative Flight Map page with no database persistence
+   - CRDT-based synchronization with `Y.js` featuring `IndexedDB` and `y_ex` server-side for Stock Manager page. It uses an embedded `SQLite` database for server-side state management synchronization
+   - Local state management (`Valtio`) for the collaborative Flight Map page with no database persistence of the state
 
-5. **Build tool**: We need to build a Service Worker to cache HTML pages and static assets as WebSocket-rendered pages require special handling for offline access.
-   We use `Vite` as the build tool to bundle and optimize the application and enable PWA features seamlessly
+5. **Build tool**:
+   We use `Vite` as the build tool to bundle and optimize the application and enable PWA features seamlessly.
+   We need to build a Service Worker to cache HTML pages and static assets as WebSocket-rendered pages require special handling for offline access.
 
-## Key points for offline collaborative
-
-### Design goals
+## Design goals
 
 - **collaborative** (online): Clients sync via _pubsub updates_ when connected, ensuring real-time consistency.
-- **optimistic UI** the function "click on stock" assumes success and will reconciliate later.
+- **optimistic UI**: The function "click on stock" assumes success and will reconciliate later.
+- **embedded database**: We use `SQLite`.
 - **Offline-First**: The app remains functional offline (through reactive JS components), with clients converging to the correct state on reconnection.
-- **Business Rules for the stock page**: When users resync, the server enforces a "lowest stock count" rule: if two clients pick items offline, the server selects the lowest remaining stock post-merge, rather that summing te reduction, for simplicity.
-- **PWA**: full PWA features, meaning instalable and updatable.
+- **PWA**: Full PWA features, meaning it can be _installed_ as a standalone app and can be _updated_. A `Service Worker` runs in a separate thread and caches assets. It is setup with `VitePWA`
+- **Business Rules**:
 
-### Architecture - Stock page
+  - For the stock page: When users resync, the server enforces a "lowest stock count" rule: if two clients pick items offline, the server selects the lowest remaining stock post-merge, rather that summing the reduction, for simplicity.
+  - For the LiveFlight page, none.
+
+## Architecture
+
+### Tech overview
+
+| Component                  | Role                                                                                                              |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Vite                       | Build and bundling framework                                                                                      |
+| SQLite                     | Embedded persistent storage of latest Yjs document                                                                |
+| Phoenix LiveView           | UI rendering, incuding hooks                                                                                      |
+| PubSub / Phoenix.Channel   | Broadcast/notifies other clients of updates / conveys CRDTs binaries on a separate websocket (from te LiveSocket) |
+| Yjs / Y.Map                | Holds the CRDT state client-side (shared)                                                                         |
+| Valtio                     | Holds local ephemeral state                                                                                       |
+| y-indexeddb                | Persists state locally for offline mode                                                                           |
+| SolidJS                    | renders reactive UI using signals, driven by Yjs observers                                                        |
+| Hooks                      | Injects communication primitives and controls JavaScript code                                                     |
+| Service Worker / Cache API | Enable offline UI rendering and navigation by caching HTML pages and static assets                                |
+| Leaflet                    | Map rendering                                                                                                     |
+| MapTiler                   | enable vector tiles                                                                                               |
+| WebAssembly container      |  high-performance calculations for map "great-circle" routes use `Zig` code compiled to `WASM`                    |
+
+### LiveStock page
 
 You have both CRDT-based synchronization (for convergence) and server-enforced business rules (for consistency).
+We thus have two Layers of Authority:
 
-We have two Layers of Authority:
+- CRDT Sync Layer (Collaborative):
+  Clients and server synchronize using Yjs CRDTs to merge concurrent edits _deterministically_.
+  Clients can modify their local Y-Doc freely (offline or online).
 
-1. CRDT Sync Layer (Collaborative).
-   Clients and server synchronize using Yjs’s CRDTs to merge concurrent edits _deterministically_.
-   Clients can modify their local Y-Doc freely (offline or online).
+- Business Rules Layer (Authoritative):
+  The server is authoritative. It validates updates upon the business logic (e.g., stock validation), and broadcasts the canonical state to all clients.
+  Clients propose changes, but the server decides the final state (e.g., enforcing stock limits).
 
-2. Business Rules Layer (Authoritative).
-   The server is authoritative: it validates updates upon the business logic (e.g., stock validation), and broadcasts the canonical state to all clients.
-   Clients propose changes, but the server decides the final state (e.g., rejecting overflows, enforcing stock limits).
-
-### Implementation highlights - Stock page
+### Implementation highlights
 
 - **Offline capabilities**:
   Edits are saved to `y-indexeddb` and sent later.
-  `Service Worker` caches assets - setup with `VitePWA` - for full offline functionality.
 
 - **Synchronization Flow**:
   Client sends all pending `Yjs` updates on (re)connection.
   The client updates his local `Y-Doc` with the server responses.
-  `Y-Doc` mutations trigger UI rendering, and reciprocally, UI modifications update the `Y -Doc` and propagate mutations to the server.
+  `Y-Doc` mutations trigger UI rendering, and reciprocally, UI modifications update the `Y-Doc` and propagate mutations to the server.
 
 - **Server Processing**::
   Merges updates into the `SQLite3`-stored `Y-Doc` (using `y_ex`).
@@ -126,13 +156,14 @@ We have two Layers of Authority:
 
 - **Data Transport**:
   Use `Phoenix.Channel` to transmit the `Y-Doc` state as binary.
-  This minimizes bandwith usage
-  It decouples CRDT synchronization from the LiveSocket.
+  This minimizes bandwith usage and decouples CRDT synchronization from the LiveSocket.
   Implementation heavily inspired by the repo <https://github.com/satoren/y-phoenix-channel> made by the author of `y_ex`.
 
 - **Component Rendering Strategy**:
   - online: use LiveView hooks
   - offline: hydrate the cached HTML documents with reactive JavaScript components
+
+### LiveFLight page
 
 ## About PWA
 
@@ -141,25 +172,23 @@ A Progressive Web App (PWA) is a type of web application that provides an app-li
 It has:
 
 - offline support
-- is "instalable"
+- is "instalable":
 
 <img width="135" alt="Screenshot 2025-05-08 at 22 02 40" src="https://github.com/user-attachments/assets/dddaaac7-9255-419b-a5ad-44a2a891e93a" />
 <br/>
 
-The core components are:
+The core components are setup using `Vite` in the _vite.config.js_ file.
 
 - **Service Worker**:
   A background script - separate thread - that acts as a proxy: intercepts network requests and enables offline caching and background sync.
+  We use the `VitePWA` plugin to enable the Service Worker life-cycle (manage updates)
 
 - Web App **Manifest** (manifest.webmanifest)
   A JSON file that defines the app’s name, icons, theme color, start URL, etc., used to install the webapp.
+  We produce the Manifest with `Vite` via in the "vite.
 
-- HTTPS:
+- HTTPS (or localhost):
   Required for secure context: it enables Service Workers and trust.
-
-We generate the Service Worker and inject the Manifest with `Vite` via in the "vite.config.js" file.
-
-We use the `VitePWA` plugin to enable the Service Worker life-cycle (manage updates)
 
 ### Updates life-cycle
 
@@ -230,9 +259,7 @@ sequenceDiagram
 {:nimble_csv, "~> 1.2"},
 ```
 
-Client package are setup with `pnpm` (or `bun`).
-
-Check [package.json](https://github.com/dwyl/PWA-Liveview/blob/main/assets/package.json)
+Client package are setup with `pnpm` (or `bun`): check [▶️ package.json](https://github.com/dwyl/PWA-Liveview/blob/main/assets/package.json)
 
 1/ **dev** setup with _IEX_ session
 
@@ -246,57 +273,19 @@ iex -S mix phx.server
 
 2/ Before deploy, run a local Docker container in **mode=prod**
 
-<details><summary>docker-compose.yml file</summary>
-
-```dockerfile
-services:
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "4000:4000"
-    volumes:
-      - db:/app/data
-    user: nobody
-    env_file:
-      - .env
-
-volumes:
-  db:
-    name: db
-```
-
-</details>
-<br/>
-
 ```sh
 docker compose up --build
 ```
 
-You can take a look at the build artifacts by running into another terminal:
+[▶️ Dockerfile](https://github.com/dwyl/PWA-Liveview/blob/main/Dockerfile)
+
+[▶️ docker-compose.yml](https://github.com/dwyl/PWA-Liveview/blob/main/docker-compose.yml)
+
+> You can take a look at the build artifacts by running into another terminal
 
 ```sh
-docker compose exec -it web cat  lib/solidyjs-0.1.0/priv/static/.vite/manifest.json
+> docker compose exec -it web cat  lib/solidyjs-0.1.0/priv/static/.vite/manifest.json
 ```
-
-## Tech overview
-
-| Component                  | Role                                                                                           |
-| -------------------------- | ---------------------------------------------------------------------------------------------- |
-| Vite                       | Build and bundling framework                                                                   |
-| SQLite                     | Persistent storage of latest Yjs document                                                      |
-| Phoenix LiveView           | UI rendering, incuding hooks                                                                   |
-| PubSub / Phoenix.Channel   | Broadcast/notifies other clients of updates / conveys CRDTs binaries                           |
-| Yjs / Y.Map                | Holds the CRDT state client-side (shared)                                                      |
-| Valtio                     | Holds local ephemeral state                                                                    |
-| y-indexeddb                | Persists state locally for offline mode                                                        |
-| SolidJS                    | renders reactive UI using signals, driven by Yjs observers                                     |
-| Hooks                      | Injects communication primitives and controls JavaScript code                                  |
-| Service Worker / Cache API | Enable offline UI rendering and navigation by caching HTML pages and static assets             |
-| Leaflet                    | Map rendering                                                                                  |
-| MapTiler                   | enable vector tiles                                                                            |
-| WebAssembly container      |  high-performance calculations for map "great-circle" routes use `Zig` code compiled to `WASM` |
 
 ## Diagrams
 
@@ -478,16 +467,16 @@ sequenceDiagram
 </details>
 <br/>
 
-## Demo Pages
+## Pages
 
-### Stock Manager
+### LiveStock Manager
 
 Available at `/`.
 
 <img width="1404" alt="Screenshot 2025-05-08 at 22 05 15" src="https://github.com/user-attachments/assets/ba8373b5-defc-40f9-b497-d0086eb10ccc" />
 <br/>
 
-### Flight Map
+### LiveFlight
 
 Available at `/map`.
 
@@ -508,7 +497,8 @@ Key features:
 > check the folder "/zig-wasm"
 
 > [**Airport dataset**] We use a dataset from <https://ourairports.com/>. We stream download a CSV file, parse it (`NimbleCSV`) and bulk insert into an SQLite table. When a user mounts, we read from the database and pass the data asynchronously to the client via the liveSocket on the first mount. We persist the data in `localStorage` for client-side search. The socket "airports" assign is then pruned to free the server's socket.
-> Check </lib/solidyjs/db/Airports.ex>, </lib/solidyjsweb/live/live_map.ex>
+
+▶️ [Airports](<(https://github.com/dwyl/PWA-Liveview/blob/main/lib/solidyjs/db/Airports.ex)>), [LiveMap](https://github.com/dwyl/PWA-Liveview/blob/main/lib/solidyjsweb/live/live_map.ex)
 
 Below a diagram showing the flow between the database, the server and the client.
 
@@ -534,111 +524,32 @@ sequenceDiagram
 
 ## Navigation
 
-The user navigates between two pages which use the same _live_session_, with no full page reload.
+The user use "live navigation" when online between two pages which use the same _live_session_, with no full page reload.
 
-When the user goes offline, we have the same smooth navigation thanks to the HTML and assets caching, as well as the usage of `y-indexeddb`.
+When the user goes offline, we have the same smooth navigation thanks to navigation hijack an the HTML and assets caching, as well as the usage of `y-indexeddb`.
 
-The Full Lifecycle
+**Lifecycle**:
 
-- Initial Load: App determines if online/offline and sets up accordingly
+- Initial Load: App starts a continous server check. It determines if online/offline and sets up accordingly
 - Going Offline: Triggers component initialization and navigation setup
-- Navigating Offline: Fetches cached pages, cleans up components, updates DOM, re-renders components
-- Going Online: user expects a page refresh and Phoenix LiveView reinitializes.
+- Navigating Offline: cleans up components, fetch cached pages (request proxied by the SW), parse ahd hydrate the DOM to renders components
+- Going Online: when the polling detects a transistion off->on, the user expects a page refresh and Phoenix LiveView reinitializes.
 
-The key points are:
+**Key point**:
 
-- [**memory leaks**] since the reactive components are "phx-udpate= 'ignore'", they have they own lifecycle. The cleanup of these "external" components (subscriptions, listeners, disposal of the components) is essential to remove memory leaks and component ghosting.
-- [**smooth navigation**] the navigation links are `preventDefault()`. Then, we get the corresponding cached page via a `fetch(path)`. It is intercepted by the Service Worker who delivers the correct page.
-- [**hydrate the DOM**] we `parseDom` the received HTML text and inject the desired DOM container with the expected ids, and hydrate it with desired reactive components.
-
-The diagrams illustrates four key areas of the offline navigation system:
-
-1. Startup
-
-The app starts by checking connection status
-Based on the status, it either initializes LiveView (online) or offline components.
-
-```mermaid
-flowchart TD
-  subgraph "Status Management"
-        A[App Starts] --> B{Check Connection}
-        B -->|Online| C[Initialize LiveSocket with Hooks]
-        B -->|Offline| D[Run initOfflineComponents]
-  end
-```
-
-2. Status polling
-
-A polling mechanism continuously checks server connectivity.
-
-When status changes, custom events trigger appropriate handlers.
-
-```mermaid
-flowchart TD
-    subgraph "Polling"
-        P[Polling checkServer] --> Q{Connection Status Changed?}
-        Q -->|Dispatch Event| R[To Offline]
-        Q -->|Dispatch Event| S[To Online]
-        R --> T[Run initOfflineComponents]
-        S --> V[Page Reload]
-    end
-```
-
-3. Offline rendering
-
-The `renderCurrentView()` function is the central function that manages components.
-
-The `cleanupOfflineComponents()` function is calls the stored cleanup functions for each component type.
-Each cleanup function properly disposes of its resources to avoid _memory leaks_.
-
-It then renders the appropriate components (Stock, Map, Form) based on the current page.
-Each component's cleanup function is stored for later use
-Navigation listeners are attached to handle client-side routing without page reload.
-
-```mermaid
-flowchart TD
-    subgraph "Offline Rendering"
-        D[Run initOfflineComponents] --> F[Clean Up Existing Components]
-        F -->E[renderCurrentView]
-        E --> G1[Render Stock Component]
-        E --> H1[Render Map Component]
-        E --> I1[Render Form Component]
-        G1 --> J[Store Cleanup Functions]
-        H1 --> J
-        I1 --> J
-        J --> M[Attach Navigation Listeners]
-    end
-```
-
-4. Offline navigation
-
-When a user clicks a navigation link, `handleOfflineNavigation()` intercepts the click.
-It prevents the default page load behavior.
-Updates the URL using History API (no page reload)
-Fetches the cached HTML for the target page from the Service Worker cache
-Critical Step: Updates the DOM structure with the new page's HTML
-Re-renders components for the new page context
-Re-attaches navigation listeners.
-
-```mermaid
-flowchart TD
-    subgraph "Offline Navigation"
-        N[User Clicks Link] --> O[handleOfflineNavigation]
-        O --> AA[Prevent Default]
-        AA --> BB[Update URL with History API]
-        BB --> CC[Fetch Cached HTML]
-        CC --> DD[Parse HTML]
-        DD --> FF[Update DOM Structure]
-        FF --> GG[Render New Components]
-        GG --> HH[Reattach Navigation Listeners]
-    end
-```
+- ⚠️ **memory leaks**:
+  Since the reactive components are ignored (`phx-udpate= 'ignore'`), they have they own lifecycle.
+  The cleanup of these "external" components (subscriptions, listeners, disposal of the components) is essential to remove memory leaks and _component ghosting_. We store the cleanup functions.
 
 ## Configuration and settings
 
-### PWA and Workbox Caching Strategies
+### Vite and Workbox Caching Strategies
 
-`Vite` generates the Service Worker - based on the `workbox` config - and the _manifest_ in the **"vite.config.js"** file.
+Thte whole `Vite`
+We use the `VitePWA` plugin to
+
+1. Vite
+   `Vite` generates the Service Worker - based on the `workbox` config - and the _manifest_ in the **"vite.config.js"** file.
 
 Static assets are "zstd" compressed.
 
