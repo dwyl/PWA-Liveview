@@ -27,6 +27,7 @@ It uses `Vite` as the bundler.
   - [What?](#what)
   - [Why?](#why)
   - [Design goals](#design-goals)
+  - [Common pitfall of combining LiveView with CSR components](#common-pitfall-of-combining-liveview-with-csr-components)
   - [Architecture](#architecture)
     - [Tech overview](#tech-overview)
     - [LiveStock page](#livestock-page)
@@ -35,29 +36,27 @@ It uses `Vite` as the bundler.
   - [About PWA](#about-pwa)
     - [Updates life-cycle](#updates-life-cycle)
   - [Usage](#usage)
-  - [Diagrams](#diagrams)
+  - [Diagrams and data flow](#diagrams-and-data-flow)
+    - [Architecture flow](#architecture-flow)
+    - [State Synchronization Flow](#state-synchronization-flow)
+    - [Server authority (in our scenario)](#server-authority-in-our-scenario)
+    - [Detailled Sync flow sequence](#detailled-sync-flow-sequence)
   - [Pages](#pages)
     - [LiveStock Manager](#livestock-manager)
     - [LiveFlight](#liveflight)
   - [Navigation](#navigation)
   - [Configuration and settings](#configuration-and-settings)
-    - [Vite and Workbox Caching Strategies](#vite-and-workbox-caching-strategies)
-    - [Server configuration](#server-configuration)
-      - [Phoenix settings: dev build and watcher](#phoenix-settings-dev-build-and-watcher)
-      - [CSP rules and evaluation](#csp-rules-and-evaluation)
-      - [WASM CSP rule](#wasm-csp-rule)
-      - [User token](#user-token)
-    - [Yjs](#yjs)
-      - [Documentation source](#documentation-source)
-      - [Yjs initialization](#yjs-initialization)
-      - [**UI layer**: a `SolidJS` component](#ui-layer-a-solidjs-component)
-  - [State Synchronization Flow](#state-synchronization-flow)
+    - [Static assets](#static-assets)
+    - [VitePWA plugin and Workbox Caching Strategies](#vitepwa-plugin-and-workbox-caching-strategies)
+  - [Yjs and y\_ex](#yjs-and-y_ex)
+  - [Documentation source](#documentation-source)
   - [`Vite` settings](#vite-settings)
   - [Misc](#misc)
-    - [Common pitfall of combining LiveView with CSR components](#common-pitfall-of-combining-liveview-with-csr-components)
+    - [CSP rules and evaluation](#csp-rules-and-evaluation)
+    - [User token](#user-token)
     - [Icons](#icons)
     - [Manifest](#manifest)
-    - [Performance](#performance)
+  - [Performance](#performance)
     - [\[Optional\] Page Caching](#optional-page-caching)
   - [Resources](#resources)
   - [License](#license)
@@ -66,7 +65,7 @@ It uses `Vite` as the bundler.
 
 Context: we want to experiment PWA webapps using Phoenix LiveView.
 
-What are we building? A two pages webapp.
+What are we building? A very simple two pages webap:
 
 - LiveStock. On the first page, we mimic a shopping cart where users can pick items until stock is depleted, at which point the stock is replenished. Every user will see and can interact with this counter
 - LiveFlight. On the second page, we propose an interactive map with a form with two inputs where **two** users can edit collaboratively a form to display markers on the map and then draw a great circle between the two points.
@@ -105,6 +104,16 @@ Traditional Phoenix LiveView applications face several challenges in offline sce
 
   - For the stock page: When users resync, the server enforces a "lowest stock count" rule: if two clients pick items offline, the server selects the lowest remaining stock post-merge, rather that summing the reduction, for simplicity.
   - For the LiveFlight page, none.
+
+## Common pitfall of combining LiveView with CSR components
+
+The client-side rendered components are manually mounted via hooks under the tag `phx-update="ignore"`.
+
+These components have they own lifecycle. They will leak or stack duplicate components if you don't cleanup and unmount them.
+
+The "hook" comes with a handy lifecyle and the `destroyed` callback is essential.
+`SolidJS` makes this easy as it renders a `cleanupSolid` callback (where you take a reference to the SolidJS component in the hook).
+You also need to clean _subscriptions_ (when using a store manager).
 
 ## Architecture
 
@@ -259,7 +268,7 @@ sequenceDiagram
 {:nimble_csv, "~> 1.2"},
 ```
 
-Client package are setup with `pnpm` (or `bun`): check [▶️ package.json](https://github.com/dwyl/PWA-Liveview/blob/main/assets/package.json)
+Client package are setup with `pnpm`: check [▶️ package.json](https://github.com/dwyl/PWA-Liveview/blob/main/assets/package.json)
 
 1/ **dev** setup with _IEX_ session
 
@@ -287,7 +296,9 @@ docker compose up --build
 > docker compose exec -it web cat  lib/solidyjs-0.1.0/priv/static/.vite/manifest.json
 ```
 
-## Diagrams
+## Diagrams and data flow
+
+### Architecture flow
 
 <details>
 <summary>Architecture diagram</summary>
@@ -295,11 +306,10 @@ docker compose up --build
 ```mermaid
 flowchart TD
     subgraph "Client"
-        UI["UI Components\n(SolidJS)"]
-        YDoc["Local Y-Doc\n(CRDT State)"]
-        IndexedDB["IndexedDB\n(Offline Storage)"]
-        ServiceWorker["Service Worker\n(Asset Caching)"]
-        YObserver["Y.js Observer\n(State Change Listener)"]
+        UI["UI Components <br> (SolidJS)"]
+        YDoc["Local Y-Doc <br> (CRDT State)"]
+        IndexedDB["IndexedDB <br> (Offline Storage)"]
+        YObserver["Y.js **Observer** <br>(State Change Listener)"]
 
         UI <--> YDoc
         YDoc <--> IndexedDB
@@ -308,16 +318,16 @@ flowchart TD
     end
 
     subgraph "Communication Layer"
-        PhoenixChannel["Phoenix Channel\n(Binary Updates Transport)"]
-        ConnectionCheck["Connection Status\nMonitoring"]
+        PhoenixChannel["Phoenix Channel <br>(Binary Updates Transport)"]
+        ConnectionCheck["Connection Status <br>Monitoring"]
     end
 
     subgraph "Server (Elixir)"
-        YjsChannel["Yjs Channel\n(YjsChannel Module)"]
-        DocHandler["DocHandler\n(Database Interface)"]
-        YEx["Yex (y-crdt)\n(CRDT Processing)"]
-        BusinessRules["Business Rules\n(apply_if_lower?)"]
-        DB["SQLite\n(Persisted Y-Doc)"]
+        YjsChannel["Yjs Channel <br>(YjsChannel Module)"]
+        DocHandler["DocHandler<br>(Database Interface)"]
+        YEx["Yex (y-crdt)<br>(CRDT Processing)"]
+        BusinessRules["Business Rules <br>(apply_if_lower?)"]
+        DB["SQLite<br>(Persisted Y-Doc)"]
 
         YjsChannel <--> DocHandler
         YjsChannel <--> YEx
@@ -336,6 +346,41 @@ flowchart TD
 </details>
 <br/>
 
+### State Synchronization Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+
+    participant SolidJS
+    participant Yjs
+    participant Hook
+    participant Channel
+    participant OtherClients
+    participant Db
+
+    User->>SolidJS: Interact with UI
+    SolidJS->>Yjs: Update local state
+    Yjs->>Hook: Trigger update event
+    Hook->>Channel: Send state to server
+    Channel->>Yjs: merge db state with update
+    Channel->>Db: persist merged state
+    Channel->>PubSub: Broadcast update
+    PubSub->>OtherClients: Distribute changes
+    OtherClients->>Yjs: Apply update
+    Yjs->>SolidJS: Update UI
+```
+
+- **from the reactive component to Yjs**:
+  We have a reactive component.
+  A local "onClick" handler mutates the `Y.Map` type of the Y_Doc.
+  We set an "observer" on the type `Y.Map` of the YDoc. It updates the "signal":
+
+  - wether from a local click
+  - or remote of the YDoc.
+
+### Server authority (in our scenario)
+
 <details>
 <summary>Server Authority in collaborative mode
 </summary>
@@ -348,27 +393,25 @@ sequenceDiagram
     participant DB
 
     Note over ClientA,ClientB: Online Scenario
-    ClientA->>Server: "init-client" (join channel)
+    ClientA->>Server: "init-client" <br> (join channel)
     Server->>DB: Fetch Y-Doc state
-    DB-->>Server: Y-Doc (current counter)
-    Server-->>ClientA: "init" (binary update)
+    DB-->>ClientA: Y-Doc (current counter) <br> "init" (binary update)
     ClientA->>ClientA: Apply update (Yjs)
-    ClientA->>Server: "yjs-update" (local edit, e.g., counter=5)
-    Server->>DB: Load Y-Doc
-    Server->>Server: apply_if_lower?(old, new)
-    alt Business Rule Passes (new ≤ old)
-        Server->>DB: Save merged Y-Doc
-        Server->>ClientA: "pub-update" (ack)
-        Server->>ClientB: "pub-update" (broadcast)
-    else Reject (new > old)
-        Server->>ClientA: "pub-update" (revert to server state)
+    ClientA->>Server: "yjs-update" <br>(local edit)
+    alt Business Rule: Passes
+        Server->>Server: apply_if_lower?(old, new)
+        Server->>DB: Maybe save merged Y-Doc
+        Server->>ClientA: "pub-update"
+        Server->>ClientB: "pub-update" <br> (broadcast)
+    else Business Rule: Reject
+        Server->>ClientA: "pub-update" <br> (revert client to server state)
     end
 
     Note over ClientA,ClientB: Offline Scenario
-    ClientB->>ClientB: Local edit (counter=3, offline)
+    ClientB->>ClientB: Local edit <br>(counter=3, offline)
     ClientB->>ClientB: Save to y-indexeddb
     ClientB->>Server: Reconnect
-    ClientB->>Server: "yjs-update" (queued offline edits)
+    ClientB->>Server: "yjs-update" <br>(offline edits)
     Server->>DB: Load Y-Doc
     Server->>Server: apply_if_lower?(old=5, new=3)
     Server->>DB: Save merged Y-Doc (counter=3)
@@ -379,13 +422,15 @@ sequenceDiagram
 </details>
 <br/>
 
+### Detailled Sync flow sequence
+
 <details>
 <summary>Detailled Sync flow sequence</summary>
 
 ```mermaid
 sequenceDiagram
     participant Client
-    participant Channel as Phoenix.Channel
+    participant Channel as Channel
     participant YEx as Yex (y-crdt)
     participant DocHandler as DocHandler
     participant DB as SQLite
@@ -473,6 +518,9 @@ sequenceDiagram
 
 Available at `/`.
 
+You click on a counter and it goes down..! The counter is broacasted and handled by a CRDT backed into a SQLite table.
+A user can click offline, and on reconnection, all clients will get updated with the lowest value (business rule).
+
 <img width="1404" alt="Screenshot 2025-05-08 at 22 05 15" src="https://github.com/user-attachments/assets/ba8373b5-defc-40f9-b497-d0086eb10ccc" />
 <br/>
 
@@ -538,67 +586,173 @@ When the user goes offline, we have the same smooth navigation thanks to navigat
 **Key point**:
 
 - ⚠️ **memory leaks**:
-  Since the reactive components are ignored (`phx-udpate= 'ignore'`), they have they own lifecycle.
-  The cleanup of these "external" components (subscriptions, listeners, disposal of the components) is essential to remove memory leaks and _component ghosting_. We store the cleanup functions.
+  With this offline navigation, we never refresh the page. As said before, reactive components and subscriptions need to be cleaned before disposal. We store the cleanup functions and the subscriptions.
 
 ## Configuration and settings
 
-### Vite and Workbox Caching Strategies
+All the client code is managed by `Vite` and done (mostly) in a declarative way in the file [vite.config.js](https://github.com/dwyl/PWA-Liveview/blob/main/assets/vite.config.js).
 
-Thte whole `Vite`
-We use the `VitePWA` plugin to
+> Most declarations are done programatically as it is run by `NodeJS`.
 
-1. Vite
-   `Vite` generates the Service Worker - based on the `workbox` config - and the _manifest_ in the **"vite.config.js"** file.
-
-Static assets are "zstd" compressed.
-
-### Server configuration
-
-#### Phoenix settings: dev build and watcher
+There is a watcher configured in "config/dev.exs" which replaces, thus removes, `esbuild` and `tailwindCSS` (which are also removed from the mix deps).
 
 ```elixir
-# endpoint.ex
+watchers: [
+    npx: [
+      "vite",
+      "build",
+      "--mode",
+      "development",
+      "--watch",
+      "--config",
+      "vite.config.js",
+      cd: Path.expand("../assets", __DIR__)
+    ]
+  ]
+```
 
+### Static assets
+
+We do not use the step `mix phx.digest` and removed from the Dockerfile.
+We fingerprint and compress the static files via `Vite`.
+
+```js
+rollupOptions.output: {
+  assetFileNames: "assets/[name]-[hash][extname]",
+  chunkFileNames: "assets/[name]-[hash].js",
+  entryFileNames: "assets/[name]-[hash].js",
+},
+```
+
+We do this because we want the SW to be able to detect client code changes and update the app. The Phoenix work would interfer.
+
+**Caveate**:
+
+When assets are not fingerprinted, Phoenix can serve them "normally":
+
+```elixir
+<link rel="icon" href="/favicon.ico" type="image/png" sizes="48x48" />
+<link rel="manifest" href="/manifest.webmanifest" />
+```
+
+When the assets reference is fingerprinted, then we use the `.vte/manifest` dictionary to find the new name. We used a helper [ViteHelper](https://github.com/dwyl/PWA-Liveview/blob/main/lib/soldiyjsweb/vite_helper.ex):
+
+```elixir
+<link
+  phx-track-static
+  rel="stylesheet"
+  href={ViteHelper.path("css/app.css")}
+  # href={~p"/assets/app.css"}
+  crossorigin="anonymous"
+/>
+
+<script
+  defer
+  phx-track-static
+  nonce={assigns[:main_nonce]}
+  type="module"
+  src={ViteHelper.path("js/main.js")}
+  # src={~p"/app.css"}
+  crossorigin="anonymous"
+>
+</script>
+```
+
+Not all assets need to be fingerprinted, such as "robotx.txt", icons.... To copy these files , we use the plugin `vite-plugin-static-copy`.
+
+We also compress files to **ZSTD** known for its compression performance and deflating speed. We use the plugin `vite-plugin-compression2` and use `@mongodb-js/zstd`.
+
+We modify "endpoint.ex" to accept these encodings:
+
+```elixir
 plug Plug.Static,
-    encodings: [{"zstd", ".zstd"}],
-    brotli: true,
-    gzip: true,
-    at: "/",
-    from: :solidyjs,
-    only: ~w(
-      assets
-      icons
-      robots.txt
-      sw.js
-      manifest.webmanifest
-      sitemap.xml
-      ),
-    headers: %{
-      "cache-control" => "public, max-age=31536000"
-    }
+  encodings: [{"zstd", ".zstd"}],
+  brotli: true,
+  gzip: true,
+  at: "/",
+  from: :solidyjs,
+  only: ~w(
+    assets
+    icons
+    robots.txt
+    sw.js
+    manifest.webmanifest
+    sitemap.xml
+    ),
+  headers: %{
+    "cache-control" => "public, max-age=31536000"
+  }
+  [...]
 ```
 
-The watcher config is:
+### VitePWA plugin and Workbox Caching Strategies
 
-```elixir
-# config/dev.exs
-:solidyjs, SolidyjsWeb.Endpoint,
-   watchers: [
-     npx: [
-       "vite",
-       "build",
-       "--mode",
-       "development",
-       "--watch",
-       "--config",
-       "vite.config.js",
-       cd: Path.expand("../assets", __DIR__)
-     ],
-   ]
+We use the `VitePWA` plugin to generate the SW and the manifest.
+
+```js
+PWAConfig = {
+  // Don't inject <script> to register SW (handled manually)
+  // and there no client generated "index.html" by Phoenix
+  injectRegister: false, // no client generated "index.html" by Phoenix
+
+  // Let Workbox auto-generate the service worker from config
+  strategies: "generateSW",
+
+  // App manually prompts user to update SW when available
+  registerType: "prompt",
+
+  // SW lifecycle ---
+  // Claim control over all uncontrolled pages as soon as the SW is activated
+  clientsClaim: true,
+
+  // Let app decide when to update; user must confirm or app logic must apply update
+  skipWaiting: false,
+
+  workbox: ...
+}
 ```
 
-#### CSP rules and evaluation
+❗️ It is important not to split the "sw.js" file because `Vite` produces a fingerprint from the splitted files. However, Phoenix serves them and can't know the name in advance.
+
+```js
+workbox: {
+  // Disable to avoid interference with Phoenix LiveView WebSocket negotiation
+  navigationPreload: false
+
+  // ❗️ no fallback to "index.html" as it does not exist
+  navigateFallback: null
+
+  // ‼️ tell Workbox not to split te SW as the other is fingerprinted, thus unknown to Phoenix.
+  inlineWorkboxRuntime: true,
+
+}
+```
+
+For the Service Worker lifecycle, set:
+
+```js
+defineConfig = {
+  // Disable default public dir (using Phoenix's)
+  publicDir: false,
+};
+```
+
+## Yjs and y_ex
+
+## Documentation source
+
+- Update API: <https://docs.yjs.dev/api/document-updates#update-api>
+- Event handler "on": <https://docs.yjs.dev/api/y.doc#event-handler>
+- local persistence with IndexedDB: <https://docs.yjs.dev/getting-started/allowing-offline-editing>
+- Transactions: <https://docs.yjs.dev/getting-started/working-with-shared-types#transactions>
+- Map shared type: <https://docs.yjs.dev/api/shared-types/y.map>
+- observer on shared type: <https://docs.yjs.dev/api/shared-types/y.map#api>
+
+## `Vite` settings
+
+## Misc
+
+### CSP rules and evaluation
 
 The application implements security CSP headers set by a plug: `BrowserCSP`.
 
@@ -658,11 +812,9 @@ Indeed, the "root" template is rendered on the first mount, and has access to th
 <img width="581" alt="Screenshot 2025-05-02 at 21 18 09" src="https://github.com/user-attachments/assets/f80d2c0e-0f2f-460c-bec6-e0b5ff884120" />
 <br/>
 
-#### WASM CSP rule
-
 The WASM module needs `'wasm-unsafe-eval'` as the browser runs `eval`.
 
-#### User token
+### User token
 
 We also protect the custom socket with a "user_token", generated by the server with `Phoenix.Token`.
 
@@ -676,170 +828,6 @@ Instead, we pass it as a data-attirbute and save it in _sessionStorage_ .
 - We can then assign the socket.
 - In the "app.html.heex" layout, we use a simple `<div>` and set `data-user-token={@user_token}`. Indeed this template can access the liveSocket assigns.
 - in the JavaScript, we access this div and read the data-attribute.
-
-### Yjs
-
-#### Documentation source
-
-- Update API: <https://docs.yjs.dev/api/document-updates#update-api>
-- Event handler "on": <https://docs.yjs.dev/api/y.doc#event-handler>
-- local persistence with IndexedDB: <https://docs.yjs.dev/getting-started/allowing-offline-editing>
-- Transactions: <https://docs.yjs.dev/getting-started/working-with-shared-types#transactions>
-- Map shared type: <https://docs.yjs.dev/api/shared-types/y.map>
-- observer on shared type: <https://docs.yjs.dev/api/shared-types/y.map#api>
-
-#### Yjs initialization
-
-On each connection, a client starts a new local YDoc instance with an IndexedDB instance.
-
-<details>
-<summary>Yjs initialization</summary>
-
-```js
-// Initialize Y.js with IndexedDB persistence
-async function initYJS() {
-  const Y = await import("yjs");
-  const { IndexeddbPersistence } = await import("y-indexeddb");
-
-  // Create a new Y.js document with IndexedDB storage
-  const storeName = "app-store";
-  const ydoc = new Y.Doc();
-  const provider = new IndexeddbPersistence(storeName, ydoc);
-
-  // Wait for initial sync from IndexedDB
-  await provider.whenSynced;
-
-  return ydoc;
-}
-```
-
-</details>
-</br>
-
-#### **UI layer**: a `SolidJS` component
-
-It basically render the counter that contains:
-
-- a local "onClick" handler that mutates the `Y.Map` type of the YDoc,
-- an "observer" on the type `Y.Map` of the YDoc. It updates the "signal", wether from a local - from the onClick - or remote - from the hook - mutation of the YDoc.
-
-<details>
-<summary>SolidJS Stock component</summary>
-
-```js
-// ❗️ do not destructure the "props" argument
-(props) => {
-  const ymap = props.ydoc.getMap("data");
-  const [localStock, setLocalStock] = createSignal(
-    ymap.get("counter") || defaultValue
-  );
-
-  // Handle local updates in a transaction
-  const handleUpdate = (newValue) => {
-    ydoc.transact(() => {
-      ymap.set("counter", newValue);
-    }, "local");
-    setLocalStock(newValue);
-  };
-// Listen to any change (local above or remote)
-ymap.observe((event) => {
-  if (event.changes.keys.has("counter")) {
-    setLocalStock(ymap.get("counter"));
-  }
-});
-
-render(...)
-}
-
-```
-
-</details>
-</br>
-
-## State Synchronization Flow
-
-```mermaid
-sequenceDiagram
-    participant User
-
-    participant SolidJS
-    participant Yjs
-    participant Hook
-    participant Channel
-    participant OtherClients
-    participant Db
-
-    User->>SolidJS: Interact with UI
-    SolidJS->>Yjs: Update local state
-    Yjs->>Hook: Trigger update event
-    Hook->>Channel: Send state to server
-    Channel->>Yjs: merge db state with update
-    Channel->>Db: persist merged state
-    Channel->>PubSub: Broadcast update
-    PubSub->>OtherClients: Distribute changes
-    OtherClients->>Yjs: Apply update
-    Yjs->>SolidJS: Update UI
-```
-
-## `Vite` settings
-
-```js
-PWAConfig = {
-  // Don't inject <script> to register SW (handled manually)
-  // and there no client generated "index.html" by Phoenix
-  injectRegister: false, // no client generated "index.html" by Phoenix
-
-  // Let Workbox auto-generate the service worker from config
-  strategies: "generateSW",
-
-  // App manually prompts user to update SW when available
-  registerType: "prompt",
-
-  // SW lifecycle ---
-  // Claim control over all uncontrolled pages as soon as the SW is activated
-  clientsClaim: true,
-
-  // Let app decide when to update; user must confirm or app logic must apply update
-  skipWaiting: false,
-
-  workbox: ...
-}
-```
-
-It is important not to split the "sw.js" file because `Vite` produces
-a fingerprint from the splitted files. Since Phoenix serves, and we don't
-know the name in advance,
-
-```js
-workbox: {
-  // Disable to avoid interference with Phoenix LiveView WebSocket negotiation
-  navigationPreload: false
-
-  // ❗️ no fallback to "index.html" as it does not exist
-  navigateFallback: null
-
-  // ‼️ tell Workbox not to split te SW as the other is fingerprinted, thus unknown to Phoenix.
-  inlineWorkboxRuntime: true,
-
-}
-```
-
-For the Service Worker lifecycle, set:
-
-```js
-defineConfig = {
-  // Disable default public dir (using Phoenix's)
-  publicDir: false,
-};
-```
-
-## Misc
-
-### Common pitfall of combining LiveView with CSR components
-
-The client-side rendered components are manually mounted via hooks.
-They will leak or stack duplicate components if you don't cleanup and unmount them.
-You can use the `destroyed` callback where you can use `SolidJS` makes this easy with a `cleanupSolid` callback (where you take a reference to the SolidJS component in the hook).
 
 ### Icons
 
@@ -882,7 +870,9 @@ The "manifest.webmanifest" file will be generated from "vite.config.js".
 </head>
 ```
 
-### Performance
+## Performance
+
+Lighthouse results:
 
 <div align="center"><img width="619" alt="Screenshot 2024-12-28 at 04 45 26" src="https://github.com/user-attachments/assets/e6244e79-2d31-47df-9bce-a2d2a4984a33" /></div>
 

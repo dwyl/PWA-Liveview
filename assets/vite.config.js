@@ -374,6 +374,7 @@ const resolveConfig = {
     "@jsx": jsDir,
     "@css": cssDir,
     "@static": staticDir,
+    "@assets": srcImgDir,
   },
   extensions: [".js", ".jsx", "png", ".css", "webp", "jpg", "svg"],
 };

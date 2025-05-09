@@ -2,18 +2,8 @@ import { createEffect, createSignal, lazy } from "solid-js";
 import { render } from "solid-js/web";
 import { subscribe } from "valtio/vanilla";
 import { state } from "@js/stores/vStore";
-import flyUrl from "../../images/fly.svg?url";
-import delUrl from "../../images/delete.svg?url";
-
-// function Icon(props) {
-//   return (
-//     <img
-//       src={props.url}
-//       alt="Fly Icon"
-//       class="w-6 h-6 mr-2 aspect-square object-contain"
-//     />
-//   );
-// }
+import flyUrl from "@assets/fly.svg?url";
+import delUrl from "@assets/delete.svg?url";
 
 let dispose = null;
 export const CitiesForm = (props) => {
