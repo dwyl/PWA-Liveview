@@ -626,16 +626,17 @@ rollupOptions.output: {
 
 We do this because we want the SW to be able to detect client code changes and update the app. The Phoenix work would interfer.
 
-**Caveate**:
+**Caveat**: fingerprinted fils have dynamic name so how to pass them to the "root.html.heex" component?
 
-When assets are not fingerprinted, Phoenix can serve them "normally":
+When assets are not fingerprinted, Phoenix can serve them "normally" as names are known:
 
 ```elixir
 <link rel="icon" href="/favicon.ico" type="image/png" sizes="48x48" />
 <link rel="manifest" href="/manifest.webmanifest" />
 ```
 
-When the assets reference is fingerprinted, then we use the `.vte/manifest` dictionary to find the new name. We used a helper [ViteHelper](https://github.com/dwyl/PWA-Liveview/blob/main/lib/soldiyjsweb/vite_helper.ex):
+When the asset reference is fingerprinted, we use the `.vte/manifest` dictionary to find the new name.
+We used a helper [ViteHelper](https://github.com/dwyl/PWA-Liveview/blob/main/lib/soldiyjsweb/vite_helper.ex):
 
 ```elixir
 <link
