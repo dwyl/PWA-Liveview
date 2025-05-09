@@ -1016,4 +1016,4 @@ Besides Phoenix LiveView:
 
 ## License
 
-[MIT License](LICENSE)
+[GNU License](LICENSE)
