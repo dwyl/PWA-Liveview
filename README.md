@@ -142,7 +142,7 @@ It has:
 
 - offline support
 - is "instalable"
-  
+
 <img width="135" alt="Screenshot 2025-05-08 at 22 02 40" src="https://github.com/user-attachments/assets/dddaaac7-9255-419b-a5ad-44a2a891e93a" />
 <br/>
 
@@ -173,9 +173,9 @@ In action:
 <img width="1413" alt="Screenshot 2025-05-08 at 09 40 28" src="https://github.com/user-attachments/assets/a4086fe3-4952-48de-818c-b12fe1819823" />
 <br/>
 
-2) Click the "refresh needed"
--> the Service Worker and client claims are updated seamlessly, and the button is in the hidden "normal" state.
-   
+2. Click the "refresh needed"
+   -> the Service Worker and client claims are updated seamlessly, and the button is in the hidden "normal" state.
+
 <img width="1414" alt="Screenshot 2025-05-08 at 09 41 55" src="https://github.com/user-attachments/assets/7687fd61-f5b8-4298-ab96-144cdb297e6e" />
 </br>
 
@@ -640,15 +640,32 @@ flowchart TD
 
 `Vite` generates the Service Worker - based on the `workbox` config - and the _manifest_ in the **"vite.config.js"** file.
 
+Static assets are "zstd" compressed.
+
 ### Server configuration
 
 #### Phoenix settings: dev build and watcher
 
 ```elixir
 # endpoint.ex
-def static_paths do
-  ~w(assets fonts images favicon.ico robots.txt sw.js manifest.webmanifest)
-end
+
+plug Plug.Static,
+    encodings: [{"zstd", ".zstd"}],
+    brotli: true,
+    gzip: true,
+    at: "/",
+    from: :solidyjs,
+    only: ~w(
+      assets
+      icons
+      robots.txt
+      sw.js
+      manifest.webmanifest
+      sitemap.xml
+      ),
+    headers: %{
+      "cache-control" => "public, max-age=31536000"
+    }
 ```
 
 The watcher config is:
