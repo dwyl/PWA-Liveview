@@ -12,7 +12,7 @@ export const PwaHook = {
     console.log("[PwaHook] ------> destroyed");
   },
   async mounted() {
-    console.log("[PwaHook] -----> mounted");
+    // console.log("[PwaHook] -----> mounted");
     const _this = this;
 
     this.handleEvent("sw-lv-skip-waiting", () => {

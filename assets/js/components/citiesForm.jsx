@@ -5,7 +5,7 @@ import { state } from "@js/stores/vStore";
 
 let dispose = null;
 export const CitiesForm = (props) => {
-  console.log("CitiesForm component mounting");
+  // console.log("CitiesForm component mounting");
   if (dispose) dispose();
 
   const [isInitialized, setIsInitialized] = createSignal(false);
@@ -19,12 +19,12 @@ export const CitiesForm = (props) => {
   // this will run if Valtio detects a change in the airports state
   function setCitiesFromState() {
     const { airports } = state;
-    console.log(
-      "subscribe runs",
-      airports.length,
-      cities().length,
-      isInitialized()
-    );
+    // console.log(
+    //   "subscribe runs",
+    //   airports.length,
+    //   cities().length,
+    //   isInitialized()
+    // );
     if (airports.length > 0) {
       setCities(airports);
       setIsInitialized(true);
@@ -151,6 +151,6 @@ export const CitiesForm = (props) => {
   return () => {
     unsubscribe();
     dispose();
-    console.log("CitiesForm component unmounted");
+    // console.log("CitiesForm component unmounted");
   };
 };

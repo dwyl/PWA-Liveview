@@ -124,7 +124,7 @@ export async function createFlightObserver({ L, map, group }) {
         unFlight = null;
       }
       group.clearLayers();
-      console.log("unsubscribed from flight and clearLayers");
+      // console.log("unsubscribed from flight and clearLayers");
     },
   };
 }
@@ -184,7 +184,7 @@ export function createSelectionObserver({ L, group, userID, _this }) {
       if (unsubscribeDeletion) unsubscribeDeletion();
       markersMap.clear();
       group.clearLayers();
-      console.log("unsubscribed from selection and deletion and markersMap");
+      // console.log("unsubscribed from selection and deletion and markersMap");
     },
   };
 }

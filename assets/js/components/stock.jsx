@@ -24,7 +24,7 @@ export const Stock = (props) => {
   ymap.observe(updateStockSignal);
 
   function updateStockSignal(event, { origin }) {
-    console.log("origin: ", origin);
+    // console.log("origin: ", origin);
     if (event.keysChanged.has("counter")) {
       // y_ex sends BigInt so we convert it into an integer
       setLocalStock(Math.round(Number(ymap.get("counter"))));

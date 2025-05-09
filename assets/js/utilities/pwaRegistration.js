@@ -25,10 +25,10 @@ export async function registerServiceWorker() {
         }
       },
       onOfflineReady: () => {
-        console.log(
-          "[SW] Ready, app now works offline",
-          window.liveSocket.isConnected()
-        );
+        // console.log(
+        //   "[SW] Ready, app now works offline",
+        //   window.liveSocket.isConnected()
+        // );
         if (window.liveSocket) {
           try {
             window.dispatchEvent(

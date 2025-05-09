@@ -16,21 +16,23 @@ const APPVERSION = process.env.VITE_APP_VERSION; // Update this when you change 
 const rootDir = path.resolve(__dirname);
 const cssDir = path.resolve(rootDir, "css");
 const jsDir = path.resolve(rootDir, "js");
-const otherDir = path.resolve(rootDir, "other");
+const seoDir = path.resolve(rootDir, "seo");
 const iconsDir = path.resolve(rootDir, "icons");
 const wasmDir = path.resolve(rootDir, "wasm");
 const srcImgDir = path.resolve(rootDir, "images");
 const staticDir = path.resolve(rootDir, "../priv/static");
 const tailwindConfigPath = path.resolve(rootDir, "tailwind.config.js");
 
-// / Create the "static/images" directory if it doesn't exist
+// / Create the "priv/static/icons" directory if it doesn't exist
 // it will hold all the icons
 const destIconsDir = path.resolve(staticDir, "icons");
-fs.existsSync(destIconsDir, (exists) => {
-  if (!exists) {
-    fs.mkdirSync(destIconsDir);
-  }
-});
+if (!fs.existsSync(destIconsDir)) {
+  fs.mkdirSync(destIconsDir, { recursive: true });
+}
+const assetsDir = path.resolve(staticDir, "assets");
+if (!fs.existsSync(assetsDir)) {
+  fs.mkdirSync(assetsDir, { recursive: true });
+}
 
 const Icon16 = "icons/favicon-16.png";
 const Icon32 = "icons/favicon-32.png";
@@ -165,6 +167,19 @@ const buildOps = (mode) => ({
 //   },
 // };
 
+// const Cdn = {
+//   urlPattern: ({ url }) => url.hostname === "cdn.example.com",
+//   handler: "CacheFirst",
+//   options: {
+//     cacheName: "cdn-assets",
+//     cacheableResponse: { statuses: [0, 200] },
+//     expiration: {
+//       maxEntries: 100,
+//       maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+//     },
+//   },
+// }
+
 const LiveView = [
   {
     urlPattern: ({ url }) => {
@@ -235,30 +250,30 @@ const OtherStaticAsset = {
   },
 };
 
-const Fonts = {
-  urlPattern: ({ url }) => {
-    return (
-      url.hostname === "fonts.googleapis.com" ||
-      url.hostname === "fonts.gstatic.com" ||
-      url.pathname.match(/\.(woff|woff2|ttf|otf)$/)
-    );
-  },
-  handler: "CacheFirst",
-  options: {
-    cacheName: "fonts",
-    expiration: {
-      maxAgeSeconds: 60 * 60 * 24 * 365, // 1 hours
-      maxEntries: 20,
-    },
-    matchOptions: {
-      ignoreVary: true, // Important for some external resources
-      ignoreSearch: true, // Ignore query parameters
-    },
-    fetchOptions: {
-      mode: "cors",
-    },
-  },
-};
+// const Fonts = {
+//   urlPattern: ({ url }) => {
+//     return (
+//       url.hostname === "fonts.googleapis.com" ||
+//       url.hostname === "fonts.gstatic.com" ||
+//       url.pathname.match(/\.(woff|woff2|ttf|otf)$/)
+//     );
+//   },
+//   handler: "CacheFirst",
+//   options: {
+//     cacheName: "fonts",
+//     expiration: {
+//       maxAgeSeconds: 60 * 60 * 24 * 365, // 1 hours
+//       maxEntries: 20,
+//     },
+//     matchOptions: {
+//       ignoreVary: true, // Important for some external resources
+//       ignoreSearch: true, // Ignore query parameters
+//     },
+//     fetchOptions: {
+//       mode: "cors",
+//     },
+//   },
+// };
 
 /**
  * List of all caching strategies passed to Workbox
@@ -270,7 +285,7 @@ const runtimeCaching = [
   // Navigation,
   ...LiveView,
   MapTiler, // Add the SDK route before Tiles
-  Fonts,
+  // Fonts,
   OtherStaticAsset,
 ];
 
@@ -282,46 +297,38 @@ const runtimeCaching = [
 const PWAConfig = (mode) => ({
   devOptions: {
     enabled: mode === "development",
-    type: "module",
+    type: "module", //  ES module for dev SW
   },
-  suppressWarnings: false,
-  injectRegister: false,
+  suppressWarnings: true,
+  injectRegister: false, // Don't inject <script> to register SW
   // injectRegister: "auto", // Do not nject the SW registration script as "index.html" does not exist
   filename: "sw.js", // Service worker filename
-  strategies: "generateSW", // Generate service worker
-  registerType: "prompt", // default value
-  // registerType: "autoUpdate", // Let browser handle updates
-  includeAssets: [...fs.readdirSync(iconsDir), ...fs.readdirSync(otherDir)],
-  // "favicon.ico",
-  // "favicon-16.png",
-  // "favicon-32.png",
-  // "favicon-64.png",
-  // "favicon-192.png",
-  // "favicon-512.png",
-  // "pwa-maskable-192.png",
-  // "pwa-maskable-512.png",
-  // "robots.txt",
-  // "sitemap.xml",
+  strategies: "generateSW", // Let Workbox auto-generate the service worker from config
+  registerType: "prompt", // App manually prompts user to update SW when available
+
+  // These files are included in precache manifest (e.g., icons, robots.txt,...)
+  // includeAssets: [
+  //   ...fs.readdirSync(iconsDir).map((f) => path.join(destIconsDir, f)),
+  //   ...fs.readdirSync(seoDir).map((f) => path.join(staticDir, f)),
   // ],
+
   outDir: staticDir,
   manifest: manifestOpts,
   manifestFilename: "manifest.webmanifest",
   injectManifest: false, // Do not inject the SW registration script as "index.html" does not exist
-  // injectRegister: "auto", // Automatically inject the SW registration script
 
   // Cache exceptions
   ignoreURLParametersMatching: [
-    /^vsn$/,
-    /^_csrf$/,
-    /^t$/, // Timestamp params
+    /^vsn$/, // Phoenix versioning param
+    /^_csrf$/, // CSRF protection param
   ],
 
   workbox: {
     navigationPreload: false, // Ensure WebSocket connections aren't cached
 
+    // no fallback to "index.html" as it does not exist
     navigateFallback: null, // ⚠️ Critical for LiveView
     navigateFallbackDenylist: [/^\/websocket/, /^\/live/],
-
     swDest: path.resolve(staticDir, "sw.js"),
 
     // ⚠️  Inline the Workbox runtime into the service worker.
@@ -329,9 +336,7 @@ const PWAConfig = (mode) => ({
     inlineWorkboxRuntime: true,
 
     // -> Cache control
-    // globPatterns: ["assets/**/*.*"],
-    globPatterns: ["assets/**/*.*"],
-
+    globPatterns: ["assets/**/*.*"], // Cache only compiled Vite assets
     maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10MB
 
     // -> Cache exceptions: tells Workbox which URL parameters to ignore
@@ -342,22 +347,17 @@ const PWAConfig = (mode) => ({
     ],
 
     additionalManifestEntries: [
-      { url: "/", revision: `${Date.now()}` },
-      { url: "/map", revision: `${Date.now()}` },
+      { url: "/", revision: `${Date.now()}` }, // Manually precache root route
+      { url: "/map", revision: `${Date.now()}` }, // Manually precache map route
     ],
     runtimeCaching,
-    // mode === "development" ? [] : runtimeCaching, // Apply our caching strategies defined above
-
     // Update behaviour
-    clientsClaim: true, // take control of all open pages as soon as the service worker activates
+    clientsClaim: true, // Claim control over all uncontrolled pages as soon as the SW is activated
     skipWaiting: false, // let UI control when updates apply, not immediately
     // Without these settings, you might have some pages using old service worker versions
     // while others use new ones, which could lead to inconsistent behavior in your offline capabilities.
     // Ensure HTML responses are cached correctly
     cleanupOutdatedCaches: true,
-
-    // dontCacheBustURLsMatching: /^\/assets\/.*\.\w{20}\./, // Phoenix hashed assets
-
     mode: mode === "development" ? "development" : "production", // workbox own mode
   },
 });
@@ -380,18 +380,16 @@ const resolveConfig = {
   extensions: [".js", ".jsx", "png", ".css", "webp", "jpg", "svg"],
 };
 
-const staticCopy = {
-  targets: [
-    {
-      src: path.resolve(otherDir, "**", "*"),
-      dest: path.resolve(staticDir),
-    },
-    {
-      src: path.resolve(iconsDir, "**", "*"),
-      dest: path.resolve(destIconsDir),
-    },
-  ],
-};
+const targets = [
+  {
+    src: path.resolve(seoDir, "**", "*"),
+    dest: path.resolve(staticDir),
+  },
+  {
+    src: path.resolve(iconsDir, "**", "*"),
+    dest: path.resolve(destIconsDir),
+  },
+];
 
 const compressOpts = {
   // https://github.com/nonzzz/vite-plugin-compression/discussions/61#discussioncomment-10243200
@@ -404,18 +402,6 @@ const compressOpts = {
   filename: `[path][base].zstd`,
   deleteOriginalAssets: false,
 };
-// const compressionOpts = {
-//   algorithm: "zstd",
-//   deleteOriginFile: false,
-//   // deleteOriginalAssets: true,
-//   threshold: 5240,
-//   verbose: true,
-//   filter: /\.(js|jpg|webp|css|html|svg)$/,
-
-//   compressionOptions: {
-//     level: 3, // Try different compression levels (1-22)
-//   },
-// };
 
 // const compressionOpts = {
 //   algorithm: "brotliCompress",
@@ -427,6 +413,7 @@ const compressOpts = {
 //     return /\.(js|jpg|webp|css|html|svg|json)$/.test(file);
 //   },
 // };
+
 // =============================================
 // Main Configuration Export
 // =============================================
@@ -442,17 +429,18 @@ export default defineConfig(({ command, mode }) => {
   }
 
   return {
-    base: "/",
+    base: "/", // "https://cdn.example.com/assets/", // CDN base URL
     plugins: [
       wasm(),
       solidPlugin(),
       VitePWA(PWAConfig(mode)),
-      viteStaticCopy(staticCopy),
+      viteStaticCopy({ targets }),
       compression(compressOpts),
       // mode == "production" ? viteCompression(compressionOpts) : null,
     ],
     resolve: resolveConfig,
-    publicDir: false, // Disable default public dir (using Phoenix's)
+    // Disable default public dir (using Phoenix's)
+    publicDir: false,
     build: buildOps(mode),
     css: {
       postcss: {

@@ -22,7 +22,7 @@ export const StockYHook = ({ ydoc, ydocSocket }) => ({
 
     this.stockComponent = this.stockComponent.bind(this);
     this.cleanupSolid = await this.stockComponent();
-    console.log("[StockYHook] ~~~~~~~~~~> mounted");
+    // console.log("[StockYHook] ~~~~~~~~~~> mounted");
 
     this.setupChannel = this.setupChannel.bind(this);
     this.handleYUpdate = this.handleYUpdate.bind(this);
@@ -99,7 +99,7 @@ export const StockYHook = ({ ydoc, ydocSocket }) => ({
 
   //  sync with server if local change and not initial load
   async handleYUpdate(update, origin) {
-    console.log("handleYUpdate", origin, this.connectionCheckInterval);
+    // console.log("handleYUpdate", origin, this.connectionCheckInterval);
     if (origin !== "remote" && origin !== "init") {
       this.isOnline = await checkServer();
       if (this.isOnline) {
@@ -107,7 +107,7 @@ export const StockYHook = ({ ydoc, ydocSocket }) => ({
         return this.channel
           .push("yjs-update", update.buffer)
           .receive("ok", () => {
-            console.log("Successfully pushed to server");
+            // console.log("Successfully pushed to server");
           });
       }
     }
@@ -119,10 +119,10 @@ export const StockYHook = ({ ydoc, ydocSocket }) => ({
 
     // sync local state with server on init
     const update = Y.encodeStateAsUpdate(ydoc);
-    console.log("[syncWithServer]--------", update.length);
+    // console.log("[syncWithServer]--------", update.length);
     if (update.length == 2) {
       return this.channel.push("init-client", {}).receive("ok", () => {
-        console.log("Successfully instantiated sync with server");
+        // console.log("Successfully instantiated sync with server");
         clearInterval(this.connectionCheckInterval);
         this.connectionCheckInterval = null;
       });

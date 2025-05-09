@@ -96,7 +96,7 @@ window.addEventListener("connection-status-changed", async (e) => {
 
 // Selectively start
 async function init(isOnline) {
-  console.log("Start Init online? :", isOnline);
+  // console.log("Start Init online? :", isOnline);
   try {
     const { configureTopbar } = await import("@js/utilities/configureTopbar");
     configureTopbar();
@@ -158,12 +158,12 @@ async function initLiveSocket() {
     liveSocket.connect();
     // liveSocket.enableDebug();
 
-    liveSocket.getSocket().onOpen(async () => {
-      console.log(
-        "Is the LiveSocket connected ? ",
-        liveSocket?.socket.isConnected()
-      );
-    });
+    // liveSocket.getSocket().onOpen(async () => {
+    //   console.log(
+    //     "Is the LiveSocket connected ? ",
+    //     liveSocket?.socket.isConnected()
+    //   );
+    // });
     return liveSocket;
   } catch (error) {
     console.error("Error initializing LiveSocket:", error);

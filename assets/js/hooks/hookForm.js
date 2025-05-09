@@ -24,7 +24,7 @@ export const FormHook = {
 
     const { CitiesForm } = await import("@jsx/components/citiesForm");
 
-    console.log("[FormHook] ~~~~~~~~~~~> mounted");
+    // console.log("[FormHook] ~~~~~~~~~~~> mounted");
 
     // Load cached airports
     const cached = localStorage.getItem("airports");

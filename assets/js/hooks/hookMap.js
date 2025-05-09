@@ -43,7 +43,7 @@ export const MapHook = {
       if (!localStorage.getItem("userID"))
         localStorage.setItem("userID", this.userID);
 
-      console.log("[MapHook] ~~~~~~~~~~~>  mounted");
+      // console.log("[MapHook] ~~~~~~~~~~~>  mounted");
 
       const params = { L, map, group, userID: this.userID, _this: this };
       const { createFlightObserver, createSelectionObserver } = await import(
@@ -67,7 +67,6 @@ export const MapHook = {
       });
       // event from other user
       this.handleEvent("added_airport", (airport) => {
-        console.log(airport);
         if (
           airport.action === "added_airport" &&
           this.userID !== airport.userID

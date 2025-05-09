@@ -5,6 +5,6 @@ export async function initYDoc() {
   const ydoc = new Y.Doc();
   const provider = new IndexeddbPersistence(storeName, ydoc);
   await provider.whenSynced; // Wait until the state is fully loaded
-  console.log("Yjs initialized...");
+  // console.log("Yjs initialized...");
   return ydoc;
 }

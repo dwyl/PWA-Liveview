@@ -1,5 +1,5 @@
 export async function displayMap() {
-  console.log("[Map] Offline render-----");
+  // console.log("[Map] Offline render-----");
   try {
     const { renderMap } = await import("@js/components/renderMap.js");
     return await renderMap();
@@ -9,7 +9,7 @@ export async function displayMap() {
 }
 
 export async function displayForm(el) {
-  console.log("[Form] Offline render -----");
+  // console.log("[Form] Offline render -----");
   try {
     const { CitiesForm } = await import("@jsx/components/citiesForm.jsx");
     return CitiesForm({
@@ -23,7 +23,7 @@ export async function displayForm(el) {
 }
 
 export async function displayStock({ ydoc, el }) {
-  console.log("[Stock] Offline render -----");
+  // console.log("[Stock] Offline render -----");
   try {
     const { Stock } = await import("@jsx/components/stock.jsx");
     return Stock({

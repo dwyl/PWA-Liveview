@@ -6,7 +6,7 @@ export async function checkServer() {
     });
     return response.ok;
   } catch (err) {
-    console.log(
+    console.error(
       `Connectivity check failed: ${
         err.name === "AbortError" ? "timeout" : err.message
       }`

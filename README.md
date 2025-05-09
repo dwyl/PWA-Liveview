@@ -43,13 +43,13 @@ It uses `Vite` as the bundler.
       - [Yjs initialization](#yjs-initialization)
       - [**UI layer**: a `SolidJS` component](#ui-layer-a-solidjs-component)
   - [State Synchronization Flow](#state-synchronization-flow)
-    - [Misc](#misc)
-      - [Common pitfall of combining LiveView with CSR components](#common-pitfall-of-combining-liveview-with-csr-components)
-      - ["Important" `Workbox` settings](#important-workbox-settings)
-      - [Icons](#icons)
-      - [Manifest](#manifest)
-      - [Performance](#performance)
-      - [\[Optional\] Page Caching](#optional-page-caching)
+  - [`Vite` settings](#vite-settings)
+  - [Misc](#misc)
+    - [Common pitfall of combining LiveView with CSR components](#common-pitfall-of-combining-liveview-with-csr-components)
+    - [Icons](#icons)
+    - [Manifest](#manifest)
+    - [Performance](#performance)
+    - [\[Optional\] Page Caching](#optional-page-caching)
   - [Resources](#resources)
   - [License](#license)
 
@@ -160,13 +160,12 @@ We use the `VitePWA` plugin to enable the Service Worker life-cycle (manage upda
 
 ### Updates life-cycle
 
-A Service Worker (SW) runs in a _separate thread_ from the main JS and has a unique lifecycle made of 3 key phases:  install / activate / fetch
-
+A Service Worker (SW) runs in a _separate thread_ from the main JS and has a unique lifecycle made of 3 key phases: install / activate / fetch
 
 In action:
 
-1) Make a change in the client code, git push/fly deploy:
--> a button appears and the dev console shows a push and waiting stage:
+1. Make a change in the client code, git push/fly deploy:
+   -> a button appears and the dev console shows a push and waiting stage:
 
 <img width="1413" alt="Screenshot 2025-05-08 at 09 40 28" src="https://github.com/user-attachments/assets/a4086fe3-4952-48de-818c-b12fe1819823" />
 <br/>
@@ -850,42 +849,73 @@ sequenceDiagram
     Yjs->>SolidJS: Update UI
 ```
 
-### Misc
+## `Vite` settings
 
-#### Common pitfall of combining LiveView with CSR components
+```js
+PWAConfig = {
+  // Don't inject <script> to register SW (handled manually)
+  // and there no client generated "index.html" by Phoenix
+  injectRegister: false, // no client generated "index.html" by Phoenix
+
+  // Let Workbox auto-generate the service worker from config
+  strategies: "generateSW",
+
+  // App manually prompts user to update SW when available
+  registerType: "prompt",
+
+  // SW lifecycle ---
+  // Claim control over all uncontrolled pages as soon as the SW is activated
+  clientsClaim: true,
+
+  // Let app decide when to update; user must confirm or app logic must apply update
+  skipWaiting: false,
+
+  workbox: ...
+}
+```
+
+It is important not to split the "sw.js" file because `Vite` produces
+a fingerprint from the splitted files. Since Phoenix serves, and we don't
+know the name in advance,
+
+```js
+workbox: {
+  // Disable to avoid interference with Phoenix LiveView WebSocket negotiation
+  navigationPreload: false
+
+  // ❗️ no fallback to "index.html" as it does not exist
+  navigateFallback: null
+
+  // ‼️ tell Workbox not to split te SW as the other is fingerprinted, thus unknown to Phoenix.
+  inlineWorkboxRuntime: true,
+
+}
+```
+
+For the Service Worker lifecycle, set:
+
+```js
+defineConfig = {
+  // Disable default public dir (using Phoenix's)
+  publicDir: false,
+};
+```
+
+## Misc
+
+### Common pitfall of combining LiveView with CSR components
 
 The client-side rendered components are manually mounted via hooks.
 They will leak or stack duplicate components if you don't cleanup and unmount them.
 You can use the `destroyed` callback where you can use `SolidJS` makes this easy with a `cleanupSolid` callback (where you take a reference to the SolidJS component in the hook).
 
-#### "Important" `Workbox` settings
+### Icons
 
-`navigateFallbackDenylist` excludes LiveView critical path
-
-```js
-injectManifest: {
-  injectionPoint: undefined,
-},
-```
-
-Set:
-
-```js
-clientsClaim: true,
-skipWaiting: true,
-```
-
-With `clientsClaim: true`, you take control of all open pages as soon as the service worker activates.
-
-With `skipWaiting: true`, new service worker versions activate immediately.
-
-#### Icons
-
-You will need is to have at least two very low resolution icons of size 192 and 512, one extra of 180 for OSX and one 62 for Microsoft, all placed in "/priv/static/images".
+You will need is to have at least two very low resolution icons of size 192 and 512, one extra of 180 for OSX and one 62 for Microsoft, all placed in "/priv/static".
 
 Check [Resources](#resources)
 
-#### Manifest
+### Manifest
 
 The "manifest.webmanifest" file will be generated from "vite.config.js".
 
@@ -920,25 +950,11 @@ The "manifest.webmanifest" file will be generated from "vite.config.js".
 </head>
 ```
 
-#### Performance
-
-Through aggressive caching, code splitting strategies and compression (to limit `MapTiler` and `Leaflet` sizes), we get:
-
-- First Contentful Paint (FCP): **0.3s**
-- Full Page Render (with map and WASM): **0.5s**
-
-These metrics are achieved through:
-
-- Efficient WASM module loading and integration via Vite
-- Vector tiles for minimal map cache size
-- Y.js CRDT for conflict-free state sync
-- Strategic asset caching with workbox
-- Code splitting with dynamic imports
-- Optimized bundling with Vite
+### Performance
 
 <div align="center"><img width="619" alt="Screenshot 2024-12-28 at 04 45 26" src="https://github.com/user-attachments/assets/e6244e79-2d31-47df-9bce-a2d2a4984a33" /></div>
 
-#### [Optional] Page Caching
+### [Optional] Page Caching
 
 <details>
 <summary>Direct usage of Cache API instead of Workbox</summary>

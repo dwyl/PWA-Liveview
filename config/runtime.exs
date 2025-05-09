@@ -58,6 +58,7 @@ if config_env() == :prod do
   # See the documentation on https://hexdocs.pm/bandit/Bandit.html#t:options/0
   # for details about using IPv6 vs IPv4 and loopback vs public addresses.
   config :solidyjs, SolidyjsWeb.Endpoint,
+    # static_url: [host: "cdn.example.com"],
     url: [host: host, port: port, scheme: "https"],
     http: [
       ip: {0, 0, 0, 0, 0, 0, 0, 0},

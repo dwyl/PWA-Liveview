@@ -111,7 +111,7 @@ export default function City(props) {
 
   onCleanup(() => {
     unsubscribe();
-    console.log("cleanup City");
+    // console.log("cleanup City");
   });
 
   return (
