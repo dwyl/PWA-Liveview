@@ -87,14 +87,10 @@ Traditional Phoenix LiveView applications face several challenges in offline sce
    LiveView's WebSocket architecture isn't naturally suited for PWAs, as it requires constant connection for functionality. When online, we use `Phoenix.Channel` for real-time collaboration.
 
 4. **State Management**:
-   It is challenging to maintain consistent state across network interruptions between the client and the server. We use different approaches based on the page requirements:
-
-   - CRDT-based synchronization with `Y.js` featuring `IndexedDB` and `y_ex` server-side for Stock Manager page. It uses an embedded `SQLite` database for server-side state management synchronization
-   - Local state management (`Valtio`) for the collaborative Flight Map page with no database persistence of the state
+   It is challenging to maintain consistent state across network interruptions between the client and the server.
 
 5. **Build tool**:
-   We use `Vite` as the build tool to bundle and optimize the application and enable PWA features seamlessly.
-   We need to build a Service Worker to cache HTML pages and static assets as WebSocket-rendered pages require special handling for offline access.
+   We need to setup a Service Worker to cache HTML pages and static assets to work offline, out of the LiveView goodies.
 
 ## Design goals
 
@@ -149,6 +145,16 @@ The same applies when you navigate offline; you have to run cleanup functions, b
 
   - LiveStock page: Edits are saved to `y-indexeddb`
   - LiveFlight page: the "airports" list is saved in localStorage
+
+- **State Management**:
+  We use different approaches based on the page requirements:
+
+  - CRDT-based synchronization with Y.js featuring IndexedDB and y_ex server-side for Stock Manager page. It uses an embedded SQLite database for server-side state management synchronization
+  - Local state management (Valtio) for the collaborative Flight Map page with no database persistence of the state
+
+- **Build tool**:
+  We use Vite as the build tool to bundle and optimize the application and enable PWA features seamlessly.
+  The Service Worker to cache HTML pages and static assets.
 
 - **Synchronization Flow**:
 
