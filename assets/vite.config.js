@@ -1,17 +1,16 @@
+import { defineConfig, loadEnv } from "vite";
+
 import fs from "fs"; // for file system operations
 import path from "path";
 import fg from "fast-glob"; // for recursive file scanning
 
+import tailwindcss from "tailwindcss"; // <--- do not use @tailwindcss/vite
 import { VitePWA } from "vite-plugin-pwa";
-import { defineConfig, loadEnv } from "vite";
 import solidPlugin from "vite-plugin-solid";
-
 import wasm from "vite-plugin-wasm";
 import { compression } from "vite-plugin-compression2";
-import { compress } from "@mongodb-js/zstd";
 import { viteStaticCopy } from "vite-plugin-static-copy";
-
-import tailwindcss from "tailwindcss"; // <--- do not use @tailwindcss/vite
+import { compress } from "@mongodb-js/zstd";
 
 const APPVERSION = process.env.VITE_APP_VERSION; // Update this when you change the app version
 console.log(APPVERSION);

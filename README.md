@@ -15,9 +15,9 @@ It uses `Vite` as the bundler.
 **Results**:
 
 - deployed on Fly.io at <https://solidyjs-lively-pine-4375.fly.dev/>
-- standalone Phoenix LiveView app of 2.3 Mb
-- memory usage: 210Mb
-- image weight: 53Mb (`Debian` based)
+- standalone Phoenix LiveView app of 2.1 Mb
+- memory usage: 200Mb
+- image weight: 52Mb (`Debian` based)
 - client code can be updated via the Service Worker lifecycle
 
 ## Table of Contents
@@ -48,7 +48,7 @@ It uses `Vite` as the bundler.
   - [Configuration and settings](#configuration-and-settings)
     - [Static assets](#static-assets)
     - [VitePWA plugin and Workbox Caching Strategies](#vitepwa-plugin-and-workbox-caching-strategies)
-  - [Yjs and y\_ex](#yjs-and-y_ex)
+  - [Yjs and y_ex](#yjs-and-y_ex)
   - [Documentation source](#documentation-source)
   - [`Vite` settings](#vite-settings)
   - [Misc](#misc)
