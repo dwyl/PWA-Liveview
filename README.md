@@ -22,6 +22,9 @@ It uses `Vite` as the bundler.
 
 QRCode to check on a mobile device:
 
+<img alt="qr-code" width="200" src="https://github.com/user-attachments/assets/9326182b-9933-45ea-9a0b-aeea9c197c24" />
+
+
 ## Table of Contents
 
 - [Phoenix LiveView PWA](#phoenix-liveview-pwa)
