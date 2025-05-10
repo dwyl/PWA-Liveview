@@ -68,9 +68,9 @@ QRCode to check multi users, from on a mobile device:
 
 ## What?
 
-Context: we want to experiment PWA webapps using Phoenix LiveView.
+**Context**: we want to experiment PWA webapps using Phoenix LiveView.
 
-What are we building? A very simple two pages webap:
+What are we building? A two pages webap:
 
 - LiveStock. On the first page, we mimic a shopping cart where users can pick items until stock is depleted, at which point the stock is replenished. Every user will see and can interact with this counter
 - LiveFlight. On the second page, we propose an interactive map with a form with two inputs where **two** users can edit collaboratively a form to display markers on the map and then draw a great circle between the two points.
@@ -112,13 +112,17 @@ Traditional Phoenix LiveView applications face several challenges in offline sce
 
 ## Common pitfall of combining LiveView with CSR components
 
-The client-side rendered components are manually mounted via hooks under the tag `phx-update="ignore"`.
+The client-side rendered components are - when online - mounted via hooks under the tag `phx-update="ignore"`.
 
 These components have they own lifecycle. They will leak or stack duplicate components if you don't cleanup and unmount them.
+The same applies to "subscriptions/observers" primitives from the state manager. You must unsubscribe, otherwise you might get multiples calls and weird behaviours.
 
-The "hook" comes with a handy lifecyle and the `destroyed` callback is essential.
+⭐️ The "hook" comes with a handy lifecyle and the `destroyed` callback is essential.
+
 `SolidJS` makes this easy as it renders a `cleanupSolid` callback (where you take a reference to the SolidJS component in the hook).
 You also need to clean _subscriptions_ (when using a store manager).
+
+The same applies when you navigate offline; you have to run cleanup functions, both on the components and on the subsriptions/observers from the state manager.
 
 ## Architecture
 
@@ -140,7 +144,46 @@ You also need to clean _subscriptions_ (when using a store manager).
 | MapTiler                   | enable vector tiles                                                                                               |
 | WebAssembly container      |  high-performance calculations for map "great-circle" routes use `Zig` code compiled to `WASM`                    |
 
-### LiveStock page
+
+### Implementation highlights
+
+- **Offline capabilities**:
+  * LiveStock page: Edits are saved to `y-indexeddb`
+  * LiveFlight page: the "airports" list is saved in localStorage
+
+- **Synchronization Flow**:
+  * LiveStock page:
+    Client sends all pending `Yjs` updates on (re)connection.
+    The client updates his local `Y-Doc` with the server responses.
+    `Y-Doc` mutations are observed and trigger UI rendering, and reciprocally, UI modifications update the `Y-Doc` and propagate mutations to the server.
+  * LiveFlight page:
+    The inputs (selected airports) are saved to a local state (`Valtio` proxies).
+    Local UI changes mutate the state and are sent to the server. The server broadcasts the data.
+    We have state observers which update the UI if the origin is not remote.
+    
+
+- **Server Processing**:
+  * LiveStock page:
+    Merges updates into the `SQLite3`-stored `Y-Doc` (using `y_ex`).
+    Applies business rules (e.g., "stock cannot be negative").
+    Broadcasts the approved state.
+    Clients reconcile local state with the server's authoritative version
+  * LiveFlight page:
+    The Phoenix server is used to receive/emit messages.
+
+- **Data Transport**:
+  * LiveStock page:
+    Use `Phoenix.Channel` to transmit the `Y-Doc` state as binary.
+    This minimises bandwidth usage and decouples CRDT synchronisation from the LiveSocket.
+    Implementation heavily inspired by the repo <https://github.com/satoren/y-phoenix-channel> made by the author of `y_ex`.
+  * LiveFlight page:
+    We use the LiveSocket as the data flow is small.
+
+- **Component Rendering Strategy**:
+  - online: use LiveView hooks
+  - offline: hydrate the cached HTML documents with reactive JavaScript components
+
+## About the LiveStock page
 
 You have both CRDT-based synchronization (for convergence) and server-enforced business rules (for consistency).
 We thus have two Layers of Authority:
@@ -153,31 +196,6 @@ We thus have two Layers of Authority:
   The server is authoritative. It validates updates upon the business logic (e.g., stock validation), and broadcasts the canonical state to all clients.
   Clients propose changes, but the server decides the final state (e.g., enforcing stock limits).
 
-### Implementation highlights
-
-- **Offline capabilities**:
-  Edits are saved to `y-indexeddb` and sent later.
-
-- **Synchronization Flow**:
-  Client sends all pending `Yjs` updates on (re)connection.
-  The client updates his local `Y-Doc` with the server responses.
-  `Y-Doc` mutations trigger UI rendering, and reciprocally, UI modifications update the `Y-Doc` and propagate mutations to the server.
-
-- **Server Processing**::
-  Merges updates into the `SQLite3`-stored `Y-Doc` (using `y_ex`).
-  Applies business rules (e.g., "stock cannot be negative").Broadcasts the approved state.
-  Clients reconcile local state with the server's authoritative version
-
-- **Data Transport**:
-  Use `Phoenix.Channel` to transmit the `Y-Doc` state as binary.
-  This minimises bandwidth usage and decouples CRDT synchronisation from the LiveSocket.
-  Implementation heavily inspired by the repo <https://github.com/satoren/y-phoenix-channel> made by the author of `y_ex`.
-
-- **Component Rendering Strategy**:
-  - online: use LiveView hooks
-  - offline: hydrate the cached HTML documents with reactive JavaScript components
-
-### LiveFLight page
 
 ## About PWA
 
@@ -431,7 +449,7 @@ sequenceDiagram
 </details>
 <br/>
 
-## Pages
+## Details of Pages
 
 ### LiveStock Manager
 
