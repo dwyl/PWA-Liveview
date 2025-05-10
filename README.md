@@ -24,7 +24,6 @@ QRCode to check multi users, from on a mobile device:
 
 <img alt="qr-code" width="200" src="https://github.com/user-attachments/assets/9326182b-9933-45ea-9a0b-aeea9c197c24" />
 
-
 ## Table of Contents
 
 - [Phoenix LiveView PWA](#phoenix-liveview-pwa)
@@ -35,9 +34,8 @@ QRCode to check multi users, from on a mobile device:
   - [Common pitfall of combining LiveView with CSR components](#common-pitfall-of-combining-liveview-with-csr-components)
   - [Architecture](#architecture)
     - [Tech overview](#tech-overview)
-    - [LiveStock page](#livestock-page)
     - [Implementation highlights](#implementation-highlights)
-    - [LiveFLight page](#liveflight-page)
+  - [About the LiveStock page](#about-the-livestock-page)
   - [About PWA](#about-pwa)
     - [Updates life-cycle](#updates-life-cycle)
   - [Usage](#usage)
@@ -45,7 +43,7 @@ QRCode to check multi users, from on a mobile device:
     - [Architecture flow](#architecture-flow)
     - [State Synchronization Flow](#state-synchronization-flow)
     - [Server authority (in our scenario)](#server-authority-in-our-scenario)
-  - [Pages](#pages)
+  - [Details of Pages](#details-of-pages)
     - [LiveStock Manager](#livestock-manager)
     - [LiveFlight](#liveflight)
   - [Navigation](#navigation)
@@ -107,7 +105,8 @@ Traditional Phoenix LiveView applications face several challenges in offline sce
 - **PWA**: Full PWA features, meaning it can be _installed_ as a standalone app and can be _updated_. A `Service Worker` runs in a separate thread and caches assets. It is setup with `VitePWA`
 - **Business Rules**:
 
-  - For the stock page: When users resync, the server enforces a "lowest stock count" rule: if two clients pick items offline, the server selects the lowest remaining stock post-merge, rather that summing the reduction, for simplicity.
+  - For the stock page:
+    When users resync, the server enforces a "lowest stock count" rule: if two clients pick items offline, the server selects the lowest remaining stock post-merge, rather that summing the reduction, for simplicity.
   - For the LiveFlight page, none.
 
 ## Common pitfall of combining LiveView with CSR components
@@ -144,39 +143,41 @@ The same applies when you navigate offline; you have to run cleanup functions, b
 | MapTiler                   | enable vector tiles                                                                                               |
 | WebAssembly container      |  high-performance calculations for map "great-circle" routes use `Zig` code compiled to `WASM`                    |
 
-
 ### Implementation highlights
 
 - **Offline capabilities**:
-  * LiveStock page: Edits are saved to `y-indexeddb`
-  * LiveFlight page: the "airports" list is saved in localStorage
+
+  - LiveStock page: Edits are saved to `y-indexeddb`
+  - LiveFlight page: the "airports" list is saved in localStorage
 
 - **Synchronization Flow**:
-  * LiveStock page:
+
+  - LiveStock page:
     Client sends all pending `Yjs` updates on (re)connection.
     The client updates his local `Y-Doc` with the server responses.
     `Y-Doc` mutations are observed and trigger UI rendering, and reciprocally, UI modifications update the `Y-Doc` and propagate mutations to the server.
-  * LiveFlight page:
+  - LiveFlight page:
     The inputs (selected airports) are saved to a local state (`Valtio` proxies).
     Local UI changes mutate the state and are sent to the server. The server broadcasts the data.
     We have state observers which update the UI if the origin is not remote.
-    
 
 - **Server Processing**:
-  * LiveStock page:
+
+  - LiveStock page:
     Merges updates into the `SQLite3`-stored `Y-Doc` (using `y_ex`).
     Applies business rules (e.g., "stock cannot be negative").
     Broadcasts the approved state.
     Clients reconcile local state with the server's authoritative version
-  * LiveFlight page:
+  - LiveFlight page:
     The Phoenix server is used to receive/emit messages.
 
 - **Data Transport**:
-  * LiveStock page:
+
+  - LiveStock page:
     Use `Phoenix.Channel` to transmit the `Y-Doc` state as binary.
     This minimises bandwidth usage and decouples CRDT synchronisation from the LiveSocket.
     Implementation heavily inspired by the repo <https://github.com/satoren/y-phoenix-channel> made by the author of `y_ex`.
-  * LiveFlight page:
+  - LiveFlight page:
     We use the LiveSocket as the data flow is small.
 
 - **Component Rendering Strategy**:
@@ -195,7 +196,6 @@ We thus have two Layers of Authority:
 - Business Rules Layer (Authoritative):
   The server is authoritative. It validates updates upon the business logic (e.g., stock validation), and broadcasts the canonical state to all clients.
   Clients propose changes, but the server decides the final state (e.g., enforcing stock limits).
-
 
 ## About PWA
 
