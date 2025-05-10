@@ -14,13 +14,13 @@ It uses `Vite` as the bundler.
 
 **Results**:
 
-- deployed on Fly.io at <https://solidyjs-lively-pine-4375.fly.dev/>
+- deployed on Fly.io at: <https://solidyjs-lively-pine-4375.fly.dev/>
 - standalone Phoenix LiveView app of 2.1 Mb
 - memory usage: 200Mb
 - image weight: 52Mb (`Debian` based)
 - client code can be updated via the Service Worker lifecycle
 
-QRCode to check on a mobile device:
+QRCode to check multi users, from on a mobile device:
 
 <img alt="qr-code" width="200" src="https://github.com/user-attachments/assets/9326182b-9933-45ea-9a0b-aeea9c197c24" />
 
