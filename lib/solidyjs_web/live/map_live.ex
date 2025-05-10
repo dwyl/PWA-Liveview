@@ -3,7 +3,7 @@ defmodule SolidyjsWeb.MapLive do
   use Phoenix.Component
   alias Phoenix.LiveView.AsyncResult
   alias Phoenix.PubSub
-  alias SolidyjsWeb.Menu
+  alias SolidyjsWeb.{Menu, Pwa}
   # import SolidyjsWeb.CoreComponents, only: [button: 1]
 
   @moduledoc """
@@ -23,11 +23,12 @@ defmodule SolidyjsWeb.MapLive do
       <button
         :if={@update_available}
         type="button"
-        class="px-4 mb-4 mt-4 py-2 border-2 rounded-md text-bisque  bg-midnightblue hover:text-midnightblue hover:bg-bisque transition-colors duration-300"
+        class="flex flex-row px-4 mb-4 mt-4 py-2 border-2 rounded-md text-midnightblue  bg-blue-200  hover:bg-bisque transition-colors duration-300"
         id="refresh-button"
         phx-click="skip-waiting"
       >
-        Refesh needed: {@update_available}
+       <Pwa.svg height={20} class="mr-2"/>
+       <span class="ml-1 font-bold">Refesh needed</span>
       </button>
       <p class="text-sm text-gray-600 mt-4 mb-2">User ID: {@user_id}</p>
       <Menu.display update_available={@update_available} />

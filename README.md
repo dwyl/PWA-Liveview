@@ -40,7 +40,6 @@ It uses `Vite` as the bundler.
     - [Architecture flow](#architecture-flow)
     - [State Synchronization Flow](#state-synchronization-flow)
     - [Server authority (in our scenario)](#server-authority-in-our-scenario)
-    - [Detailled Sync flow sequence](#detailled-sync-flow-sequence)
   - [Pages](#pages)
     - [LiveStock Manager](#livestock-manager)
     - [LiveFlight](#liveflight)
@@ -49,8 +48,6 @@ It uses `Vite` as the bundler.
     - [Static assets](#static-assets)
     - [VitePWA plugin and Workbox Caching Strategies](#vitepwa-plugin-and-workbox-caching-strategies)
   - [Yjs and y_ex](#yjs-and-y_ex)
-  - [Documentation source](#documentation-source)
-  - [`Vite` settings](#vite-settings)
   - [Misc](#misc)
     - [CSP rules and evaluation](#csp-rules-and-evaluation)
     - [User token](#user-token)
@@ -58,6 +55,7 @@ It uses `Vite` as the bundler.
     - [Manifest](#manifest)
   - [Performance](#performance)
     - [\[Optional\] Page Caching](#optional-page-caching)
+  - [Documentation source](#documentation-source)
   - [Resources](#resources)
   - [License](#license)
 
@@ -309,7 +307,8 @@ flowchart TD
         UI["UI Components <br> (SolidJS)"]
         YDoc["Local Y-Doc <br> (CRDT State)"]
         IndexedDB["IndexedDB <br> (Offline Storage)"]
-        YObserver["Y.js **Observer** <br>(State Change Listener)"]
+        YObserver["Y.js **Observer** <br>(__Component__ listener ) <br>
+        (__Hook__ listener)"]
 
         UI <--> YDoc
         YDoc <--> IndexedDB
@@ -317,27 +316,22 @@ flowchart TD
         YDoc --> YObserver
     end
 
-    subgraph "Communication Layer"
-        PhoenixChannel["Phoenix Channel <br>(Binary Updates Transport)"]
-        ConnectionCheck["Connection Status <br>Monitoring"]
-    end
 
     subgraph "Server (Elixir)"
-        YjsChannel["Yjs Channel <br>(YjsChannel Module)"]
-        DocHandler["DocHandler<br>(Database Interface)"]
+        YjsChannel["Yjs Channel"]
+
         YEx["Yex (y-crdt)<br>(CRDT Processing)"]
         BusinessRules["Business Rules <br>(apply_if_lower?)"]
         DB["SQLite<br>(Persisted Y-Doc)"]
 
-        YjsChannel <--> DocHandler
+        YjsChannel <--> DB
         YjsChannel <--> YEx
         YjsChannel <--> BusinessRules
-        DocHandler <--> DB
     end
 
     YDoc <--> PhoenixChannel
     PhoenixChannel <--> YjsChannel
-    ConnectionCheck --> PhoenixChannel
+
 
     class BusinessRules highlight
     class YDoc,YEx highlight
@@ -376,7 +370,7 @@ sequenceDiagram
   A local "onClick" handler mutates the `Y.Map` type of the Y_Doc.
   We set an "observer" on the type `Y.Map` of the YDoc. It updates the "signal":
 
-  - wether from a local click
+  - from a local click
   - or remote of the YDoc.
 
 ### Server authority (in our scenario)
@@ -417,96 +411,6 @@ sequenceDiagram
     Server->>DB: Save merged Y-Doc (counter=3)
     Server->>ClientA: "pub-update" (counter=3)
     Server->>ClientB: "pub-update" (ack)
-```
-
-</details>
-<br/>
-
-### Detailled Sync flow sequence
-
-<details>
-<summary>Detailled Sync flow sequence</summary>
-
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Channel as Channel
-    participant YEx as Yex (y-crdt)
-    participant DocHandler as DocHandler
-    participant DB as SQLite
-
-    Note over Client,DB: Initial Connection Flow
-    Client->>Channel: join("yjs-state", {userID, max})
-    Channel->>Channel: handle_info(:after_join)
-    opt If no doc exists
-        Channel->>YEx: Yex.Doc.new()
-        Channel->>YEx: Set initial counter value (max)
-        Channel->>DocHandler: update_doc(update)
-        DocHandler->>DB: Store initial Y-Doc
-    end
-
-    Client->>Channel: "init-client"
-    Channel->>DocHandler: get_y_doc()
-    DocHandler->>DB: Fetch stored Y-Doc
-    DB-->>DocHandler: Binary Y-Doc state
-    DocHandler-->>Channel: Binary Y-Doc state
-    Channel->>YEx: Build ydoc from DB state
-    YEx-->>Channel: Y-Doc object
-    Channel->>YEx: encode_state_as_update(ydoc)
-    YEx-->>Channel: Binary update
-    Channel-->>Client: "init" with binary update
-    Client->>Client: Y.applyUpdate(ydoc, update, "init")
-    Client->>Client: Update UI via ymap.observe
-
-    Note over Client,DB: Update Flow (Client to Server)
-    Client->>Client: Local UI action
-    Client->>Client: handleUpdate(newValue)
-    Client->>Client: ydoc.transact()
-    Client->>Client: ymap.set("counter", newValue)
-    Client->>Client: Y-Doc generates update
-    Client->>Client: handleYUpdate triggered (origin: local)
-    alt If online
-        Client->>Channel: "yjs-update" with binary update
-        Channel->>DocHandler: get_y_doc()
-        DocHandler->>DB: Fetch current state
-        DB-->>DocHandler: Current binary state
-        DocHandler-->>Channel: Current binary state
-        Channel->>YEx: Build ydoc from DB state
-        YEx-->>Channel: Y-Doc object
-        Channel->>YEx: Get current counter value
-        YEx-->>Channel: old_value
-        Channel->>YEx: Apply client update
-        YEx-->>Channel: Updated Y-Doc
-        Channel->>YEx: Get new counter value
-        YEx-->>Channel: new_value
-
-        alt If apply_if_lower?(old_value, new_value)
-            Channel->>YEx: encode_state_as_update(ydoc)
-            YEx-->>Channel: Merged binary update
-            Channel->>DocHandler: update_doc(merged_doc)
-            DocHandler->>DB: Store updated Y-Doc
-            Channel-->>Client: "ok" response
-            Channel->>Channel: broadcast "pub-update" to other clients
-        else Reject update (business rule)
-            Channel-->>Client: "pub-update" with current server state
-            Client->>Client: Y.applyUpdate(ydoc, serverState, "remote")
-            Client->>Client: UI updates via ymap.observe
-        end
-    else If offline
-        Client->>Client: Changes stored in IndexedDB
-    end
-
-    Note over Client,DB: Reconnection Flow
-    Client->>Client: Detect reconnection
-    Client->>Client: syncWithServer()
-    Client->>Client: Y.encodeStateAsUpdate(ydoc)
-    alt If empty state
-        Client->>Channel: "init-client"
-        Channel-->>Client: "init" with current state
-    else Send local changes
-        Client->>Channel: "yjs-update" with local changes
-        Note right of Channel: Same flow as Update Flow
-    end
 ```
 
 </details>
@@ -610,6 +514,18 @@ watchers: [
     ]
   ]
 ```
+
+In the `Vite` config, `TailwindCSS`is set with the declaration:
+
+```js
+css: {
+  postcss: {
+    plugins: [tailwindcss()],
+  },
+},
+```
+
+where "tailwind.configjs" sits next to "vite.config.js".
 
 ### Static assets
 
@@ -740,16 +656,7 @@ defineConfig = {
 
 ## Yjs and y_ex
 
-## Documentation source
-
-- Update API: <https://docs.yjs.dev/api/document-updates#update-api>
-- Event handler "on": <https://docs.yjs.dev/api/y.doc#event-handler>
-- local persistence with IndexedDB: <https://docs.yjs.dev/getting-started/allowing-offline-editing>
-- Transactions: <https://docs.yjs.dev/getting-started/working-with-shared-types#transactions>
-- Map shared type: <https://docs.yjs.dev/api/shared-types/y.map>
-- observer on shared type: <https://docs.yjs.dev/api/shared-types/y.map#api>
-
-## `Vite` settings
+[TODO]
 
 ## Misc
 
@@ -842,18 +749,18 @@ The "manifest.webmanifest" file will be generated from "vite.config.js".
 
 ```json
 {
-  "name": "ExLivePWA",
-  "short_name": "ExLivePWA",
+  "name": "LivePWA",
+  "short_name": "LivePWA",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "lang": "en",
   "scope": "/",
-  "description": "A Phoenix LiveView PWA demo webapp",
+  "description": "A Phoenix LiveView PWA demo app",
   "theme_color": "#ffffff",
   "icons": [
     { "src": "/images/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/images/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    ...
   ]
 }
 ```
@@ -863,11 +770,9 @@ The "manifest.webmanifest" file will be generated from "vite.config.js".
 ```html
 <!-- root.html.heex -->
 <head>
-  [...] <link rel="icon-192" href={~p"/images/icon-192.png"} /> <link
-  rel="icon-512" href={~p"/images/icon-512.png"} />
-  <link rel="icon" href="/favicon.ico" sizes="48x48" />
-  <link rel="manifest" href="/manifest.webmanifest" />
-  [...]
+  [...] <link rel="icon-192" href={~p"/icons/icon-192.png"} /> <link
+  rel="icon-512" href={~p"/icons/icon-512.png"} /> [...] <link rel="manifest"
+  href={~p"/manifest.webmanifest"} /> [...]
 </head>
 ```
 
@@ -921,6 +826,15 @@ navigation.addEventListener("navigate", async ({ destination: { url } }) => {
 
 </Details>
 </br>
+
+## Documentation source
+
+- Update API: <https://docs.yjs.dev/api/document-updates#update-api>
+- Event handler "on": <https://docs.yjs.dev/api/y.doc#event-handler>
+- local persistence with IndexedDB: <https://docs.yjs.dev/getting-started/allowing-offline-editing>
+- Transactions: <https://docs.yjs.dev/getting-started/working-with-shared-types#transactions>
+- Map shared type: <https://docs.yjs.dev/api/shared-types/y.map>
+- observer on shared type: <https://docs.yjs.dev/api/shared-types/y.map#api>
 
 ## Resources
 
