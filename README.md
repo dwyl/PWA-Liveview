@@ -20,6 +20,8 @@ It uses `Vite` as the bundler.
 - image weight: 52Mb (`Debian` based)
 - client code can be updated via the Service Worker lifecycle
 
+QRCode to check on a mobile device:
+
 ## Table of Contents
 
 - [Phoenix LiveView PWA](#phoenix-liveview-pwa)
@@ -44,10 +46,12 @@ It uses `Vite` as the bundler.
     - [LiveStock Manager](#livestock-manager)
     - [LiveFlight](#liveflight)
   - [Navigation](#navigation)
-  - [Configuration and settings](#configuration-and-settings)
+  - [Vite](#vite)
+    - [Configuration and settings](#configuration-and-settings)
+    - [Client Env](#client-env)
     - [Static assets](#static-assets)
     - [VitePWA plugin and Workbox Caching Strategies](#vitepwa-plugin-and-workbox-caching-strategies)
-  - [Yjs and y_ex](#yjs-and-y_ex)
+  - [Yjs and y\_ex](#yjs-and-y_ex)
   - [Misc](#misc)
     - [CSP rules and evaluation](#csp-rules-and-evaluation)
     - [User token](#user-token)
@@ -163,7 +167,7 @@ We thus have two Layers of Authority:
 
 - **Data Transport**:
   Use `Phoenix.Channel` to transmit the `Y-Doc` state as binary.
-  This minimizes bandwith usage and decouples CRDT synchronization from the LiveSocket.
+  This minimises bandwidth usage and decouples CRDT synchronisation from the LiveSocket.
   Implementation heavily inspired by the repo <https://github.com/satoren/y-phoenix-channel> made by the author of `y_ex`.
 
 - **Component Rendering Strategy**:
@@ -278,7 +282,7 @@ cd .. && mix deps.get
 iex -S mix phx.server
 ```
 
-2/ Before deploy, run a local Docker container in **mode=prod**
+2/ Run a local Docker container in **mode=prod**
 
 ```sh
 docker compose up --build
@@ -293,6 +297,14 @@ docker compose up --build
 ```sh
 > docker compose exec -it web cat  lib/solidyjs-0.1.0/priv/static/.vite/manifest.json
 ```
+
+3/ Pull from `Docker Hub`:
+
+```sh
+docker run -it  -e SECRET_KEY_BASE=oi37wzrEwoWq4XgnSY3VRbKUhNxvdowJ7NOCrCECZ6V7WyPDNHuQp36oat+aqOkS -p 80:4000  --rm ndrean/pwa-liveview:latest
+```
+
+and visit <http://localhost>
 
 ## Diagrams and data flow
 
@@ -492,7 +504,9 @@ When the user goes offline, we have the same smooth navigation thanks to navigat
 - ⚠️ **memory leaks**:
   With this offline navigation, we never refresh the page. As said before, reactive components and subscriptions need to be cleaned before disposal. We store the cleanup functions and the subscriptions.
 
-## Configuration and settings
+## Vite
+
+### Configuration and settings
 
 All the client code is managed by `Vite` and done (mostly) in a declarative way in the file [vite.config.js](https://github.com/dwyl/PWA-Liveview/blob/main/assets/vite.config.js).
 
@@ -526,6 +540,17 @@ css: {
 ```
 
 where "tailwind.configjs" sits next to "vite.config.js".
+
+### Client Env
+
+The env arguments are loaded with `loadEnv`.
+The client ".env" is placed in the "/assets" folder and picke-up by `Vite` at build time.
+In particular, we use `VITE_API_KEY` for `Maptiler` to render the vector tiles.
+
+It will be backed in the JS code at _build time_.
+This means that it is passed in the Docker build stage when you copy the "assets" folder.
+
+When you deploy, we need to set an env variable `VITE_API_KEY` which will be used to build the image.
 
 ### Static assets
 

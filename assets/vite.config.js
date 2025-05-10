@@ -150,44 +150,14 @@ const buildOps = (mode) => ({
   // to render the correct asset links.
   manifest: true, // path  --> .vite/manifest.json.
   minify: mode === "production",
-  emptyOutDir: true,
-  reportCompressedSize: mode === "production",
+  emptyOutDir: true, // Remove old assets
+  // sourcemap: mode === "development" ? "inline" : true,
+  reportCompressedSize: true,
   assetsInlineLimit: 0,
 });
 
 // =============================================
 // Service Worker Rentime Caching Strategies
-
-// const Navigation = {
-//   urlPattern: ({ request }) => request.mode === "navigate",
-//   handler: "NetworkFirst",
-//   options: {
-//     fetchOptions: {
-//       credentials: "same-origin",
-//     },
-//     cacheName: "pages-cache",
-//     expiration: {
-//       maxEntries: 50,
-//       maxAgeSeconds: 24 * 60 * 60, // 1 day
-//     },
-//     cacheableResponse: {
-//       statuses: [0, 200],
-//     },
-//   },
-// };
-
-// const Cdn = {
-//   urlPattern: ({ url }) => url.hostname === "cdn.example.com",
-//   handler: "CacheFirst",
-//   options: {
-//     cacheName: "cdn-assets",
-//     cacheableResponse: { statuses: [0, 200] },
-//     expiration: {
-//       maxEntries: 100,
-//       maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
-//     },
-//   },
-// }
 
 const LiveView = [
   {
@@ -322,7 +292,6 @@ const PWAConfig = (mode) => ({
 
   workbox: {
     navigationPreload: false, // Ensure WebSocket connections aren't cached
-
     // no fallback to "index.html" as it does not exist
     navigateFallback: null, // ⚠️ Critical for LiveView
     navigateFallbackDenylist: [/^\/websocket/, /^\/live/],
@@ -359,8 +328,7 @@ const PWAConfig = (mode) => ({
   },
 });
 
-// =============================================
-// Alias helpers
+// Alias helpers =============================================
 /*
 creates shortcuts for directory paths, so instead of 
 writing relative paths  like ../../components/Button, 
@@ -378,7 +346,7 @@ const resolveConfig = {
   extensions: [".js", ".jsx", "png", ".css", "webp", "jpg", "svg"],
 };
 
-// =============================================
+// Static Copy =============================================
 /* 
 Static Copy of icons and SEO files sitemap.xml, robots.txt
 to priv/static/icons and priv/static
@@ -395,7 +363,7 @@ const targets = [
   },
 ];
 
-// =============================================
+// Compression =============================================
 // ZSTD Compression of assets
 const compressOpts = {
   // https://github.com/nonzzz/vite-plugin-compression/discussions/61#discussioncomment-10243200
@@ -410,7 +378,7 @@ const compressOpts = {
   verbose: true,
 };
 
-// =============================================
+// Main config =============================================
 // Main Configuration Export
 
 export default defineConfig(({ command, mode }) => {
@@ -438,11 +406,45 @@ export default defineConfig(({ command, mode }) => {
     build: buildOps(mode),
     css: {
       postcss: {
-        plugins: [tailwindcss(tailwindConfigPath)],
+        plugins: [tailwindcss()],
       },
-    },
-    define: {
-      __APP_ENV__: env.APP_ENV, // Inject env vars
     },
   };
 });
+
+// Waiting for CDN =============================================
+// const Navigation = {
+//   urlPattern: ({ request }) => request.mode === "navigate",
+//   handler: "NetworkFirst",
+//   options: {
+//     fetchOptions: {
+//       credentials: "same-origin",
+//     },
+//     cacheName: "pages-cache",
+//     expiration: {
+//       maxEntries: 50,
+//       maxAgeSeconds: 24 * 60 * 60, // 1 day
+//     },
+//     cacheableResponse: {
+//       statuses: [0, 200],
+//     },
+//   },
+// };
+
+// const Cdn = {
+//   urlPattern: ({ url }) => url.hostname === "cdn.example.com",
+//   handler: "CacheFirst",
+//   options: {
+//     cacheName: "cdn-assets",
+//     cacheableResponse: { statuses: [0, 200] },
+//     expiration: {
+//       maxEntries: 100,
+//       maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+//     },
+//   },
+// }
+
+// if we need to inject env vars in the app, we should use:
+// define: {
+//   __APP_ENV__: JSON.stringify(process.env.APP_ENV), // Inject env vars
+// },

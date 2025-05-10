@@ -6,13 +6,24 @@ ARG DEBIAN_VERSION=bullseye-20250428-slim
 ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
 ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"
 
+ARG MIX_ENV=prod
+ARG NODE_ENV=production
+
 FROM ${BUILDER_IMAGE} AS builder
+
 
 RUN apt-get update -y && apt-get install -y \
   build-essential  git curl && \
   curl -sL https://deb.nodesource.com/setup_22.x | bash - && \
   apt-get install -y nodejs && \
   apt-get clean && rm -f /var/lib/apt/lists/*_*
+
+ARG MIX_ENV
+ARG NODE_ENV
+ENV MIX_ENV=${MIX_ENV} \
+  NODE_ENV=${NODE_ENV} \
+  DATABASE_PATH=/app/data/main.db
+
 
 # Install pnpm
 RUN npm install -g pnpm 
@@ -23,12 +34,10 @@ WORKDIR /app
 # Install Elixir deps
 RUN mix local.hex --force && mix local.rebar --force
 
-ENV MIX_ENV=prod
-ENV NODE_ENV=production
-
 COPY mix.exs mix.lock ./
-RUN mix deps.get --only prod
+RUN mix deps.get --only ${MIX_ENV}
 RUN mkdir config
+
 
 COPY config/config.exs config/${MIX_ENV}.exs config/
 RUN mix deps.compile
@@ -45,8 +54,12 @@ COPY priv priv
 WORKDIR /app/assets
 COPY assets/package.json assets/pnpm-lock.yaml ./
 RUN pnpm self-update && pnpm install --frozen-lockfile
-COPY assets ./
-RUN pnpm vite build --mode production --config vite.config.js
+#  this will copy the assets/.env for the Maptiler api key loaded by Vite.loadenv
+COPY assets ./ 
+
+ENV DATABASE_PATH=/app/data/main.db
+
+RUN pnpm vite build --mode ${NODE_ENV} --config vite.config.js
 
 WORKDIR /app
 # RUN mix phx.digest <-- used Vite to fingerprint assets instead
@@ -65,12 +78,15 @@ RUN apt-get update -y && \
   apt-get install -y libstdc++6 openssl libncurses5 locales ca-certificates \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+ENV MIX_ENV=prod \
+  DATABASE_PATH=/app/data/main.db
+
+
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
 ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8
 
 WORKDIR /app
 
-ENV MIX_ENV=prod
 
 COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/solidyjs ./
 
