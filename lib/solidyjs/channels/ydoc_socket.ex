@@ -18,5 +18,5 @@ defmodule Solidyjs.YdocSocket do
   end
 
   @impl true
-  def id(_socket), do: nil
+  def id(socket), do: to_string(socket.assigns.user_id)
 end

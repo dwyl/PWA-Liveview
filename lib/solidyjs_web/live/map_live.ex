@@ -27,8 +27,8 @@ defmodule SolidyjsWeb.MapLive do
         id="refresh-button"
         phx-click="skip-waiting"
       >
-       <Pwa.svg height={20} class="mr-2"/>
-       <span class="ml-1 font-bold">Refesh needed</span>
+        <Pwa.svg height={20} class="mr-2" />
+        <span class="ml-1 font-bold">Refesh needed</span>
       </button>
       <p class="text-sm text-gray-600 mt-4 mb-2">User ID: {@user_id}</p>
       <Menu.display update_available={@update_available} />
@@ -57,7 +57,7 @@ defmodule SolidyjsWeb.MapLive do
       :ok = PubSub.subscribe(:pubsub, "do_fly")
     end
 
-    {:ok, assign(socket, %{page_title: "Map"})}
+    {:ok, assign(socket, %{page_title: "Map", airports: nil})}
   end
 
   @impl true
@@ -77,11 +77,12 @@ defmodule SolidyjsWeb.MapLive do
 
     true = :ets.insert(:hash, {:hash, hash})
 
+    send(self(), :airports_cleanup)
+
     {:noreply,
      socket
-     |> assign(:airports, AsyncResult.ok(airports, fetched_airports))
      |> push_event("airports", %{
-       airports: fetched_airports,
+       airports: AsyncResult.ok(airports, fetched_airports).result,
        hash: hash
      })
      # memory cleanup
@@ -100,6 +101,8 @@ defmodule SolidyjsWeb.MapLive do
   @impl true
   def handle_event("cache-checked", %{"cached" => false}, socket) do
     # Logger.debug("Client data empty, fetch from DB")
+
+    dbg(AsyncResult.loading())
 
     {:noreply,
      socket
@@ -206,6 +209,12 @@ defmodule SolidyjsWeb.MapLive do
     else
       {:noreply, socket}
     end
+  end
+
+  # cleanup the async result
+  def handle_info(:airports_cleanup, socket) do
+    send(socket.transport_pid, :garbage_collect)
+    {:noreply, assign(socket, airports: nil)}
   end
 
   # Helpers------------------------------>

@@ -52,7 +52,7 @@ QRCode to check multi users, from on a mobile device:
     - [Client Env](#client-env)
     - [Static assets](#static-assets)
     - [VitePWA plugin and Workbox Caching Strategies](#vitepwa-plugin-and-workbox-caching-strategies)
-  - [Yjs and y\_ex](#yjs-and-y_ex)
+  - [Yjs and y_ex](#yjs-and-y_ex)
   - [Misc](#misc)
     - [CSP rules and evaluation](#csp-rules-and-evaluation)
     - [User token](#user-token)
@@ -490,6 +490,8 @@ Key features:
 > [**Airport dataset**] We use a dataset from <https://ourairports.com/>. We stream download a CSV file, parse it (`NimbleCSV`) and bulk insert into an SQLite table. When a user mounts, we read from the database and pass the data asynchronously to the client via the liveSocket on the first mount. We persist the data in `localStorage` for client-side search. The socket "airports" assign is then pruned to free the server's socket.
 
 ▶️ [Airports](<(https://github.com/dwyl/PWA-Liveview/blob/main/lib/solidyjs/db/Airports.ex)>), [LiveMap](https://github.com/dwyl/PWA-Liveview/blob/main/lib/solidyjsweb/live/live_map.ex)
+
+> The Websocket is configured with `compress: true` (cf <https://hexdocs.pm/phoenix/Phoenix.Endpoint.html#socket/3-websocket-configuration>) to enable compression of the 1.1MB airport dataset through the LiveSocket.
 
 Below a diagram showing the flow between the database, the server and the client.
 

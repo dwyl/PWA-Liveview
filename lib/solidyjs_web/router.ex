@@ -27,7 +27,7 @@ defmodule SolidyjsWeb.Router do
       get "/connectivity", ConnectivityController, :check
     end
 
-    get "/404", NotFound, :render
+    match(:*, "/:p", NotFound, :render)
   end
 
   def set_current_user(conn, _opts) do
