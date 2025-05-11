@@ -33,6 +33,7 @@ if config_env() == :prod do
     System.get_env("DATABASE_PATH") ||
       "/app/data/main.db"
 
+  # set it as default
   # raise """
   # environment variable DATABASE_PATH is missing.
   # You can set it to the path where the database file will be stored.
