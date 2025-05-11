@@ -7,7 +7,7 @@ on:
 
 jobs:
   docker:
-    if: github.repository == 'ndrean/pwa-liveview' 
+    if: github.repository == 'ndrean/liveview-pwa' 
     name: Build and Push to Docker Hub
     runs-on: ubuntu-latest
 
