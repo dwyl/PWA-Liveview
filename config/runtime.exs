@@ -31,7 +31,7 @@ end
 if config_env() == :prod do
   database_path =
     System.get_env("DATABASE_PATH") ||
-      "/app/db/main.db"
+      "/app/data/main.db"
 
   # raise """
   # environment variable DATABASE_PATH is missing.

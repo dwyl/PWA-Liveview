@@ -74,9 +74,7 @@ RUN apt-get update -y && \
   apt-get install -y libstdc++6 openssl libncurses5 locales ca-certificates \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-ENV MIX_ENV=prod \
-  DATABASE_PATH=/app/data/main.db
-
+ENV MIX_ENV=prod
 
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
 ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8
