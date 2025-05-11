@@ -31,7 +31,7 @@ end
 if config_env() == :prod do
   database_path =
     System.get_env("DATABASE_PATH") ||
-      "/app/data/main.db"
+      "/app/db/main.db"
 
   # set it as default
   # raise """

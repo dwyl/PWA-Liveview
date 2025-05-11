@@ -6,7 +6,7 @@ services:
     ports:
       - "4000:4000"
     volumes:
-      - db:/app/data
+      - db:/app/db
     user: nobody
     env_file:
       - .env

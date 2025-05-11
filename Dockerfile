@@ -84,9 +84,9 @@ WORKDIR /app
 
 COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/solidyjs ./
 
-RUN mkdir -p /app/data && \
-  chown -R nobody:nogroup /app/data && \
-  chmod -R 777 /app/data && \
+RUN mkdir -p /app/db && \
+  chown -R nobody:nogroup /app/db && \
+  chmod -R 777 /app/db && \
   chown nobody /app
 
 USER nobody
