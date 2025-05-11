@@ -21,9 +21,7 @@ RUN apt-get update -y && apt-get install -y \
 ARG MIX_ENV
 ARG NODE_ENV
 ENV MIX_ENV=${MIX_ENV} \
-  NODE_ENV=${NODE_ENV} \
-  DATABASE_PATH=/app/data/main.db
-
+  NODE_ENV=${NODE_ENV}
 
 # Install pnpm
 RUN npm install -g pnpm 
@@ -56,8 +54,6 @@ COPY assets/package.json assets/pnpm-lock.yaml ./
 RUN pnpm self-update && pnpm install --frozen-lockfile
 #  this will copy the assets/.env for the Maptiler api key loaded by Vite.loadenv
 COPY assets ./ 
-
-ENV DATABASE_PATH=/app/data/main.db
 
 RUN pnpm vite build --mode ${NODE_ENV} --config vite.config.js
 

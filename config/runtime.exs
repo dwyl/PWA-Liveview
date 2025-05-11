@@ -31,10 +31,12 @@ end
 if config_env() == :prod do
   database_path =
     System.get_env("DATABASE_PATH") ||
-      raise """
-      environment variable DATABASE_PATH is missing.
-      You can set it to the path where the database file will be stored.
-      """
+      "/app/data/main.db"
+
+  # raise """
+  # environment variable DATABASE_PATH is missing.
+  # You can set it to the path where the database file will be stored.
+  # """
 
   config :solidyjs, Solidyjs.Repo,
     database: database_path,

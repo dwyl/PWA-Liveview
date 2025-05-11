@@ -15,9 +15,9 @@ It uses `Vite` as the bundler.
 **Results**:
 
 - deployed on Fly.io at: <https://solidyjs-lively-pine-4375.fly.dev/>
-- standalone Phoenix LiveView app of 2.1 Mb
-- memory usage: 200Mb
-- image weight: 52Mb (`Debian` based)
+- standalone Phoenix LiveView app of 2.1 MB
+- memory usage: 210MB
+- image weight: 52MB of Fly.io, 126MB on Docker Hub (`Debian` based)
 - client code can be updated via the Service Worker lifecycle
 
 QRCode to check multi users, from on a mobile device:
@@ -328,7 +328,7 @@ docker compose up --build
 3/ Pull from `Docker Hub`:
 
 ```sh
-docker run -it  -e SECRET_KEY_BASE=oi37wzrEwoWq4XgnSY3VRbKUhNxvdowJ7NOCrCECZ6V7WyPDNHuQp36oat+aqOkS -p 80:4000  --rm ndrean/pwa-liveview:latest
+docker run -it  -e SECRET_KEY_BASE=oi37wzrEwoWq4XgnSY3VRbKUhNxvdowJ7NOCrCECZ6V7WyPDNHuQp36oat+aqOkS  -p 80:4000  --rm ndrean/pwa-liveview:latest
 ```
 
 and visit <http://localhost>
