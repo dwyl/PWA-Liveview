@@ -7,6 +7,7 @@ on:
       - main
 jobs:
   deploy:
+    if: github.repository == 'ndrean/pwa-liveview'
     name: Deploy app
     runs-on: ubuntu-latest
     concurrency: deploy-group    # optional: ensure only one action runs at a time

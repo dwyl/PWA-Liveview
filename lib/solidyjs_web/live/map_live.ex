@@ -102,8 +102,6 @@ defmodule SolidyjsWeb.MapLive do
   def handle_event("cache-checked", %{"cached" => false}, socket) do
     # Logger.debug("Client data empty, fetch from DB")
 
-    dbg(AsyncResult.loading())
-
     {:noreply,
      socket
      |> assign(:airports, AsyncResult.loading())
