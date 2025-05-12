@@ -12,9 +12,6 @@ import { compression } from "vite-plugin-compression2";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 import { compress } from "@mongodb-js/zstd";
 
-const APPVERSION = process.env.VITE_APP_VERSION; // Update this when you change the app version
-console.log(APPVERSION);
-
 const rootDir = path.resolve(__dirname);
 const cssDir = path.resolve(rootDir, "css");
 const jsDir = path.resolve(rootDir, "js");
@@ -209,12 +206,35 @@ const MapTiler = {
   },
 };
 
-const OtherStaticAsset = {
+// const StaticAssets = {
+//   // urlPattern: /\.(?:js|mjs|wasm|css)$/i,
+//   urlPattern: ({ url }) => {
+//     console.log("Checking URL for caching:", url.pathname);
+//     const matches = /\.(js|wasm|mjs|css)$/i.test(url.pathname);
+//     console.log("Matches pattern:", matches);
+//     return matches;
+//   },
+//   // handler: "StaleWhileRevalidate",
+//   handler: "CacheFirst",
+//   options: {
+//     cacheName: "static-resources",
+//     expiration: {
+//       maxEntries: 50,
+//       maxAgeSeconds: 24 * 60 * 60, // 24 hours
+//     },
+//     fetchOptions: {
+//       credentials: "same-origin",
+//       // Explicitly allow compressed responses
+//     },
+//   },
+// };
+
+const OtherStaticAssets = {
   urlPattern: ({ url }) =>
     /\.(png|jpg|jpeg|gif|svg|ico|webp|woff2)$/i.test(url.pathname),
   handler: "CacheFirst",
   options: {
-    cacheName: "static",
+    cacheName: "images",
     expiration: {
       maxEntries: 200,
       maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
@@ -256,10 +276,10 @@ const Fonts = {
 
 const runtimeCaching = [
   // Navigation,
+  // StaticAssets,
+  OtherStaticAssets,
   ...LiveView,
   MapTiler, // Add the SDK route before Tiles
-  Fonts,
-  OtherStaticAsset,
   Fonts,
 ];
 
@@ -302,6 +322,7 @@ const PWAConfig = (mode) => ({
     inlineWorkboxRuntime: true,
 
     // -> Cache control
+    // preload all assets are SW is active after JS is loaded
     globPatterns: ["assets/**/*.*"], // Cache only compiled Vite assets
     maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10MB
 
@@ -312,10 +333,10 @@ const PWAConfig = (mode) => ({
       /^_csrf$/, // CSRF tokens ],
     ],
 
-    additionalManifestEntries: [
-      { url: "/", revision: `${Date.now()}` }, // Manually precache root route
-      { url: "/map", revision: `${Date.now()}` }, // Manually precache map route
-    ],
+    // additionalManifestEntries: [
+    //   { url: "/", revision: `${Date.now()}` }, // Manually precache root route
+    //   { url: "/map", revision: `${Date.now()}` }, // Manually precache map route
+    // ],
     runtimeCaching,
     // Update behaviour
     clientsClaim: true, // Claim control over all uncontrolled pages as soon as the SW is activated
@@ -409,6 +430,25 @@ export default defineConfig(({ command, mode }) => {
         plugins: [tailwindcss()],
       },
     },
+    define: {
+      /* Note: i
+       - mport.meta.env: Runtime access to .env variables
+       - define: Compile-time global constant replacement
+
+      Example:
+      __API_ENDPOINT__: JSON.stringify(
+      process.env.NODE_ENV === 'production' 
+        ? 'https://prod-api.example.com' 
+        : 'http://localhost:3000'
+      )
+      Then in the code, I can do:
+      const apiEndpoint = __API_ENDPOINT__;
+      and use it.
+      This is dead-code elimination after tree-shaking,
+      so it will be removed in production builds.
+
+      */
+    },
   };
 });
 
@@ -443,8 +483,3 @@ export default defineConfig(({ command, mode }) => {
 //     },
 //   },
 // }
-
-// if we need to inject env vars in the app, we should use:
-// define: {
-//   __APP_ENV__: JSON.stringify(process.env.APP_ENV), // Inject env vars
-// },

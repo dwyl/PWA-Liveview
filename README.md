@@ -49,10 +49,11 @@ QRCode to check multi users, from on a mobile device:
   - [Navigation](#navigation)
   - [Vite](#vite)
     - [Configuration and settings](#configuration-and-settings)
-    - [Client Env](#client-env)
+      - [Watcher](#watcher)
+      - [Client Env](#client-env)
     - [Static assets](#static-assets)
     - [VitePWA plugin and Workbox Caching Strategies](#vitepwa-plugin-and-workbox-caching-strategies)
-  - [Yjs and y_ex](#yjs-and-y_ex)
+  - [Yjs and y\_ex](#yjs-and-y_ex)
   - [Misc](#misc)
     - [CSP rules and evaluation](#csp-rules-and-evaluation)
     - [User token](#user-token)
@@ -227,6 +228,10 @@ The core components are setup using `Vite` in the _vite.config.js_ file.
 
 - HTTPS (or localhost):
   Required for secure context: it enables Service Workers and trust.
+
+`Vite` builds the SW for us via the `VitePWA` plugin by declarations in "vite.config.js". Check [Vite](#vite)
+
+The SW is started by the main script, early, and must preload all the build static assets as the main file starts before the SW runtime caching is active.
 
 ### Updates life-cycle
 
@@ -489,7 +494,7 @@ Key features:
 
 > [**Airport dataset**] We use a dataset from <https://ourairports.com/>. We stream download a CSV file, parse it (`NimbleCSV`) and bulk insert into an SQLite table. When a user mounts, we read from the database and pass the data asynchronously to the client via the liveSocket on the first mount. We persist the data in `localStorage` for client-side search. The socket "airports" assign is then pruned to free the server's socket.
 
-▶️ [Airports](<(https://github.com/dwyl/PWA-Liveview/blob/main/lib/solidyjs/db/Airports.ex)>), [LiveMap](https://github.com/dwyl/PWA-Liveview/blob/main/lib/solidyjsweb/live/live_map.ex)
+▶️ [Airports](<(https://github.com/dwyl/PWA-Liveview/blob/main/lib/LiveviewPwa/db/Airports.ex)>), [LiveMap](https://github.com/dwyl/PWA-Liveview/blob/main/lib/LiveviewPwaweb/live/live_map.ex)
 
 > The Websocket is configured with `compress: true` (cf <https://hexdocs.pm/phoenix/Phoenix.Endpoint.html#socket/3-websocket-configuration>) to enable compression of the 1.1MB airport dataset through the LiveSocket.
 
@@ -541,6 +546,8 @@ All the client code is managed by `Vite` and done (mostly) in a declarative way 
 
 > Most declarations are done programatically as it is run by `NodeJS`.
 
+#### Watcher
+
 There is a watcher configured in "config/dev.exs" which replaces, thus removes, `esbuild` and `tailwindCSS` (which are also removed from the mix deps).
 
 ```elixir
@@ -570,16 +577,41 @@ css: {
 
 where "tailwind.configjs" sits next to "vite.config.js".
 
-### Client Env
+#### Client Env
 
 The env arguments are loaded with `loadEnv`.
-The client ".env" is placed in the "/assets" folder and picke-up by `Vite` at build time.
-In particular, we use `VITE_API_KEY` for `Maptiler` to render the vector tiles.
 
-It will be backed in the JS code at _build time_.
-This means that it is passed in the Docker build stage when you copy the "assets" folder.
+1. Runtime access: `import.meta.env`
+   The client env vars are set in the ".env" placed, placed in the "/assets" folder (origin client code) next to "vite.config.js".
+   They need to be prefixed with `VITE_`.
+   They is injected by `Vite` at _runtime_ when you use `import.meta.env`.
+   In particular, we use `VITE_API_KEY` for `Maptiler` to render the vector tiles.
 
-When you deploy, we need to set an env variable `VITE_API_KEY` which will be used to build the image.
+2. Compile access: `define`
+   it is used at _compile time_ .
+   The directive `define` is used to get _compile time_ global constant replacement. This is valuable for dead code elimination.
+   For example:
+
+   ```js
+   define: {
+     __API_ENDPOINT__: JSON.stringify(
+       process.env.NODE_ENV === "production"
+         ? "https://example.com"
+         : "http://localhost:4000"
+     );
+   }
+   [...]
+   // NODE_ENV="prodution"
+   // file.js
+   if (__API__ENDPOINT__ !== "https://example.com") {
+    // => dead code eliminated
+   }
+   ```
+
+3. Docker:
+   In the Docker build stage, you copy the "assets" folder.
+   You therefor copy the ".env" file so the env vars variables are accessible at runtime.
+   When you deploy, we need to set an env variable `VITE_API_KEY` which will be used to build the image.
 
 ### Static assets
 
@@ -596,7 +628,7 @@ rollupOptions.output: {
 
 We do this because we want the SW to be able to detect client code changes and update the app. The Phoenix work would interfer.
 
-**Caveat**: fingerprinted fils have dynamic name so how to pass them to the "root.html.heex" component?
+**Caveat**: versioned fils have dynamic so how to pass them to the "root.html.heex" component?
 
 When assets are not fingerprinted, Phoenix can serve them "normally" as names are known:
 
@@ -605,8 +637,8 @@ When assets are not fingerprinted, Phoenix can serve them "normally" as names ar
 <link rel="manifest" href="/manifest.webmanifest" />
 ```
 
-When the asset reference is fingerprinted, we use the `.vte/manifest` dictionary to find the new name.
-We used a helper [ViteHelper](https://github.com/dwyl/PWA-Liveview/blob/main/lib/soldiyjsweb/vite_helper.ex):
+When the asset reference is versioned, we use the `.vte/manifest` dictionary to find the new name.
+We used a helper [ViteHelper](https://github.com/dwyl/PWA-Liveview/blob/main/lib/soldiyjsweb/vite_helper.ex) to map the original name to the versioned one (the one in "priv/static/assets").
 
 ```elixir
 <link
@@ -631,7 +663,7 @@ We used a helper [ViteHelper](https://github.com/dwyl/PWA-Liveview/blob/main/lib
 
 Not all assets need to be fingerprinted, such as "robotx.txt", icons.... To copy these files , we use the plugin `vite-plugin-static-copy`.
 
-We also compress files to **ZSTD** known for its compression performance and deflating speed. We use the plugin `vite-plugin-compression2` and use `@mongodb-js/zstd`.
+We also compress files to _ZSTD_ known for its compression performance and deflating speed. We use the plugin `vite-plugin-compression2` and use `@mongodb-js/zstd`.
 
 We modify "endpoint.ex" to accept these encodings:
 
@@ -641,7 +673,7 @@ plug Plug.Static,
   brotli: true,
   gzip: true,
   at: "/",
-  from: :solidyjs,
+  from: :liveview_pwa,
   only: ~w(
     assets
     icons
@@ -659,6 +691,12 @@ plug Plug.Static,
 ### VitePWA plugin and Workbox Caching Strategies
 
 We use the `VitePWA` plugin to generate the SW and the manifest.
+
+The client code is loaded in a `<script>`. It will load the SW registration when the event DOMContentLoaded fires.
+All of the hooks are loaded and attached to the LiveSocket, like an SPA.
+If we don't _preload_ the JS files in the SW, most of the js files will never be cached, thus the app won't work offline.
+
+For this, we define that we want to preload all static assets in the directive `globPattern`.
 
 ```js
 PWAConfig = {
@@ -679,7 +717,7 @@ PWAConfig = {
   // Let app decide when to update; user must confirm or app logic must apply update
   skipWaiting: false,
 
-  workbox: ...
+  workbox: {...}
 }
 ```
 
@@ -695,6 +733,9 @@ workbox: {
 
   // ‼️ tell Workbox not to split te SW as the other is fingerprinted, thus unknown to Phoenix.
   inlineWorkboxRuntime: true,
+
+  // preload all the built static assets
+  globPatterns: ["assets/**/*.*"],
 
 }
 ```

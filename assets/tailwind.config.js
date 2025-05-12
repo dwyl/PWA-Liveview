@@ -10,8 +10,8 @@ module.exports = {
   mode: "jit",
   content: [
     "./js/**/*.js",
-    "../lib/solidyjs_web.ex",
-    "../lib/solidyjs_web/**/*.*ex",
+    "../lib/liveview_pwa_web.ex",
+    "../lib/liveview_pwa_web/**/*.*ex",
   ],
   theme: {
     extend: {

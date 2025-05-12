@@ -2,7 +2,7 @@
   "name": "assets",
   "version": "1.0.0",
   "description": "PWA Phoenix LiveView with Yjs and SolidJS",
-  "main": "js/appV.js",
+  "main": "js/main.js",
   "type": "module",
   "keywords": [],
   "author": "",

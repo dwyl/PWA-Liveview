@@ -1,1 +1,1 @@
-call "%~dp0\solidyjs" eval Solidyjs.Release.migrate
+call "%~dp0\liveview_pwa" eval LiveviewPwa.Release.migrate

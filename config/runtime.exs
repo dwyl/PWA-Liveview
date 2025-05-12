@@ -12,7 +12,7 @@ import Config
 # If you use `mix release`, you need to explicitly enable the server
 # by passing the PHX_SERVER=true when you start it:
 #
-#     PHX_SERVER=true bin/solidyjs start
+#     PHX_SERVER=true bin/LiveviewPwa start
 #
 # Alternatively, you can use `mix phx.gen.release` to generate a `bin/server`
 # script that automatically sets the env var above.
@@ -20,7 +20,7 @@ import Config
 config :exqlite, default_chunk_size: 100
 
 if System.get_env("PHX_SERVER") do
-  config :solidyjs, SolidyjsWeb.Endpoint, server: true
+  config :liveview_pwa, LiveviewPwaWeb.Endpoint, server: true
 end
 
 # The secret key base is used to sign/encrypt cookies and other secrets.
@@ -39,7 +39,7 @@ if config_env() == :prod do
   # You can set it to the path where the database file will be stored.
   # """
 
-  config :solidyjs, Solidyjs.Repo,
+  config :liveview_pwa, LiveviewPwa.Repo,
     database: database_path,
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "5"),
     show_sensitive_data_on_connection_error: true
@@ -54,13 +54,13 @@ if config_env() == :prod do
   host = System.get_env("PHX_HOST") || "localhost"
   port = String.to_integer(System.get_env("PORT") || "4000")
 
-  config :solidyjs, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
+  config :liveview_pwa, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
   # Enable IPv6 and bind on all interfaces.
   # Set it to  {0, 0, 0, 0, 0, 0, 0, 1} for local network only access.
   # See the documentation on https://hexdocs.pm/bandit/Bandit.html#t:options/0
   # for details about using IPv6 vs IPv4 and loopback vs public addresses.
-  config :solidyjs, SolidyjsWeb.Endpoint,
+  config :liveview_pwa, LiveviewPwaWeb.Endpoint,
     # static_url: [host: "cdn.example.com"],
     url: [host: host, port: port, scheme: "https"],
     http: [
@@ -76,7 +76,7 @@ if config_env() == :prod do
   # To get SSL working, you will need to add the `https` key
   # to your endpoint configuration:
   #
-  #     config :solidyjs, SolidyjsWeb.Endpoint,
+  #     config :liveview_pwa, LiveviewPwaWeb.Endpoint,
   #       https: [
   #         ...,
   #         port: 443,
@@ -98,7 +98,7 @@ if config_env() == :prod do
   # We also recommend setting `force_ssl` in your config/prod.exs,
   # ensuring no data is ever sent via http, always redirecting to https:
   #
-  #     config :solidyjs, SolidyjsWeb.Endpoint,
+  #     config :liveview_pwa, LiveviewPwaWeb.Endpoint,
   #       force_ssl: [hsts: true]
   #
   # Check `Plug.SSL` for all available options in `force_ssl`.

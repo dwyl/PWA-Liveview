@@ -82,7 +82,7 @@ ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8
 WORKDIR /app
 
 
-COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/solidyjs ./
+COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/LiveviewPwa ./
 
 RUN mkdir -p /app/db && \
   chown -R nobody:nogroup /app/db && \

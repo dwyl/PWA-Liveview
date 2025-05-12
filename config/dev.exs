@@ -3,7 +3,7 @@ import Config
 # For development, we disable any cache and enable
 # debugging and code reloading.
 #
-config :solidyjs, SolidyjsWeb.Endpoint,
+config :liveview_pwa, LiveviewPwaWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
   http: [ip: {0, 0, 0, 0}, port: 4000],
@@ -14,8 +14,8 @@ config :solidyjs, SolidyjsWeb.Endpoint,
   live_reload: [
     patterns: [
       ~r{priv/static/.*(js|css|png|jpeg|jpg|gif)$},
-      ~r{lib/solidyjs_web/views/.*(ex)$},
-      ~r{lib/solidyjs_web/templates/.*(eex)$}
+      ~r{lib/liveview_pwa_web/views/.*(ex)$},
+      ~r{lib/liveview_pwa_web/templates/.*(eex)$}
     ]
   ],
   # The watchers configuration can be used to run external
@@ -58,17 +58,17 @@ config :solidyjs, SolidyjsWeb.Endpoint,
 # different ports.
 
 # Watch static and templates for browser reloading.
-config :solidyjs, SolidyjsWeb.Endpoint,
+config :liveview_pwa, LiveviewPwaWeb.Endpoint,
   live_reload: [
     web_console_logger: true,
     patterns: [
       ~r"priv/static/(?!uploads/).*(js|css|png|jpeg|jpg|gif|svg)$",
-      ~r"lib/solidyjs_web/(controllers|live|components)/.*(ex|heex)$"
+      ~r"lib/LiveviewPwa_web/(controllers|live|components)/.*(ex|heex)$"
     ]
   ]
 
 # Enable dev routes for dashboard and mailbox
-config :solidyjs, dev_routes: true
+config :liveview_pwa, dev_routes: true
 
 # Do not include metadata nor timestamps in development logs
 config :logger, :console, format: "[$level] $message\n"

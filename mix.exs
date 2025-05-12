@@ -1,9 +1,9 @@
-defmodule Solidyjs.MixProject do
+defmodule LiveviewPwa.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :solidyjs,
+      app: :liveview_pwa,
       version: "0.1.0",
       elixir: "~> 1.18",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -18,7 +18,7 @@ defmodule Solidyjs.MixProject do
   # Type `mix help compile.app` for more information.
   def application do
     [
-      mod: {Solidyjs.Application, []},
+      mod: {LiveviewPwa.Application, []},
       extra_applications: [:logger, :runtime_tools]
     ]
   end

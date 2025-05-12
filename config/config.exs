@@ -1,14 +1,14 @@
 import Config
 
-config :solidyjs,
+config :liveview_pwa,
   generators: [timestamp_type: :utc_datetime]
 
-config :solidyjs,
-  ecto_repos: [Solidyjs.Repo]
+config :liveview_pwa,
+  ecto_repos: [LiveviewPwa.Repo]
 
-config :solidyjs, :csp_nonce, :crypto.strong_rand_bytes(16) |> Base.encode16()
+config :liveview_pwa, :csp_nonce, :crypto.strong_rand_bytes(16) |> Base.encode16()
 
-config :solidyjs, Solidyjs.Repo,
+config :liveview_pwa, LiveviewPwa.Repo,
   adapter: Ecto.Adapters.SQLite3,
   database: Path.expand("../db/main.db", Path.dirname(__ENV__.file)),
   pool_size: 5,
@@ -18,13 +18,13 @@ config :solidyjs, Solidyjs.Repo,
 config :exqlite, force_build: true
 
 # Configures the endpoint
-config :solidyjs, SolidyjsWeb.Endpoint,
+config :liveview_pwa, LiveviewPwaWeb.Endpoint,
   url: [host: "localhost"],
   adapter: Bandit.PhoenixAdapter,
   pubsub_server: :pubsub,
   live_view: [signing_salt: "zhtHGb8Q"],
   render_errors: [
-    formats: [json: SolidyjsWeb.ErrorJSON],
+    formats: [json: LiveviewPwaWeb.ErrorJSON],
     layout: false
   ]
 

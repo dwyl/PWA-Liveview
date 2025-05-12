@@ -1,4 +1,4 @@
-defmodule Solidyjs.Repo.Migrations.CreateTables do
+defmodule LiveviewPwa.Repo.Migrations.CreateTables do
   use Ecto.Migration
 
   @moduledoc """

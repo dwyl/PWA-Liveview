@@ -2,4 +2,4 @@
 set -eu
 
 cd -P -- "$(dirname -- "$0")"
-exec ./solidyjs eval Solidyjs.Release.migrate
+exec ./liveview_pwa eval LiveviewPwa.Release.migrate

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" class="[scrollbar-gutter:stable]">
+  <head>
+    <meta charset="utf-8" />
+
+    <meta name="description" content="a real-time collaborative webapp offline ready" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content={Plug.CSRFProtection.get_csrf_token()} />
+    <.live_title>
+      {assigns[:page_title] || "LiveviewPwa"}
+    </.live_title>
+    <%!-- -------------------%>
+
+    <link rel="icon" href="/icons/favicon-16.png" type="image/png" sizes="16x16" />
+    <link rel="icon" href="/icons/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="/icons/favicon-64.png" type="image/png" sizes="64x64" />
+    <link rel="icon" href="/icons/favicon.ico" type="image/png" sizes="48x48" />
+    <link rel="icon" href="/icons/favicon-192.png" type="image/png" sizes="192x192" />
+    <link rel="icon" href="/icons/favicon-512.png" type="image/png" sizes="512x512" />
+    <link rel="mask-icon" href="/icons/pwa-maskable-192.png" color="#FFFFFF" />
+    <link rel="mask-icon" href="/icons/pwa-maskable-512.png" color="#FFFFFF" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <%!-- -------------------%>
+    <link
+      phx-track-static
+      rel="stylesheet"
+      href={ViteHelper.path("css/app.css")}
+      crossorigin="anonymous"
+    />
+    <%!-- href={~p"/assets/app.css"}  --%>
+
+    <script
+      defer
+      phx-track-static
+      nonce={assigns[:main_nonce]}
+      type="module"
+      src={ViteHelper.path("js/main.js")}
+      crossorigin="anonymous"
+    >
+    </script>
+    <%!-- src={~p"/assets/main.js"} --%>
+  </head>
+  <body class="bg-grey">
+    {@inner_content}
+  </body>
+</html>
