@@ -700,6 +700,11 @@ If we don't _preload_ the JS files in the SW, most of the js files will never be
 
 For this, we define that we want to preload all static assets in the directive `globPattern`.
 
+Once the SW activated, you should see (in dev mode):
+
+<img width="548" alt="Screenshot 2025-02-26 at 16 56 40" src="https://github.com/user-attachments/assets/932c587c-908f-4e47-936a-7a191a35c892" />
+<br/>
+
 We also cache the rendered HTML pages as we inject them when offline, via `additionalManifestEntries`.
 
 ```js
