@@ -2,7 +2,7 @@
 
 An example of a real-time, collaborative multi-page web app built with `Phoenix LiveView`.
 
-It is designed for offline-first ready; it is packaged as a `PWA` and uses CRDTs or local state and reactive components.
+It is designed for offline-first ready; it is packaged as a [PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps) and uses CRDTs or local state and reactive components.
 
 Offline first solutions naturally offloads most of the reactive UI logic to JavaScript.
 
