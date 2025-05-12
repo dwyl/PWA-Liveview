@@ -16,7 +16,7 @@ It uses `Vite` as the bundler.
 
 - deployed on Fly.io at: <https://solidyjs-lively-pine-4375.fly.dev/>
 - standalone Phoenix LiveView app of 2.1 MB
-- memory usage: 210MB
+- memory usage: 220MB
 - image weight: 52MB of Fly.io, 126MB on Docker Hub (`Debian` based)
 - client code can be updated via the Service Worker lifecycle
 
@@ -232,6 +232,8 @@ The core components are setup using `Vite` in the _vite.config.js_ file.
 `Vite` builds the SW for us via the `VitePWA` plugin by declarations in "vite.config.js". Check [Vite](#vite)
 
 The SW is started by the main script, early, and must preload all the build static assets as the main file starts before the SW runtime caching is active.
+
+Since we want offline navigation, we precache the rendered HTML as well.
 
 ### Updates life-cycle
 
@@ -530,7 +532,7 @@ When the user goes offline, we have the same smooth navigation thanks to navigat
 
 - Initial Load: App starts a continous server check. It determines if online/offline and sets up accordingly
 - Going Offline: Triggers component initialization and navigation setup
-- Navigating Offline: cleans up components, fetch cached pages (request proxied by the SW), parse ahd hydrate the DOM to renders components
+- Navigating Offline: cleans up components, _fetch_ the cached pages (request proxied by the SW and the page are cached iva the `additionalManifestEntries`), parse ahd hydrate the DOM to renders components
 - Going Online: when the polling detects a transistion off->on, the user expects a page refresh and Phoenix LiveView reinitializes.
 
 **Key point**:
@@ -698,6 +700,8 @@ If we don't _preload_ the JS files in the SW, most of the js files will never be
 
 For this, we define that we want to preload all static assets in the directive `globPattern`.
 
+We also cache the rendered HTML pages as we inject them when offline, via `additionalManifestEntries`.
+
 ```js
 PWAConfig = {
   // Don't inject <script> to register SW (handled manually)
@@ -721,7 +725,7 @@ PWAConfig = {
 }
 ```
 
-❗️ It is important not to split the "sw.js" file because `Vite` produces a fingerprint from the splitted files. However, Phoenix serves them and can't know the name in advance.
+❗️ It is important _not to split_ the "sw.js" file because `Vite` produces a fingerprint from the splitted files. However, Phoenix serves hardcoded nmes and can't know the name in advance.
 
 ```js
 workbox: {
@@ -736,6 +740,12 @@ workbox: {
 
   // preload all the built static assets
   globPatterns: ["assets/**/*.*"],
+
+  // cached the HTML for offline rendering
+  additionalManifestEntries: [
+    { url: "/", revision: `${Date.now()}` }, // Manually precache root route
+    { url: "/map", revision: `${Date.now()}` }, // Manually precache map route
+  ],
 
 }
 ```

@@ -333,10 +333,10 @@ const PWAConfig = (mode) => ({
       /^_csrf$/, // CSRF tokens ],
     ],
 
-    // additionalManifestEntries: [
-    //   { url: "/", revision: `${Date.now()}` }, // Manually precache root route
-    //   { url: "/map", revision: `${Date.now()}` }, // Manually precache map route
-    // ],
+    additionalManifestEntries: [
+      { url: "/", revision: `${Date.now()}` }, // Manually precache root route
+      { url: "/map", revision: `${Date.now()}` }, // Manually precache map route
+    ],
     runtimeCaching,
     // Update behaviour
     clientsClaim: true, // Claim control over all uncontrolled pages as soon as the SW is activated
