@@ -55,6 +55,33 @@ const manifestOpts = {
   description: "A demo collaborative LiveView webapp offline ready",
   theme_color: "#000000",
   background_color: "#FFFFFF",
+  dir: "auto",
+  lang: "en",
+  orientation: "any",
+  prefer_related_applications: false,
+  launch_handler: {
+    client_mode: "auto",
+    route_hint: "/",
+  },
+  screenshots: [
+    {
+      src: "icons/Screenshot-map.png",
+      type: "image/png",
+      sizes: "1204x1610",
+      form_factor: "wide",
+    },
+    {
+      src: "icons/Screenshot-stock.png",
+      type: "image/png",
+      sizes: "1190x1150",
+    },
+  ],
+  display_override: ["window-controls-overlay", "standalone", "browser"],
+  edge_side_panel: {
+    default_area: "left",
+    preferred_width: 400,
+    default_show: true,
+  },
   icons: [
     {
       src: Icon16,
@@ -288,13 +315,13 @@ const runtimeCaching = [
 // <https://vite-pwa-org.netlify.app/guide/>
 
 const PWAConfig = (mode) => ({
+  // https://vite-pwa-org.netlify.app/guide/inject-manifest.html#development
   devOptions: {
     enabled: mode === "development",
     type: "module", //  ES module for dev SW
   },
   suppressWarnings: true,
-  injectRegister: false, // Don't inject <script> to register SW
-  // injectRegister: "auto", // Do not nject the SW registration script as "index.html" does not exist
+  injectRegister: "null", // It is injected in the main.js script
   filename: "sw.js", // Service worker filename
   strategies: "generateSW", // Let Workbox auto-generate the service worker from config
   registerType: "prompt", // App manually prompts user to update SW when available
@@ -302,7 +329,9 @@ const PWAConfig = (mode) => ({
   outDir: staticDir,
   manifest: manifestOpts,
   manifestFilename: "manifest.webmanifest",
-  injectManifest: false, // Do not inject the SW registration script as "index.html" does not exist
+  injectManifest: {
+    injectionPoint: undefined,
+  }, // Do not inject the SW registration script as "index.html" does not exist
 
   // Cache exceptions
   ignoreURLParametersMatching: [
