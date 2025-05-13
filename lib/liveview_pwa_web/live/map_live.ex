@@ -57,7 +57,7 @@ defmodule LiveviewPwaWeb.MapLive do
       :ok = PubSub.subscribe(:pubsub, "do_fly")
     end
 
-    {:ok, assign(socket, %{page_title: "Map", airports: nil})}
+    {:ok, assign(socket, %{page_title: "Map", airports: nil, hash: Airport.hash()})}
   end
 
   @impl true
@@ -75,7 +75,7 @@ defmodule LiveviewPwaWeb.MapLive do
       :crypto.hash(:sha256, :erlang.term_to_binary(fetched_airports))
       |> Base.encode16()
 
-    true = :ets.insert(:hash, {:hash, hash})
+    Airport.put_hash(hash)
 
     send(self(), :airports_cleanup)
 
@@ -111,24 +111,30 @@ defmodule LiveviewPwaWeb.MapLive do
      )}
   end
 
+  # all good cache-checked :ok
   def handle_event(
         "cache-checked",
-        %{"cached" => true, "version" => current_hash},
+        %{"cached" => true, "version" => hash},
+        %{assigns: %{hash: hash}} = socket
+      ) do
+    {:noreply, socket}
+  end
+
+  # hash don't match
+  def handle_event(
+        "cache-checked",
+        %{"cached" => true, "version" => hash},
         socket
       ) do
-    if [{:hash, current_hash}] == :ets.lookup(:hash, :hash) do
-      # all good, use cached data
-      {:noreply, socket}
-    else
-      #  version does not match, fetch from DB
-      {:noreply,
-       socket
-       |> assign(:airports, AsyncResult.loading())
-       |> start_async(
-         :fetch_airports,
-         &fetch_airports/0
-       )}
-    end
+    Logger.info("#{inspect({hash, socket.assigns.hash})}")
+    #  version does not match, fetch from DB
+    {:noreply,
+     socket
+     |> assign(:airports, AsyncResult.loading())
+     |> start_async(
+       :fetch_airports,
+       &fetch_airports/0
+     )}
   end
 
   # <---------- airport list logic

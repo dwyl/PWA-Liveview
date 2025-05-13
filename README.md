@@ -53,7 +53,7 @@ QRCode to check multi users, from on a mobile device:
       - [Client Env](#client-env)
     - [Static assets](#static-assets)
     - [VitePWA plugin and Workbox Caching Strategies](#vitepwa-plugin-and-workbox-caching-strategies)
-  - [Yjs and y\_ex](#yjs-and-y_ex)
+  - [Yjs and y_ex](#yjs-and-y_ex)
   - [Misc](#misc)
     - [CSP rules and evaluation](#csp-rules-and-evaluation)
     - [User token](#user-token)
@@ -61,9 +61,11 @@ QRCode to check multi users, from on a mobile device:
     - [Manifest](#manifest)
   - [Performance](#performance)
     - [\[Optional\] Page Caching](#optional-page-caching)
+  - [Publish](#publish)
   - [Documentation source](#documentation-source)
   - [Resources](#resources)
   - [License](#license)
+  - [Credits](#credits)
 
 ## What?
 
@@ -692,7 +694,7 @@ plug Plug.Static,
 
 ### VitePWA plugin and Workbox Caching Strategies
 
-We use the `VitePWA` plugin to generate the SW and the manifest.
+We use the [VitePWA](https://vite-pwa-org.netlify.app/guide/) plugin to generate the SW and the manifest.
 
 The client code is loaded in a `<script>`. It will load the SW registration when the event DOMContentLoaded fires.
 All of the hooks are loaded and attached to the LiveSocket, like an SPA.
@@ -766,7 +768,7 @@ defineConfig = {
 
 ## Yjs and y_ex
 
-[TODO]
+[TODO something smart...]
 
 ## Misc
 
@@ -937,6 +939,10 @@ navigation.addEventListener("navigate", async ({ destination: { url } }) => {
 </Details>
 </br>
 
+## Publish
+
+The site <https://docs.pwabuilder.com/#/builder/android> helps to publish PWAs on Google Play, Ios and other plateforms.
+
 ## Documentation source
 
 - Update API: <https://docs.yjs.dev/api/document-updates#update-api>
@@ -953,6 +959,8 @@ Besides Phoenix LiveView:
 - [Yex with Channel](https://github.com/satoren/y-phoenix-channel)
 - [Yjs Documentation](https://docs.yjs.dev/)
 - [Vite PWA Plugin Guide](https://vite-pwa-org.netlify.app/guide/)
+- [MDN PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Best_practices)
+- [PWA builder](https://www.pwabuilder.com/reportcard?site=https://solidyjs-lively-pine-4375.fly.dev/)
 - [Favicon Generator](https://favicon.inbrowser.app/tools/favicon-generator) and <https://vite-pwa-org.netlify.app/assets-generator/#pwa-minimal-icons-requirements>
 - [CSP Evaluator](https://csp-evaluator.withgoogle.com/)
 - [Haversine formula](https://en.wikipedia.org/wiki/Haversine_formula)
@@ -960,3 +968,7 @@ Besides Phoenix LiveView:
 ## License
 
 [GNU License](LICENSE)
+
+## Credits
+
+[Satoren](https://github.com/satoren) for [Yex](https://github.com/satoren/y_ex)

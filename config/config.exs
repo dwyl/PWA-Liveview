@@ -10,9 +10,6 @@ config :liveview_pwa, :csp_nonce, :crypto.strong_rand_bytes(16) |> Base.encode16
 
 config :liveview_pwa, LiveviewPwa.Repo,
   adapter: Ecto.Adapters.SQLite3,
-  database: Path.expand("../db/main.db", Path.dirname(__ENV__.file)),
-  pool_size: 5,
-  show_sensitive_data_on_connection_error: true,
   default_transaction_mode: :immediate
 
 config :exqlite, force_build: true
@@ -27,12 +24,6 @@ config :liveview_pwa, LiveviewPwaWeb.Endpoint,
     formats: [json: LiveviewPwaWeb.ErrorJSON],
     layout: false
   ]
-
-# config :phoenix,
-#  static_compressors: [
-#     Phoenix.Digester.Gzip
-#     ExBrotli.DigesterCompressor,
-#  ]
 
 # Configures Elixir's Logger
 config :logger, :console,

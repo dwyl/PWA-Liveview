@@ -26,6 +26,7 @@ defmodule LiveviewPwa.Repo.Migrations.CreateTables do
       add :country, :string
       add :latitude, :float
       add :longitude, :float
+      add :hash, :string
     end
 
     create_if_not_exists table(:yjs_documents, primary_key: false) do

@@ -24,6 +24,50 @@ defmodule Airport do
   #   headers
   # end
 
+  def hash do
+    db = LiveviewPwa.Repo.config()[:database]
+    query = "SELECT hash FROM airports LIMIT 1;"
+
+    with {:ok, conn} <-
+           Sqlite3.open(db),
+         {:ok, stmt} <-
+           Sqlite3.prepare(conn, query),
+         {:row, [hash]} <-
+           Sqlite3.step(conn, stmt),
+         :done <-
+           Sqlite3.step(conn, stmt),
+         :ok <-
+           Sqlite3.release(conn, stmt) do
+      hash
+    else
+      reason ->
+        Logger.error("Failed to open or fetch airports: #{inspect(reason)}")
+        raise "Failed to open database connection"
+    end
+  end
+
+  def put_hash(hash) do
+    db = LiveviewPwa.Repo.config()[:database]
+    query = "UPDATE airports SET hash = ?1;"
+
+    with {:ok, conn} <-
+           Sqlite3.open(db),
+         {:ok, stmt} <-
+           Sqlite3.prepare(conn, query),
+         :ok <-
+           Sqlite3.bind(stmt, [hash]),
+         :done <-
+           Sqlite3.step(conn, stmt),
+         :ok <-
+           Sqlite3.release(conn, stmt) do
+      :ok
+    else
+      reason ->
+        Logger.error("Failed to open or fetch airports: #{inspect(reason)}")
+        raise "Failed to open database connection"
+    end
+  end
+
   @doc """
     Simple query that returns all airports from the database.
   """

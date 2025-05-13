@@ -36,9 +36,15 @@ COPY mix.exs mix.lock ./
 RUN mix deps.get --only ${MIX_ENV}
 RUN mkdir config
 
-
+# compile Elxirr deps
 COPY config/config.exs config/${MIX_ENV}.exs config/
 RUN mix deps.compile
+
+# compile Node deps
+WORKDIR /app/assets
+COPY assets/package.json assets/pnpm-lock.yaml ./
+RUN pnpm self-update && pnpm install --frozen-lockfile
+WORKDIR /app
 
 # Copy app server code---------
 #### Note: 
@@ -49,12 +55,10 @@ COPY lib lib
 
 # Copy, install & build assets--------
 COPY priv priv
-WORKDIR /app/assets
-COPY assets/package.json assets/pnpm-lock.yaml ./
-RUN pnpm self-update && pnpm install --frozen-lockfile
-#  this will copy the assets/.env for the Maptiler api key loaded by Vite.loadenv
-COPY assets ./ 
 
+#  this will copy the assets/.env for the Maptiler api key loaded by Vite.loadenv
+WORKDIR /app/assets
+COPY assets ./ 
 RUN pnpm vite build --mode ${NODE_ENV} --config vite.config.js
 
 WORKDIR /app

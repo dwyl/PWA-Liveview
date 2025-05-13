@@ -23,6 +23,13 @@ if System.get_env("PHX_SERVER") do
   config :liveview_pwa, LiveviewPwaWeb.Endpoint, server: true
 end
 
+if config_env() == :dev do
+  database_path =
+    Path.expand("../db/main.db", Application.app_dir(:liveview_pwa))
+
+  config :liveview_pwa, LiveviewPwa.Repo, database: database_path
+end
+
 # The secret key base is used to sign/encrypt cookies and other secrets.
 # A default value is used in config/dev.exs and config/test.exs but you
 # want to use a different value for prod and you most likely don't want
@@ -42,7 +49,7 @@ if config_env() == :prod do
   config :liveview_pwa, LiveviewPwa.Repo,
     database: database_path,
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "5"),
-    show_sensitive_data_on_connection_error: true
+    show_sensitive_data_on_connection_error: false
 
   secret_key_base =
     System.get_env("SECRET_KEY_BASE") ||

@@ -1,7 +1,9 @@
 import Config
 
-# For development, we disable any cache and enable
-# debugging and code reloading.
+config :liveview_pwa, LiveviewPwa.Repo,
+  show_sensitive_data_on_connection_error: true,
+  pool_size: 5
+
 #
 config :liveview_pwa, LiveviewPwaWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.

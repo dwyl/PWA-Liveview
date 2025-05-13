@@ -3,6 +3,7 @@ defmodule LiveviewPwa.Application do
   # for more information on OTP Applications
   @moduledoc false
 
+  require Logger
   use Application
 
   @max 20
@@ -11,7 +12,6 @@ defmodule LiveviewPwa.Application do
   def start(_type, _args) do
     db = setupDbPath()
     [{:ok, _, _}] = LiveviewPwa.Release.migrate()
-    :hash = :ets.new(:hash, [:named_table, :public, read_concurrency: true])
 
     children = [
       LiveviewPwaWeb.Telemetry,
@@ -37,7 +37,9 @@ defmodule LiveviewPwa.Application do
 
   defp setupDbPath do
     db = Application.get_env(:liveview_pwa, LiveviewPwa.Repo)[:database]
+
     db_dir = Path.dirname(db)
+    Logger.debug(inspect({Path.basename(db), db_dir}))
     :ok = File.mkdir_p!(db_dir)
     :ok = File.chmod!(db_dir, 0o777)
     db
