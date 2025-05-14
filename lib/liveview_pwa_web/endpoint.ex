@@ -29,7 +29,10 @@ defmodule LiveviewPwaWeb.Endpoint do
   ]
 
   socket "/live", Phoenix.LiveView.Socket,
-    websocket: [connect_info: [session: @session_options], compress: true],
+    websocket: [
+      connect_info: [session: @session_options],
+      compress: true
+    ],
     longpoll: [connect_info: [session: @session_options]]
 
   socket "/ydoc", LiveviewPwa.YdocSocket,

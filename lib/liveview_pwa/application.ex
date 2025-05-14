@@ -39,7 +39,7 @@ defmodule LiveviewPwa.Application do
     db = Application.get_env(:liveview_pwa, LiveviewPwa.Repo)[:database]
 
     db_dir = Path.dirname(db)
-    Logger.debug(inspect({Path.basename(db), db_dir}))
+    # Logger.debug(inspect({Path.basename(db), db_dir}))
     :ok = File.mkdir_p!(db_dir)
     :ok = File.chmod!(db_dir, 0o777)
     db

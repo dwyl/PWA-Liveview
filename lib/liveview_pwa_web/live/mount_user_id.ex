@@ -1,6 +1,7 @@
 defmodule LiveviewPwaWeb.MountUserId do
   # import Phoenix.LiveView
   import Phoenix.Component
+  require Logger
 
   @moduledoc """
   This module is used to mount the user_id from the session into the socket.

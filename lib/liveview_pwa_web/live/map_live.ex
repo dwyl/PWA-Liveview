@@ -208,6 +208,7 @@ defmodule LiveviewPwaWeb.MapLive do
 
     Logger.info("#{user_id} Received PubSub event: #{action} from #{from}")
 
+    # delete action has no "from" field as it applies to all clients
     if user_id != from do
       {:noreply, push_event(socket, action, payload)}
     else

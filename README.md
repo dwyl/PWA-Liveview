@@ -50,10 +50,11 @@ QRCode to check multi users, from on a mobile device:
   - [Vite](#vite)
     - [Configuration and settings](#configuration-and-settings)
       - [Watcher](#watcher)
+      - [Tailwind](#tailwind)
       - [Client Env](#client-env)
     - [Static assets](#static-assets)
     - [VitePWA plugin and Workbox Caching Strategies](#vitepwa-plugin-and-workbox-caching-strategies)
-  - [Yjs and y_ex](#yjs-and-y_ex)
+  - [Yjs and y\_ex](#yjs-and-y_ex)
   - [Misc](#misc)
     - [CSP rules and evaluation](#csp-rules-and-evaluation)
     - [User token](#user-token)
@@ -569,9 +570,16 @@ watchers: [
   ]
 ```
 
-In the `Vite` config, `TailwindCSS`is set with the declaration:
+#### Tailwind
+
+⚠️You can't use v4 but should _keep v3.4_. Indeed, Tailwind v4 drops the "tailwind.config.js" and there is no proper way to parse the SSR files (.ex, .heex) without it.
+
+Tailwind is used as a PostCSS plugin. In the `Vite` config, it is set with the declaration:
 
 ```js
+import tailwindcss from "tailwindcss";
+[...]
+// in `defineConfig`, add:
 css: {
   postcss: {
     plugins: [tailwindcss()],
@@ -579,7 +587,9 @@ css: {
 },
 ```
 
-where "tailwind.configjs" sits next to "vite.config.js".
+and reads automatically the "tailwind.configjs" which sits next to "vite.config.js".
+
+> Note. We use `lightningCSS` for further optimze the CSS and `autoprefixer` is built in (if "-weebkit" for flex/grid or "-moz" for transitions are needed).
 
 #### Client Env
 
@@ -858,6 +868,8 @@ Check [Resources](#resources)
 ### Manifest
 
 The "manifest.webmanifest" file will be generated from "vite.config.js".
+
+Source: check [PWABuilder](https://www.pwabuilder.com)
 
 ```json
 {

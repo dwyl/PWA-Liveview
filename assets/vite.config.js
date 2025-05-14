@@ -1,10 +1,18 @@
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig } from "vite";
 
 import fs from "fs"; // for file system operations
 import path from "path";
 import fg from "fast-glob"; // for recursive file scanning
 
-import tailwindcss from "tailwindcss"; // <--- do not use @tailwindcss/vite
+// <-- !! do not use @tailwindcss/vite v4
+// but v3.4 instead as Tailwind v4 throws away the tailwind.config.js file
+// and Phoenix CSS won't be parsed by Vite without it
+import tailwindcss from "tailwindcss";
+
+// autoprefixing CSS, eg --webkit for flex/grid, --moz for transitions, etc
+// but "ligntningcss" is used for minification and autoprefixing
+// import autoprefixer from "autoprefixer";
+
 import { VitePWA } from "vite-plugin-pwa";
 import solidPlugin from "vite-plugin-solid";
 import wasm from "vite-plugin-wasm";
@@ -20,7 +28,6 @@ const iconsDir = path.resolve(rootDir, "icons");
 const wasmDir = path.resolve(rootDir, "wasm");
 const srcImgDir = path.resolve(rootDir, "images");
 const staticDir = path.resolve(rootDir, "../priv/static");
-const tailwindConfigPath = path.resolve(rootDir, "tailwind.config.js");
 
 // / Create the "priv/static/icons" directory if it doesn't exist
 // it will hold all the icons
@@ -429,10 +436,8 @@ const compressOpts = {
 };
 
 // Main config =============================================
-// Main Configuration Export
 
 export default defineConfig(({ command, mode }) => {
-  const env = loadEnv(mode, process.cwd(), "VITE_");
   if (command != "build") {
     process.stdin.on("close", () => {
       process.exit(0);
@@ -449,6 +454,7 @@ export default defineConfig(({ command, mode }) => {
       solidPlugin(),
       viteStaticCopy({ targets }),
       compression(compressOpts),
+      // tailwindcss(),
     ],
     resolve: resolveConfig,
     // Disable default public dir (using Phoenix's)

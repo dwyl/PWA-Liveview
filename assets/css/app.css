@@ -1,11 +1,7 @@
-/* Ensure Tailwind CSS is properly configured */
-/* @import "tailwindcss"; */
-
+/* Tailwind directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Custom styles can be added below */
 
 body {
   font-family: "Inter", sans-serif;

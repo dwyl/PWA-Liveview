@@ -3,10 +3,13 @@
 /** @type {import('tailwindcss').Config} */
 
 import plugin from "tailwindcss/plugin";
+import forms from "@tailwindcss/forms";
 import fs from "fs";
 import path from "path";
 
-module.exports = {
+console.log("Loading 'tailwind.config.js'...");
+
+export default {
   mode: "jit",
   content: [
     "./js/**/*.js",
@@ -25,7 +28,7 @@ module.exports = {
     },
   },
   plugins: [
-    require("@tailwindcss/forms"),
+    forms,
     // Allows prefixing tailwind classes with LiveView classes to add rules
     // only when LiveView classes are applied, for example:
     //
