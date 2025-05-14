@@ -18,12 +18,14 @@ defmodule LiveviewPwa.Application do
       {DNSCluster, query: Application.get_env(:liveview_pwa, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: :pubsub},
       LiveviewPwa.Repo,
+      LiveviewPwaWeb.Presence,
       LiveviewPwaWeb.Endpoint,
       {AirportDB, [db]},
       {LiveviewPwa.DocHandler, [db, @max]}
     ]
 
     opts = [strategy: :one_for_one, name: LiveviewPwa.Supervisor]
+
     Supervisor.start_link(children, opts)
   end
 

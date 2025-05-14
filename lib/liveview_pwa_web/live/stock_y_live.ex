@@ -1,13 +1,15 @@
 defmodule LiveviewPwaWeb.StockYLive do
   use LiveviewPwaWeb, :live_view
   alias Phoenix.PubSub
-  alias LiveviewPwaWeb.{Menu, Pwa}
+  alias LiveviewPwaWeb.{Menu, Pwa, Presence}
   # import LiveviewPwaWeb.CoreComponents, only: [button: 1]
   require Logger
 
   @moduledoc """
   LiveView for the stock_y page.
   """
+
+  @presence "presence"
 
   @impl true
   def render(assigns) do
@@ -23,7 +25,10 @@ defmodule LiveviewPwaWeb.StockYLive do
         <Pwa.svg height={20} class="mr-2" />
         <span class="ml-1 font-bold">Refesh needed</span>
       </button>
+      <br />
       <p class="text-sm text-gray-600 mt-4 mb-4">User ID: {@user_id}</p>
+      <p class="text-sm text-gray-600 mt-4 mb-4">Online users: {inspect(@presence_list)}</p>
+      <br />
       <Menu.display update_available={@update_available} />
 
       <br />
@@ -43,15 +48,30 @@ defmodule LiveviewPwaWeb.StockYLive do
   def mount(_params, _session, socket) do
     if connected?(socket) do
       :ok = PubSub.subscribe(:pubsub, "ystock")
-    end
+      :ok = PubSub.subscribe(:pubsub, @presence)
+      # <- presence tracking
+      Presence.track(self(), @presence, socket.assigns.user_id, %{})
 
-    {:ok, assign(socket, %{max: 20, page_title: "Stock"})}
+      {:ok, assign(socket, %{presence_list: Presence.list(@presence)})}
+    else
+      {:ok,
+       assign(socket,
+         page_title: "Stock"
+       )}
+    end
   end
 
   @impl true
   def handle_params(_params, _url, socket) do
     # uri = URI.new!(url)
     {:noreply, socket}
+  end
+
+  # Presence tracking ----------------->
+  @impl true
+  def handle_info(%{event: "presence_diff"}, socket) do
+    new_list = Presence.list(@presence) |> Map.keys()
+    {:noreply, assign(socket, presence_list: new_list)}
   end
 
   # PWA event handlers ----------------->
