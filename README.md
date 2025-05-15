@@ -63,6 +63,7 @@ QRCode to check multi users, from on a mobile device:
   - [Performance](#performance)
     - [\[Optional\] Page Caching](#optional-page-caching)
   - [Publish](#publish)
+  - [Fly volumes](#fly-volumes)
   - [Documentation source](#documentation-source)
   - [Resources](#resources)
   - [License](#license)
@@ -956,6 +957,25 @@ navigation.addEventListener("navigate", async ({ destination: { url } }) => {
 ## Publish
 
 The site <https://docs.pwabuilder.com/#/builder/android> helps to publish PWAs on Google Play, Ios and other plateforms.
+
+## Fly volumes
+
+In the "fly.toml", the settings for the volume are:
+
+```toml
+[env]
+DATABASE_PATH = '/mnt/db/main.db'
+MIX_ENV = 'prod'
+PHX_HOST = 'solidyjs-lively-pine-4375.fly.dev'
+PORT = '8080'
+
+[[mounts]]
+source = 'name'
+destination = '/mnt/db'
+```
+
+This volume is made persistent through build with `source = 'name'`.
+We set the Fly secret: `DATABASE_PATH=mnt/db/main.db`.
 
 ## Documentation source
 
