@@ -77,6 +77,8 @@ What are we building? A two pages webap:
 - LiveStock. On the first page, we mimic a shopping cart where users can pick items until stock is depleted, at which point the stock is replenished. Every user will see and can interact with this counter
 - LiveFlight. On the second page, we propose an interactive map with a form with two inputs where **two** users can edit collaboratively a form to display markers on the map and then draw a great circle between the two points.
 
+> You need an api key to render the Maptiler vector tiles. You can see the Service Worker in action in the LiveMap page when you go offline as the tiles are cached. This is naturally only true if you already visited these tiles, thus loaded them.
+
 ## Why?
 
 Traditional Phoenix LiveView applications face several challenges in offline scenarios:
@@ -313,9 +315,9 @@ Client package are setup with `pnpm`: check [▶️ package.json](https://github
 
 ```sh
 # install all dependencies including Vite
-cd assets && pnpm install
+mix deps.get
+pnpm install --prefix assets
 # start Phoenix server, it will also compile the JS
-cd .. && mix deps.get
 iex -S mix phx.server
 ```
 

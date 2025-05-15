@@ -1,4 +1,4 @@
-import { createEffect, createSignal, lazy } from "solid-js";
+import { createEffect, createSignal, lazy, batch } from "solid-js";
 import { render } from "solid-js/web";
 import { subscribeKey } from "valtio/vanilla/utils";
 import { state } from "@js/stores/vStore";
@@ -26,8 +26,10 @@ export const CitiesForm = (props) => {
   function setCitiesFromState() {
     const { airports } = state;
     if (airports.length > 0) {
-      setCities(airports);
-      setIsInitialized(true);
+      batch(() => {
+        setCities(airports);
+        setIsInitialized(true);
+      });
     }
   }
 
@@ -35,8 +37,10 @@ export const CitiesForm = (props) => {
   // if not already done on the subscription
   createEffect(() => {
     if (state.airports.length > 0 && cities().length === 0) {
-      setCities(state.airports);
-      setIsInitialized(true);
+      batch(() => {
+        setCities(state.airports);
+        setIsInitialized(true);
+      });
     }
   });
 

@@ -1,4 +1,11 @@
-import { For, Show, createSignal, createEffect, onCleanup } from "solid-js";
+import {
+  For,
+  Show,
+  createSignal,
+  createEffect,
+  onCleanup,
+  batch,
+} from "solid-js";
 
 import { snapshot, subscribe } from "valtio/vanilla";
 import { state } from "@js/stores/vStore";
@@ -15,13 +22,17 @@ export default function City(props) {
     if (state.selection.has(props.inputType)) {
       const airport = snapshot(state.selection.get(props.inputType));
       if (airport && (airport.displayText || airport.name)) {
-        setInputValue(airport.displayText || airport.name);
-        setHasSelection(true); // Selection found, update the selection status
+        batch(() => {
+          setInputValue(airport.displayText || airport.name);
+          setHasSelection(true); // Selection found, update the selection status
+        });
       }
     } else if (hasSelection()) {
       // If selection is removed externally, reset the input field
-      setInputValue("");
-      setHasSelection(false);
+      batch(() => {
+        setInputValue("");
+        setHasSelection(false);
+      });
     }
   });
 
@@ -44,11 +55,15 @@ export default function City(props) {
 
     if (value.length >= 2) {
       const filteredSuggestions = filterCities(value);
-      setSuggestions(filteredSuggestions);
-      setIsOpen(filteredSuggestions.length > 0);
+      batch(() => {
+        setSuggestions(filteredSuggestions);
+        setIsOpen(filteredSuggestions.length > 0);
+      });
     } else {
-      setSuggestions([]);
-      setIsOpen(false);
+      batch(() => {
+        setSuggestions([]);
+        setIsOpen(false);
+      });
     }
   });
 
@@ -75,10 +90,11 @@ export default function City(props) {
     };
 
     // Update input value directly and close the dropdown
-    setInputValue(displayText);
-
-    setIsOpen(false);
-    setSuggestions([]);
+    batch(() => {
+      setInputValue(displayText);
+      setIsOpen(false);
+      setSuggestions([]);
+    });
 
     // Update global state with the selected marker data
     // console.log(`Updating state.selection for ${props.inputType}:`, markerData);
