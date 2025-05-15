@@ -1,6 +1,4 @@
 defmodule LiveviewPwaWeb.MountUserId do
-  # import Phoenix.LiveView
-  alias LiveviewPwaWeb.Presence
   import Phoenix.Component
   require Logger
 
@@ -16,15 +14,6 @@ defmodule LiveviewPwaWeb.MountUserId do
     user_id = Map.get(session, "user_id")
     user_token = Map.get(session, "user_token")
 
-    # l = Presence.list("presence") |> dbg()
-
-    # list =
-    #   case l = Presence.list("presence") do
-    #     %{} -> []
-    #     _ -> Map.keys(l)
-    #   end
-    #   |> dbg()
-
     if !user_id or !user_token do
       {:halt, Phoenix.LiveView.redirect(socket, to: "/404")}
     else
@@ -33,8 +22,7 @@ defmodule LiveviewPwaWeb.MountUserId do
          max: @max,
          user_id: user_id,
          user_token: user_token,
-         update_available: false,
-         presence_list: Presence.list("presence") |> Map.keys()
+         update_available: false
        })}
     end
   end

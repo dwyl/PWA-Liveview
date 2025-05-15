@@ -52,11 +52,12 @@ defmodule LiveviewPwaWeb.StockYLive do
       # <- presence tracking
       Presence.track(self(), @presence, socket.assigns.user_id, %{})
 
-      {:ok, assign(socket, %{presence_list: Presence.list(@presence)})}
+      {:ok, assign(socket, %{presence_list: Presence.list(@presence) |> Map.keys()})}
     else
       {:ok,
        assign(socket,
-         page_title: "Stock"
+         page_title: "Stock",
+         presence_list: []
        )}
     end
   end
