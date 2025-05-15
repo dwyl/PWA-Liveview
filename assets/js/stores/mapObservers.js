@@ -6,14 +6,19 @@ export async function createFlightObserver({ L, map, group }) {
   let unFlight = null;
   const { loadWasm } = await import("@js/utilities/loadWasm");
 
-  function airplaneMarker(L, latLngs) {
-    return L.marker(latLngs[0], {
+  function airplaneMarker(L, latLngs, inverse = false) {
+    const east = new URL("/images/airplane.svg", import.meta.url).href;
+    const west = new URL("/images/airplane_inv.svg", import.meta.url).href;
+    const airplane = L.marker(latLngs[0], {
       icon: new L.Icon({
-        iconUrl: new URL("/images/airplane.svg", import.meta.url).href,
+        iconUrl: inverse ? east : west,
         iconSize: [20, 20],
         iconAnchor: [10, 20],
       }),
     });
+    inverse ? (airplane.className = "rotate-180 origin-center") : null;
+    console.log(inverse, airplane);
+    return airplane;
   }
   async function computeGreatCircle({ L, group, departure, arrival }) {
     const { lat: latA, lng: lngA } = arrival;
@@ -39,13 +44,13 @@ export async function createFlightObserver({ L, map, group }) {
       throw error;
     }
   }
-  async function animate({ L, group, latLngs }, animationTime = 200) {
+  async function animate({ L, group, latLngs, inverse }, animationTime = 200) {
     if (currentAnimationInterval) {
       clearInterval(currentAnimationInterval);
       currentAnimationInterval = null;
     }
 
-    const marker = airplaneMarker(L, latLngs);
+    const marker = airplaneMarker(L, latLngs, inverse);
     marker.addTo(group);
 
     let idx = 0;
@@ -73,7 +78,7 @@ export async function createFlightObserver({ L, map, group }) {
     }
   }
 
-  async function animateRoute({ L, map, group, departure, arrival }) {
+  async function animateRoute({ L, map, group, departure, arrival, inverse }) {
     try {
       const A = L.latLng(arrival);
       const D = L.latLng(departure);
@@ -87,7 +92,7 @@ export async function createFlightObserver({ L, map, group }) {
         arrival,
       });
 
-      return await animate({ L, group, latLngs }, 200);
+      return await animate({ L, group, latLngs, inverse }, 200);
     } catch (error) {
       console.error(`Unable to instantiate module`, error);
       throw error;
@@ -96,22 +101,34 @@ export async function createFlightObserver({ L, map, group }) {
 
   return {
     observeVFlight: () => {
+      // the state.flight never gets reassigned, only mutated
+      // so we need to subscribe to the state and not the selection array
       unFlight = subscribe(state.flight, async () => {
         const { arrival, departure } = state.flight;
         if (departure && arrival) {
-          return await animateRoute({ L, map, group, departure, arrival });
+          const inverse = arrival.lng > departure.lng;
+          return await animateRoute({
+            L,
+            map,
+            group,
+            departure,
+            arrival,
+            inverse,
+          });
         }
       });
     },
     handleFlight: async (departure, arrival) => {
       const [latD, lngD] = departure;
       const [latA, lngA] = arrival;
+      const inverse = lngA > lngD;
       return await animateRoute({
         L,
         map,
         group,
         departure: { lat: latD, lng: lngD },
         arrival: { lat: latA, lng: lngA },
+        inverse,
       });
     },
     cleanup: () => {
@@ -155,6 +172,8 @@ export function createSelectionObserver({ L, group, userID, _this }) {
     observeVSelections: () => {
       // console.log("observe selection", new Error().stack);
       if (unsubscribeSelection) unsubscribeSelection();
+      // the state.Selection never gets reassigned, only mutated
+      // so we need to subscribe to the state
       unsubscribeSelection = subscribe(state.selection, () => {
         if (isProcessingBroadcast) return; // prevent race condition & infinite loop
         state.selection.forEach((selection) => {

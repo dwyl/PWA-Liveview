@@ -1,6 +1,6 @@
 import { createEffect, createSignal, lazy } from "solid-js";
 import { render } from "solid-js/web";
-import { subscribe } from "valtio/vanilla";
+import { subscribeKey } from "valtio/vanilla/utils";
 import { state } from "@js/stores/vStore";
 import flyUrl from "@assets/fly.svg?url";
 import delUrl from "@assets/delete.svg?url";
@@ -17,17 +17,14 @@ export const CitiesForm = (props) => {
   const Icon = lazy(() => import("@jsx/components/icon"));
 
   // Subscribe to changes in the airports state on first hook mount
-  const unsubscribe = subscribe(state.airports, setCitiesFromState);
+  //  !!! state.airports get reassigned in the hookForm.js so we need to
+  //  subscribe to the state and not the airports array
+  // or use subscribeKey to listen to the airports array
+  const unsubscribe = subscribeKey(state, "airports", setCitiesFromState);
 
   // this will run if Valtio detects a change in the airports state
   function setCitiesFromState() {
     const { airports } = state;
-    // console.log(
-    //   "subscribe runs",
-    //   airports.length,
-    //   cities().length,
-    //   isInitialized()
-    // );
     if (airports.length > 0) {
       setCities(airports);
       setIsInitialized(true);
