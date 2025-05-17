@@ -1,13 +1,12 @@
-defmodule LiveviewPwaWeb.StockElectricLive do
+defmodule LiveviewPwaWeb.StockYjsLive do
   use LiveviewPwaWeb, :live_view
   alias Phoenix.PubSub
-
   alias LiveviewPwaWeb.HeaderComponent
-  alias LiveviewPwa.ElecCount
-
-  import Phoenix.Sync.LiveView
-  # import Ecto.Query, only: [from: 2]
   require Logger
+
+  @moduledoc """
+  LiveView for the stock_y page.
+  """
 
   @impl true
   def render(assigns) do
@@ -21,8 +20,15 @@ defmodule LiveviewPwaWeb.StockElectricLive do
         presence_list={@presence_list}
         active_path={@active_path}
       />
-      <h1>Electric Stock</h1>
-      <p>Welcome to the Electric Stock page!</p>
+      <br />
+      <div
+        id="stock_y"
+        phx-hook="StockYjsHook"
+        phx-update="ignore"
+        data-userid={@user_id}
+        data-max={@max}
+      >
+      </div>
     </div>
     """
   end
@@ -31,16 +37,9 @@ defmodule LiveviewPwaWeb.StockElectricLive do
   def mount(_params, _session, socket) do
     if connected?(socket) do
       :ok = PubSub.subscribe(:pubsub, "ystock")
-
-      query = ElecCount.counter_query()
-
-      {:ok,
-       socket
-       |> assign(%{page_title: "Electric"})
-       |> sync_stream(:elec_counter, query)}
-    else
-      {:ok, socket}
     end
+
+    {:ok, assign(socket, %{page_title: "Stock"})}
   end
 
   @impl true
@@ -49,12 +48,8 @@ defmodule LiveviewPwaWeb.StockElectricLive do
     {:noreply, assign(socket, :active_path, path)}
   end
 
+  # Presence tracking ----------------->
   @impl true
-  def handle_info({:sync, event}, socket) do
-    dbg(event)
-    {:noreply, Phoenix.Sync.LiveView.sync_stream_update(socket, event)}
-  end
-
   def handle_info(
         %{event: "presence_diff", payload: %{joins: joins, leaves: leaves}},
         socket
@@ -65,9 +60,5 @@ defmodule LiveviewPwaWeb.StockElectricLive do
       LiveviewPwaWeb.Presence.sieve(presence_list, joins, leaves, id)
 
     {:noreply, assign(socket, presence_list: new_list)}
-  end
-
-  def handle_info(:sw_ready, socket) do
-    {:noreply, put_flash(socket, :info, "PWA ready")}
   end
 end

@@ -25,14 +25,29 @@ defmodule LiveviewPwaWeb.MountUser do
     if !user_id or !user_token do
       {:halt, redirect(socket, to: "/404")}
     else
-      {:cont,
-       assign(socket, %{
-         max: @max,
-         user_id: user_id,
-         user_token: user_token,
-         update_available: false,
-         presence_list: Presence.list("presence") |> Map.keys()
-       })}
+      {
+        :cont,
+        socket
+        |> assign(%{
+          max: @max,
+          user_id: user_id,
+          user_token: user_token,
+          update_available: false,
+          presence_list: Presence.list("presence") |> Map.keys()
+        })
+        #
+        |> attach_hook(:sw, :handle_event, fn
+          "sw-lv-ready", _, socket ->
+            {:halt, put_flash(socket, :info, "Service Worker ready")}
+
+          "sw-lv-error", _, socket ->
+            {:halt,
+             put_flash(socket, :error, "Service Worker error. This app can't work offline")}
+
+          _, _, socket ->
+            {:cont, socket}
+        end)
+      }
     end
   end
 end

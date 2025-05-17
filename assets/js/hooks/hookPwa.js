@@ -16,6 +16,7 @@ export const PwaHook = {
     const _this = this;
     const pwaAction = document.getElementById("pwa_action-1");
 
+    // received from the LiveComponent "lv_component_header" after user's action
     this.handleEvent("sw-lv-skip-waiting", () => {
       const updateServiceWorker = AppState.updateServiceWorker;
       if (updateServiceWorker) {
@@ -24,18 +25,21 @@ export const PwaHook = {
     });
 
     this.handleReady = (event) => {
-      _this.pushEventTo(pwaAction, "sw-lv-ready", {
+      // push to the LV for the on_mount/attach_hook to fire the flash
+      _this.pushEvent("sw-lv-ready", {
         ready: event.detail.ready,
       });
     };
 
     this.handleError = (event) => {
+      // push to the LV for the on_mount/attach_hook to fire the flash
       _this.pushEvent("sw-lv-error", {
         error: event.detail.error,
       });
     };
 
     this.handleUpdate = (event) => {
+      // push to the LiveComponent to fire the button
       _this.pushEventTo(pwaAction, "sw-lv-update", {
         update: event.detail.update,
       });

@@ -26,16 +26,6 @@ defmodule LiveviewPwaWeb.HeaderComponent do
   end
 
   @impl true
-  def handle_event("sw-lv-error", %{"error" => error}, socket) do
-    Logger.warning("PWA on error")
-    {:noreply, put_flash(socket, :error, inspect(error))}
-  end
-
-  def handle_event("sw-lv-ready", %{"ready" => true}, socket) do
-    send(self(), :sw_ready)
-    {:noreply, socket}
-  end
-
   def handle_event("sw-lv-update", %{"update" => true}, socket) do
     {:noreply, assign(socket, update_available: true)}
   end

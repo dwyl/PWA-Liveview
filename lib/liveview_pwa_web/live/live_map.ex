@@ -27,8 +27,7 @@ defmodule LiveviewPwaWeb.MapLive do
         presence_list={@presence_list}
         active_path={@active_path}
       />
-      <%!-- <Users.display user_id={@user_id} presence_list={@presence_list} />
-      <Menu.display update_available={@update_available} active_path={@current_path} /> --%>
+      <br />
       <div
         id="map"
         phx-hook="MapHook"
@@ -37,7 +36,13 @@ defmodule LiveviewPwaWeb.MapLive do
         data-userid={@user_id}
       >
       </div>
-      <div id="select_form" phx-hook="FormHook" phx-update="ignore" data-userid={@user_id}></div>
+      <div
+        id="select_form"
+        phx-hook="FormHook"
+        phx-update="ignore"
+        data-userid={@user_id}
+      >
+      </div>
     </div>
     """
   end
@@ -224,10 +229,6 @@ defmodule LiveviewPwaWeb.MapLive do
       LiveviewPwaWeb.Presence.sieve(presence_list, joins, leaves, id)
 
     {:noreply, assign(socket, presence_list: new_list)}
-  end
-
-  def handle_info(:sw_ready, socket) do
-    {:noreply, put_flash(socket, :info, "PWA ready")}
   end
 
   # cleanup the async result
