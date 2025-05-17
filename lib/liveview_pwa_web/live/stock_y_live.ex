@@ -18,7 +18,7 @@ defmodule LiveviewPwaWeb.StockYjsLive do
         update_available={@update_available}
         user_id={@user_id}
         presence_list={@presence_list}
-        acti_ve_apth={@current_path}
+        active_path={@active_path}
       />
 
       <br />
@@ -46,7 +46,7 @@ defmodule LiveviewPwaWeb.StockYjsLive do
   @impl true
   def handle_params(_params, url, socket) do
     path = URI.new!(url) |> Map.get(:path)
-    {:noreply, assign(socket, :current_path, path)}
+    {:noreply, assign(socket, :active_path, path)}
   end
 
   # Presence tracking ----------------->

@@ -25,7 +25,7 @@ defmodule LiveviewPwaWeb.MapLive do
         update_available={@update_available}
         user_id={@user_id}
         presence_list={@presence_list}
-        acti_ve_apth={@current_path}
+        active_path={@active_path}
       />
       <%!-- <Users.display user_id={@user_id} presence_list={@presence_list} />
       <Menu.display update_available={@update_available} active_path={@current_path} /> --%>
@@ -67,7 +67,7 @@ defmodule LiveviewPwaWeb.MapLive do
   @impl true
   def handle_params(_params, url, socket) do
     path = URI.new!(url) |> Map.get(:path)
-    {:noreply, assign(socket, :current_path, path)}
+    {:noreply, assign(socket, :active_path, path)}
   end
 
   # airport list setup on mount ---------->

@@ -1,7 +1,7 @@
 defmodule LiveviewPwaWeb.Router do
   use LiveviewPwaWeb, :router
   alias Phoenix.Token
-  alias LiveviewPwaWeb.{Endpoint, MountUserId}
+  alias LiveviewPwaWeb.{Endpoint, MountUser}
 
   # Note: After adding 'preload', submit your domain to
   # Ensure you can maintain HTTPS for the entire domain and all subdomains
@@ -21,7 +21,7 @@ defmodule LiveviewPwaWeb.Router do
     pipe_through :browser
 
     live_session :pretend_authenticated,
-      on_mount: {MountUserId, :ensure_authenticated} do
+      on_mount: {MountUser, :ensure_authenticated} do
       live "/", StockYjsLive, :index
       live "/elec", StockElectricLive, :index
       live "/map", MapLive, :index

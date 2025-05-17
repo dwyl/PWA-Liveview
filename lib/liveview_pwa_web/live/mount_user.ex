@@ -1,4 +1,4 @@
-defmodule LiveviewPwaWeb.MountUserId do
+defmodule LiveviewPwaWeb.MountUser do
   import Phoenix.LiveView
   import Phoenix.Component, only: [assign: 2]
   alias Phoenix.PubSub

@@ -20,7 +20,7 @@ defmodule LiveviewPwaWeb.HeaderComponent do
         <span class="ml-1 font-bold">Refesh needed</span>
       </button>
       <Users.display user_id={@user_id} presence_list={@presence_list} />
-      <Menu.display update_available={@update_available} active_path={@current_path} />
+      <Menu.display update_available={@update_available} active_path={@active_path} />
     </div>
     """
   end
