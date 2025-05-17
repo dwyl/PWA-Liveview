@@ -1,4 +1,4 @@
-# Phoenix LiveView PWA
+# Offline first Phoenix LiveView PWA
 
 An example of a real-time, collaborative multi-page web app built with `Phoenix LiveView`.
 
@@ -26,7 +26,7 @@ QRCode to check multi users, from on a mobile device:
 
 ## Table of Contents
 
-- [Phoenix LiveView PWA](#phoenix-liveview-pwa)
+- [Offline first Phoenix LiveView PWA](#offline-first-phoenix-liveview-pwa)
   - [Table of Contents](#table-of-contents)
   - [What?](#what)
   - [Why?](#why)
@@ -54,7 +54,7 @@ QRCode to check multi users, from on a mobile device:
       - [Client Env](#client-env)
     - [Static assets](#static-assets)
     - [VitePWA plugin and Workbox Caching Strategies](#vitepwa-plugin-and-workbox-caching-strategies)
-  - [Yjs and y\_ex](#yjs-and-y_ex)
+  - [Yjs and y_ex](#yjs-and-y_ex)
   - [Misc](#misc)
     - [CSP rules and evaluation](#csp-rules-and-evaluation)
     - [User token](#user-token)

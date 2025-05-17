@@ -1,13 +1,14 @@
-defmodule LiveviewPwaWeb.StockYjsLive do
+defmodule LiveviewPwaWeb.StockElectricLive do
   use LiveviewPwaWeb, :live_view
   alias Phoenix.PubSub
-  alias LiveviewPwaWeb.{Menu, PwaActionComponent, Presence, Users}
-  # import LiveviewPwaWeb.CoreComponents, only: [button: 1]
-  require Logger
 
-  @moduledoc """
-  LiveView for the stock_y page.
-  """
+  alias LiveviewPwaWeb.{Menu, Presence, PwaActionComponent, Users}
+  alias LiveviewPwa.ElecCount
+
+  # only: [sync_stream: 4, sync_stream_update: 3]
+  import Phoenix.Sync.LiveView
+  # import Ecto.Query, only: [from: 2]
+  require Logger
 
   @impl true
   def render(assigns) do
@@ -20,31 +21,30 @@ defmodule LiveviewPwaWeb.StockYjsLive do
       />
       <Users.display user_id={@user_id} presence_list={@presence_list} />
       <Menu.display update_available={@update_available} />
-
-      <br />
-      <div
-        id="stock_y"
-        phx-hook="StockYjsHook"
-        phx-update="ignore"
-        data-userid={@user_id}
-        data-max={@max}
-      >
-      </div>
+      <h1>Electric Stock</h1>
+      <p>Welcome to the Electric Stock page!</p>
     </div>
     """
   end
 
   @impl true
   def mount(_params, _session, socket) do
+    # :ok = PubSub.subscribe(:pubsub, "presence")
+    # <- presence tracking
+    # Presence.track(self(), "presence", socket.assigns.user_id, %{})
+
     if connected?(socket) do
       :ok = PubSub.subscribe(:pubsub, "ystock")
-      # :ok = PubSub.subscribe(:pubsub, "presence")
       # <- presence tracking
       Presence.track(self(), "presence", socket.assigns.user_id, %{})
-      init_presence = Presence.list("presence") |> Map.keys()
+      init_presence_list = Presence.list("presence") |> Map.keys() |> dbg()
 
-      {:ok, assign(socket, %{presence_list: init_presence, page_title: "Stock"})}
-      # {:ok, assign(socket, %{page_title: "Stock"})}
+      query = ElecCount.counter_query()
+
+      {:ok,
+       socket
+       |> assign(%{presence_list: init_presence_list, page_title: "Electric"})
+       |> sync_stream(:elec_counter, query)}
     else
       {:ok, socket}
     end
@@ -52,12 +52,15 @@ defmodule LiveviewPwaWeb.StockYjsLive do
 
   @impl true
   def handle_params(_params, _url, socket) do
-    # uri = URI.new!(url)
     {:noreply, socket}
   end
 
-  # Presence tracking ----------------->
   @impl true
+  def handle_info({:sync, event}, socket) do
+    dbg(event)
+    {:noreply, Phoenix.Sync.LiveView.sync_stream_update(socket, event)}
+  end
+
   def handle_info(
         %{event: "presence_diff", payload: %{joins: joins, leaves: leaves}},
         socket

@@ -16,8 +16,8 @@ PHX_HOST = 'solidyjs-lively-pine-4375.fly.dev'
 PORT = '8080'
 
 [[mounts]]
-source = 'name'
-destination = '/mnt/db'
+source = 'db'
+destination = '/mnt'
 auto_extend_size_threshold = 80
 auto_extend_size_increment = '1GB'
 auto_extend_size_limit = '10GB'

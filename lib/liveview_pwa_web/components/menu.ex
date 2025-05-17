@@ -28,8 +28,17 @@ defmodule LiveviewPwaWeb.Menu do
           class="px-4 py-2 border-2 rounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300"
         >
           <%!-- <span> --%>
-          <.icon name="hero-home-solid" /> &nbsp Stock_Y &nbsp <.icon name="hero-chart-bar" />
-          <%!-- </span> --%>
+          <.icon name="hero-home-solid" /> &nbsp Yjs Stock &nbsp <%!-- </span> --%>
+        </.link>
+        <.link
+          id="elec"
+          data-path="/elec"
+          patch={~p"/elec"}
+          replace
+          class="px-4 py-2 border-2 rounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300"
+        >
+          <%!-- <span> --%>
+          <.icon name="hero-bolt" /> &nbsp Elec Stock &nbsp <%!-- </span> --%>
         </.link>
 
         <.link
@@ -40,8 +49,7 @@ defmodule LiveviewPwaWeb.Menu do
           class="px-4 py-2 border-2 rounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300"
         >
           <%!-- <span> --%>
-          <.icon name="hero-cpu-chip" /> &nbsp Leaflet &nbsp <.icon name="hero-globe-alt" />
-          <%!-- </span> --%>
+          <.icon name="hero-cpu-chip" /> &nbsp Leaflet &nbsp <%!-- </span> --%>
         </.link>
         <%!-- </div> --%>
       </nav>

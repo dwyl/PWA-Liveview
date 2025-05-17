@@ -25,8 +25,10 @@ export { AppState, CONFIG };
 async function startApp() {
   console.log(" **** App started ****");
   try {
-    const { checkServer } = await import("@js/utilities/checkServer");
-    const { initYDoc } = await import("@js/stores/initYJS");
+    const [{ checkServer }, { initYDoc }] = await Promise.all([
+      import("@js/utilities/checkServer"),
+      import("@js/stores/initYJS"),
+    ]);
 
     AppState.globalYdoc = await initYDoc();
     AppState.isOnline = await checkServer();
@@ -45,10 +47,17 @@ startApp().then(() => {
 
 // Register service worker early ----------------
 document.addEventListener("DOMContentLoaded", async () => {
-  const { registerServiceWorker } = await import(
-    "@js/utilities/pwaRegistration"
-  );
-  AppState.updateServiceWorker = await registerServiceWorker();
+  const [{ configureTopbar }, { registerServiceWorker }] = await Promise.all([
+    import("@js/utilities/configureTopbar"),
+    import("@js/utilities/pwaRegistration"),
+  ]);
+
+  const [_, swRegistration] = Promise.all([
+    configureTopbar(),
+    registerServiceWorker(),
+  ]);
+
+  AppState.updateServiceWorker = swRegistration;
   return true;
 });
 
@@ -98,9 +107,6 @@ window.addEventListener("connection-status-changed", async (e) => {
 async function init(isOnline) {
   // console.log("Start Init online? :", isOnline);
   try {
-    const { configureTopbar } = await import("@js/utilities/configureTopbar");
-    configureTopbar();
-
     if (isOnline) {
       window.liveSocket = await initLiveSocket();
     } else {
@@ -115,16 +121,18 @@ async function init(isOnline) {
 async function initLiveSocket() {
   try {
     const [
+      { StockElecHook },
       { ydocSocket },
-      { StockYHook },
+      { StockYjsHook },
       { PwaHook },
       { MapHook },
       { FormHook },
       { LiveSocket },
       { Socket },
     ] = await Promise.all([
+      import("@js/hooks/hookElecStock"),
       import("@js/ydoc_socket/ydocSocket"),
-      import("@js/hooks/hookYStock.js"),
+      import("@js/hooks/hookYjsStock.js"),
       import("@js/hooks/hookPwa.js"),
       import("@js/hooks/hookMap.js"),
       import("@js/hooks/hookForm.js"),
@@ -140,13 +148,14 @@ async function initLiveSocket() {
       .getAttribute("content");
 
     const hooks = {
-      StockYHook: StockYHook({
+      StockYjsHook: StockYjsHook({
         ydoc: AppState.globalYdoc,
         ydocSocket: AppState.ydocSocket,
       }),
       MapHook,
       FormHook,
       PwaHook,
+      StockElecHook,
     };
 
     const liveSocket = new LiveSocket("/live", Socket, {

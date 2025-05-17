@@ -10,18 +10,20 @@ defmodule LiveviewPwa.Application do
 
   @impl true
   def start(_type, _args) do
+    LiveviewPwa.Release.migrate()
+
     db = setupDbPath()
-    [{:ok, _, _}] = LiveviewPwa.Release.migrate()
 
     children = [
       LiveviewPwaWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:liveview_pwa, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: :pubsub},
-      LiveviewPwa.Repo,
+      LiveviewPwa.PgRepo,
+      LiveviewPwa.Sql3Repo,
       LiveviewPwaWeb.Presence,
-      LiveviewPwaWeb.Endpoint,
-      {AirportDB, [db]},
-      {LiveviewPwa.DocHandler, [db, @max]}
+      {LiveviewPwaWeb.Endpoint, phoenix_sync: Phoenix.Sync.plug_opts()},
+      {LiveviewPwa.DocHandler, [db, @max]},
+      {AirportDB, [db]}
     ]
 
     opts = [strategy: :one_for_one, name: LiveviewPwa.Supervisor]
@@ -38,12 +40,6 @@ defmodule LiveviewPwa.Application do
   end
 
   defp setupDbPath do
-    db = Application.get_env(:liveview_pwa, LiveviewPwa.Repo)[:database]
-
-    db_dir = Path.dirname(db)
-    # Logger.debug(inspect({Path.basename(db), db_dir}))
-    :ok = File.mkdir_p!(db_dir)
-    :ok = File.chmod!(db_dir, 0o777)
-    db
+    _db = Application.get_env(:liveview_pwa, LiveviewPwa.Sql3Repo)[:database]
   end
 end

@@ -23,12 +23,12 @@ if System.get_env("PHX_SERVER") do
   config :liveview_pwa, LiveviewPwaWeb.Endpoint, server: true
 end
 
-if config_env() == :dev do
-  database_path =
-    Path.expand("../db/main.db", Application.app_dir(:liveview_pwa))
+# if config_env() == :dev do
+#   database_path =
+#     Path.expand("../db/main.db", Application.app_dir(:liveview_pwa))
 
-  config :liveview_pwa, LiveviewPwa.Repo, database: database_path
-end
+#   config :liveview_pwa, LiveviewPwa.Sql3Repo, database: database_path
+# end
 
 # The secret key base is used to sign/encrypt cookies and other secrets.
 # A default value is used in config/dev.exs and config/test.exs but you
@@ -38,7 +38,7 @@ end
 if config_env() == :prod do
   database_path =
     System.get_env("DATABASE_PATH") ||
-      "/app/db/main.db"
+      "/db/main.db"
 
   # set it as default
   # raise """
@@ -46,10 +46,22 @@ if config_env() == :prod do
   # You can set it to the path where the database file will be stored.
   # """
 
-  config :liveview_pwa, LiveviewPwa.Repo,
+  config :liveview_pwa, LiveviewPwa.Sql3Repo,
     database: database_path,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "5"),
-    show_sensitive_data_on_connection_error: false
+    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
+    show_sensitive_data_on_connection_error: true
+
+  pg_config = [
+    url:
+      System.get_env("DATABASE_URL") ||
+        "postgres://postgres:1234@pg:5432/elec_prod",
+    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
+  ]
+
+  config :liveview_pwa, LiveviewPwa.PgRepo, pg_config
+
+  config :electric,
+    replication_connection_opts: Electric.Config.parse_postgresql_uri!(pg_config[:url])
 
   secret_key_base =
     System.get_env("SECRET_KEY_BASE") ||

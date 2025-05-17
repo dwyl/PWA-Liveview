@@ -1,6 +1,17 @@
 import { lazy } from "solid-js";
 
+// The callback runs every time the Shape data changes.
 export default function Counter(props) {
+  // const { ShapeStream, Shape } = await import("@electric-sql/client");
+  // const stream = new ShapeStream({
+  //   url: `http://localhost:3000/v1/shape`,
+  //   params: {
+  //     table: "items",
+  //   },
+  // });
+  // const shape = new Shape(stream);
+  // shape.subscribe((data) => console.log(data));
+
   const Bins = lazy(() => import("@jsx/components/bins"));
 
   const handleTake = () => {

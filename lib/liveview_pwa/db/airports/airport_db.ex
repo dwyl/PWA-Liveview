@@ -19,14 +19,11 @@ defmodule AirportDB do
   @impl true
   def init([db]) do
     # Ensure the database file exists and has correct permissions
-    if File.exists?(db) do
-      Logger.info("Database ready")
-      {:ok, ""}
-    else
-      Logger.info("Creating database")
-      File.touch!(db)
-      File.chmod!(db, 0o666)
-    end
+    true =
+      if File.exists?(db) do
+        Logger.info("SQLite Database ready")
+        true
+      end
 
     # Ensure no existing connections & run migrations
     with {:ok, conn} <-

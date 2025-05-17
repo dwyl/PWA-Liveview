@@ -3,7 +3,7 @@ defmodule LiveviewPwaWeb.MapLive do
   use Phoenix.Component
   alias Phoenix.LiveView.AsyncResult
   alias Phoenix.PubSub
-  alias LiveviewPwaWeb.{Menu, Pwa}
+  alias LiveviewPwaWeb.{Menu, Presence, PwaActionComponent, Users}
   # import LiveviewPwaWeb.CoreComponents, only: [button: 1]
 
   @moduledoc """
@@ -20,17 +20,12 @@ defmodule LiveviewPwaWeb.MapLive do
   def render(assigns) do
     ~H"""
     <div>
-      <button
-        :if={@update_available}
-        type="button"
-        class="flex flex-row px-4 mb-4 mt-4 py-2 border-2 rounded-md text-midnightblue  bg-blue-200  hover:bg-bisque transition-colors duration-300"
-        id="refresh-button"
-        phx-click="skip-waiting"
-      >
-        <Pwa.svg height={20} class="mr-2" />
-        <span class="ml-1 font-bold">Refesh needed</span>
-      </button>
-      <p class="text-sm text-gray-600 mt-4 mb-2">User ID: {@user_id}</p>
+      <.live_component
+        module={PwaActionComponent}
+        id="pwa_action-0"
+        update_available={@update_available}
+      />
+      <Users.display user_id={@user_id} presence_list={@presence_list} />
       <Menu.display update_available={@update_available} />
       <div
         id="map"
@@ -55,9 +50,21 @@ defmodule LiveviewPwaWeb.MapLive do
       :ok = PubSub.subscribe(:pubsub, "new_airport")
       :ok = PubSub.subscribe(:pubsub, "remove_airport")
       :ok = PubSub.subscribe(:pubsub, "do_fly")
-    end
+      # :ok = PubSub.subscribe(:pubsub, "presence")
+      # <- presence tracking
+      Presence.track(self(), "presence", socket.assigns.user_id, %{})
+      init_presence_list = Presence.list("presence") |> Map.keys()
 
-    {:ok, assign(socket, %{page_title: "Map", airports: nil, hash: Airport.hash()})}
+      {:ok,
+       assign(socket, %{
+         presence_list: init_presence_list,
+         page_title: "Map",
+         airports: nil,
+         hash: Airport.hash()
+       })}
+    else
+      {:ok, socket}
+    end
   end
 
   @impl true
@@ -97,7 +104,7 @@ defmodule LiveviewPwaWeb.MapLive do
      |> assign(:airports, AsyncResult.failed(airports, {:exit, reason}))}
   end
 
-  # Client events ----------------->
+  # Client events
   @impl true
   def handle_event("cache-checked", %{"cached" => false}, socket) do
     # Logger.debug("Client data empty, fetch from DB")
@@ -138,25 +145,6 @@ defmodule LiveviewPwaWeb.MapLive do
   end
 
   # <---------- airport list logic
-
-  # PWA event handlers ----------------->
-
-  def handle_event("sw-lv-error", %{"error" => error}, socket) do
-    Logger.warning("PWA on error")
-    {:noreply, put_flash(socket, :error, inspect(error))}
-  end
-
-  def handle_event("sw-lv-ready", %{"ready" => true}, socket) do
-    {:noreply, put_flash(socket, :info, "PWA ready")}
-  end
-
-  def handle_event("sw-lv-update", %{"update" => true}, socket) do
-    {:noreply, assign(socket, update_available: true)}
-  end
-
-  def handle_event("skip-waiting", _params, socket) do
-    {:noreply, push_event(socket, "sw-lv-skip-waiting", %{})}
-  end
 
   # Clients Flight events callbacks ----------------->
   def handle_event("fly", %{"userID" => userID} = payload, socket) do
@@ -202,6 +190,18 @@ defmodule LiveviewPwaWeb.MapLive do
 
   # Generic PubSub callback: pushes response to other clients
   @impl true
+  def handle_info(
+        %{event: "presence_diff", payload: %{joins: joins, leaves: leaves}},
+        socket
+      ) do
+    %{assigns: %{presence_list: presence_list}, id: id} = socket
+
+    new_list =
+      LiveviewPwaWeb.Presence.sieve(presence_list, joins, leaves, id)
+
+    {:noreply, assign(socket, presence_list: new_list)}
+  end
+
   def handle_info(%{"action" => action} = payload, socket) do
     user_id = socket.assigns.user_id
     from = Map.get(payload, "origin_user_id")
@@ -214,6 +214,10 @@ defmodule LiveviewPwaWeb.MapLive do
     else
       {:noreply, socket}
     end
+  end
+
+  def handle_info(:sw_ready, socket) do
+    {:noreply, put_flash(socket, :info, "PWA ready")}
   end
 
   # cleanup the async result

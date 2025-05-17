@@ -1,4 +1,4 @@
-defmodule LiveviewPwa.Repo.Migrations.AddHash do
+defmodule LiveviewPwa.Sql3Repo.Migrations.AddHash do
   use Ecto.Migration
 
   def change do

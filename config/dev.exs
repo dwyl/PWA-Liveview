@@ -1,10 +1,16 @@
 import Config
 
-config :liveview_pwa, LiveviewPwa.Repo,
-  show_sensitive_data_on_connection_error: true,
-  pool_size: 5
+config :liveview_pwa, LiveviewPwa.Sql3Repo,
+  database: Path.expand("../db/main.db", Path.dirname(__ENV__.file))
 
-#
+config :liveview_pwa, LiveviewPwa.PgRepo,
+  url: "ecto://myuser:mysecretpassword@localhost:5432/elec_dev"
+
+# paswword: "postgres",
+# username: "postgres",
+# database: "liveview_pwa_dev",
+# hostname: "localhost"
+
 config :liveview_pwa, LiveviewPwaWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.

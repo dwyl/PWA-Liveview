@@ -1,4 +1,4 @@
-defmodule LiveviewPwa.Repo.Migrations.CreateTables do
+defmodule LiveviewPwa.Sql3Repo.Migrations.CreateTables do
   use Ecto.Migration
 
   @moduledoc """
@@ -30,7 +30,7 @@ defmodule LiveviewPwa.Repo.Migrations.CreateTables do
     end
 
     create_if_not_exists table(:yjs_documents, primary_key: false) do
-      add :id, :string, primary_key: true
+      add :id, :string, primary_key: true, default: "yjs-doc", null: false
       add :y_doc, :binary # the Sqlite3 blob type
 
     end

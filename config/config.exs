@@ -4,15 +4,27 @@ config :liveview_pwa,
   generators: [timestamp_type: :utc_datetime]
 
 config :liveview_pwa,
-  ecto_repos: [LiveviewPwa.Repo]
+  ecto_repos: [LiveviewPwa.PgRepo, LiveviewPwa.Sql3Repo]
 
 config :liveview_pwa, :csp_nonce, :crypto.strong_rand_bytes(16) |> Base.encode16()
 
-config :liveview_pwa, LiveviewPwa.Repo,
+config :liveview_pwa, LiveviewPwa.Sql3Repo,
   adapter: Ecto.Adapters.SQLite3,
-  default_transaction_mode: :immediate
+  default_transaction_mode: :immediate,
+  show_sensitive_data_on_connection_error: true,
+  pool_size: 5
 
 config :exqlite, force_build: true
+
+config :liveview_pwa, LiveviewPwa.PgRepo,
+  adapter: Ecto.Adapters.Postgres,
+  show_sensitive_data_on_connection_error: true,
+  pool_size: 5
+
+config :phoenix_sync,
+  env: config_env(),
+  mode: :embedded,
+  repo: LiveviewPwa.PgRepo
 
 # Configures the endpoint
 config :liveview_pwa, LiveviewPwaWeb.Endpoint,

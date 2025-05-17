@@ -8,6 +8,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@electric-sql/client": "^1.0.4",
     "@maptiler/leaflet-maptilersdk": "^4.0.3",
     "@maptiler/sdk": "^3.2.2",
     "leaflet": "^1.9.4",

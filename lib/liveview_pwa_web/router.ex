@@ -22,7 +22,8 @@ defmodule LiveviewPwaWeb.Router do
 
     live_session :pretend_authenticated,
       on_mount: {MountUserId, :ensure_authenticated} do
-      live "/", StockYLive, :index
+      live "/", StockYjsLive, :index
+      live "/elec", StockElectricLive, :index
       live "/map", MapLive, :index
       get "/connectivity", ConnectivityController, :check
     end

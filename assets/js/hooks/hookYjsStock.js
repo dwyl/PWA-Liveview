@@ -1,7 +1,7 @@
 import * as Y from "yjs";
 import { checkServer } from "@js/utilities/checkServer";
 
-export const StockYHook = ({ ydoc, ydocSocket }) => ({
+export const StockYjsHook = ({ ydoc, ydocSocket }) => ({
   isOnline: false,
   wasOffline: true,
   connectionCheckInterval: null,
@@ -22,7 +22,7 @@ export const StockYHook = ({ ydoc, ydocSocket }) => ({
 
     this.stockComponent = this.stockComponent.bind(this);
     this.cleanupSolid = await this.stockComponent();
-    // console.log("[StockYHook] ~~~~~~~~~~> mounted");
+    // console.log("[StockYjsHook] ~~~~~~~~~~> mounted");
 
     this.setupChannel = this.setupChannel.bind(this);
     this.handleYUpdate = this.handleYUpdate.bind(this);
@@ -69,7 +69,7 @@ export const StockYHook = ({ ydoc, ydocSocket }) => ({
       clearInterval(this.connectionCheckInterval);
     }
 
-    console.log("[StockYHook] ~~~~~~~~~~> destroyed");
+    console.log("[StockYjsHook] ~~~~~~~~~~> destroyed");
   },
 
   async stockComponent() {

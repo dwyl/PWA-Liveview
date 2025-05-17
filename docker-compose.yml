@@ -1,16 +1,56 @@
 services:
+  pg:
+    image: postgres:17
+    container_name: pg17
+
+    environment:
+      # PostgreSQL environment variables are in the form POSTGRES_*
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_USER: postgres
+      POSTGRES_DB: elec_prod
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+    ports:
+      - "3001:5432"
+
+    tmpfs:
+      # - /var/lib/postgresql/data
+      - /tmp
+
+    command:
+      - -c
+      - listen_addresses=*
+      - -c
+      - wal_level=logical
+      - -c
+      - max_wal_senders=10
+
   web:
+    container_name: web
+    depends_on:
+      pg:
+        condition: service_healthy
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "4000:4000"
     volumes:
-      - db:/app/db
+      - sql3:/app/db
     user: nobody
     env_file:
       - .env
 
 volumes:
-  db:
-    name: db
+  pgdata:
+    name: pgdata
+  sql3:
+    name: sql3

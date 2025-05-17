@@ -24,8 +24,13 @@ defmodule Airport do
   #   headers
   # end
 
+  defp db do
+    # Application.get_env(:liveview_pwa, LiveviewPwa.Sql3Repo)[:database]
+    LiveviewPwa.Sql3Repo.config()[:database]
+  end
+
   def hash do
-    db = LiveviewPwa.Repo.config()[:database]
+    db = db()
     query = "SELECT hash FROM airports LIMIT 1;"
 
     with {:ok, conn} <-
@@ -47,7 +52,7 @@ defmodule Airport do
   end
 
   def put_hash(hash) do
-    db = LiveviewPwa.Repo.config()[:database]
+    db = db()
     query = "UPDATE airports SET hash = ?1;"
 
     with {:ok, conn} <-
@@ -73,7 +78,7 @@ defmodule Airport do
   """
   def municipalities do
     Logger.info("Fetching all airports from the database................")
-    db = Application.get_env(:liveview_pwa, LiveviewPwa.Repo)[:database]
+    db = db()
     query = "SELECT airport_id,name,city,country,latitude, longitude FROM airports;"
 
     with true <-

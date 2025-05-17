@@ -24,5 +24,6 @@ erl_crash.dump
 
 /db/
 .env
+/pgdata/
 
 

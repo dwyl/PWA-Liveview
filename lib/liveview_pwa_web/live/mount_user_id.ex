@@ -1,5 +1,7 @@
 defmodule LiveviewPwaWeb.MountUserId do
-  import Phoenix.Component
+  import Phoenix.LiveView, only: [redirect: 2]
+  import Phoenix.Component, only: [assign: 2]
+  alias Phoenix.PubSub
   require Logger
 
   @max 20
@@ -13,16 +15,18 @@ defmodule LiveviewPwaWeb.MountUserId do
   def on_mount(:ensure_authenticated, _params, session, socket) do
     user_id = Map.get(session, "user_id")
     user_token = Map.get(session, "user_token")
+    :ok = PubSub.subscribe(:pubsub, "presence")
 
     if !user_id or !user_token do
-      {:halt, Phoenix.LiveView.redirect(socket, to: "/404")}
+      {:halt, redirect(socket, to: "/404")}
     else
       {:cont,
        assign(socket, %{
          max: @max,
          user_id: user_id,
          user_token: user_token,
-         update_available: false
+         update_available: false,
+         presence_list: []
        })}
     end
   end

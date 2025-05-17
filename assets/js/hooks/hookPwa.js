@@ -14,6 +14,7 @@ export const PwaHook = {
   async mounted() {
     // console.log("[PwaHook] -----> mounted");
     const _this = this;
+    const pwaAction = document.getElementById("pwa_action-1");
 
     this.handleEvent("sw-lv-skip-waiting", () => {
       const updateServiceWorker = AppState.updateServiceWorker;
@@ -23,7 +24,7 @@ export const PwaHook = {
     });
 
     this.handleReady = (event) => {
-      _this.pushEvent("sw-lv-ready", {
+      _this.pushEventTo(pwaAction, "sw-lv-ready", {
         ready: event.detail.ready,
       });
     };
@@ -35,7 +36,7 @@ export const PwaHook = {
     };
 
     this.handleUpdate = (event) => {
-      _this.pushEvent("sw-lv-update", {
+      _this.pushEventTo(pwaAction, "sw-lv-update", {
         update: event.detail.update,
       });
     };
