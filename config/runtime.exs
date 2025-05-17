@@ -83,7 +83,8 @@ if config_env() == :prod do
     # static_url: [host: "cdn.example.com"],
     url: [host: host, port: port, scheme: "https"],
     http: [
-      ip: {0, 0, 0, 0, 0, 0, 0, 0},
+      # ip: {0, 0, 0, 0, 0, 0, 0, 0},
+      ip: {0, 0, 0, 0},
       port: port
     ],
     secret_key_base: secret_key_base,

@@ -1,8 +1,7 @@
 defmodule LiveviewPwaWeb.StockYjsLive do
   use LiveviewPwaWeb, :live_view
   alias Phoenix.PubSub
-  alias LiveviewPwaWeb.{Menu, PwaActionComponent, Presence, Users}
-  # import LiveviewPwaWeb.CoreComponents, only: [button: 1]
+  alias LiveviewPwaWeb.{Menu, PwaActionComponent, Users}
   require Logger
 
   @moduledoc """
@@ -19,7 +18,7 @@ defmodule LiveviewPwaWeb.StockYjsLive do
         update_available={@update_available}
       />
       <Users.display user_id={@user_id} presence_list={@presence_list} />
-      <Menu.display update_available={@update_available} />
+      <Menu.display update_available={@update_available} active_path={@current_path}/>
 
       <br />
       <div
@@ -38,22 +37,15 @@ defmodule LiveviewPwaWeb.StockYjsLive do
   def mount(_params, _session, socket) do
     if connected?(socket) do
       :ok = PubSub.subscribe(:pubsub, "ystock")
-      # :ok = PubSub.subscribe(:pubsub, "presence")
-      # <- presence tracking
-      Presence.track(self(), "presence", socket.assigns.user_id, %{})
-      init_presence = Presence.list("presence") |> Map.keys()
-
-      {:ok, assign(socket, %{presence_list: init_presence, page_title: "Stock"})}
-      # {:ok, assign(socket, %{page_title: "Stock"})}
-    else
-      {:ok, socket}
     end
+
+    {:ok, assign(socket, %{page_title: "Stock"})}
   end
 
   @impl true
-  def handle_params(_params, _url, socket) do
-    # uri = URI.new!(url)
-    {:noreply, socket}
+  def handle_params(_params, url, socket) do
+    path = URI.new!(url) |> Map.get(:path)
+    {:noreply, assign(socket, :current_path, path)}
   end
 
   # Presence tracking ----------------->

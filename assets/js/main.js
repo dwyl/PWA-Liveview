@@ -4,7 +4,7 @@ import "phoenix_html";
 
 const CONFIG = {
   MAIN_CONTENT_SELECTOR: "#main-content", // used in navigate.js
-  POLL_INTERVAL: 10_000,
+  POLL_INTERVAL: 2_000,
   ON_ICON: new URL("/images/online.svg", import.meta.url).href,
   OFF_ICON: new URL("/images/offline.svg", import.meta.url).href,
 };
@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     import("@js/utilities/pwaRegistration"),
   ]);
 
-  const [_, swRegistration] = Promise.all([
+  const [_, swRegistration] = await Promise.all([
     configureTopbar(),
     registerServiceWorker(),
   ]);

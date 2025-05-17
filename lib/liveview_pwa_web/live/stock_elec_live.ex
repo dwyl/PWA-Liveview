@@ -2,10 +2,9 @@ defmodule LiveviewPwaWeb.StockElectricLive do
   use LiveviewPwaWeb, :live_view
   alias Phoenix.PubSub
 
-  alias LiveviewPwaWeb.{Menu, Presence, PwaActionComponent, Users}
+  alias LiveviewPwaWeb.{Menu, PwaActionComponent, Users}
   alias LiveviewPwa.ElecCount
 
-  # only: [sync_stream: 4, sync_stream_update: 3]
   import Phoenix.Sync.LiveView
   # import Ecto.Query, only: [from: 2]
   require Logger
@@ -20,7 +19,7 @@ defmodule LiveviewPwaWeb.StockElectricLive do
         update_available={@update_available}
       />
       <Users.display user_id={@user_id} presence_list={@presence_list} />
-      <Menu.display update_available={@update_available} />
+      <Menu.display update_available={@update_available} active_path={@current_path}/>
       <h1>Electric Stock</h1>
       <p>Welcome to the Electric Stock page!</p>
     </div>
@@ -29,21 +28,14 @@ defmodule LiveviewPwaWeb.StockElectricLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    # :ok = PubSub.subscribe(:pubsub, "presence")
-    # <- presence tracking
-    # Presence.track(self(), "presence", socket.assigns.user_id, %{})
-
     if connected?(socket) do
       :ok = PubSub.subscribe(:pubsub, "ystock")
-      # <- presence tracking
-      Presence.track(self(), "presence", socket.assigns.user_id, %{})
-      init_presence_list = Presence.list("presence") |> Map.keys() |> dbg()
 
       query = ElecCount.counter_query()
 
       {:ok,
        socket
-       |> assign(%{presence_list: init_presence_list, page_title: "Electric"})
+       |> assign(%{page_title: "Electric"})
        |> sync_stream(:elec_counter, query)}
     else
       {:ok, socket}
@@ -51,8 +43,9 @@ defmodule LiveviewPwaWeb.StockElectricLive do
   end
 
   @impl true
-  def handle_params(_params, _url, socket) do
-    {:noreply, socket}
+  def handle_params(_params, url, socket) do
+    path = URI.new!(url) |> Map.get(:path)
+    {:noreply, assign(socket, :current_path, path)}
   end
 
   @impl true
