@@ -3,7 +3,7 @@ defmodule LiveviewPwaWeb.MapLive do
   use Phoenix.Component
   alias Phoenix.LiveView.AsyncResult
   alias Phoenix.PubSub
-  alias LiveviewPwaWeb.{Menu, PwaActionComponent, Users}
+  alias LiveviewPwaWeb.HeaderComponent
 
   @moduledoc """
   LiveView for the map page.
@@ -20,12 +20,15 @@ defmodule LiveviewPwaWeb.MapLive do
     ~H"""
     <div>
       <.live_component
-        module={PwaActionComponent}
+        module={HeaderComponent}
         id="pwa_action-0"
         update_available={@update_available}
+        user_id={@user_id}
+        presence_list={@presence_list}
+        acti_ve_apth={@current_path}
       />
-      <Users.display user_id={@user_id} presence_list={@presence_list} />
-      <Menu.display update_available={@update_available} active_path={@current_path} />
+      <%!-- <Users.display user_id={@user_id} presence_list={@presence_list} />
+      <Menu.display update_available={@update_available} active_path={@current_path} /> --%>
       <div
         id="map"
         phx-hook="MapHook"

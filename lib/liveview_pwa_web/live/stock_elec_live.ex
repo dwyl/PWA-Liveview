@@ -2,7 +2,7 @@ defmodule LiveviewPwaWeb.StockElectricLive do
   use LiveviewPwaWeb, :live_view
   alias Phoenix.PubSub
 
-  alias LiveviewPwaWeb.{Menu, PwaActionComponent, Users}
+  alias LiveviewPwaWeb.HeaderComponent
   alias LiveviewPwa.ElecCount
 
   import Phoenix.Sync.LiveView
@@ -14,12 +14,13 @@ defmodule LiveviewPwaWeb.StockElectricLive do
     ~H"""
     <div>
       <.live_component
-        module={PwaActionComponent}
+        module={HeaderComponent}
         id="pwa_action-0"
         update_available={@update_available}
+        user_id={@user_id}
+        presence_list={@presence_list}
+        acti_ve_apth={@current_path}
       />
-      <Users.display user_id={@user_id} presence_list={@presence_list} />
-      <Menu.display update_available={@update_available} active_path={@current_path}/>
       <h1>Electric Stock</h1>
       <p>Welcome to the Electric Stock page!</p>
     </div>

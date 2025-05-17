@@ -1,6 +1,6 @@
-defmodule LiveviewPwaWeb.PwaActionComponent do
+defmodule LiveviewPwaWeb.HeaderComponent do
   use LiveviewPwaWeb, :live_component
-  alias LiveviewPwaWeb.Pwa
+  alias LiveviewPwaWeb.{Pwa, Users, Menu}
   require Logger
 
   @impl true
@@ -19,6 +19,8 @@ defmodule LiveviewPwaWeb.PwaActionComponent do
         <Pwa.svg height={20} class="mr-2" />
         <span class="ml-1 font-bold">Refesh needed</span>
       </button>
+      <Users.display user_id={@user_id} presence_list={@presence_list} />
+      <Menu.display update_available={@update_available} active_path={@current_path} />
     </div>
     """
   end
