@@ -1,6 +1,6 @@
-defmodule LiveviewPwaWeb.HeaderComponent do
+defmodule LiveviewPwaWeb.PwaLiveC do
   use LiveviewPwaWeb, :live_component
-  alias LiveviewPwaWeb.{Pwa, Users, Menu}
+  alias LiveviewPwaWeb.{Pwa}
   require Logger
 
   @impl true
@@ -19,15 +19,13 @@ defmodule LiveviewPwaWeb.HeaderComponent do
         <Pwa.svg height={20} class="mr-2" />
         <span class="ml-1 font-bold">Refesh needed</span>
       </button>
-      <Users.display user_id={@user_id} presence_list={@presence_list} />
-      <Menu.display update_available={@update_available} active_path={@active_path} />
     </div>
     """
   end
 
   @impl true
   def handle_event("sw-lv-update", %{"update" => true}, socket) do
-    {:noreply, assign(socket, update_available: true)}
+    {:noreply, assign(socket, :update_available, true)}
   end
 
   def handle_event("skip-waiting", _params, socket) do

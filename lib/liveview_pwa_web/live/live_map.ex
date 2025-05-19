@@ -3,7 +3,8 @@ defmodule LiveviewPwaWeb.MapLive do
   use Phoenix.Component
   alias Phoenix.LiveView.AsyncResult
   alias Phoenix.PubSub
-  alias LiveviewPwaWeb.HeaderComponent
+  alias LiveviewPwaWeb.{PwaLiveC, Users, Menu, Presence}
+  # alias LiveviewPwaWeb.Presence
 
   @moduledoc """
   LiveView for the map page.
@@ -20,13 +21,15 @@ defmodule LiveviewPwaWeb.MapLive do
     ~H"""
     <div>
       <.live_component
-        module={HeaderComponent}
+        module={PwaLiveC}
         id="pwa_action-0"
         update_available={@update_available}
-        user_id={@user_id}
-        presence_list={@presence_list}
         active_path={@active_path}
       />
+      <br />
+      <%!-- <Users.display user_id={@user_id} users={@presence_list} /> --%>
+      <p>{inspect(@socket_id)}</p>
+      <Menu.display update_available={@update_available} active_path={@active_path} />
       <br />
       <div
         id="map"
@@ -36,37 +39,33 @@ defmodule LiveviewPwaWeb.MapLive do
         data-userid={@user_id}
       >
       </div>
-      <div
-        id="select_form"
-        phx-hook="FormHook"
-        phx-update="ignore"
-        data-userid={@user_id}
-      >
-      </div>
+      <div id="select_form" phx-hook="FormHook" phx-update="ignore" data-userid={@user_id}></div>
     </div>
     """
   end
 
   @impl true
   def mount(_params, _session, socket) do
-    # user_id is set by "set_user_id" plug
-    # and then set in the "on_mount" function
-    # os is available in sockets in the same session
-
     if connected?(socket) do
       :ok = PubSub.subscribe(:pubsub, "new_airport")
       :ok = PubSub.subscribe(:pubsub, "remove_airport")
       :ok = PubSub.subscribe(:pubsub, "do_fly")
-
-      {:ok,
-       assign(socket, %{
-         page_title: "Map",
-         airports: nil,
-         hash: Airport.hash()
-       })}
-    else
-      {:ok, socket}
+      # :ok = PubSub.subscribe(:pubsub, "presence")
+      # Presence.track(self(), "presence", socket.assigns.user_id, %{})
     end
+
+    # presence_entries = Presence.list("presence") |> Map.values()
+    # {socket.id, presence_entries} |> dbg()
+
+    {:ok,
+     socket
+     |> assign(:socket_id, socket.id)
+     |> assign(:page_title, "Map")
+     |> assign(:airports, nil)
+     #  |> assign(:presence_list, presence_entries)
+     |> assign(:hash, Airport.hash())}
+
+    #  |> attach_hook(:presence_ist, :handle_info, &sieve/2)}
   end
 
   @impl true
@@ -96,7 +95,8 @@ defmodule LiveviewPwaWeb.MapLive do
        hash: hash
      })
      # memory cleanup
-     |> assign(%{airports: nil, hash: hash})}
+     |> assign(:airports, nil)
+     |> assign(:hash, hash)}
   end
 
   def handle_async(:airports, {:exit, reason}, socket) do
@@ -110,8 +110,6 @@ defmodule LiveviewPwaWeb.MapLive do
   # Client events
   @impl true
   def handle_event("cache-checked", %{"cached" => false}, socket) do
-    # Logger.debug("Client data empty, fetch from DB")
-
     {:noreply,
      socket
      |> assign(:airports, AsyncResult.loading())
@@ -131,11 +129,7 @@ defmodule LiveviewPwaWeb.MapLive do
   end
 
   # hash don't match
-  def handle_event(
-        "cache-checked",
-        %{"cached" => true, "version" => hash},
-        socket
-      ) do
+  def handle_event("cache-checked", %{"cached" => true, "version" => hash}, socket) do
     Logger.info("#{inspect({hash, socket.assigns.hash})}")
     #  version does not match, fetch from DB
     {:noreply,
@@ -193,18 +187,6 @@ defmodule LiveviewPwaWeb.MapLive do
 
   # Generic PubSub callback: pushes response to other clients
   @impl true
-  # def handle_info(
-  #       %{event: "presence_diff", payload: %{joins: joins, leaves: leaves}},
-  #       socket
-  #     ) do
-  #   %{assigns: %{presence_list: presence_list}, id: id} = socket
-
-  #   new_list =
-  #     LiveviewPwaWeb.Presence.sieve(presence_list, joins, leaves, id)
-
-  #   {:noreply, assign(socket, presence_list: new_list)}
-  # end
-
   def handle_info(%{"action" => action} = payload, socket) do
     user_id = socket.assigns.user_id
     from = Map.get(payload, "origin_user_id")
@@ -219,22 +201,28 @@ defmodule LiveviewPwaWeb.MapLive do
     end
   end
 
-  def handle_info(
-        %{event: "presence_diff", payload: %{joins: joins, leaves: leaves}},
-        socket
-      ) do
-    %{assigns: %{presence_list: presence_list}, id: id} = socket
-
-    new_list =
-      LiveviewPwaWeb.Presence.sieve(presence_list, joins, leaves, id)
-
-    {:noreply, assign(socket, presence_list: new_list)}
-  end
-
   # cleanup the async result
   def handle_info(:airports_cleanup, socket) do
     send(socket.transport_pid, :garbage_collect)
-    {:noreply, assign(socket, airports: nil)}
+    {:noreply, assign(socket, :airports, nil)}
+  end
+
+  def handle_info(%{event: "presence_diff"} = payload, socket) do
+    %{payload: %{joins: joins, leaves: leaves}} = payload
+    %{assigns: %{presence_list: presence_list}} = socket
+
+    new_list = Presence.sieve(presence_list, joins, leaves, socket.id)
+    # socket =
+    #   Enum.reduce(Map.keys(joins), socket, fn user_id, s ->
+    #     stream_insert(s, :presence_list, %{id: user_id})
+    #   end)
+
+    # socket =
+    #   Enum.reduce(Map.keys(leaves), socket, fn user_id, s ->
+    #     stream_delete(s, :presence_list, %{id: user_id})
+    #   end)
+
+    {:noreply, assign(socket, :presence_list, new_list)}
   end
 
   # Helpers------------------------------>

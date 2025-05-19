@@ -1,15 +1,13 @@
 import Config
 
+# we configured Sqlite to save the database in the project root
+# so that we can easily access it from the host machine
 config :liveview_pwa, LiveviewPwa.Sql3Repo,
   database: Path.expand("../db/main.db", Path.dirname(__ENV__.file))
 
-config :liveview_pwa, LiveviewPwa.PgRepo,
-  url: "ecto://myuser:mysecretpassword@localhost:5432/elec_dev"
-
-# paswword: "postgres",
-# username: "postgres",
-# database: "liveview_pwa_dev",
-# hostname: "localhost"
+# Postgres is running in a docker container with local replication enabled
+# and is accessible on localhost:3001
+config :liveview_pwa, LiveviewPwa.PgRepo, url: "ecto://postgres:1234@localhost:3001/elec_prod"
 
 config :liveview_pwa, LiveviewPwaWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
@@ -26,9 +24,6 @@ config :liveview_pwa, LiveviewPwaWeb.Endpoint,
       ~r{lib/liveview_pwa_web/templates/.*(eex)$}
     ]
   ],
-  # The watchers configuration can be used to run external
-  # watchers to your application. For example, we can use it
-  # to bundle .js and .css sources.
   watchers: [
     npx: [
       "vite",

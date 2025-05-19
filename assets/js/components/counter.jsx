@@ -2,16 +2,6 @@ import { lazy } from "solid-js";
 
 // The callback runs every time the Shape data changes.
 export default function Counter(props) {
-  // const { ShapeStream, Shape } = await import("@electric-sql/client");
-  // const stream = new ShapeStream({
-  //   url: `http://localhost:3000/v1/shape`,
-  //   params: {
-  //     table: "items",
-  //   },
-  // });
-  // const shape = new Shape(stream);
-  // shape.subscribe((data) => console.log(data));
-
   const Bins = lazy(() => import("@jsx/components/bins"));
 
   const handleTake = () => {
@@ -23,7 +13,6 @@ export default function Counter(props) {
   return (
     <>
       <h1 class="mt-4 mb-4 text-2xl text-gray-600">Reactive Component</h1>
-      {/* <div class="text-sm text-gray-600 mt-4 mb-2">User ID: {props.userID}</div> */}
       <button
         id="takeFromStock"
         class="font-bold py-2 mt-4 px-4 rounded border border-gray-800  bg-bisque  text-midnightblue transition duration-300 ease-in-out 
@@ -48,7 +37,7 @@ export default function Counter(props) {
           id="rangeInput"
           class="w-full m-0 mt-4"
           type="range"
-          min="0"
+          min={0}
           max={props.max}
           step="1"
           value={props.stock}

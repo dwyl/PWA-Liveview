@@ -1,3 +1,4 @@
+name: liveview_pwa
 services:
   pg:
     image: postgres:17

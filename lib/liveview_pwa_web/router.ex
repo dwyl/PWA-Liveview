@@ -1,7 +1,8 @@
 defmodule LiveviewPwaWeb.Router do
   use LiveviewPwaWeb, :router
-  alias Phoenix.Token
+
   alias LiveviewPwaWeb.{Endpoint, MountUser}
+  alias Phoenix.Token
 
   # Note: After adding 'preload', submit your domain to
   # Ensure you can maintain HTTPS for the entire domain and all subdomains
@@ -12,9 +13,9 @@ defmodule LiveviewPwaWeb.Router do
     plug :fetch_session
     plug :fetch_live_flash
     plug :put_root_layout, html: {LiveviewPwaWeb.Layouts, :root}
+    plug :set_current_user
     plug BrowserCSP
     plug :protect_from_forgery
-    plug :set_current_user
   end
 
   scope "/", LiveviewPwaWeb do
@@ -25,22 +26,28 @@ defmodule LiveviewPwaWeb.Router do
       live "/", StockYjsLive, :index
       live "/elec", StockElectricLive, :index
       live "/map", MapLive, :index
-      get "/connectivity", ConnectivityController, :check
     end
 
     match(:*, "/:p", NotFound, :render)
   end
 
+  scope "/api", LiveviewPwaWeb do
+    pipe_through :browser
+
+    get "/connectivity", ConnectivityController, :check
+    get "/user_token", UserTokenController, :show
+    get "/sql3_counter", Sql3CounterController, :show
+    get "/pg_counter", PgCounterController, :show
+  end
+
   def set_current_user(conn, _opts) do
-    conn
-    |> get_session(:user_id)
-    |> case do
+    case get_session(conn, :user_id) do
       nil ->
-        id = :rand.uniform(1000)
-        user_token = Token.sign(Endpoint, "user token", id)
+        user_id = :rand.uniform(10_000)
+        user_token = Token.sign(Endpoint, "user token", user_id)
 
         conn
-        |> put_session(:user_id, id)
+        |> put_session(:user_id, user_id)
         |> put_session(:user_token, user_token)
 
       _user_id ->

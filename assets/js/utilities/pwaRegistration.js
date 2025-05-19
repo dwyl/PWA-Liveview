@@ -5,6 +5,7 @@ let updateSWFunction = null;
 
 export async function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return false;
+  console.log("registerServiceWorker------");
 
   try {
     const { registerSW } = await import("virtual:pwa-register");

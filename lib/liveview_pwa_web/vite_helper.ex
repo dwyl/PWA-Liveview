@@ -26,7 +26,7 @@ defmodule ViteHelper do
     end
   end
 
-  # !!! this can possibly crash if the manifest is not found
+  # !!! this can possibly crash if the manifest is not found in DEV mode
   defp get_manifest do
     Path.join(:code.priv_dir(:liveview_pwa), "/static/.vite/manifest.json")
     |> File.read!()

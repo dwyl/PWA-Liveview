@@ -41,14 +41,17 @@ defmodule BrowserCSP do
       script-src 'self' 'nonce-#{nonce}' 'strict-dynamic' 'wasm-unsafe-eval' https://cdn.maptiler.com/;
       object-src 'none';
       connect-src 'self' http://localhost:* https://solidyjs-lively-pine-4375.fly.dev wss://solidyjs-lively-pine-4375.fly.dev ws://solidyjs-lively-pine-4375.fly.dev ws://localhost:* https://api.maptiler.com/ https://*.maptiler.com/;
-      img-src 'self' data: https://*.maptiler.com/ https://api.maptiler.com/ http://localhost:4000;
+      img-src 'self' data: https://*.maptiler.com/ https://api.maptiler.com/ http://localhost:4000 https://leafletjs.com;
       worker-src 'self' blob:;
       style-src 'self' 'unsafe-inline';
-      default-src 'self' https://LiveviewPwa-lively-pine-4375.fly.dev;
+      default-src 'self' https://solidjs-lively-pine-4375.fly.dev;
       frame-ancestors 'self' https://solidyjs-lively-pine-4375.fly.dev;
+      font-src 'self' https://fonts.maptiler.com;
       base-uri 'self'
     """
     |> String.replace("\n", " ")
+
+    # style-src: 'unsafe-inline'
 
     # _ ->
     #   """

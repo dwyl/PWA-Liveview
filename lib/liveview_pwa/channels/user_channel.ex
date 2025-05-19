@@ -1,4 +1,4 @@
-defmodule LiveviewPwa.YjsChannel do
+defmodule LiveviewPwa.UserChannel do
   use Phoenix.Channel
   # alias Yex.Sync.SharedDoc
 

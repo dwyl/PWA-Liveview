@@ -3,17 +3,27 @@ defmodule LiveviewPwaWeb.Presence do
     otp_app: :liveivew_pwa,
     pubsub_server: :pubsub
 
-  def sieve(presence_list, joins, leaves, socket_id) do
-    {_, joins} =
-      Map.pop(joins, socket_id, %{})
+  @impl true
+  def init(_), do: {:ok, %{}}
 
-    {_, leaves} =
-      Map.pop(leaves, socket_id, %{})
-
-    [presence_list | Map.keys(joins)]
-    |> List.flatten()
-    |> MapSet.new()
-    |> MapSet.difference(MapSet.new(Map.keys(leaves)))
-    |> MapSet.to_list()
+  @impl true
+  def fetch("presence", presences) do
+    for {key, %{metas: [meta | _metas]}} <- presences, into: %{} do
+      {key, %{id: meta.id}}
+    end
   end
+
+  # def sieve(users, joins, leaves, id) do
+  #   [users | Map.values(joins)]
+  #   |> List.flatten()
+  #   |> MapSet.new()
+  #   # |> MapSet.difference(MapSet.new(Map.keys(leaves)))
+  #   |> MapSet.difference(MapSet.new(Map.values(leaves)))
+  #   |> MapSet.to_list()
+
+  #   # [users | Map.keys(joins)]
+  #   # |> List.flatten()
+  #   # |> Enum.uniq()
+  #   # |> Enum.reject(&(&1 in Map.keys(leaves)))
+  # end
 end

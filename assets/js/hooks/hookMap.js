@@ -19,10 +19,9 @@ export const MapHook = {
 
     if (this.map) {
       this.group.clearLayers();
-      this.map.removeLayer(this.group);
       this.map.removeLayer(this.maptLayer);
-      this.maptLayer.remove();
       this.map.remove();
+      this.maptLayer = null;
       this.group = null;
       this.map = null;
     }

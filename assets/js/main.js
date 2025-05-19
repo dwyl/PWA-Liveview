@@ -4,7 +4,7 @@ import "phoenix_html";
 
 const CONFIG = {
   MAIN_CONTENT_SELECTOR: "#main-content", // used in navigate.js
-  POLL_INTERVAL: 2_000,
+  POLL_INTERVAL: 20_000,
   ON_ICON: new URL("/images/online.svg", import.meta.url).href,
   OFF_ICON: new URL("/images/offline.svg", import.meta.url).href,
 };
@@ -14,7 +14,7 @@ const AppState = {
   isOnline: true,
   interval: null,
   globalYdoc: null,
-  ydocSocket: null,
+  userSocket: null,
   updateServiceWorker: null,
 };
 
@@ -122,7 +122,7 @@ async function initLiveSocket() {
   try {
     const [
       { StockElecHook },
-      { ydocSocket },
+      { setUserSocket },
       { StockYjsHook },
       { PwaHook },
       { MapHook },
@@ -131,7 +131,7 @@ async function initLiveSocket() {
       { Socket },
     ] = await Promise.all([
       import("@js/hooks/hookElecStock"),
-      import("@js/ydoc_socket/ydocSocket"),
+      import("@js/user_socket/userSocket"),
       import("@js/hooks/hookYjsStock.js"),
       import("@js/hooks/hookPwa.js"),
       import("@js/hooks/hookMap.js"),
@@ -141,7 +141,7 @@ async function initLiveSocket() {
     ]);
 
     // custom websocket for the Yjs document channel transfer
-    AppState.ydocSocket = ydocSocket;
+    AppState.userSocket = await setUserSocket();
 
     const csrfToken = document
       .querySelector("meta[name='csrf-token']")
@@ -150,7 +150,7 @@ async function initLiveSocket() {
     const hooks = {
       StockYjsHook: StockYjsHook({
         ydoc: AppState.globalYdoc,
-        ydocSocket: AppState.ydocSocket,
+        userSocket: AppState.userSocket,
       }),
       MapHook,
       FormHook,

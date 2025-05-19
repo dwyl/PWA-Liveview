@@ -42,7 +42,7 @@ export const Stock = (props) => {
   };
 
   createEffect(() => {
-    setRange((ar) => [...ar, ...Array(Number(max)).keys()]);
+    setRange((ar) => [...ar, ...Array(Number(max) + 1).keys()]);
   });
 
   dispose = render(

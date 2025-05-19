@@ -13,11 +13,11 @@ defmodule LiveviewPwaWeb.Endpoint do
   Two sockets are defined:
 
   - "/live" for Phoenix LiveView
-  - "/ydocSocket" for Yjs WebSocket connection
+  - "/userocket"
 
   The "/live" socket uses the session options defined below from a cookie.
 
-  The "/ydoc" socket is configured to check the origin
+  The "/user" socket is configured to check the origin
   against the application environment variable `:websocket_origins`.
   """
 
@@ -31,12 +31,14 @@ defmodule LiveviewPwaWeb.Endpoint do
   socket "/live", Phoenix.LiveView.Socket,
     websocket: [
       connect_info: [session: @session_options],
-      compress: true
+      compress: true,
+      csp_nonce_assign_key: :main_nonce
     ],
     longpoll: [connect_info: [session: @session_options]]
 
-  socket "/ydoc", LiveviewPwa.YdocSocket,
+  socket "/user", LiveviewPwa.UserSocket,
     websocket: [
+      csp_nonce_assign_key: :main_nonce,
       connect_info: [
         session: @session_options,
         check_origin: true
@@ -95,5 +97,5 @@ defmodule LiveviewPwaWeb.Endpoint do
   plug Plug.MethodOverride
   plug Plug.Head
   plug Plug.Session, @session_options
-  plug LiveviewPwaWeb.Router
+  plug LiveviewPwaWeb.Router, csp_nonce_assign_key: :main_nonce
 end

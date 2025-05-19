@@ -26,7 +26,7 @@ async function renderCurrentView() {
     });
   }
 
-  const elMap = document.getElementById("mapform");
+  const elMap = document.getElementById("map");
   const elForm = document.getElementById("select_form");
 
   if (elMap && elForm) {
@@ -91,6 +91,7 @@ async function handleOfflineNavigation(event) {
 
     // Try to get the page from cache via fetch
     const response = await fetch(path);
+    console.log(response);
     if (!response.ok)
       throw new Error(`Failed to fetch ${path}: ${response.status}`);
 

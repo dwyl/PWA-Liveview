@@ -18,10 +18,14 @@ export async function renderMap() {
     selectionObserver.cleanup();
 
     if (map) {
-      group.clearLayers();
-      map.removeLayer(group);
-      // map.removeLayer(maptLayer);
-      maptLayer.remove();
+      if (group && map.hasLayer(group)) {
+        group.clearLayers();
+        map.removeLayer(group);
+      }
+      // Remove MaptilerLayer if added
+      if (maptLayer && map.hasLayer(maptLayer)) {
+        maptLayer.remove(); // or map.removeLayer(maptLayer)
+      }
       map.remove();
     }
 

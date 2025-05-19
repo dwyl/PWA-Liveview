@@ -2,11 +2,15 @@ import { Index } from "solid-js";
 import { Dynamic } from "solid-js/web";
 
 const BlueBin = (props) => (
-  <div class="text-midnightblue font-bold">{props.value}</div>
+  <div class="text-midnightblue font-bold font-mono text-center text-sm w-5">
+    {props.value}
+  </div>
 );
 
 const BlackBin = (props) => (
-  <div class="text-black font-normal">{props.value}</div>
+  <div class="text-black font-normal font-mono text-center text-sm w-5">
+    {props.value}
+  </div>
 );
 
 export default function Bins(props) {

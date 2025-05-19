@@ -309,8 +309,6 @@ const Fonts = {
 };
 
 const runtimeCaching = [
-  // Navigation,
-  // StaticAssets,
   OtherStaticAssets,
   ...LiveView,
   MapTiler, // Add the SDK route before Tiles
@@ -371,8 +369,8 @@ const PWAConfig = (mode) => ({
 
     additionalManifestEntries: [
       { url: "/", revision: `${Date.now()}` }, // Manually precache root route
-      { url: "/map", revision: `${Date.now()}` }, // Manually precache map route
       { url: "/elec", revision: `${Date.now()}` }, // Manually precache elec route
+      { url: "/map", revision: `${Date.now()}` }, // Manually precache map route
     ],
     runtimeCaching,
     // Update behaviour
@@ -489,23 +487,6 @@ export default defineConfig(({ command, mode }) => {
 });
 
 // Waiting for CDN =============================================
-// const Navigation = {
-//   urlPattern: ({ request }) => request.mode === "navigate",
-//   handler: "NetworkFirst",
-//   options: {
-//     fetchOptions: {
-//       credentials: "same-origin",
-//     },
-//     cacheName: "pages-cache",
-//     expiration: {
-//       maxEntries: 50,
-//       maxAgeSeconds: 24 * 60 * 60, // 1 day
-//     },
-//     cacheableResponse: {
-//       statuses: [0, 200],
-//     },
-//   },
-// };
 
 // const Cdn = {
 //   urlPattern: ({ url }) => url.hostname === "cdn.example.com",
