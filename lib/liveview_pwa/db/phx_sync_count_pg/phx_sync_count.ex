@@ -1,8 +1,8 @@
-defmodule LiveviewPwa.ElecCount do
+defmodule LiveviewPwa.PhxSyncCount do
   use Ecto.Schema
   import Ecto.Query, only: [from: 2]
   import Ecto.Changeset
-  alias LiveviewPwa.{ElecCount, PgRepo}
+  alias LiveviewPwa.PgRepo
   require Logger
 
   @moduledoc """
@@ -21,12 +21,12 @@ defmodule LiveviewPwa.ElecCount do
   @init 20
   @primary_key {:id, :string, autogenerate: false}
 
-  schema "electric_counts" do
+  schema "phx_sync_counts" do
     field(:counter, :integer, default: @init)
   end
 
   def query_current do
-    from(c in __MODULE__, where: c.id == "elec")
+    from(c in __MODULE__, where: c.id == "phx-sync")
   end
 
   def changeset(struct, %{} = params) do
@@ -43,7 +43,7 @@ defmodule LiveviewPwa.ElecCount do
 
   # return nil or %electCount{} struct
   def current do
-    PgRepo.get(ElecCount, "elec")
+    PgRepo.get(__MODULE__, "phx-sync")
   end
 
   def save_counter(%__MODULE__{} = struct, new_counter) do

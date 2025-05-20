@@ -2,7 +2,7 @@ defmodule LiveviewPwaWeb.PgCounterController do
   use LiveviewPwaWeb, :controller
 
   def show(conn, _params) do
-    %{counter: v} = LiveviewPwa.ElecCount.current()
+    %{counter: v} = LiveviewPwa.PhxSyncCount.current()
     json(conn, %{counter: v})
   end
 end

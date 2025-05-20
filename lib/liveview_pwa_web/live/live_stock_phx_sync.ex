@@ -1,8 +1,8 @@
-defmodule LiveviewPwaWeb.StockElectricLive do
+defmodule LiveviewPwaWeb.StockPhxSyncLive do
   use LiveviewPwaWeb, :live_view
 
   alias LiveviewPwaWeb.{PwaLiveC, Users, Menu}
-  alias LiveviewPwa.ElecCount
+  alias LiveviewPwa.PhxSyncCount
   # alias LiveviewPwaWeb.Presence
 
   import LiveviewPwaWeb.CoreComponents
@@ -26,13 +26,13 @@ defmodule LiveviewPwaWeb.StockElectricLive do
 
       <Menu.display update_available={@update_available} active_path={@active_path} />
       <br />
-      <h1>Electric Stock</h1>
-      <h2>Welcome to the Electric Stock page!</h2>
-      <p :if={@streams.elec_counter} id="elec_count" phx-update="stream">
-        <div :for={{_id, item} <- @streams.elec_counter}>
+      <h1>PHoenix Sync Stock</h1>
+      <h2>Welcome to the Phoenix Sync Stock page!</h2>
+      <p :if={@streams.phx_sync_counter} id="phx-sync-count" phx-update="stream">
+        <div :for={{_id, item} <- @streams.phx_sync_counter}>
         <form phx-submit="dec">
           <.button>Decrement</.button>
-          <input type="range" min="0" max={@max} name="counter" value={item.counter} />
+          <input type="range" min="0" max={@max} name="dec-phx-sync-counter" value={item.counter} />
           <span class="ml-8">{item.counter}</span>
         </form>
         </div>
@@ -44,13 +44,13 @@ defmodule LiveviewPwaWeb.StockElectricLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    query = ElecCount.query_current()
+    query = PhxSyncCount.query_current()
 
     {:ok,
      socket
      |> assign(:socket_id, socket.id)
      |> assign(:page_title, "Electric")
-     |> sync_stream(:elec_counter, query)}
+     |> sync_stream(:phx_sync_counter, query)}
   end
 
   @impl true
@@ -66,12 +66,12 @@ defmodule LiveviewPwaWeb.StockElectricLive do
 
   # pass through
   def handle_info({:sync, event}, socket) do
-    {:noreply, Phoenix.Sync.LiveView.sync_stream_update(socket, event)}
+    {:noreply, sync_stream_update(socket, event)}
   end
 
   @impl true
   def handle_event("dec", _params, socket) do
-    LiveviewPwa.ElecCount.decrement()
+    PhxSyncCount.decrement()
     {:noreply, socket}
   end
 end
