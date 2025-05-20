@@ -23,7 +23,6 @@ defmodule LiveviewPwaWeb.StockElectricLive do
       />
       <br />
       <Users.display user_id={@user_id} module_id="users-elec" />
-      <p>{inspect(@socket_id)}</p>
 
       <Menu.display update_available={@update_available} active_path={@active_path} />
       <br />
@@ -31,12 +30,12 @@ defmodule LiveviewPwaWeb.StockElectricLive do
       <h2>Welcome to the Electric Stock page!</h2>
       <p :if={@streams.elec_counter} id="elec_count" phx-update="stream">
         <div :for={{_id, item} <- @streams.elec_counter}>
-          <p>{item.counter}</p>
-        </div>
         <form phx-submit="dec">
           <.button>Decrement</.button>
-          <%!-- <input type="range" min="0" max={@max} name="counter" value={item.counter} /> --%>
+          <input type="range" min="0" max={@max} name="counter" value={item.counter} />
+          <span class="ml-8">{item.counter}</span>
         </form>
+        </div>
       </p>
       <br />
     </div>

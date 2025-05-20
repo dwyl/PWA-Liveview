@@ -12,16 +12,10 @@ export default function Counter(props) {
 
   return (
     <>
-      <h1 class="mt-4 mb-4 text-2xl text-gray-600">Reactive Component</h1>
+      <h1 class="mt-4 mb-4 text-2xl text-gray-600">Yjs stock</h1>
       <button
         id="takeFromStock"
-        class="font-bold py-2 mt-4 px-4 rounded border border-gray-800  bg-bisque  text-midnightblue transition duration-300 ease-in-out 
-               active:scale-95 active:bg-burlywood hover:bg-wheat"
-        style={{
-          active: "scale-95",
-          transition: "duration-300 ease-in-out",
-          hover: "bg-wheat",
-        }}
+        class="font-bold py-2 mt-4 px-4 rounded border border-gray-800 bg-bisque text-midnightblue transition-all duration-300 ease-in-out active:scale-95 active:bg-burlywood hover:bg-wheat"
         onClick={handleTake}
       >
         Take from stock

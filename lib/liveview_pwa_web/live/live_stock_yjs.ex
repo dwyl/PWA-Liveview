@@ -23,7 +23,6 @@ defmodule LiveviewPwaWeb.StockYjsLive do
       <br />
 
       <Users.display user_id={@user_id} module_id="users-yjs" />
-      <p>{inspect(@socket_id)}</p>
 
       <Menu.display update_available={@update_available} active_path={@active_path} />
       <div

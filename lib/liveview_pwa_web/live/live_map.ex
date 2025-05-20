@@ -28,7 +28,7 @@ defmodule LiveviewPwaWeb.MapLive do
       />
       <br />
       <Users.display user_id={@user_id} module_id="users-map" />
-      <p>{inspect(@socket_id)}</p>
+
       <Menu.display update_available={@update_available} active_path={@active_path} />
       <br />
       <div
