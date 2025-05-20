@@ -1,7 +1,8 @@
 defmodule LiveviewPwaWeb.StockYjsLive do
   use LiveviewPwaWeb, :live_view
   alias Phoenix.PubSub
-  alias LiveviewPwaWeb.{PwaLiveC, Users, Menu, Presence}
+  alias LiveviewPwaWeb.{PwaLiveC, Users, Menu}
+  alias LiveviewPwa.Presence
   # alias LiveviewPwaWeb.Presence
 
   require Logger
@@ -22,7 +23,7 @@ defmodule LiveviewPwaWeb.StockYjsLive do
       />
       <br />
 
-      <Users.display user_id={@user_id} users={@streams.users} />
+      <Users.display user_id={@user_id} module_id="users-yjs" />
       <p>{inspect(@socket_id)}</p>
 
       <Menu.display update_available={@update_available} active_path={@active_path} />
@@ -44,8 +45,8 @@ defmodule LiveviewPwaWeb.StockYjsLive do
 
     if connected?(socket) do
       :ok = PubSub.subscribe(:pubsub, "ystock")
-      entries = Presence.list("presence") |> Map.values() |> dbg()
-      stream(socket, :users, entries)
+      # entries = Presence.list("presence") |> Map.values() |> dbg()
+      # stream(socket, :users, entries)
     end
 
     {:ok,
@@ -61,22 +62,22 @@ defmodule LiveviewPwaWeb.StockYjsLive do
     {:noreply, assign(socket, :active_path, path)}
   end
 
-  @impl true
-  def handle_info(%{event: "presence_diff"} = payload, socket) do
-    %{payload: %{joins: joins, leaves: leaves}} = payload
-    %{assigns: %{presence_list: presence_list}} = socket
+  # @impl true
+  # def handle_info(%{event: "presence_diff"} = payload, socket) do
+  #   %{payload: %{joins: joins, leaves: leaves}} = payload
+  #   %{assigns: %{presence_list: presence_list}} = socket
 
-    new_list = Presence.sieve(presence_list, joins, leaves, socket.id)
-    # socket =
-    #   Enum.reduce(Map.keys(joins), socket, fn user_id, s ->
-    #     stream_insert(s, :presence_list, %{id: user_id})
-    #   end)
+  #   new_list = Presence.sieve(presence_list, joins, leaves, socket.id)
+  #   # socket =
+  #   #   Enum.reduce(Map.keys(joins), socket, fn user_id, s ->
+  #   #     stream_insert(s, :presence_list, %{id: user_id})
+  #   #   end)
 
-    # socket =
-    #   Enum.reduce(Map.keys(leaves), socket, fn user_id, s ->
-    #     stream_delete(s, :presence_list, %{id: user_id})
-    #   end)
+  #   # socket =
+  #   #   Enum.reduce(Map.keys(leaves), socket, fn user_id, s ->
+  #   #     stream_delete(s, :presence_list, %{id: user_id})
+  #   #   end)
 
-    {:noreply, assign(socket, :presence_list, new_list)}
-  end
+  #   {:noreply, assign(socket, :presence_list, new_list)}
+  # end
 end

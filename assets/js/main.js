@@ -1,4 +1,5 @@
 import "@css/app.css";
+import { Presence } from "phoenix";
 // Include phoenix_html to handle method=PUT/DELETE in forms and buttons.
 import "phoenix_html";
 
@@ -7,6 +8,11 @@ const CONFIG = {
   POLL_INTERVAL: 20_000,
   ON_ICON: new URL("/images/online.svg", import.meta.url).href,
   OFF_ICON: new URL("/images/offline.svg", import.meta.url).href,
+  NAVIDS: {
+    yjs: { path: "/", id: "users-yjs" },
+    map: { path: "/map", id: "users-map" },
+    elec: { path: "/elec", id: "users-elec" },
+  },
 };
 
 const AppState = {
@@ -121,8 +127,9 @@ async function init(isOnline) {
 async function initLiveSocket() {
   try {
     const [
-      { StockElecHook },
       { setUserSocket },
+      { setPresenceChannel },
+      { StockElecHook },
       { StockYjsHook },
       { PwaHook },
       { MapHook },
@@ -130,8 +137,9 @@ async function initLiveSocket() {
       { LiveSocket },
       { Socket },
     ] = await Promise.all([
-      import("@js/hooks/hookElecStock"),
       import("@js/user_socket/userSocket"),
+      import("@js/user_socket/setPresenceChannel"),
+      import("@js/hooks/hookElecStock"),
       import("@js/hooks/hookYjsStock.js"),
       import("@js/hooks/hookPwa.js"),
       import("@js/hooks/hookMap.js"),
@@ -140,7 +148,7 @@ async function initLiveSocket() {
       import("phoenix"),
     ]);
 
-    // custom websocket for the Yjs document channel transfer
+    // custom websocket for Presence and YDoc
     AppState.userSocket = await setUserSocket();
 
     const csrfToken = document
@@ -158,6 +166,8 @@ async function initLiveSocket() {
       StockElecHook,
     };
 
+    await setPresenceChannel(AppState.userSocket, "proxy:presence");
+
     const liveSocket = new LiveSocket("/live", Socket, {
       // longPollFallbackMs: 2000,
       params: { _csrf_token: csrfToken },
@@ -168,6 +178,7 @@ async function initLiveSocket() {
     // liveSocket.enableDebug();
 
     // liveSocket.getSocket().onOpen(async () => {
+
     //   console.log(
     //     "Is the LiveSocket connected ? ",
     //     liveSocket?.socket.isConnected()

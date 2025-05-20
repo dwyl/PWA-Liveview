@@ -1,1 +1,4 @@
-export const StockElecHook = {};
+export const StockElecHook = {
+  mounted() {},
+  destroyed() {},
+};

@@ -27,7 +27,7 @@ defmodule LiveviewPwaWeb.MapLive do
         active_path={@active_path}
       />
       <br />
-      <%!-- <Users.display user_id={@user_id} users={@presence_list} /> --%>
+      <Users.display user_id={@user_id} module_id="users-map" />
       <p>{inspect(@socket_id)}</p>
       <Menu.display update_available={@update_available} active_path={@active_path} />
       <br />
@@ -207,23 +207,23 @@ defmodule LiveviewPwaWeb.MapLive do
     {:noreply, assign(socket, :airports, nil)}
   end
 
-  def handle_info(%{event: "presence_diff"} = payload, socket) do
-    %{payload: %{joins: joins, leaves: leaves}} = payload
-    %{assigns: %{presence_list: presence_list}} = socket
+  # def handle_info(%{event: "presence_diff"} = payload, socket) do
+  #   %{payload: %{joins: joins, leaves: leaves}} = payload
+  #   %{assigns: %{presence_list: presence_list}} = socket
 
-    new_list = Presence.sieve(presence_list, joins, leaves, socket.id)
-    # socket =
-    #   Enum.reduce(Map.keys(joins), socket, fn user_id, s ->
-    #     stream_insert(s, :presence_list, %{id: user_id})
-    #   end)
+  #   new_list = Presence.sieve(presence_list, joins, leaves, socket.id)
+  #   # socket =
+  #   #   Enum.reduce(Map.keys(joins), socket, fn user_id, s ->
+  #   #     stream_insert(s, :presence_list, %{id: user_id})
+  #   #   end)
 
-    # socket =
-    #   Enum.reduce(Map.keys(leaves), socket, fn user_id, s ->
-    #     stream_delete(s, :presence_list, %{id: user_id})
-    #   end)
+  #   # socket =
+  #   #   Enum.reduce(Map.keys(leaves), socket, fn user_id, s ->
+  #   #     stream_delete(s, :presence_list, %{id: user_id})
+  #   #   end)
 
-    {:noreply, assign(socket, :presence_list, new_list)}
-  end
+  #   {:noreply, assign(socket, :presence_list, new_list)}
+  # end
 
   # Helpers------------------------------>
   defp fetch_airports do

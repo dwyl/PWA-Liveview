@@ -2,7 +2,7 @@ defmodule LiveviewPwaWeb.MountUser do
   import Phoenix.LiveView
   import Phoenix.Component
   alias Phoenix.PubSub
-  alias LiveviewPwaWeb.Presence
+  alias LiveviewPwa.Presence
   require Logger
 
   @max 20
@@ -19,19 +19,19 @@ defmodule LiveviewPwaWeb.MountUser do
 
   def on_mount(:ensure_authenticated, _params, %{"user_id" => user_id}, socket) do
     if connected?(socket) do
-      :ok = PubSub.subscribe(:pubsub, "presence")
-      Presence.track(self(), "presence", user_id, %{id: user_id})
+      # :ok = PubSub.subscribe(:pubsub, "presence")
+      # Presence.track(self(), "presence", user_id, %{id: user_id})
     end
 
-    users = Presence.list("presence") |> Map.values() |> dbg()
+    # users = Presence.list("presence") |> Map.values() |> dbg()
 
     {:cont,
      socket
      |> assign(:max, @max)
      |> assign(:user_id, user_id)
      |> assign(:update_available, false)
-     |> stream(:users, users)
-     |> attach_hook(:presence_diff, :handle_info, &handle_presence_info/2)
+     #  |> stream(:users, users)
+     #  |> attach_hook(:presence_diff, :handle_info, &handle_presence_info/2)
      |> attach_hook(:sw, :handle_event, &handle_pwa_event/3)}
   end
 

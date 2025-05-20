@@ -20,7 +20,7 @@ defmodule LiveviewPwa.Application do
       {Phoenix.PubSub, name: :pubsub},
       LiveviewPwa.PgRepo,
       LiveviewPwa.Sql3Repo,
-      LiveviewPwaWeb.Presence,
+      LiveviewPwa.Presence,
       {LiveviewPwaWeb.Endpoint, phoenix_sync: Phoenix.Sync.plug_opts()},
       {LiveviewPwa.DocHandler, [db, @max]},
       {AirportDB, [db]}

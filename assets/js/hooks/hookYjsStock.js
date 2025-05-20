@@ -29,8 +29,8 @@ export const StockYjsHook = ({ ydoc, userSocket }) => ({
     // this.handleServerState = this.handleServerState.bind(this);
     this.syncWithServer = this.syncWithServer.bind(this);
 
-    const channelState = await this.setupChannel(userSocket);
-    console.log("channel: ", channelState);
+    const channelState = await this.setupChannel(userSocket, "yjs-state");
+    console.log("channel yjs-state: ", channelState);
 
     // start the state syncing process with the server
     this.connectionCheckInterval = setInterval(async () => {
@@ -82,9 +82,9 @@ export const StockYjsHook = ({ ydoc, userSocket }) => ({
     });
   },
 
-  async setupChannel(userSocket) {
+  async setupChannel(userSocket, topic) {
     const { useChannel } = await import("@js/user_socket/useChannel");
-    this.channel = await useChannel(userSocket, "yjs-state", {
+    this.channel = await useChannel(userSocket, topic, {
       userID: this.userID,
       max: this.max,
     });
