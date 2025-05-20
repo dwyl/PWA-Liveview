@@ -16,13 +16,9 @@ defmodule LiveviewPwaWeb.MountUser do
   """
 
   def on_mount(:ensure_authenticated, _params, %{"user_id" => user_id}, socket) do
-    if connected?(socket) do
-      # :ok = PubSub.subscribe(:pubsub, "presence")
-      # Presence.track(self(), "presence", user_id, %{id: user_id})
-    end
-
     {:cont,
      socket
+     #  shared assigns and PWA button handler delegated to a LiveComponent
      |> assign(:max, @max)
      |> assign(:user_id, user_id)
      |> assign(:update_available, false)

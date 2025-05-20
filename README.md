@@ -800,8 +800,9 @@ It returns a "dispose" and an update" function.
 This snippet runs in "main.js".
 The key points are:
 
-- use `presence.onSync` to get the `Presence` list up-to-date
-- use `phx:page-loading-stop` when navigating between Liveviews because we target DOM elements to render the reactive component.
+- a simple Channel with `Presence.track` and a `push` of the `Presence.list`,
+- use `presence.onSync` listener to get a `Presence` list up-to-date and render the UI with this list
+- a `phx:page-loading-stop` listener to udpate the UI when navigating between Liveviews because we target DOM elements to render the reactive component.
 
 ### CSP rules and evaluation
 
