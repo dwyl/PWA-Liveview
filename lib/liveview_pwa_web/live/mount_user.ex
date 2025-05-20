@@ -1,8 +1,6 @@
 defmodule LiveviewPwaWeb.MountUser do
   import Phoenix.LiveView
   import Phoenix.Component
-  alias Phoenix.PubSub
-  alias LiveviewPwa.Presence
   require Logger
 
   @max 20
@@ -23,15 +21,11 @@ defmodule LiveviewPwaWeb.MountUser do
       # Presence.track(self(), "presence", user_id, %{id: user_id})
     end
 
-    # users = Presence.list("presence") |> Map.values() |> dbg()
-
     {:cont,
      socket
      |> assign(:max, @max)
      |> assign(:user_id, user_id)
      |> assign(:update_available, false)
-     #  |> stream(:users, users)
-     #  |> attach_hook(:presence_diff, :handle_info, &handle_presence_info/2)
      |> attach_hook(:sw, :handle_event, &handle_pwa_event/3)}
   end
 
@@ -44,33 +38,6 @@ defmodule LiveviewPwaWeb.MountUser do
   end
 
   defp handle_pwa_event(_, _, socket) do
-    {:cont, socket}
-  end
-
-  defp handle_presence_info(%{event: "presence_diff"} = payload, socket) do
-    dbg(payload)
-    %{payload: %{joins: joins, leaves: leaves}} = payload
-    # %{assigns: %{users: users}} = socket
-
-    # new_list = Presence.sieve(presence_list, joins, leaves, socket.id)
-
-    socket =
-      Enum.reduce(Map.keys(joins), socket, fn user_id, s ->
-        dbg({"joins", user_id})
-        {:halt, stream_insert(s, :users, %{id: user_id})}
-      end)
-
-    #     # # Remove users who left
-    socket =
-      Enum.reduce(Map.keys(leaves), socket, fn user_id, s ->
-        dbg({"leaves", user_id})
-        {:halt, stream_delete(s, :users, %{id: user_id})}
-      end)
-
-    # {:noreply, assign(socket, :presence_list, new_list)}
-  end
-
-  defp handle_presence_info(_, socket) do
     {:cont, socket}
   end
 end

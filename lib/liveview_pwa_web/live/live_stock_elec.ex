@@ -1,8 +1,7 @@
 defmodule LiveviewPwaWeb.StockElectricLive do
   use LiveviewPwaWeb, :live_view
-  alias Phoenix.PubSub
 
-  alias LiveviewPwaWeb.{PwaLiveC, Users, Menu, Presence}
+  alias LiveviewPwaWeb.{PwaLiveC, Users, Menu}
   alias LiveviewPwa.ElecCount
   # alias LiveviewPwaWeb.Presence
 
@@ -48,26 +47,11 @@ defmodule LiveviewPwaWeb.StockElectricLive do
   def mount(_params, _session, socket) do
     query = ElecCount.query_current()
 
-    if connected?(socket) do
-      # :ok = PubSub.subscribe(:pubsub, "presence")
-      # Presence.track(self(), "presence", socket.assigns.user_id, %{})
-    end
-
-    # presence_entries = Presence.list("presence") |> Map.values()
-    # {socket.id, presence_entries} |> dbg()
-
     {:ok,
      socket
      |> assign(:socket_id, socket.id)
      |> assign(:page_title, "Electric")
-     #  |> assign(:presence_list, presence_entries)
      |> sync_stream(:elec_counter, query)}
-
-    #  |> attach_hook(:presence_ist, :handle_info, &sieve/2)}
-
-    #  subscribing the LiveView socket to a real-time data stream
-    # from ElectricSQL, based on the query
-    #  |> sync_stream(:elec_counter, query)}
   end
 
   @impl true
@@ -85,24 +69,6 @@ defmodule LiveviewPwaWeb.StockElectricLive do
   def handle_info({:sync, event}, socket) do
     {:noreply, Phoenix.Sync.LiveView.sync_stream_update(socket, event)}
   end
-
-  # def handle_info(%{event: "presence_diff"} = payload, socket) do
-  #   %{payload: %{joins: joins, leaves: leaves}} = payload
-  #   %{assigns: %{presence_list: presence_list}} = socket
-
-  #   new_list = Presence.sieve(presence_list, joins, leaves, socket.id)
-  #   # socket =
-  #   #   Enum.reduce(Map.keys(joins), socket, fn user_id, s ->
-  #   #     stream_insert(s, :presence_list, %{id: user_id})
-  #   #   end)
-
-  #   # socket =
-  #   #   Enum.reduce(Map.keys(leaves), socket, fn user_id, s ->
-  #   #     stream_delete(s, :presence_list, %{id: user_id})
-  #   #   end)
-
-  #   {:noreply, assign(socket, :presence_list, new_list)}
-  # end
 
   @impl true
   def handle_event("dec", _params, socket) do

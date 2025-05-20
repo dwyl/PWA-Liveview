@@ -3,7 +3,7 @@ defmodule LiveviewPwaWeb.MapLive do
   use Phoenix.Component
   alias Phoenix.LiveView.AsyncResult
   alias Phoenix.PubSub
-  alias LiveviewPwaWeb.{PwaLiveC, Users, Menu, Presence}
+  alias LiveviewPwaWeb.{PwaLiveC, Users, Menu}
   # alias LiveviewPwaWeb.Presence
 
   @moduledoc """
@@ -50,22 +50,14 @@ defmodule LiveviewPwaWeb.MapLive do
       :ok = PubSub.subscribe(:pubsub, "new_airport")
       :ok = PubSub.subscribe(:pubsub, "remove_airport")
       :ok = PubSub.subscribe(:pubsub, "do_fly")
-      # :ok = PubSub.subscribe(:pubsub, "presence")
-      # Presence.track(self(), "presence", socket.assigns.user_id, %{})
     end
-
-    # presence_entries = Presence.list("presence") |> Map.values()
-    # {socket.id, presence_entries} |> dbg()
 
     {:ok,
      socket
      |> assign(:socket_id, socket.id)
      |> assign(:page_title, "Map")
      |> assign(:airports, nil)
-     #  |> assign(:presence_list, presence_entries)
      |> assign(:hash, Airport.hash())}
-
-    #  |> attach_hook(:presence_ist, :handle_info, &sieve/2)}
   end
 
   @impl true
@@ -206,24 +198,6 @@ defmodule LiveviewPwaWeb.MapLive do
     send(socket.transport_pid, :garbage_collect)
     {:noreply, assign(socket, :airports, nil)}
   end
-
-  # def handle_info(%{event: "presence_diff"} = payload, socket) do
-  #   %{payload: %{joins: joins, leaves: leaves}} = payload
-  #   %{assigns: %{presence_list: presence_list}} = socket
-
-  #   new_list = Presence.sieve(presence_list, joins, leaves, socket.id)
-  #   # socket =
-  #   #   Enum.reduce(Map.keys(joins), socket, fn user_id, s ->
-  #   #     stream_insert(s, :presence_list, %{id: user_id})
-  #   #   end)
-
-  #   # socket =
-  #   #   Enum.reduce(Map.keys(leaves), socket, fn user_id, s ->
-  #   #     stream_delete(s, :presence_list, %{id: user_id})
-  #   #   end)
-
-  #   {:noreply, assign(socket, :presence_list, new_list)}
-  # end
 
   # Helpers------------------------------>
   defp fetch_airports do

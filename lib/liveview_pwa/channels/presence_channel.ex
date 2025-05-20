@@ -4,7 +4,7 @@ defmodule LiveviewPwa.PresenceChannel do
   require Logger
 
   @impl true
-  def join("proxy:presence", params, socket) do
+  def join("proxy:presence", _params, socket) do
     send(self(), :after_join)
     {:ok, socket}
   end
@@ -18,8 +18,10 @@ defmodule LiveviewPwa.PresenceChannel do
   end
 
   def handle_info(:push_users, socket) do
-    users = Presence.list(socket) |> dbg()
+    users = Presence.list(socket)
+    #  pass the user_id to the channel
     :ok = push(socket, "user", %{from: socket.assigns.user_id})
+    #  push the presence state to the channel
     :ok = push(socket, "presence_state", users)
     {:noreply, socket}
   end
