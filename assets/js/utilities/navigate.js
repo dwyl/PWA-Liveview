@@ -6,6 +6,9 @@ const offlineComponents = {
   form: null,
 };
 
+const hooksIDs = CONFIG.PHX_HOOKS_IDS;
+const contentSelector = CONFIG.CONTENT_SELECTOR;
+
 function attachNavigationListeners() {
   const navLinks = document.querySelectorAll("nav a");
   navLinks.forEach((link) => {
@@ -17,7 +20,7 @@ function attachNavigationListeners() {
 async function renderCurrentView() {
   await cleanupOfflineComponents();
 
-  const elStock = document.getElementById("stock_y");
+  const elStock = document.getElementById(hooksIDs.yls);
   if (elStock) {
     const { displayStock } = await import("@js/components/renderers");
     offlineComponents.stock = await displayStock({
@@ -26,8 +29,8 @@ async function renderCurrentView() {
     });
   }
 
-  const elMap = document.getElementById("map");
-  const elForm = document.getElementById("select_form");
+  const elMap = document.getElementById(hooksIDs.map);
+  const elForm = document.getElementById(hooksIDs.mapForm);
 
   if (elMap && elForm) {
     const { displayMap, displayForm } = await import(
@@ -91,7 +94,6 @@ async function handleOfflineNavigation(event) {
 
     // Try to get the page from cache via fetch
     const response = await fetch(path);
-    console.log(response);
     if (!response.ok)
       throw new Error(`Failed to fetch ${path}: ${response.status}`);
 
@@ -99,12 +101,12 @@ async function handleOfflineNavigation(event) {
     // Parse the HTML
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
-    const newContent = doc.querySelector(CONFIG.MAIN_CONTENT_SELECTOR);
+    const newContent = doc.querySelector(contentSelector);
     if (!newContent)
       throw new Error(`Main content element not found in fetched HTML`);
 
     // Replace only the main content, not the entire body
-    const currentContent = document.querySelector(CONFIG.MAIN_CONTENT_SELECTOR);
+    const currentContent = document.querySelector(contentSelector);
     if (currentContent) {
       currentContent.innerHTML = newContent.innerHTML;
       await renderCurrentView();

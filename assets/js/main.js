@@ -4,7 +4,7 @@ import { Presence } from "phoenix";
 import "phoenix_html";
 
 const CONFIG = {
-  MAIN_CONTENT_SELECTOR: "#main-content", // used in navigate.js
+  CONTENT_SELECTOR: "#main-content", // used in navigate.js
   POLL_INTERVAL: 20_000,
   ON_ICON: new URL("/images/online.svg", import.meta.url).href,
   OFF_ICON: new URL("/images/offline.svg", import.meta.url).href,
@@ -12,6 +12,11 @@ const CONFIG = {
     yjs: { path: "/", id: "users-yjs" },
     map: { path: "/map", id: "users-map" },
     elec: { path: "/elec", id: "users-elec" },
+  },
+  PHX_HOOKS_IDS: {
+    yls: "stock_y",
+    map: "map",
+    mapForm: "select_form",
   },
 };
 

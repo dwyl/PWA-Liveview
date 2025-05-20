@@ -54,7 +54,7 @@ QRCode to check multi users, from on a mobile device:
       - [Client Env](#client-env)
     - [Static assets](#static-assets)
     - [VitePWA plugin and Workbox Caching Strategies](#vitepwa-plugin-and-workbox-caching-strategies)
-  - [Yjs and y\_ex](#yjs-and-y_ex)
+  - [Yjs and y_ex](#yjs-and-y_ex)
   - [Misc](#misc)
     - [Presence through Live-navigation](#presence-through-live-navigation)
     - [CSP rules and evaluation](#csp-rules-and-evaluation)
@@ -787,15 +787,15 @@ defineConfig = {
 
 ### Presence through Live-navigation
 
-It is implemented using a `Channel` and a `JavaScript` snippet.
+It is implemented using a `Channel` and a `JavaScript` snippet used in the main script.
 
 The reason is that if we implement it with "streams", it will wash away the current stream
 used by `Phoenix_sync`.
 
-It also allows to minimise rendering when navigation to the different Liveviews.
+It also allows to minimise rendering when navigating to the different Liveviews.
 
-The relevant module is: `setPresenceChannel.js` whilst the list is a reactive JS component (`SolidJS`).
-It returns a "dispose" and an update" function.
+The relevant module is: `setPresenceChannel.js`. It uses a reactive JS component (`SolidJS`).
+It returns a "dispose" and an "update" function.
 
 This snippet runs in "main.js".
 The key points are:
