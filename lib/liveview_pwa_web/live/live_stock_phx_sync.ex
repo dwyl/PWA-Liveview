@@ -26,15 +26,22 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
 
       <Menu.display update_available={@update_available} active_path={@active_path} />
       <br />
-      <h1>PHoenix Sync Stock</h1>
+      <h1>Phoenix Sync Stock</h1>
       <h2>Welcome to the Phoenix Sync Stock page!</h2>
       <p :if={@streams.phx_sync_counter} id="phx-sync-count" phx-update="stream">
         <div :for={{_id, item} <- @streams.phx_sync_counter}>
-        <form phx-submit="dec">
-          <.button>Decrement</.button>
-          <input type="range" min="0" max={@max} name="dec-phx-sync-counter" value={item.counter} />
-          <span class="ml-8">{item.counter}</span>
-        </form>
+          <form phx-submit="dec">
+            <.button>Decrement</.button>
+            <input
+              type="range"
+              min="0"
+              max={@max}
+              name="dec-phx-sync-counter"
+              value={item.counter}
+              aria-label="displayed-stock"
+            />
+            <span class="ml-8">{item.counter}</span>
+          </form>
         </div>
       </p>
       <br />
@@ -51,12 +58,6 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
      |> assign(:socket_id, socket.id)
      |> assign(:page_title, "Electric")
      |> sync_stream(:phx_sync_counter, query)}
-  end
-
-  @impl true
-  def handle_params(_params, url, socket) do
-    path = URI.new!(url) |> Map.get(:path)
-    {:noreply, assign(socket, :active_path, path)}
   end
 
   @impl true

@@ -1,11 +1,8 @@
 import { Socket } from "phoenix";
 
-export async function setUserSocket() {
-  const response = await fetch("/api/user_token");
-  const { user_token } = await response.json();
-
+export async function setUserSocket(userToken) {
   const userSocket = new Socket("/user", {
-    params: { userToken: user_token },
+    params: { userToken },
     binaryType: "arraybuffer",
   });
   userSocket.connect();

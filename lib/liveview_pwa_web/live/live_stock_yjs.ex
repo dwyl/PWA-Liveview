@@ -26,8 +26,8 @@ defmodule LiveviewPwaWeb.StockYjsLive do
 
       <Menu.display update_available={@update_available} active_path={@active_path} />
       <div
-        id="stock_y"
-        phx-hook="StockYjsHook"
+        id="yjs-stock"
+        phx-hook="StockJsonHook"
         phx-update="ignore"
         data-userid={@user_id}
         data-max={@max}
@@ -48,11 +48,5 @@ defmodule LiveviewPwaWeb.StockYjsLive do
      |> assign(:socket_id, socket.id)
      |> assign(:page_title, "Stock")
      |> assign(:active_path, "/")}
-  end
-
-  @impl true
-  def handle_params(_params, url, socket) do
-    path = URI.new!(url) |> Map.get(:path)
-    {:noreply, assign(socket, :active_path, path)}
   end
 end

@@ -7,7 +7,7 @@ export function mountUsers(props) {
 
   const dispose = render(
     () => (
-      <p class="text-sm text-gray-600 mt-4 mb-4" id="users">
+      <p class="text-sm text-midnightblue mt-4 mb-4" id="users">
         <span>{users().length}</span>
         Online user(s): &nbsp
         <For each={users()}>
@@ -15,7 +15,7 @@ export function mountUsers(props) {
             <span
               class={[
                 Number(user) !== Number(props.userID) ? "bg-green-200" : null,
-                "inline-flex items-center px-2 py-1 text-xs font-medium border border-blue-500 text-blue-500 rounded-full",
+                "inline-flex items-center px-2 py-1 text-xs font-medium border border-midnightblue text-midnightblue rounded-full",
               ].join(" ")}
             >
               {user}

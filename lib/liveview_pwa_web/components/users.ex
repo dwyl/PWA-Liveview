@@ -12,7 +12,7 @@ defmodule LiveviewPwaWeb.Users do
         User ID:
         <span
           id="user-id"
-          class="inline-flex items-center px-2 py-1 text-xs font-medium border border-blue-500 text-blue-500 rounded-full"
+          class="inline-flex items-center px-2 py-1 text-xs font-medium border border-midnightblue text-midnightblue rounded-full"
         >
           {@user_id}
         </span>

@@ -220,6 +220,15 @@ const LiveView = [
       },
     },
   },
+  {
+    urlPattern: ({ url }) => url.pathname.startsWith("/api/"),
+    handler: "NetworkOnly",
+    options: {
+      fetchOptions: {
+        credentials: "same-origin",
+      },
+    },
+  },
 ];
 
 const MapTiler = {

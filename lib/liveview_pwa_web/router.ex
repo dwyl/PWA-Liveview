@@ -36,6 +36,8 @@ defmodule LiveviewPwaWeb.Router do
 
     get "/connectivity", ConnectivityController, :check
     get "/user_token", UserTokenController, :show
+    get "/wasm", WasmController, :load
+    # test endpoints
     get "/sql3_counter", Sql3CounterController, :show
     get "/pg_counter", PgCounterController, :show
   end

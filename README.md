@@ -2,7 +2,7 @@
 
 An example of a real-time, collaborative multi-page web app built with `Phoenix LiveView`.
 
-It is designed for offline-first ready; it is packaged as a [PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps) and uses CRDTs or local state and reactive components.
+It is designed for offline-first ready; it is packaged as a [PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps) and uses op-based CRDTs or local state and reactive components.
 
 Offline first solutions naturally offloads most of the reactive UI logic to JavaScript.
 
@@ -156,23 +156,40 @@ The same applies when you navigate offline; you have to run cleanup functions, b
 - **State Management**:
   We use different approaches based on the page requirements:
 
-  - CRDT-based synchronization with Y.js featuring IndexedDB and y_ex server-side for Stock Manager page. It uses an embedded SQLite database for server-side state management synchronization
-  - Local state management (Valtio) for the collaborative Flight Map page with no database persistence of the state
+  1. CRDT-based (op-based) synchronization with Y.js featuring IndexedDB. It uses an embedded SQLite database for server-side state management synchronization.
+  2. Local state management (Valtio) for the collaborative Flight Map page with no database persistence of the state
 
 - **Build tool**:
   We use Vite as the build tool to bundle and optimize the application and enable PWA features seamlessly.
   The Service Worker to cache HTML pages and static assets.
 
-- **Synchronization Flow**:
+- **CRDT features used**:
 
-  - LiveStock page:
-    Client sends all pending `Yjs` updates on (re)connection.
-    The client updates his local `Y-Doc` with the server responses.
-    `Y-Doc` mutations are observed and trigger UI rendering, and reciprocally, UI modifications update the `Y-Doc` and propagate mutations to the server.
-  - LiveFlight page:
-    The inputs (selected airports) are saved to a local state (`Valtio` proxies).
-    Local UI changes mutate the state and are sent to the server. The server broadcasts the data.
-    We have state observers which update the UI if the origin is not remote.
+  - We are using the following features of CRDT:
+
+    - Local change tracking: All changes are modeled as CRDT ops, so you can always merge them safely if needed.
+    - Offline/online merging: If a user has multiple browser tabs, or is offline and comes back, Yjs/CRDT guarantees that the state will be consistent and no changes will be lost.
+    - Persistence: Because CRDTs work by merging, you can safely persist and reload state at any time.
+
+- **op-based CRDT Synchronization Flow**:
+
+  This is essentially implementing the [__operation-based__](Operation-based CRDTs) CRDT counter pattern.
+  Each client accumulates local ops (clicks), and only sends its local ops (since last sync) on reconnect.
+  Each client tracks only their local "clicks"/decrements since last sync (not the absolute counter value).
+  On reconnect, client sends the number of pending clicks to the server.
+  Server applies the delta to the shared counter in the database (e.g., counter = counter - clicks).
+  Server responds with the new counter value.
+  Client resets its local clicks to zero, and sets the local counter to the value from the server.
+  If a client has no pending clicks, it doesn't send anything, but receives the current counter from the server.
+
+  The client updates his local `Y-Doc` with the server responses or from his own changes.
+  `Y-Doc` mutations are observed and trigger UI rendering, and reciprocally, UI modifications update the `Y-Doc` and propagate mutations to the server.
+
+- **LiveFlight page**:
+  We use a local state manager (`Valtio` using proxies).
+  The inputs (selected airports) are saved to a local state.
+  Local UI changes mutate the state and are sent to the server. The server broadcasts the data.
+  We have state observers which update the UI if the origin is not remote.
 
 - **Server Processing**:
 

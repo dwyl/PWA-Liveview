@@ -39,9 +39,10 @@ defmodule LiveviewPwa.MixProject do
       {:ecto_sqlite3, "~> 0.19.0"},
       {:postgrex, "~> 0.20.0"},
       # <--- issue
-      {:electric, "~> 1.0 and >= 1.0.13", override: true},
-      {:phoenix_sync, "~> 0.4.2"},
-      {:y_ex, "~> 0.8"},
+      # {:electric, "~> 1.0 and >= 1.0.13", override: true},
+      {:electric, "~> 1.0.13"},
+      {:phoenix_sync, "~> 0.4.3"},
+      # {:y_ex, "~> 0.8"},
       {:phoenix_live_dashboard, "~> 0.8.3"},
       {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},

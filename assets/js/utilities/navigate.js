@@ -20,7 +20,7 @@ function attachNavigationListeners() {
 async function renderCurrentView() {
   await cleanupOfflineComponents();
 
-  const elStock = document.getElementById(hooksIDs.yls);
+  const elStock = document.getElementById(hooksIDs.yjs_stock);
   if (elStock) {
     const { displayStock } = await import("@js/components/renderers");
     offlineComponents.stock = await displayStock({

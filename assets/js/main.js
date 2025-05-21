@@ -4,19 +4,22 @@ import { Presence } from "phoenix";
 import "phoenix_html";
 
 const CONFIG = {
-  CONTENT_SELECTOR: "#main-content", // used in navigate.js
-  POLL_INTERVAL: 20_000,
-  ON_ICON: new URL("/images/online.svg", import.meta.url).href,
-  OFF_ICON: new URL("/images/offline.svg", import.meta.url).href,
+  POLL_INTERVAL: 10_000,
+  ICONS: {
+    online: new URL("/images/online.svg", import.meta.url).href,
+    offline: new URL("/images/offline.svg", import.meta.url).href,
+  },
+  // navigate.js
+  CONTENT_SELECTOR: "#main-content",
   NAVIDS: {
     yjs: { path: "/", id: "users-yjs" },
     map: { path: "/map", id: "users-map" },
     elec: { path: "/elec", id: "users-elec" },
   },
   PHX_HOOKS_IDS: {
-    yls: "stock_y",
+    yjs_stock: "yjs-stock",
     map: "map",
-    mapForm: "select_form",
+    mapForm: "select-form",
   },
 };
 
@@ -27,6 +30,8 @@ const AppState = {
   globalYdoc: null,
   userSocket: null,
   updateServiceWorker: null,
+  userToken: null,
+  userSocket: null,
 };
 
 // window.AppState = AppState; <- debugging only
@@ -36,13 +41,36 @@ export { AppState, CONFIG };
 async function startApp() {
   console.log(" **** App started ****");
   try {
-    const [{ checkServer }, { initYDoc }] = await Promise.all([
+    const [
+      { checkServer },
+      { initYDoc },
+      { setUserSocket },
+      { setPresenceChannel },
+      response,
+    ] = await Promise.all([
       import("@js/utilities/checkServer"),
       import("@js/stores/initYJS"),
+      import("@js/user_socket/userSocket"),
+      import("@js/user_socket/setPresenceChannel"),
+      fetch("/api/user_token", { cache: "no-store" }),
     ]);
 
-    AppState.globalYdoc = await initYDoc();
-    AppState.isOnline = await checkServer();
+    const { user_token } = await response.json();
+
+    const [globalYdoc, isOnline, userSocket] = await Promise.all([
+      initYDoc(),
+      checkServer(),
+      setUserSocket(user_token),
+    ]);
+    await setPresenceChannel(userSocket, "proxy:presence", user_token);
+
+    Object.assign(AppState, {
+      userToken: user_token,
+      globalYdoc,
+      isOnline,
+      userSocket,
+    });
+
     AppState.status = AppState.isOnline ? "online" : "offline";
 
     return await init(AppState.isOnline);
@@ -95,7 +123,7 @@ function updateConnectionStatus(isOnline) {
   if (prevStatus !== AppState.status) {
     const statusIcon = document.getElementById("online-status");
     statusIcon.src =
-      AppState.status === "online" ? CONFIG.ON_ICON : CONFIG.OFF_ICON;
+      AppState.status === "online" ? CONFIG.ICONS.online : CONFIG.ICONS.offline;
     window.dispatchEvent(
       new CustomEvent("connection-status-changed", {
         detail: { status: AppState.status },
@@ -110,7 +138,8 @@ window.addEventListener("connection-status-changed", async (e) => {
   if (e.detail.status === "offline") {
     return initOfflineComponents();
   } else {
-    window.location.reload();
+    window.liveSocket.connect();
+    // window.location.reload();
   }
 });
 
@@ -132,20 +161,18 @@ async function init(isOnline) {
 async function initLiveSocket() {
   try {
     const [
-      { setUserSocket },
-      { setPresenceChannel },
+      // { setPresenceChannel },
       { StockElecHook },
-      { StockYjsHook },
+      { StockJsonHook },
       { PwaHook },
       { MapHook },
       { FormHook },
       { LiveSocket },
       { Socket },
     ] = await Promise.all([
-      import("@js/user_socket/userSocket"),
-      import("@js/user_socket/setPresenceChannel"),
+      // import("@js/user_socket/setPresenceChannel"),
       import("@js/hooks/hookElecStock"),
-      import("@js/hooks/hookYjsStock.js"),
+      import("@js/hooks/hookJsonStock.js"),
       import("@js/hooks/hookPwa.js"),
       import("@js/hooks/hookMap.js"),
       import("@js/hooks/hookForm.js"),
@@ -153,15 +180,12 @@ async function initLiveSocket() {
       import("phoenix"),
     ]);
 
-    // custom websocket for Presence and YDoc
-    AppState.userSocket = await setUserSocket();
-
     const csrfToken = document
       .querySelector("meta[name='csrf-token']")
       .getAttribute("content");
 
     const hooks = {
-      StockYjsHook: StockYjsHook({
+      StockJsonHook: StockJsonHook({
         ydoc: AppState.globalYdoc,
         userSocket: AppState.userSocket,
       }),
@@ -170,8 +194,6 @@ async function initLiveSocket() {
       PwaHook,
       StockElecHook,
     };
-
-    await setPresenceChannel(AppState.userSocket, "proxy:presence");
 
     const liveSocket = new LiveSocket("/live", Socket, {
       // longPollFallbackMs: 2000,
@@ -183,11 +205,6 @@ async function initLiveSocket() {
     // liveSocket.enableDebug();
 
     // liveSocket.getSocket().onOpen(async () => {
-
-    //   console.log(
-    //     "Is the LiveSocket connected ? ",
-    //     liveSocket?.socket.isConnected()
-    //   );
     // });
     return liveSocket;
   } catch (error) {

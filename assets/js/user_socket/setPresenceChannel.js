@@ -1,13 +1,13 @@
 import { CONFIG } from "@js/main";
 
-export async function setPresenceChannel(userSocket, topic) {
+export async function setPresenceChannel(userSocket, topic, user_token) {
   const [{ Presence }, { useChannel }, { mountUsers }] = await Promise.all([
     import("phoenix"),
     import("@js/user_socket/useChannel"),
     import("@js/components/users"),
   ]);
-  const response = await fetch("/api/user_token");
-  const { user_token } = await response.json();
+  // const response = await fetch("/api/user_token");
+  // const { user_token } = await response.json();
 
   const channel = await useChannel(userSocket, topic, {
     user_token,

@@ -25,19 +25,28 @@ defmodule LiveviewPwa.Sql3Repo.Migrations.CreateTables do
       add :city, :string
       add :country, :string
       add :latitude, :float
-      add :longitude, :float
-      # add :hash, :string
+      add :longitude, :floats
     end
 
-    create_if_not_exists table(:yjs_documents, primary_key: false) do
-      add :id, :string, primary_key: true, default: "yjs-doc", null: false
-      add :y_doc, :binary # the Sqlite3 blob type
-
+    create_if_not_exists table(:counter_state, primary_key: false) do
+      add :id, :string, primary_key: true, default: "counter", null: false
+      add :counter, :integer, default: 20
     end
 
     execute("""
-      INSERT OR IGNORE INTO yjs_documents (id, y_doc)
-      VALUES ('yjs-doc', x'') -- x'' = empty binary
+      INSERT OR IGNORE INTO counter_state (id, counter)
+      VALUES ('counter', 20)
     """)
+
+    # create_if_not_exists table(:yjs_documents, primary_key: false) do
+    #   add :id, :string, primary_key: true, default: "yjs-doc", null: false
+    #   add :y_doc, :binary # the Sqlite3 blob type
+
+    # end
+
+    # execute("""
+    #   INSERT OR IGNORE INTO yjs_documents (id, y_doc)
+    #   VALUES ('yjs-doc', x'') -- x'' = empty binary
+    # """)
   end
 end

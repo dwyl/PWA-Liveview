@@ -39,7 +39,7 @@ defmodule LiveviewPwaWeb.MapLive do
         data-userid={@user_id}
       >
       </div>
-      <div id="select_form" phx-hook="FormHook" phx-update="ignore" data-userid={@user_id}></div>
+      <div id="select-form" phx-hook="FormHook" phx-update="ignore" data-userid={@user_id}></div>
     </div>
     """
   end
@@ -58,12 +58,6 @@ defmodule LiveviewPwaWeb.MapLive do
      |> assign(:page_title, "Map")
      |> assign(:airports, nil)
      |> assign(:hash, Airport.hash())}
-  end
-
-  @impl true
-  def handle_params(_params, url, socket) do
-    path = URI.new!(url) |> Map.get(:path)
-    {:noreply, assign(socket, :active_path, path)}
   end
 
   # airport list setup on mount ---------->

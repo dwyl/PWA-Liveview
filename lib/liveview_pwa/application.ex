@@ -6,8 +6,6 @@ defmodule LiveviewPwa.Application do
   require Logger
   use Application
 
-  @max 20
-
   @impl true
   def start(_type, _args) do
     LiveviewPwa.Release.migrate()
@@ -22,7 +20,7 @@ defmodule LiveviewPwa.Application do
       LiveviewPwa.Sql3Repo,
       LiveviewPwa.Presence,
       {LiveviewPwaWeb.Endpoint, phoenix_sync: Phoenix.Sync.plug_opts()},
-      {LiveviewPwa.DocHandler, [db, @max]},
+      {LiveviewPwa.Counter, [db]},
       {AirportDB, [db]}
     ]
 

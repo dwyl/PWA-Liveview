@@ -23,7 +23,7 @@ export const Stock = (props) => {
   */
   ymap.observe(updateStockSignal);
 
-  function updateStockSignal(event, { origin }) {
+  function updateStockSignal(event, { _origin }) {
     // console.log("origin: ", origin);
     if (event.keysChanged.has("counter")) {
       // y_ex sends BigInt so we convert it into an integer
@@ -38,7 +38,8 @@ export const Stock = (props) => {
   const handleUpdate = (newValue) => {
     props.ydoc.transact(() => {
       ymap.set("counter", newValue);
-    }, props.userID);
+      ymap.set("clicks", (ymap.get("clicks") || 0) + 1);
+    }, "local");
   };
 
   createEffect(() => {
