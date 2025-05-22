@@ -8,7 +8,7 @@ defmodule LiveviewPwa.Application do
 
   @impl true
   def start(_type, _args) do
-    LiveviewPwa.Release.migrate()
+    # LiveviewPwa.Release.migrate()
 
     db = setupDbPath()
 
