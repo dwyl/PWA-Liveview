@@ -17,7 +17,6 @@ export const StockJsonHook = ({ ydoc, userSocket }) => ({
     if (!sessionStorage.getItem("max")) {
       sessionStorage.setItem("max", this.max);
     }
-    console.log(this.max);
 
     this.stockComponent = this.stockComponent.bind(this);
     this.cleanupSolid = await this.stockComponent();
@@ -78,47 +77,51 @@ export const StockJsonHook = ({ ydoc, userSocket }) => ({
     // Receive new counter from server, update local doc and reset clicks
     this.channel.on("counter-update", ({ counter, from }) => {
       if (from === this.userID) return; // ignore own updates
-      console.log(this.userID, "counter-udpate", counter, from);
       const ymap = ydoc.getMap("data");
+      // console.log(ymap.toJSON());
       ydoc.transact(() => {
         ymap.set("counter", counter);
-        ymap.set("clicks", 0);
-      }, this.userID);
+        // do not reset clicks here, only in handleYUpdate
+        // as they may contain pending local state
+      }, "remote");
     });
 
     return this.channel.state;
   },
 
-  // 'on'  local change, send only the clicks delta to the server
+  // ydoc.'on':  listens to all YDoc changes
   async handleYUpdate(update, origin) {
-    if (origin == "local" && origin !== "init") {
+    console.log("handleYUpdate", this.userID, origin);
+    // accept only local updates and ignore remote ones or init
+    if (origin == "local") {
       this.isOnline = await checkServer();
       if (this.isOnline) {
         const ymap = ydoc.getMap("data");
         const clicks = ymap.get("clicks") || 0;
         if (clicks > 0) {
           return this.channel
-            .push("client-update", { clicks })
-            .receive("ok", () => {
+            .push("client-update", { clicks, from: this.userID })
+            .receive("ok", ({ counter }) => {
               ydoc.transact(() => {
                 ymap.set("clicks", 0);
-              }, this.userID); // reset clicks to 0
-              // counter will be updated by "counter-update" handler
-              // clicks always reset to 0 in the handler
+              }, "local");
             });
         }
       }
     }
   },
 
-  // On (re)connect, fetch canonical counter
+  // On (re)connect, fetch "canonical" counter
   syncWithServer() {
     if (!this.channel) return;
     const ymap = ydoc.getMap("data");
     const clicks = ymap.get("clicks") || 0;
-    const payload = clicks > 0 ? { clicks } : {};
+    const payload = {
+      from: this.userID,
+      ...(clicks > 0 ? { clicks } : {}),
+    };
     return this.channel
-      .push("init-client", payload)
+      .push("client-update", payload)
       .receive("ok", ({ counter }) => {
         ydoc.transact(() => {
           ymap.set("counter", counter);

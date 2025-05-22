@@ -32,20 +32,16 @@ QRCode to check multi users, from on a mobile device:
   - [Why?](#why)
   - [Design goals](#design-goals)
   - [Common pitfall of combining LiveView with CSR components](#common-pitfall-of-combining-liveview-with-csr-components)
-  - [Architecture](#architecture)
-    - [Tech overview](#tech-overview)
+  - [Tech overview](#tech-overview)
     - [Implementation highlights](#implementation-highlights)
-  - [About the LiveStock page](#about-the-livestock-page)
+  - [About the Yjs-Stock page](#about-the-yjs-stock-page)
   - [About PWA](#about-pwa)
     - [Updates life-cycle](#updates-life-cycle)
   - [Usage](#usage)
-  - [Diagrams and data flow](#diagrams-and-data-flow)
-    - [Architecture flow](#architecture-flow)
-    - [State Synchronization Flow](#state-synchronization-flow)
-    - [Server authority (in our scenario)](#server-authority-in-our-scenario)
   - [Details of Pages](#details-of-pages)
-    - [LiveStock Manager](#livestock-manager)
-    - [LiveFlight](#liveflight)
+    - [Yjs-Stock](#yjs-stock)
+    - [Pg-Sync-Stock](#pg-sync-stock)
+    - [FlightMap](#flightmap)
   - [Navigation](#navigation)
   - [Vite](#vite)
     - [Configuration and settings](#configuration-and-settings)
@@ -54,13 +50,13 @@ QRCode to check multi users, from on a mobile device:
       - [Client Env](#client-env)
     - [Static assets](#static-assets)
     - [VitePWA plugin and Workbox Caching Strategies](#vitepwa-plugin-and-workbox-caching-strategies)
-  - [Yjs and y_ex](#yjs-and-y_ex)
+  - [Yjs](#yjs)
   - [Misc](#misc)
     - [Presence through Live-navigation](#presence-through-live-navigation)
     - [CSP rules and evaluation](#csp-rules-and-evaluation)
     - [Icons](#icons)
     - [Manifest](#manifest)
-  - [Performance](#performance)
+    - [Performance](#performance)
     - [\[Optional\] Page Caching](#optional-page-caching)
   - [Publish](#publish)
   - [Fly volumes](#fly-volumes)
@@ -71,12 +67,13 @@ QRCode to check multi users, from on a mobile device:
 
 ## What?
 
-**Context**: we want to experiment PWA webapps using Phoenix LiveView.
+**Context**: we want to experiment PWA collaborative webapps using Phoenix LiveView.
 
-What are we building? A two pages webap:
+What are we building? A three pages webap:
 
-- LiveStock. On the first page, we mimic a shopping cart where users can pick items until stock is depleted, at which point the stock is replenished. Every user will see and can interact with this counter
-- LiveFlight. On the second page, we propose an interactive map with a form with two inputs where **two** users can edit collaboratively a form to display markers on the map and then draw a great circle between the two points.
+- Yjs-Stock. On the first page, we mimic a shopping cart where users can pick items until stock is depleted, at which point the stock is replenished. Every user will see and can interact with this counter
+- PgSync-Stock. This page features `phoenix_sync` in _embedded_ mode streaming logical replicates of a Postgres table. [Building offline features]
+- FlightMap. On the second page, we propose an interactive map with a form with two inputs where **two** users can edit collaboratively a form to display markers on the map and then draw a great circle between the two points.
 
 > You need an api key to render the Maptiler vector tiles. You can see the Service Worker in action in the LiveMap page when you go offline as the tiles are cached. This is naturally only true if you already visited these tiles, thus loaded them.
 
@@ -103,32 +100,27 @@ Traditional Phoenix LiveView applications face several challenges in offline sce
 
 - **collaborative** (online): Clients sync via _pubsub updates_ when connected, ensuring real-time consistency.
 - **optimistic UI**: The function "click on stock" assumes success and will reconciliate later.
-- **embedded database**: We use `SQLite`.
-- **Offline-First**: The app remains functional offline (through reactive JS components), with clients converging to the correct state on reconnection.
-- **PWA**: Full PWA features, meaning it can be _installed_ as a standalone app and can be _updated_. A `Service Worker` runs in a separate thread and caches assets. It is setup with `VitePWA`
-- **Business Rules**:
-
-  - For the stock page:
-    When users resync, the server enforces a "lowest stock count" rule: if two clients pick items offline, the server selects the lowest remaining stock post-merge, rather that summing the reduction, for simplicity.
-  - For the LiveFlight page, none.
+- **database**:
+  - We use `SQLite` as the "canonical" source of truth for the Yjs-Stock counter.
+  - `Postgres` is used for the `Phoenix_sync` process for the PgSync-Stock counter.
+- **Offline-First**: The app remains functional offline (through the `Cache` API and reactive JS components), with clients converging to the correct state on reconnection.
+- **PWA**: Full PWA features, meaning it can be _installed_ as a standalone app and can be _updated_. A `Service Worker` runs in a separate thread and caches the assets. It is setup with `VitePWA`.
 
 ## Common pitfall of combining LiveView with CSR components
 
 The client-side rendered components are - when online - mounted via hooks under the tag `phx-update="ignore"`.
 
-These components have they own lifecycle. They will leak or stack duplicate components if you don't cleanup and unmount them.
-The same applies to "subscriptions/observers" primitives from the state manager. You must unsubscribe, otherwise you might get multiples calls and weird behaviours.
+These components have they own lifecycle. They can leak or stack duplicate components if you don't cleanup them properly.
+The same applies to "subscriptions/observers" primitives from (any) the state manager. You must _unsubscribe_, otherwise you might get multiples calls and weird behaviours.
 
-⭐️ The "hook" comes with a handy lifecyle and the `destroyed` callback is essential.
+⭐️ LiveView hooks comes with a handy lifecyle and the `destroyed` callback is essential.
 
-`SolidJS` makes this easy as it renders a `cleanupSolid` callback (where you take a reference to the SolidJS component in the hook).
+`SolidJS` makes this easy as it can return a `cleanupSolid` callback (where you take a reference to the SolidJS component in the hook).
 You also need to clean _subscriptions_ (when using a store manager).
 
 The same applies when you navigate offline; you have to run cleanup functions, both on the components and on the subsriptions/observers from the state manager.
 
-## Architecture
-
-### Tech overview
+## Tech overview
 
 | Component                  | Role                                                                                                              |
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------- |
@@ -150,20 +142,22 @@ The same applies when you navigate offline; you have to run cleanup functions, b
 
 - **Offline capabilities**:
 
-  - LiveStock page: Edits are saved to `y-indexeddb`
-  - LiveFlight page: the "airports" list is saved in localStorage
+  - Yjs-Stock page: edits are saved to `y-indexeddb`
+  - PgSync-Stock: edits save in _localStorage_ (TODO)
+  - FlightMap: the "airports" list is saved in _localStorage_
 
 - **State Management**:
   We use different approaches based on the page requirements:
 
-  1. CRDT-based (op-based) synchronization with Y.js featuring IndexedDB. It uses an embedded SQLite database for server-side state management synchronization.
-  2. Local state management (Valtio) for the collaborative Flight Map page with no database persistence of the state
+  1. Yjs-Stock. Client-side: CRDT-based (op-based) synchronization with `Yjs` featuring `IndexedDB`. Server-side, it uses an embedded `SQLite` database as the canonical source of truth, even if Yjs is the local source of truth.
+  2. PgSync-Stock. Client-side: _localStorage_ persistence, and server-side, `Postgres` with logical replication.
+  3. FlightMap. Local state management (`Valtio`) for the collaborative Flight Map page with no server-side persistence of the state
 
 - **Build tool**:
   We use Vite as the build tool to bundle and optimize the application and enable PWA features seamlessly.
   The Service Worker to cache HTML pages and static assets.
 
-- **CRDT features used**:
+- **CRDT features used** in Yjs-Stock page:
 
   - We are using the following features of CRDT:
 
@@ -171,61 +165,79 @@ The same applies when you navigate offline; you have to run cleanup functions, b
     - Offline/online merging: If a user has multiple browser tabs, or is offline and comes back, Yjs/CRDT guarantees that the state will be consistent and no changes will be lost.
     - Persistence: Because CRDTs work by merging, you can safely persist and reload state at any time.
 
-- **op-based CRDT Synchronization Flow**:
+  - **op-based CRDT Synchronization Flow**:
 
-  This is essentially implementing the [__operation-based__](Operation-based CRDTs) CRDT counter pattern.
-  Each client accumulates local ops (clicks), and only sends its local ops (since last sync) on reconnect.
-  Each client tracks only their local "clicks"/decrements since last sync (not the absolute counter value).
-  On reconnect, client sends the number of pending clicks to the server.
-  Server applies the delta to the shared counter in the database (e.g., counter = counter - clicks).
-  Server responds with the new counter value.
-  Client resets its local clicks to zero, and sets the local counter to the value from the server.
-  If a client has no pending clicks, it doesn't send anything, but receives the current counter from the server.
+    This is essentially implementing the operation-based CRDT counter pattern.
+    Each client accumulates local ops (clicks), and only sends its local ops (since last sync) on reconnect.
+    Each client tracks only their local "clicks"/decrements since last sync (not the absolute counter value).
+    On reconnection, client sends the number of pending clicks to the server.
+    Server applies the delta to the shared counter in the database (e.g., counter = counter - clicks).
+    Server responds with the new counter value.
+    Client resets its local clicks to zero, and sets the local counter to the value from the server.
+    If a client has no pending clicks, it doesn't send anything, but receives the current counter from the server.
 
-  The client updates his local `Y-Doc` with the server responses or from his own changes.
-  `Y-Doc` mutations are observed and trigger UI rendering, and reciprocally, UI modifications update the `Y-Doc` and propagate mutations to the server.
+  The client updates his local `YDoc` with the server responses or from his own changes.
+  `YDoc` mutations are observed and trigger UI rendering, and reciprocally, UI modifications update the `YDoc` and propagate mutations to the server.
 
-- **LiveFlight page**:
+- **FlightMap page**:
   We use a local state manager (`Valtio` using proxies).
   The inputs (selected airports) are saved to a local state.
   Local UI changes mutate the state and are sent to the server. The server broadcasts the data.
   We have state observers which update the UI if the origin is not remote.
 
-- **Server Processing**:
-
-  - LiveStock page:
-    Merges updates into the `SQLite3`-stored `Y-Doc` (using `y_ex`).
-    Applies business rules (e.g., "stock cannot be negative").
-    Broadcasts the approved state.
-    Clients reconcile local state with the server's authoritative version
-  - LiveFlight page:
-    The Phoenix server is used to receive/emit messages.
-
 - **Data Transport**:
 
-  - LiveStock page:
-    Use `Phoenix.Channel` to transmit the `Y-Doc` state as binary.
-    This minimises bandwidth usage and decouples CRDT synchronisation from the LiveSocket.
-    Implementation heavily inspired by the repo <https://github.com/satoren/y-phoenix-channel> made by the author of `y_ex`.
-  - LiveFlight page:
+  - Yjs-Stock page: we used `Phoenix.Channel` to decouples state handling from the LiveSocket.
+  - FlightMap page:
     We use the LiveSocket as the data flow is small.
 
 - **Component Rendering Strategy**:
   - online: use LiveView hooks
-  - offline: hydrate the cached HTML documents with reactive JavaScript components
+  - offline: hydrate the HTML with cached documents and run reactive JavaScript components
 
-## About the LiveStock page
+## About the Yjs-Stock page
 
-You have both CRDT-based synchronization (for convergence) and server-enforced business rules (for consistency).
-We thus have two Layers of Authority:
+```mermaid
+sequenceDiagram
+  autonumber
 
-- CRDT Sync Layer (Collaborative):
-  Clients and server synchronize using Yjs CRDTs to merge concurrent edits _deterministically_.
-  Clients can modify their local Y-Doc freely (offline or online).
+  participant User
+  participant SolidJS/Yjs Client
+  participant LiveView Hook
+  participant Phoenix Server
 
-- Business Rules Layer (Authoritative):
-  The server is authoritative. It validates updates upon the business logic (e.g., stock validation), and broadcasts the canonical state to all clients.
-  Clients propose changes, but the server decides the final state (e.g., enforcing stock limits).
+  Note over SolidJS/Yjs Client: CRDT Initialized (Y.Map: {counter, clicks})
+  Note over SolidJS/Yjs Client, Phoenix Server: Shared topic: "counter"
+
+  User->>SolidJS/Yjs Client: Clicks +1
+  Note over SolidJS/Yjs Client: CRDT 'counter' += 1\nCRDT 'clicks' += 1 (local only)
+  SolidJS/Yjs Client-->>UI: Immediate update (Optimistic)
+
+  Note over SolidJS/Yjs Client: Yjs triggers `ydoc.on("update")`
+
+  SolidJS/Yjs Client->>LiveView Hook: handleYUpdate(origin="local")
+  LiveView Hook->>Phoenix Server: push("client-update", {clicks})
+  Phoenix Server->>Phoenix Server: counter += clicks
+  Phoenix Server->>LiveView Hook: reply("ok", {counter})
+  LiveView Hook->>SolidJS/Yjs Client: trigger counter-update
+
+  SolidJS/Yjs Client->>Yjs: ydoc.transact() to set counter\n& reset clicks = 0
+  SolidJS/Yjs Client-->>UI: CRDT triggers observer\nUI re-renders
+
+  Note over SolidJS/Yjs Client: Yjs (CRDT) is reactive and stateful
+  Note over Phoenix Server: Phoenix holds canonical "counter"
+
+  %% Sync from server on connect
+  SolidJS/Yjs Client->>LiveView Hook: syncWithServer()
+  LiveView Hook->>Phoenix Server: push("client-update", {clicks?})
+  Phoenix Server-->>LiveView Hook: reply("ok", {counter})
+  LiveView Hook->>SolidJS/Yjs Client: ydoc.set("counter", counter)\nydoc.set("clicks", 0)
+
+  %% Broadcasts to others
+  Phoenix Server->>Other Clients: broadcast "counter-update"
+  Other Clients->>Yjs: set("counter", counter)
+  Note over Other Clients: Observer triggers UI update
+```
 
 ## About PWA
 
@@ -334,6 +346,7 @@ Client package are setup with `pnpm`: check [▶️ package.json](https://github
 ```sh
 # install all dependencies including Vite
 mix deps.get
+mix ecto.create && mix ecto.migrate
 pnpm install --prefix assets
 # start Phoenix server, it will also compile the JS
 iex -S mix phx.server
@@ -363,131 +376,9 @@ docker run -it  -e SECRET_KEY_BASE=oi37wzrEwoWq4XgnSY3VRbKUhNxvdowJ7NOCrCECZ6V7W
 
 and visit <http://localhost>
 
-## Diagrams and data flow
-
-### Architecture flow
-
-<details>
-<summary>Architecture diagram</summary>
-
-```mermaid
-flowchart TD
-    subgraph "Client"
-        UI["UI Components <br> (SolidJS)"]
-        YDoc["Local Y-Doc <br> (CRDT State)"]
-        IndexedDB["IndexedDB <br> (Offline Storage)"]
-        YObserver["Y.js **Observer** <br>(__Component__ listener ) <br>
-        (__Hook__ listener)"]
-
-        UI <--> YDoc
-        YDoc <--> IndexedDB
-        YObserver --> UI
-        YDoc --> YObserver
-    end
-
-
-    subgraph "Server (Elixir)"
-        YjsChannel["Yjs Channel"]
-
-        YEx["Yex (y-crdt)<br>(CRDT Processing)"]
-        BusinessRules["Business Rules <br>(apply_if_lower?)"]
-        DB["SQLite<br>(Persisted Y-Doc)"]
-
-        YjsChannel <--> DB
-        YjsChannel <--> YEx
-        YjsChannel <--> BusinessRules
-    end
-
-    YDoc <--> PhoenixChannel
-    PhoenixChannel <--> YjsChannel
-
-
-    class BusinessRules highlight
-    class YDoc,YEx highlight
-```
-
-</details>
-<br/>
-
-### State Synchronization Flow
-
-```mermaid
-sequenceDiagram
-    participant User
-
-    participant SolidJS
-    participant Yjs
-    participant Hook
-    participant Channel
-    participant OtherClients
-    participant Db
-
-    User->>SolidJS: Interact with UI
-    SolidJS->>Yjs: Update local state
-    Yjs->>Hook: Trigger update event
-    Hook->>Channel: Send state to server
-    Channel->>Yjs: merge db state with update
-    Channel->>Db: persist merged state
-    Channel->>PubSub: Broadcast update
-    PubSub->>OtherClients: Distribute changes
-    OtherClients->>Yjs: Apply update
-    Yjs->>SolidJS: Update UI
-```
-
-- **from the reactive component to Yjs**:
-  We have a reactive component.
-  A local "onClick" handler mutates the `Y.Map` type of the Y_Doc.
-  We set an "observer" on the type `Y.Map` of the YDoc. It updates the "signal":
-
-  - from a local click
-  - or remote of the YDoc.
-
-### Server authority (in our scenario)
-
-<details>
-<summary>Server Authority in collaborative mode
-</summary>
-
-```mermaid
-sequenceDiagram
-    participant ClientA
-    participant ClientB
-    participant Server
-    participant DB
-
-    Note over ClientA,ClientB: Online Scenario
-    ClientA->>Server: "init-client" <br> (join channel)
-    Server->>DB: Fetch Y-Doc state
-    DB-->>ClientA: Y-Doc (current counter) <br> "init" (binary update)
-    ClientA->>ClientA: Apply update (Yjs)
-    ClientA->>Server: "yjs-update" <br>(local edit)
-    alt Business Rule: Passes
-        Server->>Server: apply_if_lower?(old, new)
-        Server->>DB: Maybe save merged Y-Doc
-        Server->>ClientA: "pub-update"
-        Server->>ClientB: "pub-update" <br> (broadcast)
-    else Business Rule: Reject
-        Server->>ClientA: "pub-update" <br> (revert client to server state)
-    end
-
-    Note over ClientA,ClientB: Offline Scenario
-    ClientB->>ClientB: Local edit <br>(counter=3, offline)
-    ClientB->>ClientB: Save to y-indexeddb
-    ClientB->>Server: Reconnect
-    ClientB->>Server: "yjs-update" <br>(offline edits)
-    Server->>DB: Load Y-Doc
-    Server->>Server: apply_if_lower?(old=5, new=3)
-    Server->>DB: Save merged Y-Doc (counter=3)
-    Server->>ClientA: "pub-update" (counter=3)
-    Server->>ClientB: "pub-update" (ack)
-```
-
-</details>
-<br/>
-
 ## Details of Pages
 
-### LiveStock Manager
+### Yjs-Stock
 
 Available at `/`.
 
@@ -497,7 +388,11 @@ A user can click offline, and on reconnection, all clients will get updated with
 <img width="1404" alt="Screenshot 2025-05-08 at 22 05 15" src="https://github.com/user-attachments/assets/ba8373b5-defc-40f9-b497-d0086eb10ccc" />
 <br/>
 
-### LiveFlight
+### Pg-Sync-Stock
+
+Available at "/elec"
+
+### FlightMap
 
 Available at `/map`.
 
@@ -796,9 +691,9 @@ defineConfig = {
 };
 ```
 
-## Yjs and y_ex
+## Yjs
 
-[TODO something smart...]
+[TODO something smart...?]
 
 ## Misc
 
@@ -924,7 +819,7 @@ Source: check [PWABuilder](https://www.pwabuilder.com)
 </head>
 ```
 
-## Performance
+### Performance
 
 Lighthouse results:
 
@@ -1026,4 +921,6 @@ Besides Phoenix LiveView:
 
 ## Credits
 
-[Satoren](https://github.com/satoren) for [Yex](https://github.com/satoren/y_ex)
+To enhance this project, you may want to use `y_ex`, the `Elixir` port of `y-crdt`.
+
+Cf [Satoren](https://github.com/satoren) for [Yex](https://github.com/satoren/y_ex)
