@@ -1,18 +1,22 @@
-# fly.toml app configuration file generated for solidyjs-lively-pine-4375 on 2025-03-25T06:21:19-05:00
+# fly.toml app configuration file generated for lieview-pwa on 2025-05-21T21:20:09-05:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'solidyjs-lively-pine-4375'
+app = 'liveview-pwa'
 primary_region = 'bog'
 kill_signal = 'SIGTERM'
 
 [build]
 
+[deploy]
+release_command = '/app/bin/migrate'
+
 [env]
+DATABASE_URL = 'postgres://postgres:w5GaNKWIa91kIDT@lively-pond-1698.flycast:5432'
 DATABASE_PATH = '/mnt/db/main.db'
 MIX_ENV = 'prod'
-PHX_HOST = 'solidyjs-lively-pine-4375.fly.dev'
+PHX_HOST = 'liveview-pwa.fly.dev'
 PORT = '8080'
 
 [[mounts]]
