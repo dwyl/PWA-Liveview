@@ -9,17 +9,16 @@ defmodule LiveviewPwa.CounterChannel do
   """
 
   @impl true
-  def join("counter", params, socket) do
-    user_id = params["userID"]
-    max = params["max"]
+  def join("counter", %{"max" => max_value, "userID" => user_id} = params, socket) do
     Logger.info("#{user_id} joined Counter channel")
-    {:ok, assign(socket, %{user_id: user_id, max: max})}
+    {:ok, assign(socket, %{user_id: user_id, max_value: max_value})}
   end
 
   @impl true
   def handle_in("client-update", %{"clicks" => clicks, "from" => from}, socket)
       when is_integer(clicks) and clicks > 0 do
     user_id = socket.assigns.user_id
+    max_value = socket.assigns.max_value
     Logger.debug("[#{user_id}] client-udpate with clicks: #{clicks} from #{from}")
 
     case Counter.get_counter() do
@@ -28,7 +27,7 @@ defmodule LiveviewPwa.CounterChannel do
 
         maybe_rescale =
           if new_counter < 0,
-            do: socket.assigns.max + 1 + new_counter,
+            do: max_value + 1 + new_counter,
             else: new_counter
 
         :ok = Counter.set_counter(maybe_rescale)
@@ -50,7 +49,7 @@ defmodule LiveviewPwa.CounterChannel do
   end
 
   # Fallback no clicks
-  def handle_in("client-update", payload, socket) do
+  def handle_in("client-update", _, socket) do
     case Counter.get_counter() do
       {:ok, counter} ->
         Logger.debug(

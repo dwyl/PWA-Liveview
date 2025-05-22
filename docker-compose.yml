@@ -12,9 +12,9 @@ services:
 
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 5
 
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -48,7 +48,7 @@ services:
       - sql3:/app/db
     user: nobody
     env_file:
-      - .env
+      - .env.docker
 
 volumes:
   pgdata:

@@ -39,7 +39,7 @@ export const StockJsonHook = ({ ydoc, userSocket }) => ({
       }
     });
 
-    // Listen to local yjs updates (component will update clicks/counter)
+    // Listen to yjs updates (component will update clicks/counter)
     ydoc.on("update", this.handleYUpdate);
   },
 
@@ -91,7 +91,6 @@ export const StockJsonHook = ({ ydoc, userSocket }) => ({
 
   // ydoc.'on':  listens to all YDoc changes
   async handleYUpdate(update, origin) {
-    console.log("handleYUpdate", this.userID, origin);
     // accept only local updates and ignore remote ones or init
     if (origin == "local") {
       this.isOnline = await checkServer();
