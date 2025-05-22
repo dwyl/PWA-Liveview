@@ -16,14 +16,14 @@ services:
       timeout: 5s
       retries: 5
 
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+    # volumes:
+    #   - pgdata:/var/lib/postgresql/data
 
     ports:
       - "3001:5432"
 
     tmpfs:
-      # - /var/lib/postgresql/data
+      - /var/lib/postgresql/data
       - /tmp
 
     command:
@@ -44,14 +44,16 @@ services:
       dockerfile: Dockerfile
     ports:
       - "4000:4000"
-    volumes:
-      - sql3:/app/db
+    # volumes:
+    # - sql3:/app/db
+    tmpfs:
+      - /app/db
+      - /tmp
     user: nobody
     env_file:
       - .env.docker
-
-volumes:
-  pgdata:
-    name: pgdata
-  sql3:
-    name: sql3
+# volumes:
+# pgdata:
+#   name: pgdata
+# sql3:
+#   name: sql3
