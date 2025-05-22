@@ -12,7 +12,10 @@ export default function Counter(props) {
 
   return (
     <>
-      <h1 class="mt-4 mb-4 text-2xl text-gray-600">Yjs stock</h1>
+      <h2 class="mt-4 mb-4 text-xl text-gray-600">
+        The counter is synchronised with <code>Yjs</code> and{" "}
+        <code>SQLite</code>
+      </h2>
       <button
         id="takeFromStock"
         class="font-bold py-2 mt-4 px-4 rounded border border-gray-800 bg-bisque text-midnightblue transition-all duration-300 ease-in-out active:scale-95 active:bg-burlywood hover:bg-wheat"
@@ -25,7 +28,7 @@ export default function Counter(props) {
         class="w-full mt-4 max-w-[300px] relative px-[0] py-[10px]"
       >
         <label for="rangeInput" class="text-sm text-gray-600 mt-4 mb-2">
-          Y.js Client Stock: {props.stock}
+          <code>Yjs</code> local Stock: {props.stock}
         </label>
         <input
           id="rangeInput"

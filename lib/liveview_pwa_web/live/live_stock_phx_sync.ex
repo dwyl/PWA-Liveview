@@ -26,11 +26,10 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
 
       <Menu.display update_available={@update_available} active_path={@active_path} />
       <br />
-      <h1>Phoenix Sync Stock</h1>
-      <h2>Welcome to the Phoenix Sync Stock page!</h2>
+      <h2 class="mt-4 mb-4 text-xl text-gray-600">The counter is synchronised by <code>Phoenix_sync</code> with <code>Postgres</code></h2>
       <p :if={@streams.phx_sync_counter} id="phx-sync-count" phx-update="stream">
         <div :for={{_id, item} <- @streams.phx_sync_counter}>
-          <form phx-submit="dec">
+          <form phx-submit="dec" phx-hook="PgStockHook" id="phx-sync-count-form">
             <.button>Decrement</.button>
             <input
               type="range"
@@ -72,7 +71,7 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
 
   @impl true
   def handle_event("dec", _params, socket) do
-    PhxSyncCount.decrement()
-    {:noreply, socket}
+    {:ok, new_val} = PhxSyncCount.decrement()
+    {:noreply, push_event(socket, "pg-update", %{count: new_val})}
   end
 end

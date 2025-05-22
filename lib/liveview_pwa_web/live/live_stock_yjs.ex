@@ -25,6 +25,7 @@ defmodule LiveviewPwaWeb.StockYjsLive do
       <Users.display user_id={@user_id} module_id="users-yjs" />
 
       <Menu.display update_available={@update_available} active_path={@active_path} />
+      <br/>
       <div
         id="yjs-stock"
         phx-hook="StockJsonHook"

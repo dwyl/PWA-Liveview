@@ -20,6 +20,7 @@ const CONFIG = {
     yjs_stock: "yjs-stock",
     map: "map",
     mapForm: "select-form",
+    pg_stock: "phx-sync-count-form",
   },
 };
 
@@ -162,7 +163,7 @@ async function initLiveSocket() {
   try {
     const [
       // { setPresenceChannel },
-      { StockElecHook },
+      { PgStockHook },
       { StockJsonHook },
       { PwaHook },
       { MapHook },
@@ -171,7 +172,7 @@ async function initLiveSocket() {
       { Socket },
     ] = await Promise.all([
       // import("@js/user_socket/setPresenceChannel"),
-      import("@js/hooks/hookElecStock"),
+      import("@js/hooks/hookPgStock"),
       import("@js/hooks/hookJsonStock.js"),
       import("@js/hooks/hookPwa.js"),
       import("@js/hooks/hookMap.js"),
@@ -192,7 +193,7 @@ async function initLiveSocket() {
       MapHook,
       FormHook,
       PwaHook,
-      StockElecHook,
+      PgStockHook,
     };
 
     const liveSocket = new LiveSocket("/live", Socket, {
