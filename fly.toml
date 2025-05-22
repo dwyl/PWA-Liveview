@@ -13,7 +13,7 @@ kill_signal = 'SIGTERM'
 release_command = '/app/bin/migrate'
 
 [env]
-DATABASE_PATH = '/mnt/db/app/main.db'
+DATABASE_PATH = '/mnt/db/main.db'
 MIX_ENV = 'prod'
 PHX_HOST = 'liveview-pwa.fly.dev'
 PORT = '8080'
