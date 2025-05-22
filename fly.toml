@@ -1,4 +1,4 @@
-# fly.toml app configuration file generated for lieview-pwa on 2025-05-21T21:20:09-05:00
+# fly.toml app configuration file generated for liveview-pwa on 2025-05-21T21:44:11-05:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
@@ -13,8 +13,8 @@ kill_signal = 'SIGTERM'
 release_command = '/app/bin/migrate'
 
 [env]
-DATABASE_URL = 'postgres://postgres:w5GaNKWIa91kIDT@lively-pond-1698.flycast:5432'
 DATABASE_PATH = '/mnt/db/main.db'
+DATABASE_URL = 'postgres://postgres:ndmLhXhl5cTXqyY@liveview-pwa-db.flycast:5432'
 MIX_ENV = 'prod'
 PHX_HOST = 'liveview-pwa.fly.dev'
 PORT = '8080'
