@@ -58,7 +58,9 @@ if config_env() == :prod do
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
   ]
 
-  config :liveview_pwa, LiveviewPwa.PgRepo, pg_config
+  config :liveview_pwa, LiveviewPwa.PgRepo,
+    database_url: pg_config[:url],
+    pool_size: pg_config[:pool_size]
 
   config :electric,
     replication_connection_opts: Electric.Config.parse_postgresql_uri!(pg_config[:url])
