@@ -14,7 +14,7 @@ release_command = '/app/bin/migrate'
 
 [env]
 DATABASE_PATH = '/mnt/db/app/main.db'
-DATABASE_URL = 'postgres://postgres:ndmLhXhl5cTXqyY@liveview-pwa-db.flycast:5432postgres://postgres:ndmLhXhl5cTXqyY@liveview-pwa-db.flycast:5432/liveview_pwa_prod'
+DATABASE_URL = 'postgres://postgres:ndmLhXhl5cTXqyY@liveview-pwa-db.flycast:5432/liveview_pwa_prod'
 MIX_ENV = 'prod'
 PHX_HOST = 'liveview-pwa.fly.dev'
 PORT = '8080'
