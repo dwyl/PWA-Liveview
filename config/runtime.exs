@@ -60,8 +60,8 @@ if config_env() == :prod do
 
   config :liveview_pwa, LiveviewPwa.PgRepo, pg_config
 
-  config :electric,
-    replication_connection_opts: Electric.Config.parse_postgresql_uri!(pg_config[:url])
+  # config :electric,
+  #   replication_connection_opts: Electric.Config.parse_postgresql_uri!(pg_config[:url])
 
   secret_key_base =
     System.get_env("SECRET_KEY_BASE") ||
