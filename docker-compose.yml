@@ -44,16 +44,13 @@ services:
       dockerfile: Dockerfile
     ports:
       - "4000:4000"
-    # volumes:
-    # - sql3:/app/db
-    tmpfs:
-      - /app/db
-      - /tmp
+    volumes:
+      - sql3:/app/db
     user: nobody
     env_file:
       - .env.docker
-# volumes:
-# pgdata:
-#   name: pgdata
-# sql3:
-#   name: sql3
+volumes:
+  sql3:
+    name: sql3
+  # pgdata:
+  #   name: pgdata

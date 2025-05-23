@@ -3,8 +3,8 @@ defmodule LiveviewPwa.UserSocket do
   alias LiveviewPwaWeb.Endpoint
   require Logger
 
-  channel "counter", LiveviewPwa.CounterChannel
-  # channel "yjs-state", LiveviewPwa.YjsChannel
+  channel "pg-counter", LiveviewPwa.PgCounterChannel
+  channel "sql3-counter", LiveviewPwa.Sql3CounterChannel
   channel "proxy:presence", LiveviewPwa.PresenceChannel
 
   @impl true

@@ -13,8 +13,9 @@ export default function Counter(props) {
   return (
     <>
       <h2 class="mt-4 mb-4 text-xl text-gray-600">
-        The counter is synchronised with <code>Yjs</code> and{" "}
-        <code>SQLite</code>
+        The counter uses <code>Yjs</code> client-side, and commnciates via a
+        Channel to synchornize with an
+        <code>SQLite</code> database.
       </h2>
       <button
         id="takeFromStock"

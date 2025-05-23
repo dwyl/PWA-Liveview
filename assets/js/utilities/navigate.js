@@ -1,13 +1,18 @@
-import { CONFIG, AppState } from "@js/main";
+import { AppState } from "@js/main";
 
 const offlineComponents = {
-  stock: null,
-  map: null,
-  form: null,
-};
-
-const hooksIDs = CONFIG.PHX_HOOKS_IDS;
-const contentSelector = CONFIG.CONTENT_SELECTOR;
+    yjsStock: null,
+    map: null,
+    form: null,
+    pgStock: null,
+  },
+  hooksIDs = {
+    yjsStock: "yjs-stock",
+    map: "map",
+    mapForm: "select-form",
+    pgStock: "hook-pg",
+  },
+  contentSelector = "#main-content";
 
 function attachNavigationListeners() {
   const navLinks = document.querySelectorAll("nav a");
@@ -20,39 +25,72 @@ function attachNavigationListeners() {
 async function renderCurrentView() {
   await cleanupOfflineComponents();
 
-  const elStock = document.getElementById(hooksIDs.yjs_stock);
-  if (elStock) {
-    const { displayStock } = await import("@js/components/renderers");
-    offlineComponents.stock = await displayStock({
+  const elPgStock = document.getElementById(hooksIDs.pgStock);
+  if (elPgStock) {
+    const lvPgForm = document.getElementById("lv-pg-form");
+    if (lvPgForm) lvPgForm.remove();
+    const hookDiv = document.getElementById("hook-pg");
+    hookDiv.classList.remove("hidden");
+
+    const { PgStock } = await import("@jsx/components/pgStock.jsx");
+    offlineComponents.pgStock = PgStock({
+      el: elPgStock,
+      max: Number(localStorage.getItem("max")),
       ydoc: AppState.globalYdoc,
-      el: elStock,
+      userID: localStorage.getItem("userID"),
     });
+
+    // return to clean component
+    return offlineComponents.pgStock;
+  }
+
+  const elYjsStock = document.getElementById(hooksIDs.yjsStock);
+  if (elYjsStock) {
+    const { YjsStock } = await import("@jsx/components/yjsStock.jsx");
+    offlineComponents.yjsStock = YjsStock({
+      ydoc: AppState.globalYdoc,
+      userID: localStorage.getItem("userID"),
+      max: Number(localStorage.getItem("max")),
+      el: elYjsStock,
+    });
+
+    return true;
   }
 
   const elMap = document.getElementById(hooksIDs.map);
   const elForm = document.getElementById(hooksIDs.mapForm);
 
   if (elMap && elForm) {
-    const { displayMap, displayForm } = await import(
-      "@js/components/renderers"
-    );
-    offlineComponents.map = await displayMap();
-    offlineComponents.form = await displayForm(elForm);
+    const { renderMap } = await import("@js/components/renderMap.js");
+    offlineComponents.map = await renderMap();
+
+    const { CitiesForm } = await import("@jsx/components/citiesForm.jsx");
+    offlineComponents.form = CitiesForm({
+      el: elForm,
+      _this: null,
+      userID: localStorage.getItem("userID"),
+    });
+    return true;
   }
-  return true;
 }
 
-export { renderCurrentView, attachNavigationListeners };
-
 async function cleanupOfflineComponents() {
-  // Cleanup Stock SolidJS component
-  if (offlineComponents.stock) {
+  if (offlineComponents.yjsStock) {
     try {
-      offlineComponents.stock();
+      offlineComponents.yjsStock();
     } catch (error) {
-      console.error("Error cleaning up Stock component:", error);
+      console.error("Error cleaning up YjsStock component:", error);
     }
-    offlineComponents.stock = null;
+    offlineComponents.yjsStock = null;
+  }
+
+  if (offlineComponents.pgStock) {
+    try {
+      offlineComponents.pgStock();
+    } catch (error) {
+      console.error("Error cleaning up PgStock component:", error);
+    }
+    offlineComponents.pgStock = null;
   }
 
   // Cleanup Leaflet map
@@ -83,7 +121,6 @@ Render the new components into the updated DOM
 Reattach navigation listeners to handle future navigation
 */
 async function handleOfflineNavigation(event) {
-  // console.log("handling Offline Navigation");
   try {
     event.preventDefault();
     const link = event.currentTarget;
@@ -117,3 +154,5 @@ async function handleOfflineNavigation(event) {
     return false;
   }
 }
+
+export { renderCurrentView, attachNavigationListeners };

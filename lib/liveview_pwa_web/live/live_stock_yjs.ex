@@ -25,7 +25,7 @@ defmodule LiveviewPwaWeb.StockYjsLive do
       <Users.display user_id={@user_id} module_id="users-yjs" />
 
       <Menu.display update_available={@update_available} active_path={@active_path} />
-      <br/>
+      <br />
       <div
         id="yjs-stock"
         phx-hook="StockJsonHook"
@@ -47,7 +47,8 @@ defmodule LiveviewPwaWeb.StockYjsLive do
     {:ok,
      socket
      |> assign(:socket_id, socket.id)
-     |> assign(:page_title, "Stock")
-     |> assign(:active_path, "/")}
+     |> assign(:page_title, "Stock")}
+
+    #  |> assign(:active_path, "/yjs")}
   end
 end

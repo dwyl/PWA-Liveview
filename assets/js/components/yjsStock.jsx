@@ -3,11 +3,10 @@ import { createSignal, createEffect, lazy } from "solid-js";
 
 let dispose = null;
 
-export const Stock = (props) => {
+export const YjsStock = (props) => {
   if (dispose) dispose();
 
-  const max = Number(sessionStorage.getItem("max"));
-  const ymap = props.ydoc.getMap("data");
+  const ymap = props.ydoc.getMap("sql3-data");
   const [localStock, setLocalStock] = createSignal(
     Math.round(Number(ymap.get("counter"))) || props.max
   );
@@ -43,7 +42,7 @@ export const Stock = (props) => {
   };
 
   createEffect(() => {
-    setRange((ar) => [...ar, ...Array(Number(max) + 1).keys()]);
+    setRange((ar) => [...ar, ...Array(Number(props.max) + 1).keys()]);
   });
 
   dispose = render(
@@ -52,7 +51,7 @@ export const Stock = (props) => {
         id="counter"
         onStockChange={handleUpdate}
         stock={localStock()}
-        max={max}
+        max={props.max}
         userID={props.userID}
         range={range()}
       />
@@ -62,7 +61,7 @@ export const Stock = (props) => {
   return () => {
     ymap.unobserve(updateStockSignal);
     dispose();
-    console.log("Stock & observer cleanup");
+    console.log("[Stock & observer] cleanup");
   };
 
   /**

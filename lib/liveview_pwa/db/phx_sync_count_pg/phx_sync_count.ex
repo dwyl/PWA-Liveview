@@ -36,11 +36,6 @@ defmodule LiveviewPwa.PhxSyncCount do
     |> unique_constraint(:id, name: :count_id_key_unique)
   end
 
-  # def current! do
-  #   %__MODULE__{counter: c} = PgRepo.get!(__MODULE__, "elec")
-  #   c
-  # end
-
   # return nil or %electCount{} struct
   def current do
     PgRepo.get(__MODULE__, "phx-sync")
@@ -59,17 +54,17 @@ defmodule LiveviewPwa.PhxSyncCount do
     end
   end
 
-  def decrement do
+  def decrement(d) do
+    dbg(d)
+
     PgRepo.transaction(fn ->
       case current() do
         nil ->
           {:error, :not_found}
 
-        %__MODULE__{counter: 0} = struct ->
-          save_counter(struct, @init)
-
-        %__MODULE__{counter: c} = struct when is_integer(c) and c > 0 ->
-          save_counter(struct, c - 1)
+        %__MODULE__{counter: c} = struct ->
+          new_val = rem(@init + c - d + 1, @init + 1) |> dbg()
+          save_counter(struct, new_val)
       end
     end)
     |> case do

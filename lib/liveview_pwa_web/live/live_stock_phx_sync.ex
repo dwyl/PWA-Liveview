@@ -26,11 +26,16 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
 
       <Menu.display update_available={@update_available} active_path={@active_path} />
       <br />
-      <h2 class="mt-4 mb-4 text-xl text-gray-600">The counter is synchronised by <code>Phoenix_sync</code> with <code>Postgres</code></h2>
+      <h2 class="mt-4 mb-4 text-xl text-gray-600">
+        The counter is synchronised server-side by <code>Phoenix_sync</code> with <code>Postgres</code> and <code>Yjs</code> client-side.
+      </h2>
+      <p>The component is rendered by <code>LiveView</code> using the <code>LiveSocket</code> when online</p>
+      <p>When offline, we use a <code>SolidJS</code> component and push the sync via a Channel.</p>
+      <br/>
       <p :if={@streams.phx_sync_counter} id="phx-sync-count" phx-update="stream">
         <div :for={{_id, item} <- @streams.phx_sync_counter}>
-          <form phx-submit="dec" phx-hook="PgStockHook" id="phx-sync-count-form">
-            <.button>Decrement</.button>
+          <form phx-submit="dec" id="lv-pg-form">
+            <.button>Decrement Stock</.button>
             <input
               type="range"
               min="0"
@@ -43,6 +48,13 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
           </form>
         </div>
       </p>
+      <%!-- <p>{inspect(@hide)}</p> --%>
+      <p id="hook-pg"
+      phx-hook="PgStockHook"
+      phx-update="ignore"
+      data-max={@max}
+      data-userid={@user_id}
+      ></p>
       <br />
     </div>
     """
@@ -55,7 +67,8 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
     {:ok,
      socket
      |> assign(:socket_id, socket.id)
-     |> assign(:page_title, "Electric")
+     |> assign(:page_title, "Phx-Sync")
+     |> assign(:hide, false)
      |> sync_stream(:phx_sync_counter, query)}
   end
 
@@ -69,9 +82,37 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
     {:noreply, sync_stream_update(socket, event)}
   end
 
+  # LV rendering of online clicks
+  # and uses the liveSocket to updte localStorage for offline persistence
   @impl true
-  def handle_event("dec", _params, socket) do
-    {:ok, new_val} = PhxSyncCount.decrement()
-    {:noreply, push_event(socket, "pg-update", %{count: new_val})}
+  def handle_event("dec", _, socket) do
+    # !! buiness logic to put a circular counter is delegated to the PhxSynCount module
+    {:ok, new_val} = PhxSyncCount.decrement(1)
+    Logger.info("decrement val to----------->: #{new_val}")
+
+    # update YDoc
+    {:reply, %{new_val: new_val}, push_event(socket, "update-local-store", %{counter: new_val})}
+    # {:noreply, socket}
+
+    # {:noreply, socket}
+  end
+
+  def handle_event("client-clicks", %{"clicks" => 0}, socket) do
+    %{counter: val} = PhxSyncCount.current()
+
+    Logger.info("Zero client-clicks----------->: received #{0}, val: #{inspect(val)}")
+
+    {:reply, %{new_val: val}, socket}
+  end
+
+  # the event "client-clicks" is handled by the channel
+  def handle_event("client-clicks", %{"clicks" => clicks}, socket) do
+    {:ok, new_val} = PhxSyncCount.decrement(clicks)
+
+    Logger.info(
+      "client-clicks----------->: received #{inspect(clicks)}, updated val: #{inspect(new_val)}"
+    )
+
+    {:reply, %{new_val: new_val}, socket}
   end
 end

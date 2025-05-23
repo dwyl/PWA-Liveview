@@ -14,8 +14,8 @@ export const StockJsonHook = ({ ydoc, userSocket }) => ({
       localStorage.setItem("userID", this.userID);
     }
     this.max = Number(this.el.dataset.max);
-    if (!sessionStorage.getItem("max")) {
-      sessionStorage.setItem("max", this.max);
+    if (!localStorage.getItem("max")) {
+      localStorage.setItem("max", this.max);
     }
 
     this.stockComponent = this.stockComponent.bind(this);
@@ -24,28 +24,29 @@ export const StockJsonHook = ({ ydoc, userSocket }) => ({
     this.setupChannel = this.setupChannel.bind(this);
     this.handleYUpdate = this.handleYUpdate.bind(this);
     this.syncWithServer = this.syncWithServer.bind(this);
+    this.runSync = this.runSync.bind(this);
 
-    await this.setupChannel(userSocket, "counter").then(() =>
+    await this.setupChannel(userSocket, "sql3-counter").then(() =>
       this.syncWithServer()
     );
 
-    window.addEventListener("connection-status-changed", ({ detail }) => {
-      console.log("connection-status-changed", detail.status);
-      if (detail.status === "online") {
-        this.status = "online";
-        this.syncWithServer();
-      } else {
-        this.status = "offline";
-      }
-    });
+    window.addEventListener("connection-status-changed", this.runSync);
 
     // Listen to yjs updates (component will update clicks/counter)
     ydoc.on("update", this.handleYUpdate);
   },
+  runSync({ detail }) {
+    if (detail.status === "online") {
+      this.status = "online";
+      this.syncWithServer();
+    } else {
+      this.status = "offline";
+    }
+  },
 
   destroyed() {
     if (ydoc) ydoc.off("update", this.handleYUpdate);
-
+    window.removeEventListener("connection-status-changed", this.runSync);
     if (this.cleanupSolid) {
       this.cleanupSolid();
       this.cleanupSolid = null;
@@ -58,12 +59,12 @@ export const StockJsonHook = ({ ydoc, userSocket }) => ({
   },
 
   async stockComponent() {
-    const { Stock } = await import("@jsx/components/stock");
-    return Stock({
+    const { YjsStock } = await import("@jsx/components/yjsStock");
+    return YjsStock({
       el: this.el,
-      ydoc: ydoc,
       userID: this.userID,
       max: this.max,
+      ydoc,
     });
   },
 
