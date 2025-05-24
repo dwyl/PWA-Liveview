@@ -6,7 +6,7 @@ It is designed for offline-first ready; it is packaged as a [PWA](https://develo
 
 Offline first solutions naturally offloads most of the reactive UI logic to JavaScript.
 
-When online, we use LiveView "hooks", while when offline, we render the reactive components.
+When online, we use LiveView "hooks" or SSR, and while when offline, we render the reactive components.
 
 It uses `Vite` as the bundler.
 
@@ -71,11 +71,10 @@ QRCode to check multi users, from on a mobile device:
 
 What are we building? A three pages webap:
 
-- Yjs-Stock. On the first page, we mimic a shopping cart where users can pick items until stock is depleted, at which point the stock is replenished. Every user will see and can interact with this counter
-- PgSync-Stock. This page features `phoenix_sync` in _embedded_ mode streaming logical replicates of a Postgres table. [Building offline features]
-- FlightMap. On the second page, we propose an interactive map with a form with two inputs where **two** users can edit collaboratively a form to display markers on the map and then draw a great circle between the two points.
-
-> You need an api key to render the Maptiler vector tiles. You can see the Service Worker in action in the LiveMap page when you go offline as the tiles are cached. This is naturally only true if you already visited these tiles, thus loaded them.
+1. We mimic a stock mananger.
+   - Yjs-Stock. On the first page, we mimic a shopping cart where users can pick items until stock is depleted, at which point the stock is replenished. Every user will see and can interact with this counter
+   - PgSync-Stock. This page features `phoenix_sync` in _embedded_ mode streaming logical replicates of a Postgres table.
+2. FlightMap. On the second page, we propose an interactive map with a form with two inputs where **two** users can edit collaboratively a form to display markers on the map and then draw a great circle between the two points.
 
 ## Why?
 
@@ -142,15 +141,14 @@ The same applies when you navigate offline; you have to run cleanup functions, b
 
 - **Offline capabilities**:
 
-  - Yjs-Stock page: edits are saved to `y-indexeddb`
-  - PgSync-Stock: edits save in _localStorage_ (TODO)
+  - Yjs-Stock page and PgSync-Stock page edits are saved to `y-indexeddb`
   - FlightMap: the "airports" list is saved in _localStorage_
 
 - **State Management**:
   We use different approaches based on the page requirements:
 
   1. Yjs-Stock. Client-side: CRDT-based (op-based) synchronization with `Yjs` featuring `IndexedDB`. Server-side, it uses an embedded `SQLite` database as the canonical source of truth, even if Yjs is the local source of truth.
-  2. PgSync-Stock. Client-side: _localStorage_ persistence, and server-side, `Postgres` with logical replication.
+  2. PgSync-Stock. Client-side: `indexeddb` persistence, and server-side, `Postgres` with logical replication as the source of truth.
   3. FlightMap. Local state management (`Valtio`) for the collaborative Flight Map page with no server-side persistence of the state
 
 - **Build tool**:

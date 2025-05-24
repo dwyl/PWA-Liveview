@@ -4,17 +4,13 @@ import { lazy } from "solid-js";
 export default function Counter(props) {
   const Bins = lazy(() => import("@jsx/components/bins"));
 
-  const handleTake = () => {
-    // keep a circular range for the demo
-    const newValue = props.stock === 0 ? props.max : props.stock - 1;
-    props.onStockChange(newValue);
-  };
+  const handleTake = props.onStockChange;
 
   return (
     <>
       <h2 class="mt-4 mb-4 text-xl text-gray-600">
-        The counter uses <code>Yjs</code> client-side, and commnciates via a
-        Channel to synchornize with an
+        The counter uses <code>Yjs</code> client-side, and communicates via a
+        Channel to synchronize with an
         <code>SQLite</code> database.
       </h2>
       <button

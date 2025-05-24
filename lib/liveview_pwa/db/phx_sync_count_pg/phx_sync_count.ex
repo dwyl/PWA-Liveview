@@ -63,7 +63,7 @@ defmodule LiveviewPwa.PhxSyncCount do
           {:error, :not_found}
 
         %__MODULE__{counter: c} = struct ->
-          new_val = rem(@init + c - d + 1, @init + 1) |> dbg()
+          new_val = rem(@init + c - d + 1, @init + 1)
           save_counter(struct, new_val)
       end
     end)

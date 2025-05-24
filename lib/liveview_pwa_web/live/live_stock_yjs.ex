@@ -1,13 +1,12 @@
 defmodule LiveviewPwaWeb.StockYjsLive do
   use LiveviewPwaWeb, :live_view
   alias Phoenix.PubSub
-  alias LiveviewPwaWeb.{PwaLiveC, Users, Menu}
-  # alias LiveviewPwaWeb.Presence
+  alias LiveviewPwaWeb.{PwaLiveComp, Users, Menu}
 
   require Logger
 
   @moduledoc """
-  LiveView for the stock_y page.
+  LiveView for the stock_yjs page.
   """
 
   @impl true
@@ -15,19 +14,17 @@ defmodule LiveviewPwaWeb.StockYjsLive do
     ~H"""
     <div>
       <.live_component
-        module={PwaLiveC}
+        module={PwaLiveComp}
         id="pwa_action-0"
         update_available={@update_available}
         active_path={@active_path}
       />
       <br />
-
       <Users.display user_id={@user_id} module_id="users-yjs" />
-
-      <Menu.display update_available={@update_available} active_path={@active_path} />
+      <Menu.display active_path={@active_path} />
       <br />
       <div
-        id="yjs-stock"
+        id="hook-yjs-sql3"
         phx-hook="StockJsonHook"
         phx-update="ignore"
         data-userid={@user_id}
@@ -44,11 +41,6 @@ defmodule LiveviewPwaWeb.StockYjsLive do
       :ok = PubSub.subscribe(:pubsub, "ystock")
     end
 
-    {:ok,
-     socket
-     |> assign(:socket_id, socket.id)
-     |> assign(:page_title, "Stock")}
-
-    #  |> assign(:active_path, "/yjs")}
+    {:ok, assign(socket, :page_title, "Yjs-SQL3")}
   end
 end

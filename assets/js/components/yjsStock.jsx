@@ -3,10 +3,17 @@ import { createSignal, createEffect, lazy } from "solid-js";
 
 let dispose = null;
 
+const getCircularValue = (currentValue, max) => {
+  return currentValue === 0 ? max : currentValue - 1;
+};
+
 export const YjsStock = (props) => {
   if (dispose) dispose();
 
+  console.log(props);
+
   const ymap = props.ydoc.getMap("sql3-data");
+
   const [localStock, setLocalStock] = createSignal(
     Math.round(Number(ymap.get("counter"))) || props.max
   );
@@ -22,8 +29,8 @@ export const YjsStock = (props) => {
   */
   ymap.observe(updateStockSignal);
 
-  function updateStockSignal(event, { _origin }) {
-    // console.log("origin: ", origin);
+  function updateStockSignal(event, { origin }) {
+    console.log("origin: ", origin);
     if (event.keysChanged.has("counter")) {
       // y_ex sends BigInt so we convert it into an integer
       setLocalStock(Math.round(Number(ymap.get("counter"))));
@@ -34,7 +41,10 @@ export const YjsStock = (props) => {
   Local action: just update Yjs state
   This will trigger the observer above 
   */
-  const handleUpdate = (newValue) => {
+  const handleDecrement = () => {
+    // keep a circular range for the demo: shouldn't it go up?
+    const newValue = getCircularValue(localStock(), props.max);
+
     props.ydoc.transact(() => {
       ymap.set("counter", newValue);
       ymap.set("clicks", (ymap.get("clicks") || 0) + 1);
@@ -42,14 +52,14 @@ export const YjsStock = (props) => {
   };
 
   createEffect(() => {
-    setRange((ar) => [...ar, ...Array(Number(props.max) + 1).keys()]);
+    setRange([...Array(Number(props.max) + 1).keys()]);
   });
 
   dispose = render(
     () => (
       <Counter
         id="counter"
-        onStockChange={handleUpdate}
+        onStockChange={handleDecrement}
         stock={localStock()}
         max={props.max}
         userID={props.userID}

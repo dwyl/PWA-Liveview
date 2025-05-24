@@ -3,7 +3,7 @@ import "@css/app.css";
 import "phoenix_html";
 
 const CONFIG = {
-  POLL_INTERVAL: 2_000,
+  POLL_INTERVAL: 10_000,
   ICONS: {
     online: new URL("/images/online.svg", import.meta.url).href,
     offline: new URL("/images/offline.svg", import.meta.url).href,
@@ -37,13 +37,13 @@ async function startApp() {
       { checkServer },
       { initYDoc },
       { setUserSocket },
-      { setPresenceChannel },
+      { setPresence },
       response,
     ] = await Promise.all([
       import("@js/utilities/checkServer"),
       import("@js/stores/initYJS"),
       import("@js/user_socket/userSocket"),
-      import("@js/user_socket/setPresenceChannel"),
+      import("@js/components/setPresence"),
       fetch("/api/user_token", { cache: "no-store" }),
     ]);
 
@@ -54,7 +54,7 @@ async function startApp() {
       checkServer(),
       setUserSocket(user_token),
     ]);
-    await setPresenceChannel(userSocket, "proxy:presence", user_token);
+    await setPresence(userSocket, "proxy:presence", user_token);
 
     Object.assign(AppState, {
       userToken: user_token,

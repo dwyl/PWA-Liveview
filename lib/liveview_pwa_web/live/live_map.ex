@@ -3,7 +3,7 @@ defmodule LiveviewPwaWeb.MapLive do
   use Phoenix.Component
   alias Phoenix.LiveView.AsyncResult
   alias Phoenix.PubSub
-  alias LiveviewPwaWeb.{PwaLiveC, Users, Menu}
+  alias LiveviewPwaWeb.{PwaLiveComp, Users, Menu}
   # alias LiveviewPwaWeb.Presence
 
   @moduledoc """
@@ -21,7 +21,7 @@ defmodule LiveviewPwaWeb.MapLive do
     ~H"""
     <div>
       <.live_component
-        module={PwaLiveC}
+        module={PwaLiveComp}
         id="pwa_action-0"
         update_available={@update_available}
         active_path={@active_path}
@@ -29,17 +29,17 @@ defmodule LiveviewPwaWeb.MapLive do
       <br />
       <Users.display user_id={@user_id} module_id="users-map" />
 
-      <Menu.display update_available={@update_available} active_path={@active_path} />
+      <Menu.display active_path={@active_path} />
       <br />
       <div
-        id="map"
+        id="hook-map"
         phx-hook="MapHook"
         phx-update="ignore"
         style="height: 300px"
         data-userid={@user_id}
       >
       </div>
-      <div id="select-form" phx-hook="FormHook" phx-update="ignore" data-userid={@user_id}></div>
+      <div id="hok-select-form" phx-hook="FormHook" phx-update="ignore" data-userid={@user_id}></div>
     </div>
     """
   end
@@ -54,8 +54,7 @@ defmodule LiveviewPwaWeb.MapLive do
 
     {:ok,
      socket
-     |> assign(:socket_id, socket.id)
-     |> assign(:page_title, "Map")
+     |> assign(:page_title, "FlightMap")
      |> assign(:airports, nil)
      |> assign(:hash, Airport.hash())}
   end

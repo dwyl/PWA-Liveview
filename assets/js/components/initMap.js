@@ -7,7 +7,7 @@ export async function initMap() {
   const { default: L } = await import("leaflet");
   const { MaptilerLayer } = await import("@maptiler/leaflet-maptilersdk");
 
-  const map = L.map("map", {
+  const map = L.map("hook-map", {
     renderer: L.canvas(),
     minzoom: 1,
     maxzoom: 10,

@@ -1,7 +1,7 @@
 defmodule LiveviewPwaWeb.StockPhxSyncLive do
   use LiveviewPwaWeb, :live_view
 
-  alias LiveviewPwaWeb.{PwaLiveC, Users, Menu}
+  alias LiveviewPwaWeb.{PwaLiveComp, Users, Menu}
   alias LiveviewPwa.PhxSyncCount
   # alias LiveviewPwaWeb.Presence
 
@@ -16,7 +16,7 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
     ~H"""
     <div>
       <.live_component
-        module={PwaLiveC}
+        module={PwaLiveComp}
         id="pwa_action-0"
         update_available={@update_available}
         active_path={@active_path}
@@ -24,14 +24,21 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
       <br />
       <Users.display user_id={@user_id} module_id="users-elec" />
 
-      <Menu.display update_available={@update_available} active_path={@active_path} />
+      <Menu.display active_path={@active_path} />
       <br />
       <h2 class="mt-4 mb-4 text-xl text-gray-600">
-        The counter is synchronised server-side by <code>Phoenix_sync</code> with <code>Postgres</code> and <code>Yjs</code> client-side.
+        The counter is synchronised server-side by <code>Phoenix_sync</code>
+        with <code>Postgres</code>
+        and <code>Yjs</code>
+        client-side.
       </h2>
-      <p>The component is rendered by <code>LiveView</code> using the <code>LiveSocket</code> when online</p>
+      <p>
+        The component is rendered by <code>LiveView</code>
+        using the <code>LiveSocket</code>
+        when online
+      </p>
       <p>When offline, we use a <code>SolidJS</code> component and push the sync via a Channel.</p>
-      <br/>
+      <br />
       <p :if={@streams.phx_sync_counter} id="phx-sync-count" phx-update="stream">
         <div :for={{_id, item} <- @streams.phx_sync_counter}>
           <form phx-submit="dec" id="lv-pg-form">
@@ -48,14 +55,9 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
           </form>
         </div>
       </p>
-      <%!-- <p>{inspect(@hide)}</p> --%>
-      <p id="hook-pg"
-      phx-hook="PgStockHook"
-      phx-update="ignore"
-      data-max={@max}
-      data-userid={@user_id}
-      ></p>
+      <p id="hook-pg" phx-hook="PgStockHook" data-max={@max} data-userid={@user_id}></p>
       <br />
+      <%!-- phx-update="ignore" --%>
     </div>
     """
   end
@@ -66,7 +68,6 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
 
     {:ok,
      socket
-     |> assign(:socket_id, socket.id)
      |> assign(:page_title, "Phx-Sync")
      |> assign(:hide, false)
      |> sync_stream(:phx_sync_counter, query)}

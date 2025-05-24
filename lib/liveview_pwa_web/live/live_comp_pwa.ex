@@ -1,4 +1,4 @@
-defmodule LiveviewPwaWeb.PwaLiveC do
+defmodule LiveviewPwaWeb.PwaLiveComp do
   use LiveviewPwaWeb, :live_component
   alias LiveviewPwaWeb.{Pwa}
   require Logger
@@ -17,7 +17,7 @@ defmodule LiveviewPwaWeb.PwaLiveC do
         phx-hook="PwaHook"
       >
         <Pwa.svg height={20} class="mr-2" />
-        <span class="ml-1 font-bold">Refesh needed</span>
+        <span class="ml-1 font-bold">Refresh needed</span>
       </button>
     </div>
     """

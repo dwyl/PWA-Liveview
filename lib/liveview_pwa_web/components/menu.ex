@@ -11,9 +11,9 @@ defmodule LiveviewPwaWeb.Menu do
 
   defp menu do
     [
-      %{id: "elec", title: "Electric", path: "/", icon: "hero-bolt"},
-      %{id: "countdown", title: "Yjs", path: "/yjs", icon: "hero-wrench"},
-      %{id: "mapform", title: "Map", path: "/map", icon: "hero-globe-alt"}
+      %{id: "elec", title: "PhxSync", path: ~p"/", icon: "hero-bolt"},
+      %{id: "countdown", title: "Yjs-Channel", path: ~p"/yjs", icon: "hero-wrench"},
+      %{id: "mapform", title: "Map", path: ~p"/map", icon: "hero-globe-alt"}
     ]
   end
 

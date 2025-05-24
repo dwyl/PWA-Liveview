@@ -1,16 +1,16 @@
 import { AppState } from "@js/main";
 
 const offlineComponents = {
+    pgStock: null,
     yjsStock: null,
     map: null,
     form: null,
-    pgStock: null,
   },
   hooksIDs = {
-    yjsStock: "yjs-stock",
-    map: "map",
-    mapForm: "select-form",
     pgStock: "hook-pg",
+    yjsStock: "hook-yjs-sql3",
+    map: "hook-map",
+    mapForm: "hook-select-form",
   },
   contentSelector = "#main-content";
 
@@ -35,8 +35,8 @@ async function renderCurrentView() {
     const { PgStock } = await import("@jsx/components/pgStock.jsx");
     offlineComponents.pgStock = PgStock({
       el: elPgStock,
-      max: Number(localStorage.getItem("max")),
       ydoc: AppState.globalYdoc,
+      max: Number(localStorage.getItem("max")),
       userID: localStorage.getItem("userID"),
     });
 
@@ -48,10 +48,10 @@ async function renderCurrentView() {
   if (elYjsStock) {
     const { YjsStock } = await import("@jsx/components/yjsStock.jsx");
     offlineComponents.yjsStock = YjsStock({
-      ydoc: AppState.globalYdoc,
-      userID: localStorage.getItem("userID"),
-      max: Number(localStorage.getItem("max")),
       el: elYjsStock,
+      ydoc: AppState.globalYdoc,
+      max: Number(localStorage.getItem("max")),
+      userID: localStorage.getItem("userID"),
     });
 
     return true;

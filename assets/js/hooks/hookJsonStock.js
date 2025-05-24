@@ -18,6 +18,8 @@ export const StockJsonHook = ({ ydoc, userSocket }) => ({
       localStorage.setItem("max", this.max);
     }
 
+    this.ymap = ydoc.getMap("sql3-data");
+
     this.stockComponent = this.stockComponent.bind(this);
     this.cleanupSolid = await this.stockComponent();
 
@@ -77,11 +79,11 @@ export const StockJsonHook = ({ ydoc, userSocket }) => ({
 
     // Receive new counter from server, update local doc and reset clicks
     this.channel.on("counter-update", ({ counter, from }) => {
+      console.log("counter-udpate", counter);
       if (from === this.userID) return; // ignore own updates
-      const ymap = ydoc.getMap("data");
       // console.log(ymap.toJSON());
       ydoc.transact(() => {
-        ymap.set("counter", counter);
+        this.ymap.set("counter", counter);
         // do not reset clicks here, only in handleYUpdate
         // as they may contain pending local state
       }, "remote");
@@ -96,14 +98,13 @@ export const StockJsonHook = ({ ydoc, userSocket }) => ({
     if (origin == "local") {
       this.isOnline = await checkServer();
       if (this.isOnline) {
-        const ymap = ydoc.getMap("data");
-        const clicks = ymap.get("clicks") || 0;
+        const clicks = this.ymap.get("clicks") || 0;
         if (clicks > 0) {
           return this.channel
             .push("client-update", { clicks, from: this.userID })
             .receive("ok", ({ counter }) => {
               ydoc.transact(() => {
-                ymap.set("clicks", 0);
+                this.ymap.set("clicks", 0);
               }, "local");
             });
         }
@@ -114,8 +115,8 @@ export const StockJsonHook = ({ ydoc, userSocket }) => ({
   // On (re)connect, fetch "canonical" counter
   syncWithServer() {
     if (!this.channel) return;
-    const ymap = ydoc.getMap("data");
-    const clicks = ymap.get("clicks") || 0;
+
+    const clicks = this.ymap.get("clicks") || 0;
     const payload = {
       from: this.userID,
       ...(clicks > 0 ? { clicks } : {}),
@@ -123,9 +124,10 @@ export const StockJsonHook = ({ ydoc, userSocket }) => ({
     return this.channel
       .push("client-update", payload)
       .receive("ok", ({ counter }) => {
+        console.log(counter);
         ydoc.transact(() => {
-          ymap.set("counter", counter);
-          ymap.set("clicks", 0);
+          this.ymap.set("counter", counter);
+          this.ymap.set("clicks", 0);
         }, "init");
       });
   },

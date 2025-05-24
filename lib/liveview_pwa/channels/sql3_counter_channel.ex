@@ -26,7 +26,7 @@ defmodule LiveviewPwa.Sql3CounterChannel do
          new_counter <-
            old_db_counter - clicks,
          rescaled_counter <-
-           rem(new_counter + max_value + 1, max_value + 1) |> dbg(),
+           rem(new_counter + max_value + 1, max_value + 1),
          :ok <-
            Counter.set_counter(rescaled_counter) do
       Logger.info(
@@ -39,31 +39,6 @@ defmodule LiveviewPwa.Sql3CounterChannel do
       err ->
         Logger.error("Failed to apply clicks: #{inspect(err)}")
         {:stop, :shutdown, {:error, %{"error" => "Failed to apply clicks"}}, socket}
-
-        # case Counter.get_counter() do
-        #   {:ok, old_db_counter} ->
-        #     new_counter = old_db_counter - clicks
-
-        #     maybe_rescale =
-        #       if new_counter < 0,
-        #         do: max_value + 1 + new_counter,
-        #         else: new_counter
-
-        #     :ok = Counter.set_counter(maybe_rescale)
-
-        #     Logger.debug(
-        #       "[#{user_id}] client-udpate applied #{clicks} clicks: #{old_db_counter} -> #{maybe_rescale}"
-        #     )
-
-        #     # Broadcast new counter to all except himself
-        #     broadcast!(socket, "counter-update", %{"counter" => maybe_rescale, "from" => user_id})
-
-        #     # Respond to sender
-        #     {:reply, {:ok, %{"counter" => maybe_rescale}}, socket}
-
-        #   err ->
-        #     Logger.error("Failed to apply clicks: #{inspect(err)}")
-        #     {:stop, :shutdown, {:error, %{"error" => "Failed to apply clicks"}}, socket}
     end
   end
 

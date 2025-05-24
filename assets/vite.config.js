@@ -378,7 +378,7 @@ const PWAConfig = (mode) => ({
 
     additionalManifestEntries: [
       { url: "/", revision: `${Date.now()}` }, // Manually precache root route
-      { url: "/elec", revision: `${Date.now()}` }, // Manually precache elec route
+      { url: "/yjs", revision: `${Date.now()}` }, // Manually precache elec route
       { url: "/map", revision: `${Date.now()}` }, // Manually precache map route
     ],
     runtimeCaching,

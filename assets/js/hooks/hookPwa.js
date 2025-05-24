@@ -12,7 +12,6 @@ export const PwaHook = {
     console.log("[PwaHook] ------> destroyed");
   },
   async mounted() {
-    // console.log("[PwaHook] -----> mounted");
     const _this = this;
     const pwaAction = document.getElementById("pwa_action-1");
 
@@ -53,6 +52,7 @@ export const PwaHook = {
     window.addEventListener("sw-ready", this.handleReady);
     window.addEventListener("sw-error", this.handleError);
     window.addEventListener("sw-update", this.handleUpdate);
+    console.log("[PwaHook] -----> mounted");
     // window.addEventListener("sw-change", this.handleControllerChange);
   },
 };
