@@ -12,6 +12,9 @@ kill_signal = 'SIGTERM'
 [deploy]
 release_command = '/app/bin/migrate'
 
+[processes]
+app = "root"
+
 [env]
 DATABASE_PATH = '/mnt/db/main.db'
 MIX_ENV = 'prod'
