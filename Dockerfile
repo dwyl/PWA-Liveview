@@ -97,8 +97,8 @@ RUN mkdir -p /app/db && \
 
 USER nobody
 
-COPY entrypoint.sh /app/entrypoint.sh
-ENTRYPOINT ["/app/entrypoint.sh"]
+COPY sql3-entrypoint.sh /app/sql3-entrypoint.sh
+ENTRYPOINT ["/app/sql3-entrypoint.sh"]
 
 
 # EXPOSE 4000
