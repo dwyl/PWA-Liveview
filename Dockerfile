@@ -94,7 +94,12 @@ RUN mkdir -p /app/db && \
   chmod -R 777 /app/db && \
   chown nobody /app
 
+
 USER nobody
 
-EXPOSE 4000
+COPY entrypoint.sh /app/entrypoint.sh
+ENTRYPOINT ["/app/entrypoint.sh"]
+
+
+# EXPOSE 4000
 CMD ["/bin/sh", "-c", "/app/bin/server"]
