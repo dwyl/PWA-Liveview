@@ -95,7 +95,7 @@ RUN mkdir -p /app/db && \
   chown nobody /app
 
 
-USER nobody
+#USER nobody
 
 COPY sql3-entrypoint.sh /app/sql3-entrypoint.sh
 ENTRYPOINT ["/app/sql3-entrypoint.sh"]
