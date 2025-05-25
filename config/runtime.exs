@@ -40,22 +40,16 @@ if config_env() == :prod do
     System.get_env("DATABASE_PATH") ||
       "/db/main.db"
 
+  config :liveview_pwa, LiveviewPwa.Sql3Repo,
+    database: database_path,
+    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
+    show_sensitive_data_on_connection_error: true
+
   database_url =
     System.get_env("DATABASE_URL") ||
       raise """
       environment variable DATABASE_URL is missing.
       """
-
-  # set it as default
-  # raise """
-  # environment variable DATABASE_PATH is missing.
-  # You can set it to the path where the database file will be stored.
-  # """
-
-  config :liveview_pwa, LiveviewPwa.Sql3Repo,
-    database: database_path,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
-    show_sensitive_data_on_connection_error: true
 
   pg_config = [
     url: database_url,
@@ -63,6 +57,11 @@ if config_env() == :prod do
   ]
 
   config :liveview_pwa, LiveviewPwa.PgRepo, pg_config
+
+  config :phoenix_sync,
+    env: config_env(),
+    mode: :embedded,
+    repo: LiveviewPwa.PgRepo
 
   # config :electric,
   #   replication_connection_opts: Electric.Config.parse_postgresql_uri!(pg_config[:url])

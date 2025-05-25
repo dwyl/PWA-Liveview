@@ -32,10 +32,6 @@ defmodule LiveviewPwaWeb.StockYjsLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    # if connected?(socket) do
-    #   :ok = PubSub.subscribe(:pubsub, "ystock")
-    # end
-
     {:ok, assign(socket, :page_title, "Yjs-SQL3")}
   end
 end
