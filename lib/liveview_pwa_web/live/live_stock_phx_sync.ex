@@ -17,9 +17,8 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
     <div>
       <.live_component
         module={PwaLiveComp}
-        id="pwa_action-0"
+        id="pwa_action-phx-sync"
         update_available={@update_available}
-        active_path={@active_path}
       />
       <br />
       <Users.display user_id={@user_id} module_id="users-elec" />
@@ -29,15 +28,12 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
       <h2 class="mt-4 mb-4 text-xl text-gray-600">
         The counter is synchronised server-side by <code>Phoenix_sync</code>
         with <code>Postgres</code>
-        and <code>Yjs</code>
-        client-side.
+        and persisted client-side with <code>Yjs</code>.
       </h2>
       <p>
-        The component is rendered by <code>LiveView</code>
-        using the <code>LiveSocket</code>
-        when online
+        When online, the component below is rendered by <code>LiveView</code>.
       </p>
-      <p>When offline, we use a <code>SolidJS</code> component and push the sync via a Channel.</p>
+      <p>When offline, the component is a <code>SolidJS</code> rendered component.</p>
       <br />
       <p :if={@streams.phx_sync_counter} id="phx-sync-count" phx-update="stream">
         <div :for={{_id, item} <- @streams.phx_sync_counter}>
@@ -49,6 +45,7 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
               max={@max}
               name="dec-phx-sync-counter"
               value={item.counter}
+              disabled={@disabled}
               aria-label="displayed-stock"
             />
             <span class="ml-8">{item.counter}</span>
@@ -70,6 +67,7 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
      socket
      |> assign(:page_title, "Phx-Sync")
      |> assign(:hide, false)
+     |> assign(:disabled, false)
      |> sync_stream(:phx_sync_counter, query)}
   end
 
@@ -84,36 +82,24 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
   end
 
   # LV rendering of online clicks
-  # and uses the liveSocket to updte localStorage for offline persistence
+  # and uses the liveSocket to updte YDoc
   @impl true
   def handle_event("dec", _, socket) do
     # !! buiness logic to put a circular counter is delegated to the PhxSynCount module
     {:ok, new_val} = PhxSyncCount.decrement(1)
-    Logger.info("decrement val to----------->: #{new_val}")
+    Logger.debug("decrement val to----------->: #{new_val}")
 
-    # update YDoc
-    {:reply, %{new_val: new_val}, push_event(socket, "update-local-store", %{counter: new_val})}
-    # {:noreply, socket}
-
-    # {:noreply, socket}
+    {:reply, %{new_val: new_val},
+     push_event(socket, "update-local-store", %{counter: new_val}) |> assign(:disabled, true)}
   end
 
-  def handle_event("client-clicks", %{"clicks" => 0}, socket) do
-    %{counter: val} = PhxSyncCount.current()
+  #
+  # the event "client-clicks" with clicks>0 are sent to the channel
+  # def handle_event("client-clicks", %{"clicks" => 0}, socket) do
+  #   %{counter: val} = PhxSyncCount.current()
 
-    Logger.info("Zero client-clicks----------->: received #{0}, val: #{inspect(val)}")
+  #   Logger.debug("[LV] Zero client-clicks----------->: received #{0}, val: #{inspect(val)}")
 
-    {:reply, %{new_val: val}, socket}
-  end
-
-  # the event "client-clicks" is handled by the channel
-  def handle_event("client-clicks", %{"clicks" => clicks}, socket) do
-    {:ok, new_val} = PhxSyncCount.decrement(clicks)
-
-    Logger.info(
-      "client-clicks----------->: received #{inspect(clicks)}, updated val: #{inspect(new_val)}"
-    )
-
-    {:reply, %{new_val: new_val}, socket}
-  end
+  #   {:reply, %{new_val: val}, assign(socket, :disabled, false)}
+  # end
 end

@@ -4,19 +4,21 @@ import { lazy } from "solid-js";
 export default function Counter(props) {
   const Bins = lazy(() => import("@jsx/components/bins"));
 
-  const handleTake = props.onStockChange;
-
   return (
     <>
       <h2 class="mt-4 mb-4 text-xl text-gray-600">
-        The counter uses <code>Yjs</code> client-side, and communicates via a
-        Channel to synchronize with an
-        <code>SQLite</code> database.
+        The counter uses an <code>SQLite</code> database server-side and state
+        is persisted client-side with <code>Yjs</code>.
       </h2>
+      <p>
+        The component below is a reactive frontend component (
+        <code>SolidJS</code>) that is mounted via a hook when online, and
+        rendered by <code>SolidJS</code> when offline.
+      </p>
       <button
         id="takeFromStock"
         class="font-bold py-2 mt-4 px-4 rounded border border-gray-800 bg-bisque text-midnightblue transition-all duration-300 ease-in-out active:scale-95 active:bg-burlywood hover:bg-wheat"
-        onClick={handleTake}
+        onClick={props.onStockChange}
       >
         Take from stock
       </button>

@@ -19,7 +19,7 @@ defmodule LiveviewPwa.Sql3CounterChannel do
       when is_integer(clicks) and clicks > 0 do
     user_id = socket.assigns.user_id
     max_value = socket.assigns.max_value
-    Logger.info("[#{user_id}] client-udpate with clicks: #{clicks} from #{from}")
+    Logger.debug("[#{user_id}] client-udpate with clicks: #{clicks} from #{from}")
 
     with {:ok, old_db_counter} <-
            Counter.get_counter(),
@@ -29,7 +29,7 @@ defmodule LiveviewPwa.Sql3CounterChannel do
            rem(new_counter + max_value + 1, max_value + 1),
          :ok <-
            Counter.set_counter(rescaled_counter) do
-      Logger.info(
+      Logger.debug(
         "[#{user_id}] client-update applied #{clicks} clicks: #{old_db_counter} -> #{rescaled_counter}"
       )
 

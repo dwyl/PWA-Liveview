@@ -2,6 +2,8 @@ defmodule LiveviewPwaWeb.Pwa do
   use Phoenix.Component
   use LiveviewPwaWeb, :verified_routes
 
+  @moduledoc false
+
   attr :height, :integer, default: 20, doc: "Height of the SVG icon"
   attr :class, :string, doc: "CSS class for the SVG icon"
 

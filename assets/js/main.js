@@ -3,7 +3,7 @@ import "@css/app.css";
 import "phoenix_html";
 
 const CONFIG = {
-  POLL_INTERVAL: 10_000,
+  POLL_INTERVAL: 1_000,
   ICONS: {
     online: new URL("/images/online.svg", import.meta.url).href,
     offline: new URL("/images/offline.svg", import.meta.url).href,
@@ -16,7 +16,7 @@ const CONFIG = {
 };
 
 const AppState = {
-  status: "online",
+  status: "offline",
   isOnline: true,
   interval: null,
   globalYdoc: null,
@@ -65,7 +65,8 @@ async function startApp() {
 
     AppState.status = AppState.isOnline ? "online" : "offline";
 
-    return await init(AppState.isOnline);
+    // return await init(AppState.isOnline);
+    return await init();
   } catch (error) {
     console.error("Initialization error:", error);
   }
@@ -124,32 +125,25 @@ function updateConnectionStatus(isOnline) {
   }
 }
 
-let cleanup = null;
 // trigger offline rendering if offline ---------------
 window.addEventListener("connection-status-changed", async (e) => {
   console.log("Connection status changed to:", e.detail.status);
   if (e.detail.status === "offline") {
     AppState.status = "offline";
-    cleanup = await initOfflineComponents();
+    await initOfflineComponents();
   } else {
-    AppState.status = "online";
-    window.liveSocket.connect();
-    if (cleanup && typeof cleanup === "function") {
-      console.log("[PGSolid] cleanup from main *******");
-      cleanup();
-      cleanup = null;
-    }
+    window.location.reload();
   }
 });
 
 // Selectively start
-async function init(isOnline) {
+async function init() {
   try {
-    if (isOnline) {
-      window.liveSocket = await initLiveSocket();
-    } else {
-      await initOfflineComponents();
-    }
+    //   if (isOnline) {
+    window.liveSocket = await initLiveSocket();
+    // } else {
+    // await initOfflineComponents();
+    // }
   } catch (error) {
     console.error("Init failed:", error);
   }
@@ -159,7 +153,7 @@ async function initLiveSocket() {
   try {
     const [
       { PgStockHook },
-      { StockJsonHook },
+      { StockYjsChHook },
       { PwaHook },
       { MapHook },
       { FormHook },
@@ -167,7 +161,7 @@ async function initLiveSocket() {
       { Socket },
     ] = await Promise.all([
       import("@js/hooks/hookPgStock"),
-      import("@js/hooks/hookJsonStock.js"),
+      import("@js/hooks/hookYjsChStock.js"),
       import("@js/hooks/hookPwa.js"),
       import("@js/hooks/hookMap.js"),
       import("@js/hooks/hookForm.js"),
@@ -180,7 +174,7 @@ async function initLiveSocket() {
       .getAttribute("content");
 
     const hooks = {
-      StockJsonHook: StockJsonHook({
+      StockYjsChHook: StockYjsChHook({
         ydoc: AppState.globalYdoc,
         userSocket: AppState.userSocket,
       }),
@@ -200,8 +194,6 @@ async function initLiveSocket() {
     });
 
     liveSocket.connect();
-    // liveSocket.enableDebug();
-
     // liveSocket.getSocket().onOpen(async () => {
     // });
     return liveSocket;

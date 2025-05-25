@@ -1,11 +1,5 @@
 import { CONFIG } from "@js/main";
 
-// const NAVIDS = {
-//   yjs: { path: "/yjs", id: "users-yjs" },
-//   map: { path: "/map", id: "users-map" },
-//   elec: { path: "/", id: "users-elec" },
-// };
-
 export async function setPresence(userSocket, topic, user_token) {
   const [{ Presence }, { useChannel }, { mountUsers }] = await Promise.all([
     import("phoenix"),

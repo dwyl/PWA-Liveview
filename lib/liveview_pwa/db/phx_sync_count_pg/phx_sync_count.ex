@@ -25,10 +25,17 @@ defmodule LiveviewPwa.PhxSyncCount do
     field(:counter, :integer, default: @init)
   end
 
+  @type t :: %__MODULE__{
+          id: String.t(),
+          counter: integer()
+        }
+
+  @spec query_current() :: Ecto.Query.t()
   def query_current do
     from(c in __MODULE__, where: c.id == "phx-sync")
   end
 
+  @spec changeset(t(), map()) :: Ecto.Changeset.t()
   def changeset(struct, %{} = params) do
     struct
     |> cast(params, [:counter])
@@ -37,16 +44,19 @@ defmodule LiveviewPwa.PhxSyncCount do
   end
 
   # return nil or %electCount{} struct
+  @spec current() :: t() | nil
   def current do
     PgRepo.get(__MODULE__, "phx-sync")
   end
 
+  @spec save_counter(t(), integer()) :: {:ok, t()} | {:error, Ecto.Changeset.t()}
   def save_counter(%__MODULE__{} = struct, new_counter) do
     struct
     |> changeset(%{counter: new_counter})
     |> PgRepo.update()
   end
 
+  @spec set_counter(integer()) :: {:ok, t()} | {:error, :not_found} | {:error, Ecto.Changeset.t()}
   def set_counter(new_counter) do
     case current() do
       nil -> {:error, :not_found}
@@ -54,9 +64,8 @@ defmodule LiveviewPwa.PhxSyncCount do
     end
   end
 
+  @spec decrement(integer()) :: {:ok, integer()} | {:error, any()}
   def decrement(d) do
-    dbg(d)
-
     PgRepo.transaction(fn ->
       case current() do
         nil ->

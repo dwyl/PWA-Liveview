@@ -3,10 +3,18 @@ defmodule LiveviewPwaWeb.PwaLiveComp do
   alias LiveviewPwaWeb.{Pwa}
   require Logger
 
+  @moduledoc """
+  Live component for handling PWA updates.
+  This component listens for service worker updates and provides a button
+  to refresh the page when an update is available.
+  It uses a Phoenix hook to manage the service worker lifecycle events.
+  It is used in the LiveView modules to display a button when an update is available.
+  """
+
   @impl true
   def render(assigns) do
     ~H"""
-    <div id="pwa_action-1">
+    <div id="pwa_action-c" phx-hook="PwaHook">
       <button
         :if={@update_available}
         type="button"
@@ -14,7 +22,6 @@ defmodule LiveviewPwaWeb.PwaLiveComp do
         id="refresh-button"
         phx-click="skip-waiting"
         phx-target={@myself}
-        phx-hook="PwaHook"
       >
         <Pwa.svg height={20} class="mr-2" />
         <span class="ml-1 font-bold">Refresh needed</span>
@@ -25,10 +32,16 @@ defmodule LiveviewPwaWeb.PwaLiveComp do
 
   @impl true
   def handle_event("sw-lv-update", %{"update" => true}, socket) do
+    Logger.info("sw-lv-update_comp")
     {:noreply, assign(socket, :update_available, true)}
   end
 
   def handle_event("skip-waiting", _params, socket) do
-    {:noreply, push_event(socket, "sw-lv-skip-waiting", %{})}
+    Logger.info("skip-waiting-comp")
+
+    {:noreply,
+     socket
+     |> assign(:update_available, false)
+     |> push_event("sw-lv-skip-waiting", %{})}
   end
 end

@@ -31,6 +31,7 @@ defmodule LiveviewPwaWeb.MountUser do
   end
 
   defp handle_pwa_event("sw-lv-ready", _, socket) do
+    Logger.info("sw-lv-ready")
     {:halt, put_flash(socket, :info, "Service Worker ready")}
   end
 
@@ -38,6 +39,7 @@ defmodule LiveviewPwaWeb.MountUser do
     {:halt, put_flash(socket, :error, "Service Worker error. This app can't work offline")}
   end
 
+  # delegated to the LiveComponent
   defp handle_pwa_event(_, _, socket) do
     {:cont, socket}
   end

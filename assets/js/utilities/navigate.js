@@ -29,8 +29,8 @@ async function renderCurrentView() {
   if (elPgStock) {
     const lvPgForm = document.getElementById("lv-pg-form");
     if (lvPgForm) lvPgForm.remove();
-    const hookDiv = document.getElementById("hook-pg");
-    hookDiv.classList.remove("hidden");
+    // const hookDiv = document.getElementById("hook-pg");
+    // hookDiv.classList.remove("hidden");
 
     const { PgStock } = await import("@jsx/components/pgStock.jsx");
     offlineComponents.pgStock = PgStock({
@@ -62,6 +62,7 @@ async function renderCurrentView() {
 
   if (elMap && elForm) {
     const { renderMap } = await import("@js/components/renderMap.js");
+    console.log(renderMap);
     offlineComponents.map = await renderMap();
 
     const { CitiesForm } = await import("@jsx/components/citiesForm.jsx");

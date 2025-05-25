@@ -5,61 +5,48 @@ let updateSWFunction = null;
 
 export async function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return false;
-  console.log("registerServiceWorker------");
 
   try {
     const { registerSW } = await import("virtual:pwa-register");
     updateSWFunction = registerSW({
       immediate: true, // Register immediately in the app.js context
+
+      onOfflineReady: () => {
+        console.log("[SW] Ready, app now works offline");
+        window.dispatchEvent(
+          new CustomEvent("sw-ready", {
+            detail: { ready: true },
+          })
+        );
+      },
+
       onNeedRefresh: () => {
         console.log("[SW] New version available");
+        // localStorage.setItem("pwa_update_available", "1");
         if (window.liveSocket) {
-          try {
-            window.dispatchEvent(
-              new CustomEvent("sw-update", {
-                detail: { update: true },
-              })
-            );
-          } catch (e) {
-            console.error("[SW] Failed to dispatch update event:", e);
-          }
+          window.dispatchEvent(
+            new CustomEvent("sw-update", {
+              detail: { update: true },
+            })
+          );
         }
       },
-      onOfflineReady: () => {
-        if (window.liveSocket) {
-          console.log("[SW] Ready, app now works offline");
-          try {
-            window.dispatchEvent(
-              new CustomEvent("sw-ready", {
-                detail: { ready: true },
-              })
-            );
-          } catch (e) {
-            console.error("[SW] Failed to dispatch offline ready event:", e);
-          }
-          // }
-        }
-      },
+
       onRegisterError: (error) => {
         console.error("[SW] Registration failed:", error);
         if (window.liveSocket) {
-          try {
-            window.dispatchEvent(
-              new CustomEvent("sw-error", {
-                detail: { error: error.toString() },
-              })
-            );
-          } catch (e) {
-            console.error(
-              "[SW] Failed to dispatch registration error event:",
-              e
-            );
-          }
+          window.dispatchEvent(
+            new CustomEvent("sw-error", {
+              detail: { error: error.toString() },
+            })
+          );
         }
       },
     });
 
-    return updateSWFunction;
+    console.log("registerServiceWorker------");
+
+    return await updateSWFunction;
   } catch (error) {
     console.error("[PWA] Failed to load PWA module:", error);
     return false;

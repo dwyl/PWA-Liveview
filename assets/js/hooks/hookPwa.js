@@ -13,15 +13,13 @@ export const PwaHook = {
   },
   async mounted() {
     const _this = this;
-    const pwaAction = document.getElementById("pwa_action-1");
+    const pwaAction = document.getElementById("pwa_action-c");
+    if (!pwaAction) {
+      console.error("[PwaHook] pwa_action-c not found");
+      return;
+    }
 
-    // received from the LiveComponent "lv_component_header" after user's action
-    this.handleEvent("sw-lv-skip-waiting", () => {
-      const updateServiceWorker = AppState.updateServiceWorker;
-      if (updateServiceWorker) {
-        updateServiceWorker();
-      }
-    });
+    // received from regissterServiceWorker()
 
     this.handleReady = (event) => {
       // push to the LV for the on_mount/attach_hook to fire the flash
@@ -30,6 +28,29 @@ export const PwaHook = {
       });
     };
 
+    this.handleUpdate = (event) => {
+      // push to the LiveComponent to fire the button
+      console.log("[PWA] handleUpdate 0");
+      _this.pushEventTo(pwaAction, "sw-lv-update", {
+        update: event.detail.update,
+      });
+      localStorage.removeItem("pwa_update_available");
+    };
+
+    if (localStorage.getItem("pwa_update_available") === "1") {
+      console.log("[PWA] handleUpdate 1");
+      this.handleUpdate({ detail: { update: true } });
+      localStorage.removeItem("pwa_update_available");
+    }
+
+    this.handleEvent("sw-lv-skip-waiting", () => {
+      const updateServiceWorker = AppState.updateServiceWorker;
+      if (updateServiceWorker) {
+        updateServiceWorker();
+        // localStorage.removeItem("pwa_update_available");
+      }
+    });
+
     this.handleError = (event) => {
       // push to the LV for the on_mount/attach_hook to fire the flash
       _this.pushEvent("sw-lv-error", {
@@ -37,22 +58,18 @@ export const PwaHook = {
       });
     };
 
-    this.handleUpdate = (event) => {
-      // push to the LiveComponent to fire the button
-      _this.pushEventTo(pwaAction, "sw-lv-update", {
-        update: event.detail.update,
-      });
-    };
+    // at the end! the callbacks need to be defined before
+    window.addEventListener("sw-ready", this.handleReady);
+    window.addEventListener("sw-error", this.handleError);
+    window.addEventListener("sw-update", this.handleUpdate);
+    console.log("[PwaHook] ----> mounted");
+
     // this.handleControllerChange = (event) => {
     //   _this.pushEvent("sw-lv-change", {
     //     changed: event.detail.changed,
     //   });
     // };
 
-    window.addEventListener("sw-ready", this.handleReady);
-    window.addEventListener("sw-error", this.handleError);
-    window.addEventListener("sw-update", this.handleUpdate);
-    console.log("[PwaHook] -----> mounted");
     // window.addEventListener("sw-change", this.handleControllerChange);
   },
 };

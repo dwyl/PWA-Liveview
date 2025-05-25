@@ -1,6 +1,6 @@
 import { checkServer } from "@js/utilities/checkServer";
 
-export const StockJsonHook = ({ ydoc, userSocket }) => ({
+export const StockYjsChHook = ({ ydoc, userSocket }) => ({
   isOnline: false,
   status: "offline",
   channel: null,
@@ -8,6 +8,8 @@ export const StockJsonHook = ({ ydoc, userSocket }) => ({
   max: null,
   stockComponent: null,
   cleanupSolid: null,
+  ymap: null,
+
   async mounted() {
     this.userID = Number(this.el.dataset.userid);
     if (!localStorage.getItem("userID")) {
@@ -28,15 +30,17 @@ export const StockJsonHook = ({ ydoc, userSocket }) => ({
     this.syncWithServer = this.syncWithServer.bind(this);
     this.runSync = this.runSync.bind(this);
 
-    await this.setupChannel(userSocket, "sql3-counter").then(() =>
-      this.syncWithServer()
-    );
+    await this.setupChannel(userSocket, "sql3-counter").then((msg) => {
+      if (msg !== "joined") throw new Error("Channel setup failed");
+      this.syncWithServer();
+    });
 
     window.addEventListener("connection-status-changed", this.runSync);
 
     // Listen to yjs updates (component will update clicks/counter)
     ydoc.on("update", this.handleYUpdate);
   },
+
   runSync({ detail }) {
     if (detail.status === "online") {
       this.status = "online";
@@ -57,7 +61,7 @@ export const StockJsonHook = ({ ydoc, userSocket }) => ({
       this.channel.leave();
       this.channel = null;
     }
-    console.log("[StockJsonHook] destroyed");
+    console.log("[StocYjsChHook] destroyed");
   },
 
   async stockComponent() {
@@ -124,7 +128,6 @@ export const StockJsonHook = ({ ydoc, userSocket }) => ({
     return this.channel
       .push("client-update", payload)
       .receive("ok", ({ counter }) => {
-        console.log(counter);
         ydoc.transact(() => {
           this.ymap.set("counter", counter);
           this.ymap.set("clicks", 0);

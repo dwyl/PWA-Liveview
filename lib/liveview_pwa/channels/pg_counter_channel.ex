@@ -13,11 +13,25 @@ defmodule LiveviewPwa.PgCounterChannel do
     {:ok, assign(socket, %{user_id: user_id, max_value: max_value})}
   end
 
+  # endpoint of the hook
+  def handle_in("client-clicks", %{"clicks" => 0}, socket) do
+    %{counter: val} = PhxSyncCount.current()
+
+    Logger.debug("[Channel] Zero client-clicks----------->: received #{0}, val: #{inspect(val)}")
+
+    {:reply, {:ok, %{new_val: val}}, assign(socket, :disabled, false)}
+  end
+
   @impl true
   def handle_in("client-clicks", %{"clicks" => clicks}, socket) do
     {:ok, new_val} = PhxSyncCount.decrement(clicks)
-    Logger.info("channel client-clicks----------->: #{inspect(clicks)}, #{inspect(new_val)}")
+    Logger.debug("[channel] client-clicks----------->: #{inspect(clicks)}, #{inspect(new_val)}")
 
     {:reply, {:ok, %{new_val: new_val}}, socket}
+  end
+
+  @impl true
+  def terminate(msg, socket) do
+    Logger.info("#{socket.assigns.user_id} channel terminated: #{inspect(msg)}")
   end
 end

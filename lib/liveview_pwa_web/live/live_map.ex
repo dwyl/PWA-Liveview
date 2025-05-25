@@ -20,12 +20,7 @@ defmodule LiveviewPwaWeb.MapLive do
   def render(assigns) do
     ~H"""
     <div>
-      <.live_component
-        module={PwaLiveComp}
-        id="pwa_action-0"
-        update_available={@update_available}
-        active_path={@active_path}
-      />
+      <.live_component module={PwaLiveComp} id="pwa_action-map" update_available={@update_available} />
       <br />
       <Users.display user_id={@user_id} module_id="users-map" />
 
@@ -39,7 +34,7 @@ defmodule LiveviewPwaWeb.MapLive do
         data-userid={@user_id}
       >
       </div>
-      <div id="hok-select-form" phx-hook="FormHook" phx-update="ignore" data-userid={@user_id}></div>
+      <div id="hook-select-form" phx-hook="FormHook" phx-update="ignore" data-userid={@user_id}></div>
     </div>
     """
   end
@@ -55,15 +50,17 @@ defmodule LiveviewPwaWeb.MapLive do
     {:ok,
      socket
      |> assign(:page_title, "FlightMap")
-     |> assign(:airports, nil)
-     |> assign(:hash, Airport.hash())}
+     |> assign(:hash, Airport.hash())
+     #  |> assign(:airports, nil)
+     |> stream_configure(:airports, dom_id: &"airport-#{&1.airport_id}", id: :airport_id)
+     |> stream(:airports, [])}
   end
 
   # airport list setup on mount ---------->
 
   @impl true
   def handle_async(:fetch_airports, {:ok, fetched_airports}, socket) do
-    %{airports: airports} = socket.assigns
+    # %{airports: airports} = socket.assigns
 
     hash =
       :crypto.hash(:sha256, :erlang.term_to_binary(fetched_airports))
@@ -71,17 +68,22 @@ defmodule LiveviewPwaWeb.MapLive do
 
     Airport.put_hash(hash)
 
-    send(self(), :airports_cleanup)
+    # send(self(), :airports_cleanup)
 
     {:noreply,
      socket
+     |> stream(:airports, fetched_airports, reset: true)
+     |> assign(:hash, hash)
      |> push_event("airports", %{
-       airports: AsyncResult.ok(airports, fetched_airports).result,
+       airports: fetched_airports,
        hash: hash
-     })
-     # memory cleanup
-     |> assign(:airports, nil)
-     |> assign(:hash, hash)}
+     })}
+
+    #  |> push_event("airports", %{
+    #    airports: AsyncResult.ok(airports, fetched_airports).result,
+    #    hash: hash
+    #  })
+    # memory cleanup
   end
 
   def handle_async(:airports, {:exit, reason}, socket) do
@@ -176,7 +178,7 @@ defmodule LiveviewPwaWeb.MapLive do
     user_id = socket.assigns.user_id
     from = Map.get(payload, "origin_user_id")
 
-    Logger.info("#{user_id} Received PubSub event: #{action} from #{from}")
+    Logger.debug("#{user_id} Received PubSub event: #{action} from #{from}")
 
     # delete action has no "from" field as it applies to all clients
     if user_id != from do
@@ -186,11 +188,11 @@ defmodule LiveviewPwaWeb.MapLive do
     end
   end
 
-  # cleanup the async result
-  def handle_info(:airports_cleanup, socket) do
-    send(socket.transport_pid, :garbage_collect)
-    {:noreply, assign(socket, :airports, nil)}
-  end
+  # cleanup the async result. Solution before streams usage
+  # def handle_info(:airports_cleanup, socket) do
+  #   send(socket.transport_pid, :garbage_collect)
+  #   {:noreply, assign(socket, :airports, nil)}
+  # end
 
   # Helpers------------------------------>
   defp fetch_airports do

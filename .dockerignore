@@ -32,7 +32,9 @@
 /_build/
 /.elixir_ls/
 /deps/
+/.github/
 *.ez
+/db/
 
 erl_crash.dump
 
@@ -42,11 +44,16 @@ erl_crash.dump
 
 /priv/phx-static-resources/
 /priv/static/
-#/priv/static/assets/
-#/priv/static/sw.js*
-#/priv/static/airpors.csv
 
 README.md
 /test/
 #docker-compose.yml
 /zig-wasm/
+.env
+.env.docker
+.env.server_example
+docker-compose.yml
+README.md
+LICENSE
+.formatter.exs
+

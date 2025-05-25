@@ -28,7 +28,7 @@ export const PgStock = (props) => {
     () => (
       <>
         <form phx-submit="dec" onSubmit={decrement} id="sol-pg-form">
-          <button class="rounded-lg bg-bisque hover:bg-midnightblue py-2 px-3 text-sm font-semibold leading-6 text-midnightblue active:text-bisque ">
+          <button class="rounded-lg bg-bisque hover:bg-midnightblue py-2 px-3 text-sm font-semibold leading-6 text-midnightblue hover:text-bisque active:text-bisque ">
             Decrement Stock
           </button>
           <input

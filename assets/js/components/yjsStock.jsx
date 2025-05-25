@@ -10,8 +10,6 @@ const getCircularValue = (currentValue, max) => {
 export const YjsStock = (props) => {
   if (dispose) dispose();
 
-  console.log(props);
-
   const ymap = props.ydoc.getMap("sql3-data");
 
   const [localStock, setLocalStock] = createSignal(
@@ -30,7 +28,6 @@ export const YjsStock = (props) => {
   ymap.observe(updateStockSignal);
 
   function updateStockSignal(event, { origin }) {
-    console.log("origin: ", origin);
     if (event.keysChanged.has("counter")) {
       // y_ex sends BigInt so we convert it into an integer
       setLocalStock(Math.round(Number(ymap.get("counter"))));

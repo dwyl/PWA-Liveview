@@ -12,8 +12,8 @@ defmodule LiveviewPwaWeb.Menu do
   defp menu do
     [
       %{id: "elec", title: "PhxSync", path: ~p"/", icon: "hero-bolt"},
-      %{id: "countdown", title: "Yjs-Channel", path: ~p"/yjs", icon: "hero-wrench"},
-      %{id: "mapform", title: "Map", path: ~p"/map", icon: "hero-globe-alt"}
+      %{id: "countdown", title: "YjsChannel", path: ~p"/yjs", icon: "hero-wrench"},
+      %{id: "mapform", title: "FlightMap", path: ~p"/map", icon: "hero-globe-alt"}
     ]
   end
 
@@ -24,14 +24,13 @@ defmodule LiveviewPwaWeb.Menu do
   end
 
   attr :active_path, :string, default: "/"
-  attr :update_available, :boolean, default: false
+  # attr :update_available, :boolean, default: false
 
   def display(assigns) do
     ~H"""
     <div id="menu">
       <nav
         id="navbar"
-        phx-hook="PwaHook"
         class="mt-4 bg-gradient-to-r from-blue-200 to-purple-200 p-4 rounded-lg shadow-md flex justify-between items-center"
       >
         <.link
