@@ -1,0 +1,8 @@
+Postgres cluster pg-lv-pwa created
+  Username:    postgres
+  Password:    lcP9CanAhFLggW2
+  Hostname:    pg-lv-pwa.internal
+  Flycast:     fdaa:0:57e6:0:1::a
+  Proxy port:  5432
+  Postgres port:  5433
+  Connection string: postgres://postgres:lcP9CanAhFLggW2@pg-lv-pwa.flycast:5432
