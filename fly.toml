@@ -17,6 +17,8 @@ DATABASE_PATH = '/mnt/db/main.db'
 MIX_ENV = 'prod'
 PHX_HOST = 'liveview-pwa.fly.dev'
 PORT = '8080'
+ECTO_IPV6 = 'true'
+ERL_AFLAGS = '-proto_dist inet6_tcp'
 
 [[mounts]]
 source = 'db'
