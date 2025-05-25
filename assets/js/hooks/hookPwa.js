@@ -34,14 +34,14 @@ export const PwaHook = {
       _this.pushEventTo(pwaAction, "sw-lv-update", {
         update: event.detail.update,
       });
-      localStorage.removeItem("pwa_update_available");
+      // localStorage.removeItem("pwa_update_available");
     };
 
-    if (localStorage.getItem("pwa_update_available") === "1") {
-      console.log("[PWA] handleUpdate 1");
-      this.handleUpdate({ detail: { update: true } });
-      localStorage.removeItem("pwa_update_available");
-    }
+    // if (localStorage.getItem("pwa_update_available") === "1") {
+    //   console.log("[PWA] handleUpdate 1");
+    //   this.handleUpdate({ detail: { update: true } });
+    //   localStorage.removeItem("pwa_update_available");
+    // }
 
     this.handleEvent("sw-lv-skip-waiting", () => {
       const updateServiceWorker = AppState.updateServiceWorker;

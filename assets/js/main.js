@@ -13,6 +13,7 @@ const CONFIG = {
     map: { path: "/map", id: "users-map" },
     elec: { path: "/", id: "users-elec" },
   },
+  MapID: "hook-map",
 };
 
 const AppState = {
@@ -182,7 +183,7 @@ async function initLiveSocket() {
         ydoc: AppState.globalYdoc,
         userSocket: AppState.userSocket,
       }),
-      MapHook,
+      MapHook: MapHook({ mapID: CONFIG.MapID }),
       FormHook,
       PwaHook,
     };

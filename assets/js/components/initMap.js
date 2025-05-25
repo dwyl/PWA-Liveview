@@ -3,11 +3,11 @@ import markerIconUrl from "leaflet/dist/images/marker-icon.png";
 import markerIconRetinaUrl from "leaflet/dist/images/marker-icon-2x.png";
 import markerShadowUrl from "leaflet/dist/images/marker-shadow.png";
 
-export async function initMap() {
+export async function initMap(mapID) {
   const { default: L } = await import("leaflet");
   const { MaptilerLayer } = await import("@maptiler/leaflet-maptilersdk");
 
-  const map = L.map("hook-map", {
+  const map = L.map(mapID, {
     renderer: L.canvas(),
     minzoom: 1,
     maxzoom: 10,

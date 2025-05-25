@@ -1,6 +1,7 @@
-export async function renderMap() {
+export async function renderMap({ id: mapID }) {
+  console.log(mapID);
   const { initMap } = await import("@js/components/initMap.js");
-  const { L, map, group, maptLayer } = await initMap();
+  const { L, map, group, maptLayer } = await initMap(mapID);
   const userID = localStorage.getItem("userID");
   const params = { L, map, group, _this: null, userID };
 

@@ -1,4 +1,5 @@
 import { AppState } from "@js/main";
+import { CONFIG } from "@js/main";
 
 const offlineComponents = {
     pgStock: null,
@@ -6,112 +7,123 @@ const offlineComponents = {
     map: null,
     form: null,
   },
-  hooksIDs = {
-    pgStock: "hook-pg",
-    yjsStock: "hook-yjs-sql3",
-    map: "hook-map",
-    mapForm: "hook-select-form",
-  },
   contentSelector = "#main-content";
 
-function attachNavigationListeners() {
-  const navLinks = document.querySelectorAll("nav a");
-  navLinks.forEach((link) => {
-    link.removeEventListener("click", handleOfflineNavigation);
-    link.addEventListener("click", handleOfflineNavigation);
-  });
-}
+const hooks = {
+  // substitue the LV rendered DOM with the rendered SolidJS component and use the 'before' cleanup
+  pgStock: {
+    id: "hook-pg",
+    import: () => import("@jsx/components/pgStock.jsx"),
+    component: "PgStock",
+    args: (el) => ({
+      el,
+      ydoc: AppState.globalYdoc,
+      max: Number(localStorage.getItem("max")),
+      userID: localStorage.getItem("userID"),
+    }),
+    assign: (instance) => (offlineComponents.pgStock = instance),
+    // special case when the component is SSR/Liveview and needs to be cleaned up before the Solid component mounts
+    before: () => {
+      const lvPgForm = document.getElementById("lv-pg-form");
+      console.log(lvPgForm);
+      if (lvPgForm) lvPgForm.remove();
+    },
+  },
+  // single hook renders a Solidjs component in the view
+  yjsStock: {
+    id: "hook-yjs-sql3",
+    import: () => import("@jsx/components/yjsStock.jsx"),
+    component: "YjsStock",
+    args: (el) => ({
+      el,
+      ydoc: AppState.globalYdoc,
+      max: Number(localStorage.getItem("max")),
+      userID: localStorage.getItem("userID"),
+    }),
+    assign: (instance) => (offlineComponents.yjsStock = instance),
+  },
+  // multiple hooks in the same view
+  mapView: [
+    // the map is not rendered as a Solidjs component but vanilla JS - Leaflet
+    {
+      id: "hook-map",
+      import: () => import("@js/components/renderMap.js"),
+      component: "renderMap",
+      args: () => ({
+        id: "hook-map",
+      }),
+      assign: async (instance) => (offlineComponents.map = await instance),
+    },
+    // the form is a SolidJS component
+    {
+      id: "hook-select-form",
+      import: () => import("@jsx/components/citiesForm.jsx"),
+      component: "CitiesForm",
+      args: (el) => ({
+        el,
+        _this: null,
+        userID: localStorage.getItem("userID"),
+      }),
+      assign: (instance) => (offlineComponents.form = instance),
+    },
+  ],
+};
 
 async function renderCurrentView() {
   await cleanupOfflineComponents();
 
-  const elPgStock = document.getElementById(hooksIDs.pgStock);
-  if (elPgStock) {
-    const lvPgForm = document.getElementById("lv-pg-form");
-    if (lvPgForm) lvPgForm.remove();
-    // const hookDiv = document.getElementById("hook-pg");
-    // hookDiv.classList.remove("hidden");
+  let results = [];
 
-    const { PgStock } = await import("@jsx/components/pgStock.jsx");
-    offlineComponents.pgStock = PgStock({
-      el: elPgStock,
-      ydoc: AppState.globalYdoc,
-      max: Number(localStorage.getItem("max")),
-      userID: localStorage.getItem("userID"),
-    });
-
-    // return to clean component
-    return offlineComponents.pgStock;
+  for (const key in hooks) {
+    const conf = hooks[key];
+    if (Array.isArray(conf)) {
+      const allPresent = conf.every((hookConf) =>
+        document.getElementById(hookConf.id)
+      );
+      if (allPresent) {
+        for (const hookConf of conf) {
+          const el = document.getElementById(hookConf.id);
+          if (hookConf.before) hookConf.before(el);
+          const module = await hookConf.import();
+          const Component = module[hookConf.component];
+          const args = hookConf.args(el);
+          const instance = Component(args);
+          if (hookConf.assign) await hookConf.assign(instance);
+          results.push(instance);
+        }
+        return results;
+      }
+    } else if (conf.id) {
+      const el = document.getElementById(conf.id);
+      if (el) {
+        if (conf.before) await conf.before(el);
+        const module = await conf.import();
+        const Component = module[conf.component];
+        const args = conf.args(el);
+        const instance = Component(args);
+        await conf.assign?.(instance);
+        return instance;
+      }
+    }
   }
-
-  const elYjsStock = document.getElementById(hooksIDs.yjsStock);
-  if (elYjsStock) {
-    const { YjsStock } = await import("@jsx/components/yjsStock.jsx");
-    offlineComponents.yjsStock = YjsStock({
-      el: elYjsStock,
-      ydoc: AppState.globalYdoc,
-      max: Number(localStorage.getItem("max")),
-      userID: localStorage.getItem("userID"),
-    });
-
-    return true;
-  }
-
-  const elMap = document.getElementById(hooksIDs.map);
-  const elForm = document.getElementById(hooksIDs.mapForm);
-
-  if (elMap && elForm) {
-    const { renderMap } = await import("@js/components/renderMap.js");
-    console.log(renderMap);
-    offlineComponents.map = await renderMap();
-
-    const { CitiesForm } = await import("@jsx/components/citiesForm.jsx");
-    offlineComponents.form = CitiesForm({
-      el: elForm,
-      _this: null,
-      userID: localStorage.getItem("userID"),
-    });
-    return true;
-  }
+  return results.length ? results : undefined;
 }
 
 async function cleanupOfflineComponents() {
-  if (offlineComponents.yjsStock) {
-    try {
-      offlineComponents.yjsStock();
-    } catch (error) {
-      console.error("Error cleaning up YjsStock component:", error);
+  for (const [key, cleanupFn] of Object.entries(offlineComponents)) {
+    if (cleanupFn) {
+      try {
+        cleanupFn();
+      } catch (error) {
+        console.error(
+          `Error cleaning up ${
+            key.charAt(0).toUpperCase() + key.slice(1)
+          } component:`,
+          error
+        );
+      }
+      offlineComponents[key] = null;
     }
-    offlineComponents.yjsStock = null;
-  }
-
-  if (offlineComponents.pgStock) {
-    try {
-      offlineComponents.pgStock();
-    } catch (error) {
-      console.error("Error cleaning up PgStock component:", error);
-    }
-    offlineComponents.pgStock = null;
-  }
-
-  // Cleanup Leaflet map
-  if (offlineComponents.map) {
-    try {
-      offlineComponents.map();
-    } catch (error) {
-      console.error("Error cleaning up Map component:", error);
-    }
-    offlineComponents.map = null;
-  }
-
-  // Cleanup Form SolidJS component
-  if (offlineComponents.form) {
-    try {
-      offlineComponents.form();
-    } catch (error) {
-      console.error("Error cleaning up Form component:", error);
-    }
-    offlineComponents.form = null;
   }
 }
 
@@ -154,6 +166,14 @@ async function handleOfflineNavigation(event) {
     console.error("Offline navigation error:", error);
     return false;
   }
+}
+
+function attachNavigationListeners() {
+  const navLinks = document.querySelectorAll("nav a");
+  navLinks.forEach((link) => {
+    link.removeEventListener("click", handleOfflineNavigation);
+    link.addEventListener("click", handleOfflineNavigation);
+  });
 }
 
 export { renderCurrentView, attachNavigationListeners };

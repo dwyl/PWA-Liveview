@@ -1,6 +1,6 @@
 import { state } from "@js/stores/vStore";
 
-export const MapHook = {
+export const MapHook = ({ mapID }) => ({
   map: null,
   flightObserver: null,
   selectionObserver: null,
@@ -31,7 +31,7 @@ export const MapHook = {
   async mounted() {
     try {
       const { initMap } = await import("@js/components/initMap");
-      const { L, map, group, maptLayer } = await initMap();
+      const { L, map, group, maptLayer } = await initMap(mapID);
       this.map = map;
       this.group = group;
       this.maptLayer = maptLayer;
@@ -86,4 +86,4 @@ export const MapHook = {
       throw error;
     }
   },
-};
+});
