@@ -40,6 +40,12 @@ if config_env() == :prod do
     System.get_env("DATABASE_PATH") ||
       "/db/main.db"
 
+  database_url =
+    System.get_env("DATABASE_URL") ||
+      raise """
+      environment variable DATABASE_URL is missing.
+      """
+
   # set it as default
   # raise """
   # environment variable DATABASE_PATH is missing.
@@ -52,9 +58,7 @@ if config_env() == :prod do
     show_sensitive_data_on_connection_error: true
 
   pg_config = [
-    url:
-      System.get_env("DATABASE_URL") ||
-        "postgres://postgres:1234@pg:5432/elec_prod",
+    url: database_url,
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
   ]
 
