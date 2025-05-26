@@ -11,8 +11,11 @@ defmodule LiveviewPwa.Application do
     LiveviewPwa.Release.migrate()
 
     db = setupDbPath()
-    reuire(Logger)
-    Logger.info("Starting LiveviewPwa with SQLite3 at #{db}, #{System.fetch_env!(DATABASE_PATH)}")
+    require Logger
+
+    Logger.info(
+      "Starting LiveviewPwa with SQLite3 at #{db}, #{System.fetch_env!("DATABASE_PATH")}"
+    )
 
     children = [
       LiveviewPwaWeb.Telemetry,
