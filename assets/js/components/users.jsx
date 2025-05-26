@@ -8,7 +8,7 @@ export function mountUsers(props) {
   const dispose = render(
     () => (
       <p class="text-sm text-midnightblue mt-4 mb-4" id="users">
-        <span>{users().length}</span>
+        <span class="mr-2">{users().length}</span>
         Online user(s): &nbsp
         <For each={users()}>
           {(user) => (

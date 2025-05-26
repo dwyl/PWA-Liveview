@@ -1,55 +1,89 @@
 # Offline first Phoenix LiveView PWA
 
-An example of a real-time, collaborative multi-page web app built with `Phoenix LiveView`.
+An example of a real-time, collaborative multi-page web app built with `Phoenix LiveView` designed for offline-first ready; it is packaged as a [PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps).
 
-It is designed for offline-first ready; it is packaged as a [PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps).
+While the app supports full offline interaction and local persistence using CRDTs (via `Yjs` and `y-indexeddb`), the core architecture is still grounded in a server-side source of truth. The server database ultimately reconciles all updates, ensuring consistency across clients.
+
+This design enables:
+
+✅ Full offline functionality and interactivity
+
+✅ Real-time collaboration between multiple users
+
+✅ Reconciliation with a central, trusted source of truth when back online
 
 In this demo, we have a _centralized authoritative server_. We use:
 
-- `SQlite` where no logical replication is available, and where the Channel is responsible to update the database and broadcast to clients,
-- `Postgres` with logical replication via `Phoenix_Sync`.
+## Architecture at a glance
 
-Even if it uses `Yjs` (CRDT based), it is not decentralized as requested for pur CRDT: there is no peer-to-peer replication nor concurrent writes.
+- Client-side CRDTs (`Yjs`) manage local state changes (e.g. counter updates), even when offline
+- Server-side database (`Postgres` or `SQLite`) remains authoritative
+- When the client reconnects, local CRDT updates are synced with the server:
 
-It isn't neither pure [lazy replication](https://en.wikipedia.org/wiki/Optimistic_replication) as there is no direct state replication between clients.
-Writes are _serialized_ but actions - the user - are concurrent.
+  - In one page, via `Postgres` and `Phoenix_Sync` wit logical replication
+  - In another, via `SQLite` using a `Phoenix Channel` message
 
-We have instead _asynchronous reconciliation_, in other words Optimistic updates with centralized reconciliation.
+- Offline first solutions naturally offloads the reactive UI logic to JavaScript. We used `SolidJS`.
+- It uses `Vite` as the bundler. The `vite-plugin-pwa` registers a Service Worker to cache app shell and assets for offline usage.
 
-It is rather a hydrib [op-based CRDT](https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type#Counters):
+## How it works
 
-- we send operations, not values,
-- it is commutative is the sense of being independant of the order of interaaction
-- `Phoenix` acts as a broadcasting layer
+### Optimistic Updates with Centralized Reconciliation
 
-The local state (`Yjs`+ `IndexedDB`) is a replica of the authoritative state
-and uses op-based CRDTs (no concurrent writes here) or local state and reactive components.
+Although we leverage Yjs (a CRDT library) under the hood, this isn’t a fully peer-to-peer, decentralized CRDT system. Instead, in this demo we have:
 
-Offline first solutions naturally offloads the reactive UI logic to JavaScript.
+- No direct client-to-client replication (not pure lazy/optimistic replication).
+- No concurrent writes against the same replica—all operations are serialized through the server.
 
-When online, we use LiveView "hooks" or SSR, and while when offline, we render the reactive components.
+Writes are _serialized_ but actions are concurrent. What we do have is _asynchronous reconciliation_ with an [operation-based CRDT](https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type#Counters) approach:
 
-It uses `Vite` as the bundler.
+- User actions (e.g. clicking “decrement” on the counter) are applied locally to a `Yjs` document stored in `IndexedDB`.
+- The same operation (not the full value) is sent to the server via `Phoenix` (either `Phoenix_Sync` or a `Channel`).
+- `Phoenix` broadcasts that op to all connected clients.
+- Upon receipt, each client applies the op to its local `Yjs` document—order doesn’t matter, making it commutative.
+- The server database (Postgres or SQLite) remains the single source of truth and persists ops in sequence.
 
-> While it can be extended to support multiple pages, dynamic page handling has not yet been tested nor implemented.
+> In CRDT terms: We use an operation-based CRDT (CRDT Counter) for each shared value Ops commute (order-independent) even though they pass through a central broker.
 
-## Known bug(s)
+### Rendering Strategy: SSR vs. Client-Side Hooks
 
-Phoenix_Sync crashes in embeded mode.
+To keep the UI interactive both online and offline, we mix `LiveView`’s server-side rendering (SSR) with a client-side reactive framework:
 
+- Online (`LiveView` SSR or Hooks)
+
+  - `LiveView` renders the initial HTML on the server.
+  - A `LiveView` hook (`JavaScript`) attaches to the counter element and initializes a `SolidJS` component.
+  - As ops flow in/out over the LiveSocket, `SolidJS` updates the DOM reactively.
+
+- Offline (Manual Rendering)
+
+  - The Service Worker serves the cached HTML & JS bundle.
+  - LiveSocket is disconnected, so `LiveView` hooks can’t drive updates.
+  - We detect offline status and manually mount the same `SolidJS` component using our "navigate.js" utility.
+  - The component reads from the local `Yjs`+`IndexedDB` replica and remains fully interactive.
+
+### Service Worker & Asset Caching
+
+`vite-plugin-pwa` generates a Service Worker that:
+
+- Pre-caches the app shell (HTML, CSS, JS) on install.
+- Intercepts navigations to serve the cached app shell for offline-first startup.
+
+This ensures the entire app loads reliably even without network connectivity.
 
 ## Results
 
-- deployed on Fly.io at: <https://liveview-pwa.fly.dev/yjs/>
-- standalone Phoenix LiveView app of 2.5 MB
-- memory usage: 270MB
-- image weight: 57MB of Fly.io, 126MB on Docker Hub (`Debian` based)
-- client code can be updated via the Service Worker lifecycle
-
+Deployed on `Fly.io`: <https://liveview-pwa.fly.dev/yjs/>
 
 ## Table of Contents
 
 - [Offline first Phoenix LiveView PWA](#offline-first-phoenix-liveview-pwa)
+  - [Architecture at a glance](#architecture-at-a-glance)
+  - [How it works](#how-it-works)
+    - [Optimistic Updates with Centralized Reconciliation](#optimistic-updates-with-centralized-reconciliation)
+    - [Rendering Strategy: SSR vs. Client-Side Hooks](#rendering-strategy-ssr-vs-client-side-hooks)
+    - [Service Worker \& Asset Caching](#service-worker--asset-caching)
+  - [Results](#results)
   - [Table of Contents](#table-of-contents)
   - [What?](#what)
   - [Why?](#why)
@@ -238,7 +272,7 @@ A Progressive Web App (PWA) is a type of web application that provides an app-li
 It has:
 
 - offline support
-- is "instalable":
+- is "installable":
 
 <img width="135" alt="Screenshot 2025-05-08 at 22 02 40" src="https://github.com/user-attachments/assets/dddaaac7-9255-419b-a5ad-44a2a891e93a" />
 <br/>
