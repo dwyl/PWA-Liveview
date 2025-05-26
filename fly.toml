@@ -1,4 +1,4 @@
-# fly.toml app configuration file generated for liveview-pwa on 2025-05-26T09:30:28-05:00
+# fly.toml app configuration file generated for liveview-pwa on 2025-05-26T09:42:26-05:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
@@ -17,6 +17,9 @@ DATABASE_PATH = '/data/db/main.sqlite3'
 MIX_ENV = 'prod'
 PHX_HOST = 'liveview-pwa.fly.dev'
 PORT = '8080'
+ECTO_IPV6 = 'true'
+ERL_AFLAGS = '-proto_dist inet6_tcp'
+
 
 [[mounts]]
 source = 'db'
@@ -39,6 +42,6 @@ hard_limit = 1000
 soft_limit = 1000
 
 [[vm]]
-memory = '512mb'
+memory = '1gb'
 cpu_kind = 'shared'
 cpus = 1
