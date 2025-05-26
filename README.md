@@ -33,17 +33,19 @@ It uses `Vite` as the bundler.
 
 > While it can be extended to support multiple pages, dynamic page handling has not yet been tested nor implemented.
 
-**Results**:
+## Known bug(s)
 
-- deployed on Fly.io at: <https://solidyjs-lively-pine-4375.fly.dev/>
-- standalone Phoenix LiveView app of 2.1 MB
-- memory usage: 220MB
-- image weight: 52MB of Fly.io, 126MB on Docker Hub (`Debian` based)
+Phoenix_Sync crashes in embeded mode.
+
+
+## Results
+
+- deployed on Fly.io at: <https://liveview-pwa.fly.dev/yjs/>
+- standalone Phoenix LiveView app of 2.5 MB
+- memory usage: 270MB
+- image weight: 57MB of Fly.io, 126MB on Docker Hub (`Debian` based)
 - client code can be updated via the Service Worker lifecycle
 
-QRCode to check multi users, from on a mobile device:
-
-<img alt="qr-code" width="200" src="https://github.com/user-attachments/assets/9326182b-9933-45ea-9a0b-aeea9c197c24" />
 
 ## Table of Contents
 
