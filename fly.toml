@@ -13,7 +13,7 @@ kill_signal = 'SIGTERM'
 release_command = '/app/bin/migrate'
 
 [env]
-DATABASE_PATH = '/mnt/db/main.db'
+DATABASE_PATH = '/mnt/db/main.sql3'
 ECTO_IPV6 = 'true'
 ERL_AFLAGS = '-proto_dist inet6_tcp'
 MIX_ENV = 'prod'
@@ -24,7 +24,7 @@ PORT = '8080'
 # app = 'root'
 
 [[mounts]]
-source = 'db'
+source = 'name'
 destination = '/mnt/db'
 auto_extend_size_threshold = 80
 auto_extend_size_increment = '1GB'
