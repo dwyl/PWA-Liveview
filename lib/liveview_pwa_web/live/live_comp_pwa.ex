@@ -32,12 +32,12 @@ defmodule LiveviewPwaWeb.PwaLiveComp do
 
   @impl true
   def handle_event("sw-lv-update", %{"update" => true}, socket) do
-    Logger.info("sw-lv-update_comp")
+    Logger.debug("sw-lv-update_comp")
     {:noreply, assign(socket, :update_available, true)}
   end
 
   def handle_event("skip-waiting", _params, socket) do
-    Logger.info("skip-waiting-comp")
+    Logger.debug("skip-waiting-comp")
 
     {:noreply,
      socket

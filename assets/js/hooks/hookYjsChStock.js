@@ -83,9 +83,7 @@ export const StockYjsChHook = ({ ydoc, userSocket }) => ({
 
     // Receive new counter from server, update local doc and reset clicks
     this.channel.on("counter-update", ({ counter, from }) => {
-      console.log("counter-udpate", counter);
       if (from === this.userID) return; // ignore own updates
-      // console.log(ymap.toJSON());
       ydoc.transact(() => {
         this.ymap.set("counter", counter);
         // do not reset clicks here, only in handleYUpdate

@@ -31,7 +31,7 @@ defmodule LiveviewPwaWeb.MountUser do
   end
 
   defp handle_pwa_event("sw-lv-ready", _, socket) do
-    Logger.info("sw-lv-ready")
+    Logger.debug("sw-lv-ready")
     {:halt, put_flash(socket, :info, "Service Worker ready")}
   end
 

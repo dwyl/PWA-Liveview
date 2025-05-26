@@ -31,6 +31,7 @@ defmodule LiveviewPwaWeb.Endpoint do
   socket "/live", Phoenix.LiveView.Socket,
     websocket: [
       connect_info: [session: @session_options],
+      # <- reduces payload size of airports
       compress: true,
       csp_nonce_assign_key: :main_nonce
     ],
@@ -47,7 +48,6 @@ defmodule LiveviewPwaWeb.Endpoint do
         # which is set in the Dockerfile.
         # This allows the Yjs WebSocket connection to be
         # established from the client.
-        # origins: Application.get_env(:liveview_pwa, :websocket_origins)
       ]
     ]
 
@@ -62,14 +62,7 @@ defmodule LiveviewPwaWeb.Endpoint do
     gzip: true,
     at: "/",
     from: :liveview_pwa,
-    only: ~w(
-      assets
-      icons
-      robots.txt
-      sw.js
-      manifest.webmanifest
-      sitemap.xml
-      ),
+    only: LiveviewPwaWeb.static_paths(),
     headers: %{
       "cache-control" => "public, max-age=31536000"
     }

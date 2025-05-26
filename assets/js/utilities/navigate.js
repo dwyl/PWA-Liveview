@@ -83,7 +83,7 @@ async function renderCurrentView() {
       if (allPresent) {
         for (const hookConf of conf) {
           const el = document.getElementById(hookConf.id);
-          if (hookConf.before) hookConf.before(el);
+          if (hookConf.before) hookConf.before();
           const module = await hookConf.import();
           const Component = module[hookConf.component];
           const args = hookConf.args(el);
@@ -96,7 +96,7 @@ async function renderCurrentView() {
     } else if (conf.id) {
       const el = document.getElementById(conf.id);
       if (el) {
-        if (conf.before) await conf.before(el);
+        if (conf.before) await conf.before();
         const module = await conf.import();
         const Component = module[conf.component];
         const args = conf.args(el);
@@ -111,19 +111,8 @@ async function renderCurrentView() {
 
 async function cleanupOfflineComponents() {
   for (const [key, cleanupFn] of Object.entries(offlineComponents)) {
-    if (cleanupFn) {
-      try {
-        cleanupFn();
-      } catch (error) {
-        console.error(
-          `Error cleaning up ${
-            key.charAt(0).toUpperCase() + key.slice(1)
-          } component:`,
-          error
-        );
-      }
-      offlineComponents[key] = null;
-    }
+    if (cleanupFn) cleanupFn();
+    offlineComponents[key] = null;
   }
 }
 

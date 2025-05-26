@@ -9,8 +9,8 @@
   "license": "ISC",
   "dependencies": {
     "@electric-sql/client": "^1.0.4",
-    "@maptiler/leaflet-maptilersdk": "^4.0.3",
-    "@maptiler/sdk": "^3.2.3",
+    "@maptiler/leaflet-maptilersdk": "^4.1.0",
+    "@maptiler/sdk": "^3.3.0",
     "leaflet": "^1.9.4",
     "phoenix": "file:../deps/phoenix",
     "phoenix_html": "file:../deps/phoenix_html",

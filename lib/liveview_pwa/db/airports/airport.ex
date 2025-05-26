@@ -77,7 +77,7 @@ defmodule Airport do
     Simple query that returns all airports from the database.
   """
   def municipalities do
-    Logger.info("Fetching all airports from the database................")
+    Logger.info("[Airport] Fetching all from the database.............")
     db = db()
     query = "SELECT airport_id,name,city,country,latitude, longitude FROM airports;"
 

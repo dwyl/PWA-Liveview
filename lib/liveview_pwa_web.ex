@@ -18,12 +18,12 @@ defmodule LiveviewPwaWeb do
   """
 
   def static_paths,
-    do: ~w(assets fonts images favicon.ico robots.txt  sw.js custom-sw.js manifest.webmanifest)
-
-  # sw.js
-  # get "/", PageController, :home
-
-  # yjs.js preload-helper.js registerSW.js sw.js y-indexeddb.js web.js workbox-window.prod.es5.js)
+    do: ~w(assets
+      icons
+      robots.txt
+      sw.js
+      manifest.webmanifest
+      sitemap.xml)
 
   def router do
     quote do

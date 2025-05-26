@@ -93,13 +93,5 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
      push_event(socket, "update-local-store", %{counter: new_val}) |> assign(:disabled, true)}
   end
 
-  #
-  # the event "client-clicks" with clicks>0 are sent to the channel
-  # def handle_event("client-clicks", %{"clicks" => 0}, socket) do
-  #   %{counter: val} = PhxSyncCount.current()
-
-  #   Logger.debug("[LV] Zero client-clicks----------->: received #{0}, val: #{inspect(val)}")
-
-  #   {:reply, %{new_val: val}, assign(socket, :disabled, false)}
-  # end
+  # event "client-clicks" sent over the userSocket
 end
