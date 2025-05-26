@@ -88,17 +88,14 @@ WORKDIR /app
 
 COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/liveview_pwa ./
 
-RUN chown -R nobody:nogroup /mnt
-RUN mkdir -p /app/db && \
-  chown -R nobody:nogroup /app/db && \
-  chmod -R 777 /app/db && \
-  chown nobody /app
+# RUN chown -R nobody:nogroup /mnt
+# RUN mkdir -p /app/db && \
+#   chown -R nobody:nogroup /app/db && \
+#   chmod -R 777 /app/db && \
+#   chown nobody /app
 
 
 USER nobody
-
-# COPY sql3-entrypoint.sh /app/sql3-entrypoint.sh
-# ENTRYPOINT ["/app/sql3-entrypoint.sh"]
 
 
 # EXPOSE 4000
