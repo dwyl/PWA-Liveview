@@ -13,7 +13,7 @@ kill_signal = 'SIGTERM'
 release_command = '/app/bin/migrate'
 
 [env]
-DATABASE_PATH = '/data/main.sqlite3'
+DATABASE_PATH = '/data/db/main.sqlite3'
 ECTO_IPV6 = 'true'
 ERL_AFLAGS = '-proto_dist inet6_tcp'
 MIX_ENV = 'prod'
