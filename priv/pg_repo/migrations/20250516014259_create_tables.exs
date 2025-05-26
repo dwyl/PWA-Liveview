@@ -18,6 +18,10 @@ defmodule LiveviewPwa.PgRepo.Migrations.CreateTables do
       ON CONFLICT (id) DO NOTHING;
     """)
 
+    execute("""
+    ALTER ROLE postgres WITH REPLICATION;
+    """)
+
     # execute("""
     #   INSERT INTO electric_counts (id, y_doc)
     #   VALUES ('yjs-doc', decode('', 'hex'))
