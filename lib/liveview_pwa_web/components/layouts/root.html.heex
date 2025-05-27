@@ -29,6 +29,21 @@
       href={ViteHelper.path("css/app.css")}
       crossorigin="anonymous"
     />
+    <%!-- <link
+      rel="preload"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      as="style"
+      id="leaflet-css-preload"
+    />
+
+    <script defer nonce={assigns[:style_nonce]}>
+      // This is a workaround to load Leaflet CSS correctly
+      // It prevents the stylesheet from blocking the initial page render
+      document.getElementById("leaflet-css-preload").onload = function() {
+        this.rel = 'stylesheet';
+      };
+    </script> --%>
+
     <%!-- href={~p"/assets/app.css"}  --%>
 
     <script

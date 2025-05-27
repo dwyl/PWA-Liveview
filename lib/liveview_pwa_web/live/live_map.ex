@@ -30,13 +30,15 @@ defmodule LiveviewPwaWeb.MapLive do
         id="hook-map"
         phx-hook="MapHook"
         phx-update="ignore"
-        style="height: 300px"
+        class="h-64 md:h-80"
         data-userid={@user_id}
       >
       </div>
       <div id="hook-select-form" phx-hook="FormHook" phx-update="ignore" data-userid={@user_id}></div>
     </div>
     """
+
+    # style="height: 300px"
   end
 
   @impl true

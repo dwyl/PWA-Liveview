@@ -13,8 +13,8 @@ defmodule LiveviewPwaWeb.Router do
     plug :fetch_session
     plug :fetch_live_flash
     plug :put_root_layout, html: {LiveviewPwaWeb.Layouts, :root}
-    plug :set_current_user
     plug BrowserCSP
+    plug :set_current_user
     plug :protect_from_forgery
   end
 
@@ -51,6 +51,7 @@ defmodule LiveviewPwaWeb.Router do
         conn
         |> put_session(:user_id, user_id)
         |> put_session(:user_token, user_token)
+        |> put_session(:style_nonce, conn.assigns.style_nonce)
 
       _user_id ->
         conn

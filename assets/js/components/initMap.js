@@ -1,11 +1,14 @@
-import "leaflet/dist/leaflet.css";
-import markerIconUrl from "leaflet/dist/images/marker-icon.png";
-import markerIconRetinaUrl from "leaflet/dist/images/marker-icon-2x.png";
-import markerShadowUrl from "leaflet/dist/images/marker-shadow.png";
-
 export async function initMap(mapID) {
   const { default: L } = await import("leaflet");
   const { MaptilerLayer } = await import("@maptiler/leaflet-maptilersdk");
+
+  // await import("leaflet/dist/leaflet.css");
+  await import("@css/leaflet.css");
+  // Vite-specific: Dynamically inject Leaflet CSS
+  // const css = await import("leaflet/dist/leaflet.css?inline");
+  // const style = document.createElement("style");
+  // style.textContent = css.default;
+  // document.head.appendChild(style);
 
   const map = L.map(mapID, {
     renderer: L.canvas(),
@@ -25,10 +28,12 @@ export async function initMap(mapID) {
 
   const group = L.layerGroup().addTo(map);
 
-  // L.Icon.Default.imagePath = "/";
-  L.Icon.Default.prototype.options.iconUrl = markerIconUrl;
-  L.Icon.Default.prototype.options.iconRetinaUrl = markerIconRetinaUrl;
-  L.Icon.Default.prototype.options.shadowUrl = markerShadowUrl;
-  L.Icon.Default.imagePath = "";
+  L.Marker.prototype.options.icon = L.icon({
+    iconUrl: new URL("@assets/marker-icon.png", import.meta.url).href,
+    iconRetinaUrl: new URL("@assets/marker-icon-2x.png", import.meta.url).href,
+    shadowUrl: new URL("@assets/marker-shadow.png", import.meta.url).href,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+  });
   return { L, map, group, maptLayer };
 }

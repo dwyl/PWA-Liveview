@@ -249,29 +249,6 @@ const MapTiler = {
   },
 };
 
-// const StaticAssets = {
-//   // urlPattern: /\.(?:js|mjs|wasm|css)$/i,
-//   urlPattern: ({ url }) => {
-//     console.log("Checking URL for caching:", url.pathname);
-//     const matches = /\.(js|wasm|mjs|css)$/i.test(url.pathname);
-//     console.log("Matches pattern:", matches);
-//     return matches;
-//   },
-//   // handler: "StaleWhileRevalidate",
-//   handler: "CacheFirst",
-//   options: {
-//     cacheName: "static-resources",
-//     expiration: {
-//       maxEntries: 50,
-//       maxAgeSeconds: 24 * 60 * 60, // 24 hours
-//     },
-//     fetchOptions: {
-//       credentials: "same-origin",
-//       // Explicitly allow compressed responses
-//     },
-//   },
-// };
-
 const OtherStaticAssets = {
   urlPattern: ({ url }) =>
     /\.(png|jpg|jpeg|gif|svg|ico|webp|woff2)$/i.test(url.pathname),

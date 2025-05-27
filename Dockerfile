@@ -85,18 +85,16 @@ ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8
 
 WORKDIR /app
 
-
 COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/liveview_pwa ./
 
+# <-- needed for local testing
 # RUN chown -R nobody:nogroup /mnt
 # RUN mkdir -p /app/db && \
 #   chown -R nobody:nogroup /app/db && \
 #   chmod -R 777 /app/db && \
 #   chown nobody /app
 
-
 USER nobody
 
-
-# EXPOSE 4000
+EXPOSE 4000
 CMD ["/bin/sh", "-c", "/app/bin/server"]

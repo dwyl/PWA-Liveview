@@ -21,9 +21,10 @@ defmodule BrowserCSP do
   def call(conn, _opts) do
     # main_nonce = Application.fetch_env!(:liveview_pwa, :csp_nonce)
     main_nonce = generate_nonce()
+    style_nonce = generate_nonce()
 
     conn
-    |> put_resp_header("content-security-policy", build_csp(main_nonce))
+    |> put_resp_header("content-security-policy", build_csp(main_nonce, style_nonce))
     |> put_resp_header(
       "strict-transport-security",
       "max-age=#{@hsts_max_age}; includeSubDomains; preload"
@@ -31,16 +32,17 @@ defmodule BrowserCSP do
     |> put_resp_header("cross-origin-opener-policy", "same-origin")
     # -> assign available and populated in "root.html.heex"
     |> assign(:main_nonce, main_nonce)
+    |> assign(:style_nonce, style_nonce)
   end
 
-  defp build_csp(nonce) do
+  defp build_csp(nonce1, nonce2) do
     """
-      script-src 'self' 'nonce-#{nonce}' 'strict-dynamic' 'wasm-unsafe-eval' https://cdn.maptiler.com/;
+      script-src 'self' 'nonce-#{nonce1}' 'nonce-#{nonce2}' 'strict-dynamic' 'wasm-unsafe-eval' https://unpkg.com/leaflet@1.9.4/dist/leaflet.css https://cdn.maptiler.com/  https://solidjs-lively-pine-4375.fly.dev https://*.maptiler.com/ https://api.maptiler.com/ http://localhost:* ws://localhost:* wss://solidyjs-lively-pine-4375.fly.dev;
       object-src 'none';
       connect-src 'self' http://localhost:* https://solidyjs-lively-pine-4375.fly.dev wss://solidyjs-lively-pine-4375.fly.dev ws://solidyjs-lively-pine-4375.fly.dev ws://localhost:* https://api.maptiler.com/ https://*.maptiler.com/;
       img-src 'self' data: https://*.maptiler.com/ https://api.maptiler.com/ http://localhost:4000 https://leafletjs.com;
       worker-src 'self' blob:;
-      style-src 'self' 'unsafe-inline';
+      style-src 'self'  'unsafe-inline' https://unpkg.com/leaflet@1.9.4/dist/leaflet.css;
       default-src 'self' https://solidjs-lively-pine-4375.fly.dev;
       frame-ancestors 'self' https://solidyjs-lively-pine-4375.fly.dev;
       font-src 'self' https://fonts.maptiler.com;

@@ -1,4 +1,4 @@
-# fly.toml app configuration file generated for liveview-pwa on 2025-05-26T16:28:55-05:00
+# fly.toml app configuration file generated for liveview-pwa on 2025-05-26T18:35:57-05:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
@@ -20,13 +20,12 @@ PORT = '8080'
 ECTO_IPV6 = 'true'
 ERL_AFLAGS = '-proto_dist inet6_tcp'
 
-
 [[mounts]]
 source = 'db'
 destination = '/data'
 auto_extend_size_threshold = 80
 auto_extend_size_increment = '1GB'
-auto_extend_size_limit = '10GB'
+auto_extend_size_limit = '1GB'
 
 [http_service]
 internal_port = 8080
