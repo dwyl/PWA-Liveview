@@ -14,6 +14,12 @@ const CONFIG = {
     elec: { path: "/", id: "users-elec" },
   },
   MapID: "hook-map",
+  hooks: {
+    PgStockHook: "hook-pg",
+    StockYjsChHook: "hook-yjs-sql3",
+    MapHook: "hook-map",
+    FormHook: "hook-select-form",
+  },
 };
 
 const AppState = {

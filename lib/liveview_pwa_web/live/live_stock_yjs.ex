@@ -32,6 +32,6 @@ defmodule LiveviewPwaWeb.StockYjsLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, :page_title, "Yjs-SQL3")}
+    {:ok, assign(socket, :page_title, "YjsCh")}
   end
 end

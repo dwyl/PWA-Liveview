@@ -65,7 +65,7 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
 
     {:ok,
      socket
-     |> assign(:page_title, "Phx-Sync")
+     |> assign(:page_title, "PhxSync")
      |> assign(:hide, false)
      |> assign(:disabled, false)
      |> sync_stream(:phx_sync_counter, query)}

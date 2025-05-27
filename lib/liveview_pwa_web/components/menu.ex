@@ -24,7 +24,6 @@ defmodule LiveviewPwaWeb.Menu do
   end
 
   attr :active_path, :string, default: "/"
-  # attr :update_available, :boolean, default: false
 
   def display(assigns) do
     ~H"""

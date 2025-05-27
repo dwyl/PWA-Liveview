@@ -2,62 +2,67 @@ import { AppState } from "@js/main";
 import { CONFIG } from "@js/main";
 
 const offlineComponents = {
-    pgStock: null,
-    yjsStock: null,
-    map: null,
-    form: null,
-  },
-  contentSelector = "#main-content";
+  PgStockHook: null,
+  StockYjsChHook: null,
+  MapHook: null,
+  FormHook: null,
+};
+
+const contentSelector = "#main-content";
 
 const hooks = {
   // substitue the LV rendered DOM with the rendered SolidJS component and use the 'before' cleanup
-  pgStock: {
-    id: "hook-pg",
-    import: () => import("@jsx/components/pgStock.jsx"),
-    component: "PgStock",
-    args: (el) => ({
-      el,
-      ydoc: AppState.globalYdoc,
-      max: Number(localStorage.getItem("max")),
-      userID: localStorage.getItem("userID"),
-    }),
-    assign: (instance) => (offlineComponents.pgStock = instance),
-    // special case when the component is SSR/Liveview and needs to be cleaned up before the Solid component mounts
-    before: () => {
-      const lvPgForm = document.getElementById("lv-pg-form");
-      if (lvPgForm) lvPgForm.remove();
+  PgStockHook: [
+    {
+      id: CONFIG.hooks.PgStockHook,
+      component: "PgStock",
+      import: () => import("@jsx/components/pgStock.jsx"),
+      args: (el) => ({
+        el,
+        ydoc: AppState.globalYdoc,
+        max: Number(localStorage.getItem("max")),
+        userID: localStorage.getItem("userID"),
+      }),
+      assign: (instance) => (offlineComponents.pgStock = instance),
+      // special case when the component is SSR/Liveview and needs to be cleaned up before the Solid component mounts
+      before: () => {
+        const lvPgForm = document.getElementById("lv-pg-form");
+        if (lvPgForm) lvPgForm.remove();
+      },
     },
-  },
+  ],
   // single hook renders a Solidjs component in the view
-  yjsStock: {
-    id: "hook-yjs-sql3",
-    import: () => import("@jsx/components/yjsStock.jsx"),
-    component: "YjsStock",
-    args: (el) => ({
-      el,
-      ydoc: AppState.globalYdoc,
-      max: Number(localStorage.getItem("max")),
-      userID: localStorage.getItem("userID"),
-    }),
-    assign: (instance) => (offlineComponents.yjsStock = instance),
-  },
+  StockYjsChHook: [
+    {
+      id: CONFIG.hooks.StockYjsChHook,
+      component: "YjsStock",
+      import: () => import("@jsx/components/yjsStock.jsx"),
+      args: (el) => ({
+        el,
+        ydoc: AppState.globalYdoc,
+        max: Number(localStorage.getItem("max")),
+        userID: localStorage.getItem("userID"),
+      }),
+      assign: (instance) => (offlineComponents.yjsStock = instance),
+    },
+  ],
   // multiple hooks in the same view
   mapView: [
     // the map is not rendered as a Solidjs component but vanilla JS - Leaflet
     {
-      id: "hook-map",
-      import: () => import("@js/components/renderMap.js"),
+      id: CONFIG.hooks.MapHook,
       component: "renderMap",
+      import: () => import("@js/components/renderMap.js"),
       args: () => ({
-        id: "hook-map",
+        id: CONFIG.hooks.MapHook,
       }),
       assign: async (instance) => (offlineComponents.map = await instance),
     },
     // the form is a SolidJS component
     {
-      id: "hook-select-form",
-      import: () => import("@jsx/components/citiesForm.jsx"),
+      id: CONFIG.hooks.FormHook,
       component: "CitiesForm",
+      import: () => import("@jsx/components/citiesForm.jsx"),
       args: (el) => ({
         el,
         _this: null,
@@ -86,22 +91,12 @@ async function renderCurrentView() {
           const module = await hookConf.import();
           const Component = module[hookConf.component];
           const args = hookConf.args(el);
-          const instance = Component(args);
+          const instance = await Component(args);
           if (hookConf.assign) await hookConf.assign(instance);
+          console.log(instance);
           results.push(instance);
         }
         return results;
-      }
-    } else if (conf.id) {
-      const el = document.getElementById(conf.id);
-      if (el) {
-        if (conf.before) await conf.before();
-        const module = await conf.import();
-        const Component = module[conf.component];
-        const args = conf.args(el);
-        const instance = Component(args);
-        await conf.assign?.(instance);
-        return instance;
       }
     }
   }
@@ -116,7 +111,7 @@ async function cleanupOfflineComponents() {
 }
 
 /*
-Clean up existing components (to prevent memory leaks)
+Clean up existing components
 Update the DOM structure with the cached HTML
 Render the new components into the updated DOM
 Reattach navigation listeners to handle future navigation
