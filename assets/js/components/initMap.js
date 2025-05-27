@@ -3,12 +3,15 @@ export async function initMap(mapID) {
   const { MaptilerLayer } = await import("@maptiler/leaflet-maptilersdk");
 
   // await import("leaflet/dist/leaflet.css");
-  await import("@css/leaflet.css");
+  // await import("@css/leaflet.css");
   // Vite-specific: Dynamically inject Leaflet CSS
-  // const css = await import("leaflet/dist/leaflet.css?inline");
-  // const style = document.createElement("style");
-  // style.textContent = css.default;
-  // document.head.appendChild(style);
+  if (!document.getElementById("inline-leaflet-css")) {
+    const css = await import("leaflet/dist/leaflet.css?inline");
+    const style = document.createElement("style");
+    style.setAttribute("id", "inline-leaflet-css");
+    style.textContent = css.default;
+    document.head.appendChild(style);
+  }
 
   const map = L.map(mapID, {
     renderer: L.canvas(),

@@ -251,7 +251,7 @@ const MapTiler = {
 
 const OtherStaticAssets = {
   urlPattern: ({ url }) =>
-    /\.(png|jpg|jpeg|gif|svg|ico|webp|woff2)$/i.test(url.pathname),
+    /\.(css|png|jpg|jpeg|gif|svg|ico|webp|woff2)$/i.test(url.pathname),
   handler: "CacheFirst",
   options: {
     cacheName: "images",

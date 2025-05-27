@@ -12,16 +12,14 @@ This design enables:
 
 ✅ Reconciliation with a central, trusted source of truth when back online
 
-In this demo, we have a _centralized authoritative server_. We use:
-
 ## Architecture at a glance
 
 - Client-side CRDTs (`Yjs`) manage local state changes (e.g. counter updates), even when offline
 - Server-side database (`Postgres` or `SQLite`) remains authoritative
 - When the client reconnects, local CRDT updates are synced with the server:
 
-  - In one page, via `Postgres` and `Phoenix_Sync` wit logical replication
-  - In another, via `SQLite` using a `Phoenix Channel` message
+  - In one page, via `Postgres` and `Phoenix.Sync` wit logical replication
+  - In another, via `SQLite` using a `Phoenix.Channel` message
 
 - Offline first solutions naturally offloads the reactive UI logic to JavaScript. We used `SolidJS`.
 - It uses `Vite` as the bundler. The `vite-plugin-pwa` registers a Service Worker to cache app shell and assets for offline usage.
@@ -34,14 +32,15 @@ Although we leverage Yjs (a CRDT library) under the hood, this isn’t a fully p
 
 - No direct client-to-client replication (not pure lazy/optimistic replication).
 - No concurrent writes against the same replica—all operations are serialized through the server.
+- A _centralized authoritative server_.
 
 Writes are _serialized_ but actions are concurrent. What we do have is _asynchronous reconciliation_ with an [operation-based CRDT](https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type#Counters) approach:
 
 - User actions (e.g. clicking “decrement” on the counter) are applied locally to a `Yjs` document stored in `IndexedDB`.
-- The same operation (not the full value) is sent to the server via `Phoenix` (either `Phoenix_Sync` or a `Channel`).
+- The same operation (not the full value) is sent to the server via `Phoenix` (either `Phoenix.Sync` or a `Phoenix.Channel`).
 - `Phoenix` broadcasts that op to all connected clients.
 - Upon receipt, each client applies the op to its local `Yjs` document—order doesn’t matter, making it commutative.
-- The server database (Postgres or SQLite) remains the single source of truth and persists ops in sequence.
+- The server database (`Postgres` or `SQLite`) remains the single source of truth and persists ops in sequence.
 
 > In CRDT terms: We use an operation-based CRDT (CRDT Counter) for each shared value Ops commute (order-independent) even though they pass through a central broker.
 
@@ -49,18 +48,16 @@ Writes are _serialized_ but actions are concurrent. What we do have is _asynchro
 
 To keep the UI interactive both online and offline, we mix `LiveView`’s server-side rendering (SSR) with a client-side reactive framework:
 
-- Online (`LiveView` SSR or Hooks)
+- Online (`LiveView` SSR or JS-hooks):
 
-  - `LiveView` renders the initial HTML on the server.
-  - A `LiveView` hook (`JavaScript`) attaches to the counter element and initializes a `SolidJS` component.
-  - As ops flow in/out over the LiveSocket, `SolidJS` updates the DOM reactively.
+  - The PhxSync page renders a LiveView using `streams` and the "click" event sends data to the client to update the local `Yjs` document.
+  - The YjsCh page renders a JS-hook which initialises a `SolidJS` component. In the JS-hook, the `SolidJS` communicates via a Channel to update the database and the local `Yjs` document.
 
 - Offline (Manual Rendering)
-
+  - We detect the status switch via a server polling.
   - The Service Worker serves the cached HTML & JS bundle.
-  - LiveSocket is disconnected, so `LiveView` hooks can’t drive updates.
-  - We detect offline status and manually mount the same `SolidJS` component using our "navigate.js" utility.
-  - The component reads from the local `Yjs`+`IndexedDB` replica and remains fully interactive.
+  - We hydrate the cached HTML with the correct JS component.
+  - The component reads from and writes to the local `Yjs`+`IndexedDB` replica and remains fully interactive.
 
 ### Service Worker & Asset Caching
 
@@ -175,7 +172,7 @@ The same applies when you navigate offline; you have to run cleanup functions, b
 | SQLite                     | Embedded persistent storage of latest Yjs document                                                                |
 | Postgres                   | Supports logical replication                                                                                      |
 | Phoenix LiveView           | UI rendering, incuding hooks                                                                                      |
-| Phoenix_sync               | Relays Psotgres streams into LiveView                                                                             |
+| Phoenix.Sync               | Relays Postgres streams into LiveView                                                                             |
 | PubSub / Phoenix.Channel   | Broadcast/notifies other clients of updates / conveys CRDTs binaries on a separate websocket (from te LiveSocket) |
 | Yjs / Y.Map                | Holds the CRDT state client-side (shared)                                                                         |
 | y-indexeddb                | Persists state locally for offline mode                                                                           |

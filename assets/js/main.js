@@ -5,8 +5,8 @@ import "phoenix_html";
 const CONFIG = {
   POLL_INTERVAL: 1_000,
   ICONS: {
-    online: new URL("/images/online.svg", import.meta.url).href,
-    offline: new URL("/images/offline.svg", import.meta.url).href,
+    online: new URL("@assets/online.svg", import.meta.url).href,
+    offline: new URL("@assets/offline.svg", import.meta.url).href,
   },
   NAVIDS: {
     yjs: { path: "/yjs", id: "users-yjs" },

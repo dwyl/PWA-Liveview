@@ -25,7 +25,6 @@ const hooks = {
     // special case when the component is SSR/Liveview and needs to be cleaned up before the Solid component mounts
     before: () => {
       const lvPgForm = document.getElementById("lv-pg-form");
-      console.log(lvPgForm);
       if (lvPgForm) lvPgForm.remove();
     },
   },
