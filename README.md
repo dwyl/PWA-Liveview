@@ -70,7 +70,7 @@ This ensures the entire app loads reliably even without network connectivity.
 
 ## Results
 
-Deployed on `Fly.io`: <https://liveview-pwa.fly.dev/yjs/>
+Deployed on `Fly.io`: <https://liveview-pwa.fly.dev/>
 
 The standalone PWA is 2.1 MB (page weigth).
 
