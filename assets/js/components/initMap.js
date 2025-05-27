@@ -1,17 +1,7 @@
 export async function initMap(mapID) {
+  await loadLeafletCSS();
   const { default: L } = await import("leaflet");
   const { MaptilerLayer } = await import("@maptiler/leaflet-maptilersdk");
-
-  // await import("leaflet/dist/leaflet.css");
-  // await import("@css/leaflet.css");
-  // Vite-specific: Dynamically inject Leaflet CSS
-  if (!document.getElementById("inline-leaflet-css")) {
-    const css = await import("leaflet/dist/leaflet.css?inline");
-    const style = document.createElement("style");
-    style.setAttribute("id", "inline-leaflet-css");
-    style.textContent = css.default;
-    document.head.appendChild(style);
-  }
 
   const map = L.map(mapID, {
     renderer: L.canvas(),
@@ -39,4 +29,15 @@ export async function initMap(mapID) {
     iconAnchor: [12, 41],
   });
   return { L, map, group, maptLayer };
+}
+
+async function loadLeafletCSS() {
+  if (!document.getElementById("inline-leaflet-css")) {
+    // Vite-specific: Dynamically inject Leaflet CSS with ?inline
+    const css = await import("leaflet/dist/leaflet.css?inline");
+    const style = document.createElement("style");
+    style.setAttribute("id", "inline-leaflet-css");
+    style.textContent = css.default;
+    document.head.appendChild(style);
+  }
 }

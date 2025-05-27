@@ -72,6 +72,8 @@ This ensures the entire app loads reliably even without network connectivity.
 
 Deployed on `Fly.io`: <https://liveview-pwa.fly.dev/yjs/>
 
+The standalone PWA is 2.1 MB (page weigth).
+
 ## Table of Contents
 
 - [Offline first Phoenix LiveView PWA](#offline-first-phoenix-liveview-pwa)
@@ -103,6 +105,7 @@ Deployed on `Fly.io`: <https://liveview-pwa.fly.dev/yjs/>
       - [Tailwind](#tailwind)
       - [Client Env](#client-env)
     - [Static assets](#static-assets)
+    - [Performance optimisation: Dynamic CSS loading](#performance-optimisation-dynamic-css-loading)
     - [VitePWA plugin and Workbox Caching Strategies](#vitepwa-plugin-and-workbox-caching-strategies)
   - [Yjs](#yjs)
   - [Misc](#misc)
@@ -113,6 +116,7 @@ Deployed on `Fly.io`: <https://liveview-pwa.fly.dev/yjs/>
     - [Performance](#performance)
     - [\[Optional\] Page Caching](#optional-page-caching)
   - [Publish](#publish)
+  - [Postgres setup to use Phoenix.Sync](#postgres-setup-to-use-phoenixsync)
   - [Fly volumes](#fly-volumes)
   - [Documentation source](#documentation-source)
   - [Resources](#resources)
@@ -520,6 +524,8 @@ When the user goes offline, we have the same smooth navigation thanks to navigat
 
 When the user reconnects, we have a full-page reload.
 
+This si implemented in [navigate.js](https://github.com/dwyl/PWA-Liveview/blob/main/assets/js/utilities/navigate.js).
+
 **Lifecycle**:
 
 - Initial Load: App start the LiveSocket and attaches the hooks. It will then trigger a continous server check.
@@ -691,6 +697,13 @@ plug Plug.Static,
   [...]
 ```
 
+### Performance optimisation: Dynamic CSS loading
+
+`Leaflet` needs his own CSS file to render properly. Instead of loading all CSS upfront, the app dynamically loads stylesheets only when nd where needed. This will improve Lighthouse metrics.
+
+We used a CSS-in-JS Pattern for Conditional Styles.
+Check <https://github.com/dwyl/PWA-Liveview/blob/main/assets/js/components/initMap.js>
+
 ### VitePWA plugin and Workbox Caching Strategies
 
 We use the [VitePWA](https://vite-pwa-org.netlify.app/guide/) plugin to generate the SW and the manifest.
@@ -775,19 +788,20 @@ defineConfig = {
 
 It is implemented using a `Channel` and a `JavaScript` snippet used in the main script.
 
-The reason is that if we implement it with "streams", it will wash away the current stream
-used by `Phoenix_sync`.
+The reason is that if we implement it with `streams`, it will wash away the current stream
+used by `Phoenix.Sync`.
 
 It also allows to minimise rendering when navigating to the different Liveviews.
 
-The relevant module is: `setPresenceChannel.js`. It uses a reactive JS component (`SolidJS`).
+The relevant module is: `setPresenceChannel.js`. It uses a reactive JS component (`SolidJS`) to render updates.
 It returns a "dispose" and an "update" function.
 
 This snippet runs in "main.js".
+
 The key points are:
 
-- a simple Channel with `Presence.track` and a `push` of the `Presence.list`,
-- use `presence.onSync` listener to get a `Presence` list up-to-date and render the UI with this list
+- a Channel with `Presence.track` and a `push` of the `Presence.list`,
+- use the `presence.onSync` listener to get a `Presence` list up-to-date and render the UI with this list
 - a `phx:page-loading-stop` listener to udpate the UI when navigating between Liveviews because we target DOM elements to render the reactive component.
 
 ### CSP rules and evaluation
@@ -822,17 +836,18 @@ end
 defp put_csp_headers(conn) do
   nonce = conn.assigns[:csp_nonce] || ""
 
-  csp_policy = """
-  script-src 'self' 'nonce-#{nonce}' 'wasm-unsafe-eval' https://cdn.maptiler.com;
-  object-src 'none';
-  connect-src 'self' http://localhost:* ws://localhost:* https://api.maptiler.com https://*.maptiler.com;
-  img-src 'self' data: https://*.maptiler.com https://api.maptiler.com;
-  worker-src 'self' blob:;
-  style-src 'self' 'unsafe-inline';
-  default-src 'self';
-  frame-ancestors 'self' http://localhost:*;
-  base-uri 'self'
-  """
+  csp_policy =
+    """
+    script-src 'self' 'nonce-#{nonce}' 'wasm-unsafe-eval' https://cdn.maptiler.com;
+    object-src 'none';
+    connect-src 'self' http://localhost:* ws://localhost:* https://api.maptiler.com https://*.maptiler.com;
+    img-src 'self' data: https://*.maptiler.com https://api.maptiler.com;
+    worker-src 'self' blob:;
+    style-src 'self' 'unsafe-inline';
+    default-src 'self';
+    frame-ancestors 'self' http://localhost:*;
+    base-uri 'self'
+    """
   |> String.replace("\n", " ")
 
   put_resp_header(conn, "content-security-policy", csp_policy)
@@ -948,20 +963,31 @@ navigation.addEventListener("navigate", async ({ destination: { url } }) => {
 
 The site <https://docs.pwabuilder.com/#/builder/android> helps to publish PWAs on Google Play, Ios and other plateforms.
 
+## Postgres setup to use Phoenix.Sync
+
+You need:
+
+- set `wal-level logical`
+- assign a role `WITH REPLICATION`
+
+The first point is done by configuring your Postgres machine (check a local example in the "docker-compsoe.yml").
+
+The second point is done via a migration (`ALTER ROLE postgres WITH REPLICATION`).
+
+Check <https://github.com/dwyl/PWA-Liveview/issues/35> for the Fly launch sequence.
+
 ## Fly volumes
 
 In the "fly.toml", the settings for the volume are:
 
 ```toml
 [env]
-DATABASE_PATH = '/mnt/db/main.db'
-MIX_ENV = 'prod'
-PHX_HOST = 'solidyjs-lively-pine-4375.fly.dev'
-PORT = '8080'
+DATABASE_PATH = '/data/db/main.db'
+
 
 [[mounts]]
-source = 'name'
-destination = '/mnt/db'
+source = 'db'
+destination = '/data'
 ```
 
 This volume is made persistent through build with `source = 'name'`.
