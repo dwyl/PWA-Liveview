@@ -81,7 +81,7 @@ async function startApp() {
 
 // we start the polling heartbeat when the app is loaded
 startApp().then(() => {
-  !AppState.interval && startPolling();
+  return !AppState.interval && startPolling();
 });
 
 // Register service worker early ----------------
@@ -96,8 +96,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     registerServiceWorker(),
   ]);
 
-  AppState.updateServiceWorker = swRegistration;
-  return true;
+  return (AppState.updateServiceWorker = swRegistration);
 });
 
 // Polling ----------
@@ -137,7 +136,7 @@ window.addEventListener("connection-status-changed", async (e) => {
   console.log("Connection status changed to:", e.detail.status);
   if (e.detail.status === "offline") {
     AppState.status = "offline";
-    await initOfflineComponents();
+    return await initOfflineComponents();
   } else {
     window.location.reload();
   }

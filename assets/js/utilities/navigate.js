@@ -95,7 +95,6 @@ async function injectComponentIntoView() {
         const args = compConf.args(el);
         const instance = await Component(args);
         if (compConf.assign) await compConf.assign(instance);
-        console.log(instance);
         results.push(instance);
       }
       return results;

@@ -1,67 +1,71 @@
 import { CONFIG } from "@js/main";
 
 export async function setPresence(userSocket, topic, user_token) {
-  const [{ Presence }, { useChannel }, { mountUsers }] = await Promise.all([
+  const [{ Presence }, { useChannel }, { MountUsers }] = await Promise.all([
     import("phoenix"),
     import("@js/user_socket/useChannel"),
-    import("@js/components/users"),
+    import("@js/components/mountUsers"),
   ]);
 
-  const channel = await useChannel(userSocket, topic, {
-    user_token,
-  });
+  const channel = await useChannel(userSocket, topic, { user_token });
+  const presence = new Presence(channel);
 
-  let usersComponent = null,
-    userID = null,
-    userIDs = [];
+  let userID = null;
+  let userIDs = [];
+  let usersComponent = null;
 
+  // Track user ID sent from backend
   channel.on("user", ({ from }) => {
     userID = from;
   });
 
-  const getTargetID = () => {
-    switch (window.location.pathname) {
-      case "/yjs":
-        return CONFIG.NAVIDS.yjs.id;
-      case "/map":
-        return CONFIG.NAVIDS.map.id;
-      case "/":
-        return CONFIG.NAVIDS.elec.id;
-      default:
-        return CONFIG.NAVIDS.elec.id;
-    }
+  // Utility: determine which DOM ID to use
+  const getTargetEl = () => {
+    const path = window.location.pathname;
+    const id =
+      path === "/yjs"
+        ? CONFIG.NAVIDS.yjs.id
+        : path === "/map"
+        ? CONFIG.NAVIDS.map.id
+        : CONFIG.NAVIDS.elec.id;
+    return document.getElementById(id);
   };
 
-  window.addEventListener("phx:page-loading-stop", () => {
-    maybeRenderUsers();
-  });
-
-  const presence = new Presence(channel);
-
-  presence.onSync(() => {
-    userIDs = presence.list((id, _meta) => id);
-    maybeRenderUsers();
-  });
-
-  function maybeRenderUsers() {
-    const el = document.getElementById(getTargetID());
+  // Render or update the component, if possible
+  const tryRender = () => {
+    const el = getTargetEl();
     if (!el) return;
 
+    // Avoid duplicate mounting
     if (usersComponent) {
-      usersComponent.dispose();
+      if (el === usersComponent.el) {
+        console.log("[tryRender] Same element, updating...");
+        usersComponent.update({ userIDs, userID, el });
+        return;
+      } else {
+        console.log(
+          "[tryRender] Different element, disposing old, mounting new..."
+        );
+        usersComponent.dispose();
+        usersComponent = MountUsers({ userIDs, userID, el });
+      }
+    } else {
+      console.log("[tryRender] No existing component, mounting...");
+      usersComponent = MountUsers({ userIDs, userID, el });
     }
+    // usersComponent.el = el;
+  };
 
-    usersComponent = mountUsers({
-      initIDs: userIDs,
-      userID,
-      el,
-    });
-  }
+  // Sync presence when changed
+  presence.onSync(() => {
+    console.log("[presence.onSync]");
+    userIDs = presence.list((id, _meta) => id);
+    tryRender();
+  });
 
-  channel.onClose(() => {
-    if (usersComponent) {
-      usersComponent.dispose();
-      usersComponent = null;
-    }
+  // Handle LiveView navigation
+  window.addEventListener("phx:page-loading-stop", () => {
+    console.log("[phx:page-loading-stop]");
+    tryRender();
   });
 }
