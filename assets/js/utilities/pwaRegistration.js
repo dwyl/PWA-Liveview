@@ -9,7 +9,7 @@ export async function registerServiceWorker() {
   try {
     const { registerSW } = await import("virtual:pwa-register");
     updateSWFunction = registerSW({
-      immediate: true, // Register immediately in the app.js context
+      immediate: true, // Register immediately in the main.js context
 
       onOfflineReady: () => {
         console.log("[SW] Ready, app now works offline");

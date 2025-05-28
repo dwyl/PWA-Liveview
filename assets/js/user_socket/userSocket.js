@@ -1,6 +1,5 @@
-import { Socket } from "phoenix";
-
 export async function setUserSocket(userToken) {
+  const { Socket } = await import("phoenix");
   const userSocket = new Socket("/user", {
     params: { userToken },
     // binaryType: "arraybuffer",

@@ -9,6 +9,8 @@ import fg from "fast-glob"; // for recursive file scanning
 // and Phoenix CSS won't be parsed by Vite without it
 import tailwindcss from "tailwindcss";
 
+// import { analyzer } from "vite-bundle-analyzer";
+
 // autoprefixing CSS, eg --webkit for flex/grid, --moz for transitions, etc
 // but "ligntningcss" is used for minification and autoprefixing
 // import autoprefixer from "autoprefixer";
@@ -438,7 +440,8 @@ export default defineConfig(({ command, mode }) => {
       VitePWA(PWAConfig(mode)),
       solidPlugin(),
       viteStaticCopy({ targets }),
-      compression(compressOpts),
+      mode == "production" ? compression(compressOpts) : null,
+      // mode == "development" ? analyzer() : null,
       // tailwindcss(),
     ],
     resolve: resolveConfig,

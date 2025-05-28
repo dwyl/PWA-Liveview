@@ -13,6 +13,7 @@ const CONFIG = {
     map: { path: "/map", id: "users-map" },
     elec: { path: "/", id: "users-elec" },
   },
+  CONTENT_SELECTOR: "#main-content",
   MapID: "hook-map",
   hooks: {
     PgStockHook: "hook-pg",
@@ -72,8 +73,7 @@ async function startApp() {
 
     AppState.status = AppState.isOnline ? "online" : "offline";
 
-    // return await init(AppState.isOnline);
-    return await init();
+    return (window.liveSocket = await initLiveSocket());
   } catch (error) {
     console.error("Initialization error:", error);
   }
@@ -143,19 +143,6 @@ window.addEventListener("connection-status-changed", async (e) => {
   }
 });
 
-// Selectively start
-async function init() {
-  try {
-    //   if (isOnline) {
-    window.liveSocket = await initLiveSocket();
-    // } else {
-    // await initOfflineComponents();
-    // }
-  } catch (error) {
-    console.error("Init failed:", error);
-  }
-}
-
 async function initLiveSocket() {
   try {
     const [
@@ -213,11 +200,11 @@ async function initLiveSocket() {
 async function initOfflineComponents() {
   if (AppState.isOnline) return;
   console.log("Init Offline Components---------");
-  const { renderCurrentView, attachNavigationListeners } = await import(
+  const { injectComponentIntoView, attachNavigationListeners } = await import(
     "@js/utilities/navigate"
   );
   // first hijack the navigation to avoid the page reload
   attachNavigationListeners();
   // and then render the current view
-  return await renderCurrentView();
+  return await injectComponentIntoView();
 }

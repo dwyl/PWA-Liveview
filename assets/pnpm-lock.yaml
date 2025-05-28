@@ -69,6 +69,9 @@ importers:
       vite:
         specifier: ^6.3.5
         version: 6.3.5(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.40.0)(yaml@2.8.0)
+      vite-bundle-analyzer:
+        specifier: ^0.22.0
+        version: 0.22.0
       vite-plugin-compression2:
         specifier: ^1.4.0
         version: 1.4.0(rollup@2.79.2)(vite@6.3.5(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.40.0)(yaml@2.8.0))
@@ -1449,8 +1452,8 @@ packages:
     engines: {node: '>=0.10.0'}
     hasBin: true
 
-  electron-to-chromium@1.5.158:
-    resolution: {integrity: sha512-9vcp2xHhkvraY6AHw2WMi+GDSLPX42qe2xjYaVoZqFRJiOcilVQFq9mZmpuHEQpzlgGDelKlV7ZiGcmMsc8WxQ==}
+  electron-to-chromium@1.5.159:
+    resolution: {integrity: sha512-CEvHptWAMV5p6GJ0Lq8aheyvVbfzVrv5mmidu1D3pidoVNkB3tTBsTMVtPJ+rzRK5oV229mCLz9Zj/hNvU8GBA==}
 
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
@@ -2670,6 +2673,10 @@ packages:
         optional: true
       react:
         optional: true
+
+  vite-bundle-analyzer@0.22.0:
+    resolution: {integrity: sha512-SDlQ1pBReXKrDXUisupEibWcYW5qtr/kTCm1iyRkNNEVdEdtWHuWrcpUc5IMymhkR2Kvuutr+zGsGipbWv+8TQ==}
+    hasBin: true
 
   vite-plugin-compression2@1.4.0:
     resolution: {integrity: sha512-UEk0Bq1IkkwqbDLoLOHZ8WTmN1QbvR28fvNl2liB88/6SG1oLrTVkxfjqW3pdla/rKQ6QXn+pJpv3GBbl+k56g==}
@@ -4100,7 +4107,7 @@ snapshots:
   browserslist@4.24.5:
     dependencies:
       caniuse-lite: 1.0.30001718
-      electron-to-chromium: 1.5.158
+      electron-to-chromium: 1.5.159
       node-releases: 2.0.19
       update-browserslist-db: 1.1.3(browserslist@4.24.5)
 
@@ -4274,7 +4281,7 @@ snapshots:
     dependencies:
       jake: 10.9.2
 
-  electron-to-chromium@1.5.158: {}
+  electron-to-chromium@1.5.159: {}
 
   emoji-regex@8.0.0: {}
 
@@ -5643,6 +5650,8 @@ snapshots:
   valtio@2.1.5:
     dependencies:
       proxy-compare: 3.0.1
+
+  vite-bundle-analyzer@0.22.0: {}
 
   vite-plugin-compression2@1.4.0(rollup@2.79.2)(vite@6.3.5(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.40.0)(yaml@2.8.0)):
     dependencies:

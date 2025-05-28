@@ -1,6 +1,9 @@
 import { AppState } from "@js/main";
 import { CONFIG } from "@js/main";
 
+const { CONTENT_SELECTOR: selector } = CONFIG;
+
+// instantiate when the user goes offline
 const offlineComponents = {
   PgStockHook: null,
   StockYjsChHook: null,
@@ -8,11 +11,9 @@ const offlineComponents = {
   FormHook: null,
 };
 
-const contentSelector = "#main-content";
-
-const hooks = {
+const components = {
   // substitue the LV rendered DOM with the rendered SolidJS component and use the 'before' cleanup
-  PgStockHook: [
+  pgStockHook: [
     {
       id: CONFIG.hooks.PgStockHook,
       component: "PgStock",
@@ -23,7 +24,7 @@ const hooks = {
         max: Number(localStorage.getItem("max")),
         userID: localStorage.getItem("userID"),
       }),
-      assign: (instance) => (offlineComponents.pgStock = instance),
+      assign: async (instance) => (offlineComponents.PgStockHook = instance),
       // special case when the component is SSR/Liveview and needs to be cleaned up before the Solid component mounts
       before: () => {
         const lvPgForm = document.getElementById("lv-pg-form");
@@ -32,7 +33,7 @@ const hooks = {
     },
   ],
   // single hook renders a Solidjs component in the view
-  StockYjsChHook: [
+  yjsChHook: [
     {
       id: CONFIG.hooks.StockYjsChHook,
       component: "YjsStock",
@@ -43,7 +44,7 @@ const hooks = {
         max: Number(localStorage.getItem("max")),
         userID: localStorage.getItem("userID"),
       }),
-      assign: (instance) => (offlineComponents.yjsStock = instance),
+      assign: async (instance) => (offlineComponents.StockYjsChHook = instance),
     },
   ],
   // multiple hooks in the same view
@@ -56,7 +57,7 @@ const hooks = {
       args: () => ({
         id: CONFIG.hooks.MapHook,
       }),
-      assign: async (instance) => (offlineComponents.map = await instance),
+      assign: async (instance) => (offlineComponents.MapHook = await instance),
     },
     // the form is a SolidJS component
     {
@@ -68,37 +69,38 @@ const hooks = {
         _this: null,
         userID: localStorage.getItem("userID"),
       }),
-      assign: (instance) => (offlineComponents.form = instance),
+      assign: async (instance) => (offlineComponents.FormHook = instance),
     },
   ],
 };
 
-async function renderCurrentView() {
+async function injectComponentIntoView() {
   await cleanupOfflineComponents();
 
   let results = [];
 
-  for (const key in hooks) {
-    const conf = hooks[key];
-    if (Array.isArray(conf)) {
-      const allPresent = conf.every((hookConf) =>
-        document.getElementById(hookConf.id)
-      );
-      if (allPresent) {
-        for (const hookConf of conf) {
-          const el = document.getElementById(hookConf.id);
-          if (hookConf.before) hookConf.before();
-          const module = await hookConf.import();
-          const Component = module[hookConf.component];
-          const args = hookConf.args(el);
-          const instance = await Component(args);
-          if (hookConf.assign) await hookConf.assign(instance);
-          console.log(instance);
-          results.push(instance);
-        }
-        return results;
+  for (const key in components) {
+    const config = components[key];
+    const allPresent = config.every((compConf) =>
+      document.getElementById(compConf.id)
+    );
+    // run only the components that are present in the DOM
+    // there can be several components in the same view, eg mapView
+    if (allPresent) {
+      for (const compConf of config) {
+        const el = document.getElementById(compConf.id);
+        if (compConf.before) compConf.before();
+        const module = await compConf.import();
+        const Component = module[compConf.component];
+        const args = compConf.args(el);
+        const instance = await Component(args);
+        if (compConf.assign) await compConf.assign(instance);
+        console.log(instance);
+        results.push(instance);
       }
+      return results;
     }
+    // }
   }
   return results.length ? results : undefined;
 }
@@ -134,15 +136,15 @@ async function handleOfflineNavigation(event) {
     // Parse the HTML
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
-    const newContent = doc.querySelector(contentSelector);
+    const newContent = doc.querySelector(selector);
     if (!newContent)
       throw new Error(`Main content element not found in fetched HTML`);
 
     // Replace only the main content, not the entire body
-    const currentContent = document.querySelector(contentSelector);
+    const currentContent = document.querySelector(selector);
     if (currentContent) {
       currentContent.innerHTML = newContent.innerHTML;
-      await renderCurrentView();
+      await injectComponentIntoView();
       return attachNavigationListeners();
     }
   } catch (error) {
@@ -159,4 +161,4 @@ function attachNavigationListeners() {
   });
 }
 
-export { renderCurrentView, attachNavigationListeners };
+export { injectComponentIntoView, attachNavigationListeners };

@@ -1,5 +1,4 @@
 export async function loadWasm() {
-  // console.log("loadWasm called");
   try {
     const importObject = {
       env: {
