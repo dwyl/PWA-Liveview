@@ -84,21 +84,6 @@ startApp().then(() => {
   return !AppState.interval && startPolling();
 });
 
-// Register service worker early ----------------
-document.addEventListener("DOMContentLoaded", async () => {
-  const [{ configureTopbar }, { registerServiceWorker }] = await Promise.all([
-    import("@js/utilities/configureTopbar"),
-    import("@js/utilities/pwaRegistration"),
-  ]);
-
-  const [_, swRegistration] = await Promise.all([
-    configureTopbar(),
-    registerServiceWorker(),
-  ]);
-
-  return (AppState.updateServiceWorker = swRegistration);
-});
-
 // Polling ----------
 function startPolling(interval = CONFIG.POLL_INTERVAL) {
   if (AppState.interval) return;
@@ -130,17 +115,6 @@ function updateConnectionStatus(isOnline) {
     );
   }
 }
-
-// trigger offline rendering if offline ---------------
-window.addEventListener("connection-status-changed", async (e) => {
-  console.log("Connection status changed to:", e.detail.status);
-  if (e.detail.status === "offline") {
-    AppState.status = "offline";
-    return await initOfflineComponents();
-  } else {
-    window.location.reload();
-  }
-});
 
 async function initLiveSocket() {
   try {
@@ -207,3 +181,29 @@ async function initOfflineComponents() {
   // and then render the current view
   return await injectComponentIntoView();
 }
+
+// Register service worker early ----------------
+document.addEventListener("DOMContentLoaded", async () => {
+  const [{ configureTopbar }, { registerServiceWorker }] = await Promise.all([
+    import("@js/utilities/configureTopbar"),
+    import("@js/utilities/pwaRegistration"),
+  ]);
+
+  const [_, swRegistration] = await Promise.all([
+    configureTopbar(),
+    registerServiceWorker(),
+  ]);
+
+  return (AppState.updateServiceWorker = swRegistration);
+});
+
+// trigger offline rendering if offline ---------------
+window.addEventListener("connection-status-changed", async (e) => {
+  console.log("Connection status changed to:", e.detail.status);
+  if (e.detail.status === "offline") {
+    AppState.status = "offline";
+    return await initOfflineComponents();
+  } else {
+    window.location.reload();
+  }
+});

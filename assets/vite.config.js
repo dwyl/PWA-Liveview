@@ -66,8 +66,9 @@ const manifestOpts = {
   background_color: "#FFFFFF",
   dir: "auto",
   lang: "en",
+  categories: ["productivity", "utilities"],
   orientation: "any",
-  prefer_related_applications: false,
+  prefer_related_applications: false, //<- ⚠️ Android
   launch_handler: {
     client_mode: "auto",
     route_hint: "/",
@@ -192,6 +193,20 @@ const buildOps = (mode) => ({
 // =============================================
 // Service Worker Rentime Caching Strategies
 
+// fetch for Android
+const NavAll = {
+  urlPattern: ({ request }) => request.destination === "document",
+  handler: "NetworkFirst",
+  options: {
+    cacheName: "pages",
+    networkTimeoutSeconds: 3,
+    expiration: {
+      maxEntries: 50,
+      maxAgeSeconds: 60 * 60 * 24, // 1 day
+    },
+  },
+};
+
 const LiveView = [
   {
     urlPattern: ({ url }) => {
@@ -297,6 +312,7 @@ const Fonts = {
 };
 
 const runtimeCaching = [
+  NavAll,
   OtherStaticAssets,
   ...LiveView,
   MapTiler, // Add the SDK route before Tiles
@@ -322,9 +338,9 @@ const PWAConfig = (mode) => ({
   outDir: staticDir,
   manifest: manifestOpts,
   manifestFilename: "manifest.webmanifest",
-  injectManifest: {
-    injectionPoint: undefined,
-  }, // Do not inject the SW registration script as "index.html" does not exist
+  // injectManifest: {
+  //   injectionPoint: undefined,
+  // }, // Do not inject the SW registration script as "index.html" does not exist
 
   // Cache exceptions
   ignoreURLParametersMatching: [
