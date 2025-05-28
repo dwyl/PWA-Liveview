@@ -312,11 +312,11 @@ const Fonts = {
 };
 
 const runtimeCaching = [
-  NavAll,
   OtherStaticAssets,
   ...LiveView,
   MapTiler, // Add the SDK route before Tiles
   Fonts,
+  NavAll,
 ];
 
 // =============================================
