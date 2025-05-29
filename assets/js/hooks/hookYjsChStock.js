@@ -11,6 +11,7 @@ export const StockYjsChHook = ({ ydoc, userSocket }) => ({
   ymap: null,
 
   async mounted() {
+    console.log("[StocYjsChHook] mounted", this.cleanupSolid);
     this.userID = Number(this.el.dataset.userid);
     if (!localStorage.getItem("userID")) {
       localStorage.setItem("userID", this.userID);
@@ -104,7 +105,7 @@ export const StockYjsChHook = ({ ydoc, userSocket }) => ({
         if (clicks > 0) {
           return this.channel
             .push("client-update", { clicks, from: this.userID })
-            .receive("ok", ({ counter }) => {
+            .receive("ok", ({ _counter }) => {
               ydoc.transact(() => {
                 this.ymap.set("clicks", 0);
               }, "local");

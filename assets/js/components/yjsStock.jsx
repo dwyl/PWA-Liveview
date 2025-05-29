@@ -1,22 +1,28 @@
 import { render } from "solid-js/web";
 import { createSignal, createEffect, lazy } from "solid-js";
 
-let dispose = null;
-
 const getCircularValue = (currentValue, max) => {
   return currentValue === 0 ? max : currentValue - 1;
 };
 
 export const YjsStock = (props) => {
-  if (dispose) dispose();
+  console.log("[YjsStock] component mounting");
+  // Non-reactive destructuring
+  // const { el, userID, max } = props;
 
-  const ymap = props.ydoc.getMap("sql3-data");
+  // ydoc is reactive
+  let ymap;
+  let max = null,
+    el = null,
+    range = null;
+
+  createEffect(() => {
+    ymap = props.ydoc.getMap("sql3-data");
+  });
 
   const [localStock, setLocalStock] = createSignal(
-    Math.round(Number(ymap.get("counter"))) || props.max
+    Math.round(Number(ymap.get("counter"))) || max
   );
-  const [range, setRange] = createSignal([]);
-  const Counter = lazy(() => import("@jsx/components/counter"));
 
   /**
   Central state observer to update the UI:
@@ -27,7 +33,7 @@ export const YjsStock = (props) => {
   */
   ymap.observe(updateStockSignal);
 
-  function updateStockSignal(event, { origin }) {
+  function updateStockSignal(event, { _origin }) {
     if (event.keysChanged.has("counter")) {
       // y_ex sends BigInt so we convert it into an integer
       setLocalStock(Math.round(Number(ymap.get("counter"))));
@@ -40,38 +46,45 @@ export const YjsStock = (props) => {
   */
   const handleDecrement = () => {
     // keep a circular range for the demo: shouldn't it go up?
-    const newValue = getCircularValue(localStock(), props.max);
+    const newValue = getCircularValue(localStock(), max);
 
     props.ydoc.transact(() => {
+      console.log("update YDoc");
       ymap.set("counter", newValue);
       ymap.set("clicks", (ymap.get("clicks") || 0) + 1);
     }, "local");
   };
 
   createEffect(() => {
-    setRange([...Array(Number(props.max) + 1).keys()]);
+    el = props.el;
+    max = props.max;
+    console.log(
+      "Yjs Stock:",
+      ymap.get("clicks"),
+      ymap.get("counter"),
+      localStock()
+    );
   });
 
-  dispose = render(
+  const Counter = lazy(() => import("@jsx/components/counter"));
+  range = [...Array(Number(max) + 1).keys()];
+
+  const dispose = render(
     () => (
       <Counter
         id="counter"
         onStockChange={handleDecrement}
-        stock={localStock()}
-        max={props.max}
+        stock={localStock()} // reactive signal
+        max={max}
         userID={props.userID}
-        range={range()}
+        range={range}
       />
     ),
-    props.el
+    el
   );
   return () => {
     ymap.unobserve(updateStockSignal);
     dispose();
     console.log("[Stock & observer] cleanup");
   };
-
-  /**
-   Potential memory leak if we don't clean up the observer
-  */
 };

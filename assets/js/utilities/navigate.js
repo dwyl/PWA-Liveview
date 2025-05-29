@@ -1,7 +1,7 @@
 import { AppState } from "@js/main";
 import { CONFIG } from "@js/main";
 
-const { CONTENT_SELECTOR: selector } = CONFIG;
+const { CONTENT_SELECTOR: selector, hooks } = CONFIG;
 
 // instantiate when the user goes offline
 const offlineComponents = {
@@ -15,7 +15,7 @@ const components = {
   // substitue the LV rendered DOM with the rendered SolidJS component and use the 'before' cleanup
   pgStockHook: [
     {
-      id: CONFIG.hooks.PgStockHook,
+      id: hooks.PgStockHook,
       component: "PgStock",
       import: () => import("@jsx/components/pgStock.jsx"),
       args: (el) => ({
@@ -24,18 +24,20 @@ const components = {
         max: Number(localStorage.getItem("max")),
         userID: localStorage.getItem("userID"),
       }),
-      assign: async (instance) => (offlineComponents.PgStockHook = instance),
+      assign: async (instance) => {
+        return (offlineComponents.PgStockHook = await instance);
+      },
       // special case when the component is SSR/Liveview and needs to be cleaned up before the Solid component mounts
       before: () => {
         const lvPgForm = document.getElementById("lv-pg-form");
-        if (lvPgForm) lvPgForm.remove();
+        if (lvPgForm) lvPgForm.innerHTML = "";
       },
     },
   ],
   // single hook renders a Solidjs component in the view
   yjsChHook: [
     {
-      id: CONFIG.hooks.StockYjsChHook,
+      id: hooks.StockYjsChHook,
       component: "YjsStock",
       import: () => import("@jsx/components/yjsStock.jsx"),
       args: (el) => ({
@@ -44,24 +46,29 @@ const components = {
         max: Number(localStorage.getItem("max")),
         userID: localStorage.getItem("userID"),
       }),
-      assign: async (instance) => (offlineComponents.StockYjsChHook = instance),
+      // before: () => {
+      //   const yjsChHook = document.getElementById("counter-comp");
+      //   if (yjsChHook) yjsChHook.remove();
+      // },
+      assign: async (instance) =>
+        (offlineComponents.StockYjsChHook = await instance),
     },
   ],
   // multiple hooks in the same view
   mapView: [
     // the map is not rendered as a Solidjs component but vanilla JS - Leaflet
     {
-      id: CONFIG.hooks.MapHook,
+      id: hooks.MapHook,
       component: "renderMap",
       import: () => import("@js/components/renderMap.js"),
       args: () => ({
-        id: CONFIG.hooks.MapHook,
+        id: hooks.MapHook,
       }),
       assign: async (instance) => (offlineComponents.MapHook = await instance),
     },
     // the form is a SolidJS component
     {
-      id: CONFIG.hooks.FormHook,
+      id: hooks.FormHook,
       component: "CitiesForm",
       import: () => import("@jsx/components/citiesForm.jsx"),
       args: (el) => ({
@@ -69,15 +76,15 @@ const components = {
         _this: null,
         userID: localStorage.getItem("userID"),
       }),
-      assign: async (instance) => (offlineComponents.FormHook = instance),
+      assign: async (instance) => (offlineComponents.FormHook = await instance),
     },
   ],
 };
 
 async function injectComponentIntoView() {
-  await cleanupOfflineComponents();
+  cleanupOfflineComponents();
 
-  let results = [];
+  const results = [];
 
   for (const key in components) {
     const config = components[key];
@@ -94,18 +101,19 @@ async function injectComponentIntoView() {
         const Component = module[compConf.component];
         const args = compConf.args(el);
         const instance = await Component(args);
+        console.log(instance);
         if (compConf.assign) await compConf.assign(instance);
         results.push(instance);
       }
       return results;
     }
-    // }
   }
   return results.length ? results : undefined;
 }
 
-async function cleanupOfflineComponents() {
+function cleanupOfflineComponents() {
   for (const [key, cleanupFn] of Object.entries(offlineComponents)) {
+    console.log("clean: ", key, cleanupFn);
     if (cleanupFn) cleanupFn();
     offlineComponents[key] = null;
   }

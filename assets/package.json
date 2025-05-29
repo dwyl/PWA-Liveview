@@ -22,16 +22,21 @@
     "yjs": "^13.6.27"
   },
   "devDependencies": {
+    "@eslint/js": "^9.27.0",
     "@mongodb-js/zstd": "^2.0.1",
     "@tailwindcss/forms": "^0.5.10",
     "@vite-pwa/assets-generator": "^1.0.0",
     "esbuild": "^0.25.5",
+    "eslint": "^9.27.0",
+    "eslint-plugin-solid": "^0.14.5",
     "fast-glob": "^3.3.3",
     "lightningcss": "^1.30.1",
     "tailwindcss": "^3.4.17",
     "vite": "^6.3.5",
     "vite-bundle-analyzer": "^0.22.0",
+    "vite-plugin-checker": "^0.9.3",
     "vite-plugin-compression2": "^1.4.0",
+    "vite-plugin-eslint": "^1.8.1",
     "vite-plugin-pwa": "^1.0.0",
     "vite-plugin-solid": "^2.11.6",
     "vite-plugin-static-copy": "^2.3.1",
@@ -53,6 +58,7 @@
     ]
   },
   "scripts": {
+    "lint": "eslint . --ext .js,.jsx",
     "generate": "npx pwa-assets-generator --preset minimal-2023 ./logo.png"
   },
   "packageManager": "pnpm@10.11.0"

@@ -1,5 +1,3 @@
-import { checkServer } from "@js/utilities/checkServer";
-
 export const PgStockHook = ({ ydoc, userSocket }) => ({
   ymap: null,
   channel: null,
@@ -30,12 +28,11 @@ export const PgStockHook = ({ ydoc, userSocket }) => ({
       this.pushClicks()
     );
 
-    // listener needs to be cleaned up in "destroyed"
     window.addEventListener("connection-status-changed", this.actionPushClicks);
   },
 
-  // 'offline' mode: using the Channel pushEvent
-  async actionPushClicks(e) {
+  async actionPushClicks({ detail }) {
+    if (!detail.status == "online") return;
     const channelJoined = await this.setupChannel(userSocket, "pg-counter");
 
     if (channelJoined === "joined") {

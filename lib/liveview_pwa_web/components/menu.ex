@@ -40,7 +40,7 @@ defmodule LiveviewPwaWeb.Menu do
           replace
           class={[if(@active_path == item.path, do: "border-midnightblue", else: nil), link_class()]}
         >
-          <.icon name={item.icon} /> &nbsp {item.title} &nbsp
+          <.icon name={item.icon} /> &nbsp {item.title}
         </.link>
       </nav>
     </div>

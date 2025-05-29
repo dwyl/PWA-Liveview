@@ -16,7 +16,7 @@ export async function createFlightObserver({ L, map, group }) {
         iconAnchor: [10, 20],
       }),
     });
-    inverse ? (airplane.className = "rotate-180 origin-center") : null;
+    // inverse ? (airplane.className = "rotate-180 origin-center") : null;
     return airplane;
   }
   async function computeGreatCircle({ L, group, departure, arrival }) {

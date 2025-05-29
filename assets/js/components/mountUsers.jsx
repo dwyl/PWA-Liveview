@@ -1,14 +1,13 @@
 import { render } from "solid-js/web";
 import { For, createSignal, batch } from "solid-js";
 
-export function MountUsers(props) {
+export function MountUsers({ userID, el, userIDs } = _props) {
   console.log("[MountUsers]");
 
-  const [users, setUsers] = createSignal(props.userIDs);
-  const [dom, setDom] = createSignal(props.el);
+  const [users, setUsers] = createSignal(userIDs);
 
   const dispose =
-    props.el &&
+    el &&
     render(
       () => (
         <p class="text-sm text-midnightblue mt-4 mb-4" id="users">
@@ -18,7 +17,7 @@ export function MountUsers(props) {
             {(user) => (
               <span
                 class={[
-                  Number(user) !== Number(props.userID) ? "bg-bisque" : null,
+                  Number(user) !== Number(userID) ? "bg-bisque" : null,
                   "inline-flex mr-2 items-center px-2 py-1 text-xs font-medium border border-midnightblue text-midnightblue rounded-full",
                 ].join(" ")}
               >
@@ -28,13 +27,13 @@ export function MountUsers(props) {
           </For>
         </p>
       ),
-      dom()
+      el
     );
 
-  const update = (newProps) => {
+  const update = ({ userIDs, el }) => {
     batch(() => {
-      setUsers(newProps.userIDs);
-      setDom(newProps.el);
+      setUsers(userIDs);
+      setDom(el);
     });
   };
 

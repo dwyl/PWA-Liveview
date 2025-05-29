@@ -18,7 +18,7 @@ export default function Counter(props) {
       <button
         id="takeFromStock"
         class="font-bold py-2 mt-4 px-4 rounded border border-gray-800 bg-bisque text-midnightblue transition-all duration-300 ease-in-out active:scale-95 active:bg-burlywood hover:bg-wheat"
-        onClick={props.onStockChange}
+        onClick={() => props.onStockChange()}
       >
         Take from stock
       </button>

@@ -1,20 +1,13 @@
-import { createSignal } from "solid-js";
+import { createEffect, createSignal } from "solid-js";
 import { render } from "solid-js/web";
-let dispose = null;
 
 export const PgStock = (props) => {
-  if (dispose) dispose();
-  const ymap = props.ydoc.getMap("pg-data");
+  const [localCounter, setLocalCounter] = createSignal(20);
 
-  const [localCounter, setLocalCounter] = createSignal(
-    Math.round(Number(ymap.get("pg-count"))) || props.max
-  );
-
-  const [clicks, setClicks] = createSignal(
-    Math.round(Number(ymap.get("clicks"))) || 0
-  );
+  const [clicks, setClicks] = createSignal(0);
 
   const decrement = () => {
+    const ymap = props.ydoc.getMap("pg-data");
     const new_value = localCounter() == 0 ? props.max : localCounter() - 1;
     const new_clicks = clicks() + 1;
     setClicks(new_clicks);
@@ -24,7 +17,18 @@ export const PgStock = (props) => {
     setLocalCounter(new_value);
   };
 
-  dispose = render(
+  createEffect(() => {
+    const ymap = props.ydoc.getMap("pg-data");
+    setLocalCounter(Math.round(Number(ymap.get("pg-count"))) || props.max);
+    setClicks(Math.round(Number(ymap.get("clicks"))) || 0);
+  });
+
+  createEffect(() => {
+    const ymap = props.ydoc.getMap("pg-data");
+    console.log(ymap.get("pg-count"), ymap.get("clicks"), clicks());
+  });
+
+  const dispose = render(
     () => (
       <>
         <form phx-submit="dec" onSubmit={decrement} id="sol-pg-form">

@@ -1,5 +1,7 @@
 import { defineConfig } from "vite";
 
+import checker from "vite-plugin-checker";
+
 import fs from "fs"; // for file system operations
 import path from "path";
 import fg from "fast-glob"; // for recursive file scanning
@@ -240,15 +242,15 @@ const LiveView = [
       },
     },
   },
-  {
-    urlPattern: ({ url }) => url.pathname.startsWith("/api/"),
-    handler: "NetworkOnly",
-    options: {
-      fetchOptions: {
-        credentials: "same-origin",
-      },
-    },
-  },
+  // {
+  //   urlPattern: ({ url }) => url.pathname.startsWith("/api/"),
+  //   handler: "NetworkOnly",
+  //   options: {
+  //     fetchOptions: {
+  //       credentials: "same-origin",
+  //     },
+  //   },
+  // },
 ];
 
 const MapTiler = {
@@ -319,7 +321,7 @@ const runtimeCaching = [
   ...LiveView,
   MapTiler, // Add the SDK route before Tiles
   Fonts,
-  // FetchvAll,
+  FetchvAll,
 ];
 
 // =============================================
@@ -455,6 +457,13 @@ export default defineConfig(({ command, mode }) => {
   return {
     base: "/", // "https://cdn.example.com/assets/", // CDN base URL
     plugins: [
+      mode == "production"
+        ? null
+        : checker({
+            eslint: {
+              lintCommand: 'eslint "./js/**/*.{js,jsx}"',
+            },
+          }),
       wasm(),
       VitePWA(PWAConfig(mode)),
       solidPlugin(),

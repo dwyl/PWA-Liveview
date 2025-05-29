@@ -5,10 +5,8 @@ import { state } from "@js/stores/vStore";
 import flyUrl from "@assets/fly.svg?url";
 import delUrl from "@assets/delete.svg?url";
 
-let dispose = null;
-export const CitiesForm = (props) => {
+export const CitiesForm = ({ el, userID, _this } = props) => {
   // console.log("CitiesForm component mounting");
-  if (dispose) dispose();
 
   const [isInitialized, setIsInitialized] = createSignal(false);
   const [cities, setCities] = createSignal([]);
@@ -48,9 +46,9 @@ export const CitiesForm = (props) => {
   function handleReset() {
     state.deletionState.isDeleted = true;
     state.deletionState.timestamp = Date.now();
-    state.deletionState.deletedBy = props.userID;
+    state.deletionState.deletedBy = userID;
     props._this?.pushEvent("delete", {
-      userID: props.userID,
+      userID,
       ...state.flight,
       timestamp: state.deletionState.timestamp,
     });
@@ -64,56 +62,57 @@ export const CitiesForm = (props) => {
     state.flight.departure = state.selection.get("departure");
     state.flight.arrival = state.selection.get("arrival");
 
-    if (window.liveSocket?.isConnected() && props._this) {
-      props._this?.pushEvent("fly", { userID: props.userID, ...state.flight });
+    if (window.liveSocket?.isConnected() && _this) {
+      props._this?.pushEvent("fly", { userID: userID, ...state.flight });
     }
   }
 
-  dispose = render(
-    () => (
-      <>
-        {isInitialized() ? (
-          <form onSubmit={handleSubmit} class="relative">
-            <div class="relative z-20">
-              <City
-                cities={cities()}
-                inputType="departure"
-                label="Departure City"
-                userID={props.userID}
-              />
-            </div>
-            <div class="relative z-10">
-              <City
-                cities={cities()}
-                inputType="arrival"
-                label="Arrival City"
-                userID={props.userID}
-              />
-            </div>
-            <div class="flex gap-4 mt-4 justify-center">
-              <button
-                class="w-48 px-4 py-2 bg-bisque text-midnightblue rounded-lg shadow-md hover:bg-midnightblue hover:text-bisque focus:outline-none active:bg-bisque active:text-midnightblue flex flex-col  justify-center gap-1"
-                type="submit"
-              >
-                <Icon url={flyUrl} />
-                <span class="text-sm">Fly !</span>
-              </button>
-              <button
-                class="w-48 px-4 py-2 bg-bisque text-midnightblue rounded-lg shadow-md hover:bg-midnightblue hover:text-bisque focus:outline-none active:bg-bisque active:text-midnightblue flex flex-col justify-center gap-1"
-                type="button"
-                onClick={handleReset}
-              >
-                <Icon url={delUrl} />
-                <span class="text-sm">Reset</span>
-              </button>
-            </div>
-          </form>
-        ) : (
-          <p>Loading airports data...</p>
-        )}
-      </>
-    ),
-    props.el
+  const dispose = render(
+    () =>
+      el && (
+        <>
+          {isInitialized() ? (
+            <form onSubmit={handleSubmit} class="relative">
+              <div class="relative z-20">
+                <City
+                  cities={cities()}
+                  inputType="departure"
+                  label="Departure City"
+                  userID={userID}
+                />
+              </div>
+              <div class="relative z-10">
+                <City
+                  cities={cities()}
+                  inputType="arrival"
+                  label="Arrival City"
+                  userID={userID}
+                />
+              </div>
+              <div class="flex gap-4 mt-4 justify-center">
+                <button
+                  class="w-48 px-4 py-2 bg-bisque text-midnightblue rounded-lg shadow-md hover:bg-midnightblue hover:text-bisque focus:outline-none active:bg-bisque active:text-midnightblue flex flex-col  justify-center gap-1"
+                  type="submit"
+                >
+                  <Icon url={flyUrl} />
+                  <span class="text-sm">Fly !</span>
+                </button>
+                <button
+                  class="w-48 px-4 py-2 bg-bisque text-midnightblue rounded-lg shadow-md hover:bg-midnightblue hover:text-bisque focus:outline-none active:bg-bisque active:text-midnightblue flex flex-col justify-center gap-1"
+                  type="button"
+                  onClick={handleReset}
+                >
+                  <Icon url={delUrl} />
+                  <span class="text-sm">Reset</span>
+                </button>
+              </div>
+            </form>
+          ) : (
+            <p>Loading airports data...</p>
+          )}
+        </>
+      ),
+    el
   );
 
   /**
@@ -123,8 +122,8 @@ export const CitiesForm = (props) => {
    * the component is properly cleaned up when it is no longer needed.
    */
   return () => {
-    unsubscribe();
+    unsubscribe(setCitiesFromState);
     dispose();
-    // console.log("CitiesForm component unmounted");
+    console.log("[CitiesForm ] unmounted");
   };
 };

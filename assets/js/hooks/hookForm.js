@@ -22,8 +22,6 @@ export const FormHook = {
     if (!localStorage.getItem("userID"))
       localStorage.setItem("userID", this.userID);
 
-    const { CitiesForm } = await import("@jsx/components/citiesForm");
-
     // console.log("[FormHook] ~~~~~~~~~~~> mounted");
 
     // Load cached airports
@@ -50,9 +48,8 @@ export const FormHook = {
       state.airports = [...airports];
     });
 
-    // we return both "dispose" and "cleanup" functions
-    // to allow for cleanup of the Solid component and Valtio subscription
-    // when the component is destroyed
+    const { CitiesForm } = await import("@jsx/components/citiesForm");
+
     this.cleanupSolid = CitiesForm({
       el: this.el,
       _this: this,
