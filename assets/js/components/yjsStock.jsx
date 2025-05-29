@@ -21,7 +21,7 @@ export const YjsStock = (props) => {
   });
 
   const [localStock, setLocalStock] = createSignal(
-    Math.round(Number(ymap.get("counter"))) || max
+    Math.round(Number(props.ydoc.getMap("sql3-data").get("counter"))) || max
   );
 
   /**

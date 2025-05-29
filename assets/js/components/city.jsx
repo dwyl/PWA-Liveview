@@ -5,7 +5,6 @@ import {
   createEffect,
   onCleanup,
   batch,
-  untrack,
 } from "solid-js";
 
 import { snapshot, subscribe } from "valtio/vanilla";

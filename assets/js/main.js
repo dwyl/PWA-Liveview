@@ -191,32 +191,18 @@ async function initOfflineComponents() {
 }
 
 function cleanExistingHooks() {
-  // Clean up hooks
-  // if (AppState.hooks) {
-  // for (const hook in AppState.hooks) {
-  //   const domElt = document.getElementById(domId);
-  //   if (
-  //     domElt &&
-  //     AppState.hooks[hook] &&
-  //     typeof AppState.hooks[hook].destroyed === "function"
-  //   ) {
-  //     AppState.hooks[hook].destroyed();
-  //     domElt.innerHTML = "";
-  //     console.log(`Called destroyed() for ${hook}`);
-  //   }
-  // }
   if (AppState.hooks === null) return;
 
   for (const key in AppState.hooks) {
     const domId = CONFIG.hooks[key];
     const domElt = document.getElementById(domId);
     if (domElt && typeof AppState.hooks[key].destroyed === "function") {
+      console.log(key, "destroyed");
       AppState.hooks[key].destroyed();
       domElt.innterHTML = "";
     }
   }
   AppState.hooks = null;
-  // }
 }
 
 // Register service worker early ----------------

@@ -46,10 +46,6 @@ const components = {
         max: Number(localStorage.getItem("max")),
         userID: localStorage.getItem("userID"),
       }),
-      // before: () => {
-      //   const yjsChHook = document.getElementById("counter-comp");
-      //   if (yjsChHook) yjsChHook.remove();
-      // },
       assign: async (instance) =>
         (offlineComponents.StockYjsChHook = await instance),
     },
@@ -101,7 +97,6 @@ async function injectComponentIntoView() {
         const Component = module[compConf.component];
         const args = compConf.args(el);
         const instance = await Component(args);
-        console.log(instance);
         if (compConf.assign) await compConf.assign(instance);
         results.push(instance);
       }
@@ -113,7 +108,6 @@ async function injectComponentIntoView() {
 
 function cleanupOfflineComponents() {
   for (const [key, cleanupFn] of Object.entries(offlineComponents)) {
-    console.log("clean: ", key, cleanupFn);
     if (cleanupFn) cleanupFn();
     offlineComponents[key] = null;
   }
