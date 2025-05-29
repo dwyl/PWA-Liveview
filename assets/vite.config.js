@@ -194,8 +194,8 @@ const buildOps = (mode) => ({
 // Service Worker Rentime Caching Strategies
 
 // fetch for Android
-const NavAll = {
-  urlPattern: ({ request }) => request.destination === "document",
+const FetchvAll = {
+  urlPattern: ({ request }) => request.mode === "navigate",
   handler: "NetworkFirst",
   options: {
     cacheName: "pages",
@@ -203,6 +203,9 @@ const NavAll = {
     expiration: {
       maxEntries: 50,
       maxAgeSeconds: 60 * 60 * 24, // 1 day
+    },
+    cacheableResponse: {
+      statuses: [0, 200],
     },
   },
 };
@@ -316,7 +319,7 @@ const runtimeCaching = [
   ...LiveView,
   MapTiler, // Add the SDK route before Tiles
   Fonts,
-  NavAll,
+  FetchvAll,
 ];
 
 // =============================================

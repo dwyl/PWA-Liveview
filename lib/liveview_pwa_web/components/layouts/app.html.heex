@@ -119,5 +119,14 @@
 </header>
 <main class="px-4 py-20 sm:px-6 lg:px-8 mx-auto max-w-2xl" id="main-content">
   <.flash_group flash={@flash} />
+  <div class="flex items-center gap-2">
+    <button class="border p-2 flex items-center gap-2" id="install-button">
+      <img
+        class="w-6 h-6 inline-block align-middle"
+        alt="android install"
+        src={ViteHelper.path("images/android.svg")}
+      /> Android install
+    </button>
+  </div>
   {@inner_content}
 </main>
