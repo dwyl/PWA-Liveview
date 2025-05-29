@@ -75,11 +75,7 @@ async function startApp() {
 
     AppState.status = AppState.isOnline ? "online" : "offline";
 
-    if (isOnline) {
-      return (window.liveSocket = await initLiveSocket());
-    } else {
-      return await initOfflineComponents();
-    }
+    return (window.liveSocket = await initLiveSocket());
   } catch (error) {
     console.error("Initialization error:", error);
   }
