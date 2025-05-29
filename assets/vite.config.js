@@ -319,7 +319,7 @@ const runtimeCaching = [
   ...LiveView,
   MapTiler, // Add the SDK route before Tiles
   Fonts,
-  FetchvAll,
+  // FetchvAll,
 ];
 
 // =============================================
