@@ -1,6 +1,6 @@
 // pwa-registration.js
 // Central module for PWA and Service Worker registration
-import { AppState } from "@js/main";
+import { appState } from "@js/stores/AppStore.js";
 let updateSWFunction = null;
 
 export async function registerServiceWorker() {
@@ -54,7 +54,7 @@ export async function registerServiceWorker() {
 }
 
 export function updateServiceWorker() {
-  if (AppState.updateSWFunction) {
-    AppState.updateSWFunction();
+  if (appState.updateSWFunction) {
+    appState.updateSWFunction();
   }
 }

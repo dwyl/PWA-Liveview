@@ -1,4 +1,4 @@
-import { AppState } from "@js/main";
+import { appState } from "@js/stores/AppStore.js";
 
 export const PwaHook = {
   destroyed() {
@@ -44,7 +44,7 @@ export const PwaHook = {
     // }
 
     this.handleEvent("sw-lv-skip-waiting", () => {
-      const updateServiceWorker = AppState.updateServiceWorker;
+      const updateServiceWorker = appState.updateServiceWorker;
       if (updateServiceWorker) {
         updateServiceWorker();
         // localStorage.removeItem("pwa_update_available");

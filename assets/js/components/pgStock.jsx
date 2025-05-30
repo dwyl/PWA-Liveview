@@ -23,10 +23,10 @@ export const PgStock = (props) => {
     setClicks(Math.round(Number(ymap.get("clicks"))) || 0);
   });
 
-  createEffect(() => {
-    const ymap = props.ydoc.getMap("pg-data");
-    console.log(ymap.get("pg-count"), ymap.get("clicks"), clicks());
-  });
+  // createEffect(() => {
+  //   const ymap = props.ydoc.getMap("pg-data");
+  //   console.log(ymap.get("pg-count"), ymap.get("clicks"), clicks());
+  // });
 
   const dispose = render(
     () => (

@@ -2,6 +2,8 @@ import "@css/app.css";
 // Include phoenix_html to handle method=PUT/DELETE in forms and buttons.
 import "phoenix_html";
 
+import { appState, setAppState } from "@js/stores/AppStore.js";
+
 const CONFIG = {
   POLL_INTERVAL: 1_000,
   ICONS: {
@@ -24,21 +26,9 @@ const CONFIG = {
   },
 };
 
-const AppState = {
-  status: "offline",
-  isOnline: true,
-  interval: null,
-  globalYdoc: null,
-  userSocket: null,
-  updateServiceWorker: null,
-  userToken: null,
-  userSocket: null,
-  hooks: null,
-};
+// window.appState = appState; <- debugging only
 
-// window.AppState = AppState; <- debugging only
-
-export { AppState, CONFIG };
+export { CONFIG };
 
 async function startApp() {
   console.log(" **** App started ****");
@@ -66,14 +56,13 @@ async function startApp() {
     ]);
     await setPresence(userSocket, "proxy:presence", user_token);
 
-    Object.assign(AppState, {
+    setAppState({
       userToken: user_token,
       globalYdoc,
       isOnline,
       userSocket,
+      status: isOnline ? "online" : "offline",
     });
-
-    AppState.status = AppState.isOnline ? "online" : "offline";
 
     return (window.liveSocket = await initLiveSocket());
   } catch (error) {
@@ -83,36 +72,40 @@ async function startApp() {
 
 // we start the polling heartbeat when the app is loaded
 startApp().then(() => {
-  return !AppState.interval && startPolling();
+  return !appState.interval && startPolling();
 });
 
 // Polling ----------
 function startPolling(interval = CONFIG.POLL_INTERVAL) {
-  if (AppState.interval) return;
+  if (appState.interval) return;
 
-  AppState.interval = setInterval(async () => {
-    const { checkServer } = await import("@js/utilities/checkServer");
-    const isOnline = await checkServer();
-    return updateConnectionStatus(isOnline);
-  }, interval);
+  setAppState(
+    "interval",
+    setInterval(async () => {
+      const { checkServer } = await import("@js/utilities/checkServer");
+      const isOnline = await checkServer();
+      return updateConnectionStatus(isOnline);
+    }, interval)
+  );
 
-  return AppState.interval;
+  return appState.interval;
 }
 
 // Update connection status ----------------
 function updateConnectionStatus(isOnline) {
-  const prevStatus = AppState.status;
-  AppState.status = isOnline ? "online" : "offline";
-  AppState.isOnline = isOnline;
+  const prevStatus = appState.status;
+  setAppState("isOnline", isOnline);
+  setAppState("status", isOnline ? "online" : "offline");
 
   // Only update UI and log if status actually changed
-  if (prevStatus !== AppState.status) {
+  if (prevStatus !== appState.status) {
     const statusIcon = document.getElementById("online-status");
     statusIcon.src =
-      AppState.status === "online" ? CONFIG.ICONS.online : CONFIG.ICONS.offline;
+      appState.status === "online" ? CONFIG.ICONS.online : CONFIG.ICONS.offline;
+
     window.dispatchEvent(
       new CustomEvent("connection-status-changed", {
-        detail: { status: AppState.status },
+        detail: { status: appState.status },
       })
     );
   }
@@ -144,18 +137,18 @@ async function initLiveSocket() {
 
     const hooks = {
       StockYjsChHook: StockYjsChHook({
-        ydoc: AppState.globalYdoc,
-        userSocket: AppState.userSocket,
+        ydoc: appState.globalYdoc,
+        userSocket: appState.userSocket,
       }),
       PgStockHook: PgStockHook({
-        ydoc: AppState.globalYdoc,
-        userSocket: AppState.userSocket,
+        ydoc: appState.globalYdoc,
+        userSocket: appState.userSocket,
       }),
       MapHook: MapHook({ mapID: CONFIG.MapID }),
       FormHook,
       PwaHook,
     };
-    AppState.hooks = hooks;
+    setAppState("hooks", hooks);
 
     const liveSocket = new LiveSocket("/live", Socket, {
       // longPollFallbackMs: 2000,
@@ -174,31 +167,18 @@ async function initLiveSocket() {
 }
 
 async function initOfflineComponents() {
-  if (AppState.isOnline) return;
+  if (appState.isOnline) return;
   console.log("Init Offline Components---------");
   const { injectComponentIntoView, attachNavigationListeners } = await import(
     "@js/utilities/navigate"
   );
-  cleanExistingHooks();
+  const { cleanExistingHooks } = await import("@js/utilities/navigate");
   // first hijack the navigation to avoid the page reload
+  cleanExistingHooks();
   attachNavigationListeners();
   // and then render the current view
-  return await injectComponentIntoView();
-}
-
-function cleanExistingHooks() {
-  if (AppState.hooks === null) return;
-
-  for (const key in AppState.hooks) {
-    const domId = CONFIG.hooks[key];
-    const domElt = document.getElementById(domId);
-    if (domElt && typeof AppState.hooks[key].destroyed === "function") {
-      console.log(key, "destroyed");
-      AppState.hooks[key].destroyed();
-      domElt.innterHTML = "";
-    }
-  }
-  AppState.hooks = null;
+  const _module = await injectComponentIntoView();
+  // console.log(module);
 }
 
 // Register service worker early ----------------
@@ -213,7 +193,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     registerServiceWorker(),
   ]);
 
-  AppState.updateServiceWorker = swRegistration;
+  appState.updateServiceWorker = swRegistration;
+  const { installAndroid } = await import("@js/utilities/installAndroid");
+  // if the service worker is registered, we can install the PWA
   return installAndroid();
 });
 
@@ -221,77 +203,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 window.addEventListener("connection-status-changed", async (e) => {
   console.log("Connection status changed to:", e.detail.status);
   if (e.detail.status === "offline") {
-    AppState.status = "offline";
+    setAppState("status", "offline");
     return await initOfflineComponents();
   } else {
     window.location.reload();
   }
 });
-
-function installAndroid() {
-  const installButton = document.getElementById("install-button");
-  if (!("BeforeInstallPromptEvent" in window)) {
-    console.log("beforeinstallprompt not supported");
-    installButton.style.display = "none";
-    return;
-  }
-
-  let deferredPrompt;
-  let installButtonClickHandler;
-
-  window.addEventListener(
-    "beforeinstallprompt",
-    (e) => {
-      console.log("[PWA install] prompt available");
-      e.preventDefault();
-      deferredPrompt = e;
-      showInstallButton();
-    },
-    { once: true }
-  );
-
-  function handleInstallClick() {
-    console.log("click");
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then((choiceResult) => {
-        console.log(`Install prompt result: ${choiceResult.outcome}`);
-        deferredPrompt = null;
-        hideInstallButton();
-      });
-    }
-  }
-
-  function showInstallButton() {
-    if (installButton) {
-      installButton.style.display = "block";
-      if (!installButtonClickHandler) {
-        installButtonClickHandler = handleInstallClick;
-        installButton.addEventListener("click", installButtonClickHandler);
-      }
-    }
-  }
-
-  function hideInstallButton() {
-    if (installButton) {
-      installButton.style.display = "none";
-
-      // Clean up the event listener using the stored reference
-      if (installButtonClickHandler) {
-        installButton.removeEventListener("click", installButtonClickHandler);
-        installButtonClickHandler = null;
-      }
-    }
-  }
-
-  console.log(navigator.userAgent);
-  if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-    document.addEventListener("DOMContentLoaded", () => {
-      if (installButton) {
-        installButton.style.display = "none";
-      }
-    });
-
-    console.log("iOS detected - users can install via Safari Share menu");
-  }
-}

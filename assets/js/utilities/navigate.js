@@ -1,4 +1,4 @@
-import { AppState } from "@js/main";
+import { appState, setAppState } from "@js/stores/AppStore.js";
 import { CONFIG } from "@js/main";
 
 const { CONTENT_SELECTOR: selector, hooks } = CONFIG;
@@ -20,7 +20,7 @@ const components = {
       import: () => import("@jsx/components/pgStock.jsx"),
       args: (el) => ({
         el,
-        ydoc: AppState.globalYdoc,
+        ydoc: appState.globalYdoc,
         max: Number(localStorage.getItem("max")),
         userID: localStorage.getItem("userID"),
       }),
@@ -42,7 +42,7 @@ const components = {
       import: () => import("@jsx/components/yjsStock.jsx"),
       args: (el) => ({
         el,
-        ydoc: AppState.globalYdoc,
+        ydoc: appState.globalYdoc,
         max: Number(localStorage.getItem("max")),
         userID: localStorage.getItem("userID"),
       }),
@@ -52,16 +52,6 @@ const components = {
   ],
   // multiple hooks in the same view
   mapView: [
-    // the map is not rendered as a Solidjs component but vanilla JS - Leaflet
-    {
-      id: hooks.MapHook,
-      component: "renderMap",
-      import: () => import("@js/components/renderMap.js"),
-      args: () => ({
-        id: hooks.MapHook,
-      }),
-      assign: async (instance) => (offlineComponents.MapHook = await instance),
-    },
     // the form is a SolidJS component
     {
       id: hooks.FormHook,
@@ -74,12 +64,20 @@ const components = {
       }),
       assign: async (instance) => (offlineComponents.FormHook = await instance),
     },
+    // the map is not rendered as a Solidjs component but vanilla JS - Leaflet
+    {
+      id: hooks.MapHook,
+      component: "renderMap",
+      import: () => import("@js/components/renderMap.js"),
+      args: () => ({
+        id: hooks.MapHook,
+      }),
+      assign: async (instance) => (offlineComponents.MapHook = await instance),
+    },
   ],
 };
 
 async function injectComponentIntoView() {
-  cleanupOfflineComponents();
-
   const results = [];
 
   for (const key in components) {
@@ -90,20 +88,44 @@ async function injectComponentIntoView() {
     // run only the components that are present in the DOM
     // there can be several components in the same view, eg mapView
     if (allPresent) {
+      console.log(allPresent);
       for (const compConf of config) {
         const el = document.getElementById(compConf.id);
         if (compConf.before) compConf.before();
         const module = await compConf.import();
+        console.log(module);
         const Component = module[compConf.component];
         const args = compConf.args(el);
-        const instance = await Component(args);
-        if (compConf.assign) await compConf.assign(instance);
-        results.push(instance);
+        // work around for Laflet (re)mounting
+        try {
+          const instance = await Component(args);
+          if (compConf.assign) await compConf.assign(instance);
+          results.push(instance);
+        } catch (error) {
+          console.warn(error);
+        }
       }
       return results;
     }
   }
   return results.length ? results : undefined;
+}
+
+function cleanExistingHooks() {
+  if (appState.hooks === null) return;
+
+  for (const key in appState.hooks) {
+    if (key !== "MapHook") {
+      const domId = CONFIG.hooks[key];
+      const domElt = document.getElementById(domId);
+      if (domElt && typeof appState.hooks[key].destroyed === "function") {
+        console.log(key, "destroyed");
+        appState.hooks[key].destroyed();
+        domElt.innerHTML = "";
+      }
+    }
+  }
+  setAppState("hooks", null);
 }
 
 function cleanupOfflineComponents() {
@@ -145,6 +167,7 @@ async function handleOfflineNavigation(event) {
     const currentContent = document.querySelector(selector);
     if (currentContent) {
       currentContent.innerHTML = newContent.innerHTML;
+      cleanupOfflineComponents();
       await injectComponentIntoView();
       return attachNavigationListeners();
     }
@@ -162,4 +185,8 @@ function attachNavigationListeners() {
   });
 }
 
-export { injectComponentIntoView, attachNavigationListeners };
+export {
+  cleanExistingHooks,
+  injectComponentIntoView,
+  attachNavigationListeners,
+};

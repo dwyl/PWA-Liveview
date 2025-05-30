@@ -58,12 +58,6 @@ export const YjsStock = (props) => {
   createEffect(() => {
     el = props.el;
     max = props.max;
-    console.log(
-      "Yjs Stock:",
-      ymap.get("clicks"),
-      ymap.get("counter"),
-      localStock()
-    );
   });
 
   const Counter = lazy(() => import("@jsx/components/counter"));
