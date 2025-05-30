@@ -194,9 +194,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     import("@js/utilities/pwaRegistration"),
   ]);
 
-  // const [_, updateSWFunction] =
   await Promise.all([configureTopbar(), registerServiceWorker()]);
-  // console.log(updateSWFunction);
 
   const { installAndroid } = await import("@js/utilities/installAndroid");
   // if the service worker is registered, we can install the PWA
