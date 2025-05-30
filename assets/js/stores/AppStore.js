@@ -6,7 +6,6 @@ export const [appState, setAppState] = createStore({
   interval: null,
   globalYdoc: null,
   userSocket: null,
-  updateServiceWorker: null,
   userToken: null,
   hooks: null,
 });

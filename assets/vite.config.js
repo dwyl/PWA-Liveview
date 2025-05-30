@@ -234,7 +234,7 @@ const LiveView = [
     },
   },
   {
-    urlPattern: ({ url }) => url.pathname.startsWith("/ydoc/"),
+    urlPattern: ({ url }) => url.pathname.startsWith("/user/"),
     handler: "NetworkOnly",
     options: {
       fetchOptions: {
@@ -457,13 +457,13 @@ export default defineConfig(({ command, mode }) => {
   return {
     base: "/", // "https://cdn.example.com/assets/", // CDN base URL
     plugins: [
-      // mode == "production"
-      //   ? null
-      //   : checker({
-      //       eslint: {
-      //         lintCommand: 'eslint "./js/**/*.{js,jsx}"',
-      //       },
-      //     }),
+      mode == "production"
+        ? null
+        : checker({
+            eslint: {
+              lintCommand: 'eslint "./js/**/*.{js,jsx}"',
+            },
+          }),
       wasm(),
       VitePWA(PWAConfig(mode)),
       solidPlugin(),

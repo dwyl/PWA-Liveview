@@ -24,9 +24,9 @@ export const PgStockHook = ({ ydoc, userSocket }) => ({
     this.actionPushClicks = this.actionPushClicks.bind(this);
     this.setupChannel = this.setupChannel.bind(this);
 
-    await this.setupChannel(userSocket, "pg-counter").then(() =>
-      this.pushClicks()
-    );
+    await this.setupChannel(userSocket, "pg-counter").then((channelState) => {
+      channelState === "joined" && this.pushClicks();
+    });
 
     window.addEventListener("connection-status-changed", this.actionPushClicks);
   },
@@ -36,14 +36,7 @@ export const PgStockHook = ({ ydoc, userSocket }) => ({
     const channelJoined = await this.setupChannel(userSocket, "pg-counter");
 
     if (channelJoined === "joined") {
-      this.channel
-        .push("client-clicks", {
-          clicks: Number(this.ymap.get("clicks")) || 0,
-        })
-        .receive("ok", ({ new_val }) => {
-          this.ymap.set("clicks", 0);
-          this.ymap.set("pg-count", new_val);
-        });
+      this.pushClicks();
     }
   },
 

@@ -1,14 +1,14 @@
 // pwa-registration.js
 // Central module for PWA and Service Worker registration
-import { appState } from "@js/stores/AppStore.js";
-let updateSWFunction = null;
+import { pwaRegistry } from "@js/main";
+// let updateSWFunction = null;
 
 export async function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return false;
 
   try {
     const { registerSW } = await import("virtual:pwa-register");
-    updateSWFunction = registerSW({
+    const updateSWFunction = registerSW({
       immediate: true, // Register immediately in the main.js context
 
       onOfflineReady: () => {
@@ -45,16 +45,9 @@ export async function registerServiceWorker() {
     });
 
     console.log("registerServiceWorker------");
-
-    return await updateSWFunction;
+    return (pwaRegistry.updateSW = updateSWFunction);
   } catch (error) {
     console.error("[PWA] Failed to load PWA module:", error);
     return false;
-  }
-}
-
-export function updateServiceWorker() {
-  if (appState.updateSWFunction) {
-    appState.updateSWFunction();
   }
 }

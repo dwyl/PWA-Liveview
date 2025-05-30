@@ -11,7 +11,6 @@ export const StockYjsChHook = ({ ydoc, userSocket }) => ({
   ymap: null,
 
   async mounted() {
-    console.log("[StocYjsChHook] mounted", this.cleanupSolid);
     this.userID = Number(this.el.dataset.userid);
     if (!localStorage.getItem("userID")) {
       localStorage.setItem("userID", this.userID);
@@ -40,6 +39,8 @@ export const StockYjsChHook = ({ ydoc, userSocket }) => ({
 
     // Listen to yjs updates (component will update clicks/counter)
     ydoc.on("update", this.handleYUpdate);
+
+    console.log("[StockYjsCh] mounted");
   },
 
   runSync({ detail }) {

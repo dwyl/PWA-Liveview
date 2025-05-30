@@ -77,7 +77,7 @@ const components = {
   ],
 };
 
-async function injectComponentIntoView() {
+async function mountOfflineComponents() {
   const results = [];
 
   for (const key in components) {
@@ -88,18 +88,17 @@ async function injectComponentIntoView() {
     // run only the components that are present in the DOM
     // there can be several components in the same view, eg mapView
     if (allPresent) {
-      console.log(allPresent);
       for (const compConf of config) {
         const el = document.getElementById(compConf.id);
         if (compConf.before) compConf.before();
         const module = await compConf.import();
-        console.log(module);
         const Component = module[compConf.component];
         const args = compConf.args(el);
         // work around for Laflet (re)mounting
         try {
           const instance = await Component(args);
           if (compConf.assign) await compConf.assign(instance);
+          console.log("[", Object.keys(module), "] mounted");
           results.push(instance);
         } catch (error) {
           console.warn(error);
@@ -119,7 +118,7 @@ function cleanExistingHooks() {
       const domId = CONFIG.hooks[key];
       const domElt = document.getElementById(domId);
       if (domElt && typeof appState.hooks[key].destroyed === "function") {
-        console.log(key, "destroyed");
+        console.log("to offline: [", key, "] existing cleaned");
         appState.hooks[key].destroyed();
         domElt.innerHTML = "";
       }
@@ -168,7 +167,7 @@ async function handleOfflineNavigation(event) {
     if (currentContent) {
       currentContent.innerHTML = newContent.innerHTML;
       cleanupOfflineComponents();
-      await injectComponentIntoView();
+      await mountOfflineComponents();
       return attachNavigationListeners();
     }
   } catch (error) {
@@ -187,6 +186,6 @@ function attachNavigationListeners() {
 
 export {
   cleanExistingHooks,
-  injectComponentIntoView,
+  mountOfflineComponents,
   attachNavigationListeners,
 };

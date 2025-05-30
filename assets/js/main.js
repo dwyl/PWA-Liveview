@@ -26,9 +26,15 @@ const CONFIG = {
   },
 };
 
-// window.appState = appState; <- debugging only
-
 export { CONFIG };
+
+// NOTE: pwaRegistry is a plain object so we can store callable functions
+// without SolidJS proxy interference.
+export const pwaRegistry = {};
+
+//<- debugging only
+// window.appState = appState;
+// window.pwaRegistry = pwaRegistry;
 
 async function startApp() {
   console.log(" **** App started ****");
@@ -171,13 +177,13 @@ async function initOfflineComponents() {
   console.log("Init Offline Components---------");
   const {
     cleanExistingHooks,
-    injectComponentIntoView,
+    mountOfflineComponents,
     attachNavigationListeners,
   } = await import("@js/utilities/navigate");
   cleanExistingHooks();
   attachNavigationListeners();
   // and then render the current view
-  const _module = await injectComponentIntoView();
+  const _module = await mountOfflineComponents();
   // console.log(module);
 }
 
@@ -188,12 +194,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     import("@js/utilities/pwaRegistration"),
   ]);
 
-  const [_, swRegistration] = await Promise.all([
-    configureTopbar(),
-    registerServiceWorker(),
-  ]);
+  // const [_, updateSWFunction] =
+  await Promise.all([configureTopbar(), registerServiceWorker()]);
+  // console.log(updateSWFunction);
 
-  appState.updateServiceWorker = swRegistration;
   const { installAndroid } = await import("@js/utilities/installAndroid");
   // if the service worker is registered, we can install the PWA
   return installAndroid();
