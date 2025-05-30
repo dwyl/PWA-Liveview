@@ -45,7 +45,7 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
               max={@max}
               name="dec-phx-sync-counter"
               value={item.counter}
-              disabled={@disabled}
+              disabled
               aria-label="displayed-stock"
             />
             <span class="ml-8">{item.counter}</span>
@@ -54,11 +54,11 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
       </p>
       <p id="hook-pg" phx-hook="PgStockHook" data-max={@max} data-userid={@user_id}></p>
       <br />
-      <%!-- phx-update="ignore" --%>
     </div>
     """
   end
 
+  #
   @impl true
   def mount(_params, _session, socket) do
     query = PhxSyncCount.query_current()
@@ -66,14 +66,12 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
     {:ok,
      socket
      |> assign(:page_title, "PhxSync")
-     |> assign(:hide, false)
-     |> assign(:disabled, false)
      |> sync_stream(:phx_sync_counter, query)}
   end
 
   @impl true
   def handle_info({:sync, {_name, :live}}, socket) do
-    {:noreply, assign(socket, :show_stream, true)}
+    {:noreply, socket}
   end
 
   # pass through
@@ -89,8 +87,7 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
     {:ok, new_val} = PhxSyncCount.decrement(1)
     Logger.debug("decrement val to----------->: #{new_val}")
 
-    {:reply, %{new_val: new_val},
-     push_event(socket, "update-local-store", %{counter: new_val}) |> assign(:disabled, true)}
+    {:reply, %{new_val: new_val}, push_event(socket, "update-local-store", %{counter: new_val})}
   end
 
   # event "client-clicks" sent over the userSocket

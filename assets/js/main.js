@@ -169,11 +169,11 @@ async function initLiveSocket() {
 async function initOfflineComponents() {
   if (appState.isOnline) return;
   console.log("Init Offline Components---------");
-  const { injectComponentIntoView, attachNavigationListeners } = await import(
-    "@js/utilities/navigate"
-  );
-  const { cleanExistingHooks } = await import("@js/utilities/navigate");
-  // first hijack the navigation to avoid the page reload
+  const {
+    cleanExistingHooks,
+    injectComponentIntoView,
+    attachNavigationListeners,
+  } = await import("@js/utilities/navigate");
   cleanExistingHooks();
   attachNavigationListeners();
   // and then render the current view
