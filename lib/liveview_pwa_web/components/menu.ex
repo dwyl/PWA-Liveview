@@ -20,7 +20,7 @@ defmodule LiveviewPwaWeb.Menu do
   # class="px-4 py-2 border-2 rounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300"
 
   defp link_class do
-    "px-4 py-2 border-2 rounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300"
+    "px-4 py-2 border-2 flex flex-col justify-center flex-1 items-center ounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300"
   end
 
   attr :active_path, :string, default: "/"
@@ -30,7 +30,7 @@ defmodule LiveviewPwaWeb.Menu do
     <div id="menu">
       <nav
         id="navbar"
-        class="mt-4 bg-gradient-to-r from-blue-200 to-purple-200 p-4 rounded-lg shadow-md flex justify-between items-center"
+        class="mt-4 bg-gradient-to-r from-blue-200 to-purple-200 p-2 rounded-lg shadow-md flex justify-between items-center"
       >
         <.link
           :for={item <- menu()}
@@ -40,7 +40,8 @@ defmodule LiveviewPwaWeb.Menu do
           replace
           class={[if(@active_path == item.path, do: "border-midnightblue", else: nil), link_class()]}
         >
-          <.icon name={item.icon} /> &nbsp {item.title}
+          <.icon name={item.icon} />
+          <span class="text-sm [390px]:text-base">{item.title}</span>
         </.link>
       </nav>
     </div>
