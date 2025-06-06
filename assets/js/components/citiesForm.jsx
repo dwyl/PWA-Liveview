@@ -5,7 +5,7 @@ import { state } from "@js/stores/vStore";
 import flyUrl from "@assets/fly.svg?url";
 import delUrl from "@assets/delete.svg?url";
 
-export const CitiesForm = (props) => {
+export const CitiesForm = ({ el, userID, _this }) => {
   // console.log("CitiesForm component mounting");
 
   const [isInitialized, setIsInitialized] = createSignal(false);
@@ -46,11 +46,10 @@ export const CitiesForm = (props) => {
   function handleReset() {
     state.deletionState.isDeleted = true;
     state.deletionState.timestamp = Date.now();
-    state.deletionState.deletedBy = props.userID;
-    props._this?.pushEvent("delete", {
+    state.deletionState.deletedBy = userID;
+    _this?.pushEvent("delete", {
       userID,
       ...state.flight,
-      timestamp: state.deletionState.timestamp,
     });
   }
 
@@ -62,8 +61,8 @@ export const CitiesForm = (props) => {
     state.flight.departure = state.selection.get("departure");
     state.flight.arrival = state.selection.get("arrival");
 
-    if (window.liveSocket?.isConnected() && props._this) {
-      props._this?.pushEvent("fly", { userID: props.userID, ...state.flight });
+    if (window.liveSocket?.isConnected() && _this) {
+      props._this?.pushEvent("fly", { userID: userID, ...state.flight });
     }
   }
 
@@ -77,7 +76,7 @@ export const CitiesForm = (props) => {
                 cities={cities()}
                 inputType="departure"
                 label="Departure City"
-                userID={props.userID}
+                userID={userID}
               />
             </div>
             <div class="relative z-10">
@@ -85,7 +84,7 @@ export const CitiesForm = (props) => {
                 cities={cities()}
                 inputType="arrival"
                 label="Arrival City"
-                userID={props.userID}
+                userID={userID}
               />
             </div>
             <div class="flex gap-4 mt-4 justify-center">
@@ -111,7 +110,7 @@ export const CitiesForm = (props) => {
         )}
       </>
     ),
-    props.el
+    el
   );
 
   /**

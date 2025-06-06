@@ -192,14 +192,30 @@ document.addEventListener("DOMContentLoaded", async () => {
   const [{ configureTopbar }, { registerServiceWorker }] = await Promise.all([
     import("@js/utilities/configureTopbar"),
     import("@js/utilities/pwaRegistration"),
+    import("ua-parser-js"),
   ]);
 
   await Promise.all([configureTopbar(), registerServiceWorker()]);
-
-  const { installAndroid } = await import("@js/utilities/installAndroid");
-  // if the service worker is registered, we can install the PWA
-  return installAndroid();
+  await maybeProposeAndroidInstall(new UAParser());
 });
+
+async function maybeProposeAndroidInstall(parser) {
+  const installButton = document.getElementById("install-button");
+
+  const result = parser.getResult();
+
+  if (result.os.name === "Android") {
+    const { installAndroidButton } = await import(
+      "@js/utilities/installAndroidButton"
+    );
+    installButton.classList.remove("hidden");
+    installButton.classList.add("flex");
+
+    return installAndroidButton(installButton);
+  } else {
+    console.log("[UAParser] Not Android, no install button");
+  }
+}
 
 // trigger offline rendering if offline ---------------
 window.addEventListener("connection-status-changed", async (e) => {

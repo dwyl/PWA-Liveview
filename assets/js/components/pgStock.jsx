@@ -1,14 +1,14 @@
 import { createEffect, createSignal } from "solid-js";
 import { render } from "solid-js/web";
 
-export const PgStock = (props) => {
+export const PgStock = ({ ydoc, max, el }) => {
   const [localCounter, setLocalCounter] = createSignal(20);
 
   const [clicks, setClicks] = createSignal(0);
 
   const decrement = () => {
-    const ymap = props.ydoc.getMap("pg-data");
-    const new_value = localCounter() == 0 ? props.max : localCounter() - 1;
+    const ymap = ydoc.getMap("pg-data");
+    const new_value = localCounter() == 0 ? max : localCounter() - 1;
     const new_clicks = clicks() + 1;
     setClicks(new_clicks);
 
@@ -18,7 +18,7 @@ export const PgStock = (props) => {
   };
 
   createEffect(() => {
-    const ymap = props.ydoc.getMap("pg-data");
+    const ymap = ydoc.getMap("pg-data");
     setLocalCounter(Math.round(Number(ymap.get("pg-count"))) || props.max);
     setClicks(Math.round(Number(ymap.get("clicks"))) || 0);
   });
@@ -38,7 +38,7 @@ export const PgStock = (props) => {
           <input
             type="range"
             min="0"
-            max={props.max}
+            max={max}
             name="dec-pg-sync-counter"
             value={localCounter()}
             aria-label="displayed-pg-stock"
@@ -47,7 +47,7 @@ export const PgStock = (props) => {
         </form>
       </>
     ),
-    props.el
+    el
   );
 
   return () => dispose();

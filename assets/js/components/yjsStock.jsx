@@ -1,27 +1,17 @@
 import { render } from "solid-js/web";
-import { createSignal, createEffect, lazy } from "solid-js";
+import { createSignal, lazy } from "solid-js";
 
 const getCircularValue = (currentValue, max) => {
   return currentValue === 0 ? max : currentValue - 1;
 };
 
-export const YjsStock = (props) => {
+export const YjsStock = ({ ydoc, userID, el, max }) => {
   console.log("[YjsStock] component mounting");
-  // Non-reactive destructuring
-  // const { el, userID, max } = props;
 
-  // ydoc is reactive
-  let ymap;
-  let max = null,
-    el = null,
-    range = null;
-
-  createEffect(() => {
-    ymap = props.ydoc.getMap("sql3-data");
-  });
+  const ymap = props.ydoc.getMap("sql3-data");
 
   const [localStock, setLocalStock] = createSignal(
-    Math.round(Number(props.ydoc.getMap("sql3-data").get("counter"))) || max
+    Math.round(Number(ydoc.getMap("sql3-data").get("counter"))) || max
   );
 
   /**
@@ -48,20 +38,15 @@ export const YjsStock = (props) => {
     // keep a circular range for the demo: shouldn't it go up?
     const newValue = getCircularValue(localStock(), max);
 
-    props.ydoc.transact(() => {
+    ydoc.transact(() => {
       console.log("update YDoc");
       ymap.set("counter", newValue);
       ymap.set("clicks", (ymap.get("clicks") || 0) + 1);
     }, "local");
   };
 
-  createEffect(() => {
-    el = props.el;
-    max = props.max;
-  });
-
   const Counter = lazy(() => import("@jsx/components/counter"));
-  range = [...Array(Number(max) + 1).keys()];
+  const range = [...Array(Number(max) + 1).keys()];
 
   const dispose = render(
     () => (
@@ -70,7 +55,7 @@ export const YjsStock = (props) => {
         onStockChange={handleDecrement}
         stock={localStock()} // reactive signal
         max={max}
-        userID={props.userID}
+        userID={userID}
         range={range}
       />
     ),
