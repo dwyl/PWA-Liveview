@@ -2,109 +2,109 @@
   <%!-- <div id="user_token" data-user-token={@user_token}></div> --%>
 
   <div class="flex items-center justify-between border-b border-zinc-100 py-3 text-sm">
-    <div class="flex items-center gap-4">
-      <p>
-        <img
-          class="aspect-auto"
-          width="20px"
-          height="20px"
-          alt="phoenix"
-          src={ViteHelper.path("images/logo.svg")}
-        />
-      </p>
-      <p>
-        <img
-          class="aspect-auto"
-          width="20px"
-          height="20px"
-          alt="elixir"
-          src={ViteHelper.path("images/Elixir.svg")}
-        />
-      </p>
-      <p>
-        <img
-          class="aspect-auto"
-          width="20px"
-          height="20px"
-          alt="sqlite"
-          src={ViteHelper.path("images/sqlite.svg")}
-        />
-      </p>
-      <p>
-        <img
-          class="aspect-auto"
-          width="20px"
-          height="20px"
-          alt="yjs"
-          src={ViteHelper.path("images/yjs.webp")}
-        />
-      </p>
-      <p>
-        <img
-          class="aspect-auto"
-          width="20px"
-          height="20px"
-          alt="solid"
-          src={ViteHelper.path("images/solidjs.svg")}
-        />
-      </p>
-      <p>
-        <img
-          class="aspect-auto"
-          width="20px"
-          height="20px"
-          alt="zig"
-          src={ViteHelper.path("images/zig.svg")}
-        />
-      </p>
-      <p>
-        <img
-          class="aspect-auto"
-          width="20px"
-          height="20px"
-          alt="wasm"
-          src={ViteHelper.path("images/webassembly.svg")}
-        />
-      </p>
-      s
-      <p>
-        <img
-          class="aspect-auto"
-          width="20px"
-          height="20px"
-          alt="vite"
-          src={ViteHelper.path("images/vitejs.svg")}
-        />
-      </p>
-      <p>
-        <img
-          class="aspect-auto"
-          width="20px"
-          height="20px"
-          alt="leaflet"
-          src={ViteHelper.path("images/leafletjs.svg")}
-        />
-      </p>
-      <p>
-        <img
-          class="aspect-auto w-5 h-auto"
-          width="20px"
-          height="20px"
-          alt="maptiler"
-          src={ViteHelper.path("images/maptiler.webp")}
-        />
-      </p>
-      <p>
-        <img
-          class="aspect-auto"
-          height="20px"
-          width="20px"
-          alt="pwa"
-          src={ViteHelper.path("images/pwa.svg")}
-        />
-      </p>
+    <div class="relative">
+      <button
+        id="hamburger-menu"
+        class="flex flex-col justify-center items-center w-8 h-8 space-y-1 hover:bg-gray-100 rounded transition-colors duration-200 group"
+        phx-click={
+          JS.toggle(to: "#tech-menu") |> JS.toggle_class("menu-open", to: "#hamburger-menu")
+        }
+        aria-label="Toggle menu"
+      >
+        <.icon name="hero-bars-3"/>
+      </button>
+      <div
+        id="tech-menu"
+        class="absolute top-full left-0 mt-2 bg-white border border-zinc-200 rounded-lg shadow-lg p-4 hidden z-50 min-w-max"
+        phx-click-away={
+          JS.hide(to: "#tech-menu") |> JS.remove_class("menu-open", to: "#hamburger-menu")
+        }
+      >
+        <div class="grid grid-cols-4 gap-4">
+          <div class="flex flex-col items-center gap-1 p-2 rounded hover:bg-gray-50 transition-colors">
+            <img
+              class="w-8 h-8 object-contain"
+              alt="phoenix"
+              src={ViteHelper.path("images/logo.svg")}
+            />
+            <span class="text-xs text-zinc-600 font-medium">Phoenix</span>
+          </div>
+          <div class="flex flex-col items-center gap-1 p-2 rounded hover:bg-gray-50 transition-colors">
+            <img
+              class="w-8 h-8 object-contain"
+              alt="elixir"
+              src={ViteHelper.path("images/Elixir.svg")}
+            />
+            <span class="text-xs text-zinc-600 font-medium">Elixir</span>
+          </div>
+          <div class="flex flex-col items-center gap-1 p-2 rounded hover:bg-gray-50 transition-colors">
+            <img
+              class="w-8 h-8 object-contain"
+              alt="sqlite"
+              src={ViteHelper.path("images/sqlite.svg")}
+            />
+            <span class="text-xs text-zinc-600 font-medium">SQLite</span>
+          </div>
+          <div class="flex flex-col items-center gap-1 p-2 rounded hover:bg-gray-50 transition-colors">
+            <img
+              class="w-8 h-8 object-contain"
+              alt="yjs"
+              src={ViteHelper.path("images/yjs.webp")}
+            />
+            <span class="text-xs text-zinc-600 font-medium">Yjs</span>
+          </div>
+          <div class="flex flex-col items-center gap-1 p-2 rounded hover:bg-gray-50 transition-colors">
+            <img
+              class="w-8 h-8 object-contain"
+              alt="solid"
+              src={ViteHelper.path("images/solidjs.svg")}
+            />
+            <span class="text-xs text-zinc-600 font-medium">SolidJS</span>
+          </div>
+          <div class="flex flex-col items-center gap-1 p-2 rounded hover:bg-gray-50 transition-colors">
+            <img class="w-8 h-8 object-contain" alt="zig" src={ViteHelper.path("images/zig.svg")} />
+            <span class="text-xs text-zinc-600 font-medium">Zig</span>
+          </div>
+          <div class="flex flex-col items-center gap-1 p-2 rounded hover:bg-gray-50 transition-colors">
+            <img
+              class="w-8 h-8 object-contain"
+              alt="wasm"
+              src={ViteHelper.path("images/webassembly.svg")}
+            />
+            <span class="text-xs text-zinc-600 font-medium">WASM</span>
+          </div>
+          <div class="flex flex-col items-center gap-1 p-2 rounded hover:bg-gray-50 transition-colors">
+            <img
+              class="w-8 h-8 object-contain"
+              alt="vite"
+              src={ViteHelper.path("images/vitejs.svg")}
+            />
+            <span class="text-xs text-zinc-600 font-medium">Vite</span>
+          </div>
+          <div class="flex flex-col items-center gap-1 p-2 rounded hover:bg-gray-50 transition-colors">
+            <img
+              class="w-8 h-8 object-contain"
+              alt="leaflet"
+              src={ViteHelper.path("images/leafletjs.svg")}
+            />
+            <span class="text-xs text-zinc-600 font-medium">Leaflet</span>
+          </div>
+          <div class="flex flex-col items-center gap-1 p-2 rounded hover:bg-gray-50 transition-colors">
+            <img
+              class="w-8 h-8 object-contain"
+              alt="maptiler"
+              src={ViteHelper.path("images/maptiler.webp")}
+            />
+            <span class="text-xs text-zinc-600 font-medium">MapTiler</span>
+          </div>
+          <div class="flex flex-col items-center gap-1 p-2 rounded hover:bg-gray-50 transition-colors">
+            <img class="w-8 h-8 object-contain" alt="pwa" src={ViteHelper.path("images/pwa.svg")} />
+            <span class="text-xs text-zinc-600 font-medium">PWA</span>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="flex items-center gap-4 font-semibold leading-6 text-zinc-900">
+    <h1 class="text-lg font-semibold leading-6 text-zinc-900">
       <p>
         <img
           class="aspect-square"
@@ -114,13 +114,14 @@
           src={ViteHelper.path("images/online.svg")}
         />
       </p>
-    </div>
+    </h1>
+    
   </div>
 </header>
 <main class="px-4 py-20 sm:px-6 lg:px-8 mx-auto max-w-2xl" id="main-content">
   <.flash_group flash={@flash} />
   <div class="flex items-center gap-2">
-    <button class="border p-2 flex items-center gap-2" id="install-button">
+    <button class="border p-2  hidden items-center gap-2" id="install-button">
       <img
         class="w-6 h-6 inline-block align-middle"
         alt="android install"
