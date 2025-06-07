@@ -1,14 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://https://solidyjs-lively-pine-4375.fly.dev/</loc>
-    <lastmod>2025-05-03</lastmod>  <!-- Update to current date -->
+    <loc>https://https://liveview-pwa.fly.dev/</loc>
+    <lastmod>2025-06-03</lastmod>  <!-- Update to current date -->
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://https://solidyjs-lively-pine-4375.fly.dev/map</loc>
-    <lastmod>2025-05-03</lastmod>
+    <loc>https://https://liveview-pwa.fly.dev/map</loc>
+    <lastmod>2025-06-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://https://liveview-pwa.fly.dev/yjs</loc>
+    <lastmod>2025-06-03</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
