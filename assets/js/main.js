@@ -206,13 +206,13 @@ async function maybeProposeAndroidInstall(parser) {
   const result = parser.getResult();
 
   if (result.os.name === "Android") {
-    const { installAndroidButton } = await import(
+    const { installAndroid } = await import(
       "@js/utilities/installAndroidButton"
     );
     installButton.classList.remove("hidden");
     installButton.classList.add("flex");
 
-    return installAndroidButton(installButton);
+    return installAndroid(installButton);
   } else {
     console.log("[UAParser] Not Android, no install button");
   }
