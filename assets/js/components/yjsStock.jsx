@@ -8,7 +8,7 @@ const getCircularValue = (currentValue, max) => {
 export const YjsStock = ({ ydoc, userID, el, max }) => {
   console.log("[YjsStock] component mounting");
 
-  const ymap = props.ydoc.getMap("sql3-data");
+  const ymap = ydoc.getMap("sql3-data");
 
   const [localStock, setLocalStock] = createSignal(
     Math.round(Number(ydoc.getMap("sql3-data").get("counter"))) || max

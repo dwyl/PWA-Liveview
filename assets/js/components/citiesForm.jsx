@@ -62,7 +62,7 @@ export const CitiesForm = ({ el, userID, _this }) => {
     state.flight.arrival = state.selection.get("arrival");
 
     if (window.liveSocket?.isConnected() && _this) {
-      props._this?.pushEvent("fly", { userID: userID, ...state.flight });
+      _this?.pushEvent("fly", { userID: userID, ...state.flight });
     }
   }
 

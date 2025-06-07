@@ -189,11 +189,12 @@ async function initOfflineComponents() {
 
 // Register service worker early ----------------
 document.addEventListener("DOMContentLoaded", async () => {
-  const [{ configureTopbar }, { registerServiceWorker }] = await Promise.all([
-    import("@js/utilities/configureTopbar"),
-    import("@js/utilities/pwaRegistration"),
-    import("ua-parser-js"),
-  ]);
+  const [{ configureTopbar }, { registerServiceWorker }, { UAParser }] =
+    await Promise.all([
+      import("@js/utilities/configureTopbar"),
+      import("@js/utilities/pwaRegistration"),
+      import("ua-parser-js"),
+    ]);
 
   await Promise.all([configureTopbar(), registerServiceWorker()]);
   await maybeProposeAndroidInstall(new UAParser());
