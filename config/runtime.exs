@@ -69,6 +69,9 @@ if config_env() == :prod do
   # config :electric,
   #   replication_connection_opts: Electric.Config.parse_postgresql_uri!(pg_config[:url])
 
+  config :liveview_pwa, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
+  config :logger, level: :info
+
   secret_key_base =
     System.get_env("SECRET_KEY_BASE") ||
       raise """
@@ -79,10 +82,6 @@ if config_env() == :prod do
   host = System.get_env("PHX_HOST") || "localhost"
   port = String.to_integer(System.get_env("PORT") || "4000")
 
-  config :liveview_pwa, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
-
-  config :logger, level: :info
-
   # Enable IPv6 and bind on all interfaces.
   # Set it to  {0, 0, 0, 0, 0, 0, 0, 1} for local network only access.
   # See the documentation on https://hexdocs.pm/bandit/Bandit.html#t:options/0
@@ -92,9 +91,9 @@ if config_env() == :prod do
     static_url: [path: "/"],
     url: [host: host, port: port, scheme: "https"],
     http: [
-      ip: {0, 0, 0, 0, 0, 0, 0, 0},
-      # ip: {0, 0, 0, 0},
-      port: port
+      {:port, port},
+      # {:ip, {0, 0, 0, 0, 0, 0, 0, 0}}
+      :inet6
     ],
     secret_key_base: secret_key_base,
     check_origin: ["//#{host}", "//localhost"],

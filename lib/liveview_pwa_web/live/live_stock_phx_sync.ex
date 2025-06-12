@@ -8,7 +8,6 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
   import LiveviewPwaWeb.CoreComponents
 
   import Phoenix.Sync.LiveView
-  # import Ecto.Query, only: [from: 2]
   require Logger
 
   @impl true
@@ -35,10 +34,10 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
       </p>
       <p>When offline, the component is a <code>SolidJS</code> rendered component.</p>
       <br />
-      <p :if={@streams.phx_sync_counter} id="phx-sync-count" phx-update="stream">
-        <div :for={{_id, item} <- @streams.phx_sync_counter}>
+      <div id="phx-sync-count" phx-update="stream" class={unless(@show_stream, do: "opacity-0")}>
+        <div :for={{id, item} <- @streams.phx_sync_counter} id={id}>
           <form phx-submit="dec" id="lv-pg-form">
-            <.button>Decrement Stock</.button>
+            <.button id="dec-btn">Decrement Stock</.button>
             <input
               type="range"
               min="0"
@@ -51,14 +50,15 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
             <span class="ml-8">{item.counter}</span>
           </form>
         </div>
-      </p>
+      </div>
       <p id="hook-pg" phx-hook="PgStockHook" data-max={@max} data-userid={@user_id}></p>
       <br />
     </div>
     """
   end
 
-  #
+  # :if={@streams.phx_sync_counter}
+
   @impl true
   def mount(_params, _session, socket) do
     query = PhxSyncCount.query_current()
@@ -66,12 +66,13 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
     {:ok,
      socket
      |> assign(:page_title, "PhxSync")
+     |> assign(:show_stream, false)
      |> sync_stream(:phx_sync_counter, query)}
   end
 
   @impl true
   def handle_info({:sync, {_name, :live}}, socket) do
-    {:noreply, socket}
+    {:noreply, assign(socket, :show_stream, true)}
   end
 
   # pass through

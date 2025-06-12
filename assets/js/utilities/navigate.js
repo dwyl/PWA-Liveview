@@ -29,8 +29,10 @@ const components = {
       },
       // special case when the component is SSR/Liveview and needs to be cleaned up before the Solid component mounts
       before: () => {
-        const lvPgForm = document.getElementById("lv-pg-form");
-        if (lvPgForm) lvPgForm.innerHTML = "";
+        // const lvPgForm = document.getElementById("lv-pg-form");
+        // if (lvPgForm) lvPgForm.remove();
+        const lvPgHook = document.getElementById("phx-sync-count");
+        if (lvPgHook) lvPgHook.remove();
       },
     },
   ],
@@ -118,9 +120,10 @@ function cleanExistingHooks() {
       const domId = CONFIG.hooks[key];
       const domElt = document.getElementById(domId);
       if (domElt && typeof appState.hooks[key].destroyed === "function") {
-        console.log("to offline: [", key, "] existing cleaned");
         appState.hooks[key].destroyed();
         domElt.innerHTML = "";
+        // domElt.remove();
+        console.log("existing hook: [", key, "] cleaned");
       }
     }
   }
@@ -128,9 +131,13 @@ function cleanExistingHooks() {
 }
 
 function cleanupOfflineComponents() {
+  console.log(offlineComponents);
   for (const [key, cleanupFn] of Object.entries(offlineComponents)) {
-    if (cleanupFn) cleanupFn();
-    offlineComponents[key] = null;
+    if (cleanupFn) {
+      cleanupFn();
+      offlineComponents[key] = null;
+      console.log("Offline component [", key, "] cleaned");
+    }
   }
 }
 

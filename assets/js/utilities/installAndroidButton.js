@@ -55,13 +55,13 @@ export function installAndroid() {
   }
 
   console.log(navigator.userAgent);
-  if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-    document.addEventListener("DOMContentLoaded", () => {
-      if (installButton) {
-        installButton.style.display = "none";
-      }
-    });
+  // if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+  //   document.addEventListener("DOMContentLoaded", () => {
+  //     if (installButton) {
+  //       installButton.style.display = "none";
+  //     }
+  //   });
 
-    console.log("iOS detected - users can install via Safari Share menu");
-  }
+  //   console.log("iOS detected - users can install via Safari Share menu");
+  // }
 }

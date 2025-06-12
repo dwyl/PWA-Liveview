@@ -14,7 +14,14 @@ defmodule LiveviewPwaWeb.Router do
     plug :fetch_live_flash
     plug :put_root_layout, html: {LiveviewPwaWeb.Layouts, :root}
     plug BrowserCSP
+    plug PlugUA
     plug :set_current_user
+    plug :protect_from_forgery
+  end
+
+  pipeline :api do
+    plug :accepts, ["json"]
+    plug :fetch_session
     plug :protect_from_forgery
   end
 
@@ -32,7 +39,7 @@ defmodule LiveviewPwaWeb.Router do
   end
 
   scope "/api", LiveviewPwaWeb do
-    pipe_through :browser
+    pipe_through :api
 
     get "/connectivity", ConnectivityController, :check
     get "/user_token", UserTokenController, :show

@@ -28,14 +28,14 @@ export const StockYjsChHook = ({ ydoc, userSocket }) => ({
     this.setupChannel = this.setupChannel.bind(this);
     this.handleYUpdate = this.handleYUpdate.bind(this);
     this.syncWithServer = this.syncWithServer.bind(this);
-    this.runSync = this.runSync.bind(this);
+    // this.runSync = this.runSync.bind(this);
 
     await this.setupChannel(userSocket, "sql3-counter").then((msg) => {
       if (msg !== "joined") throw new Error("Channel setup failed");
       this.syncWithServer();
     });
 
-    window.addEventListener("connection-status-changed", this.runSync);
+    // window.addEventListener("connection-status-changed", this.runSync);
 
     // Listen to yjs updates (component will update clicks/counter)
     ydoc.on("update", this.handleYUpdate);
@@ -43,18 +43,19 @@ export const StockYjsChHook = ({ ydoc, userSocket }) => ({
     console.log("[StockYjsCh] mounted");
   },
 
-  runSync({ detail }) {
-    if (detail.status === "online") {
-      this.status = "online";
-      this.syncWithServer();
-    } else {
-      this.status = "offline";
-    }
-  },
+  // runSync({ detail }) {
+  //   console.log("runSync", detail.status);
+  //   if (detail.status === "online") {
+  //     this.status = "online";
+  //     this.syncWithServer();
+  //   } else {
+  //     this.status = "offline";
+  //   }
+  // },
 
   destroyed() {
     if (ydoc) ydoc.off("update", this.handleYUpdate);
-    window.removeEventListener("connection-status-changed", this.runSync);
+    // window.removeEventListener("connection-status-changed", this.runSync);
     if (this.cleanupSolid) {
       this.cleanupSolid();
       this.cleanupSolid = null;
@@ -63,7 +64,7 @@ export const StockYjsChHook = ({ ydoc, userSocket }) => ({
       this.channel.leave();
       this.channel = null;
     }
-    console.log("[StocYjsChHook] destroyed");
+    console.log("[StockYjsChHook] destroyed");
   },
 
   async stockComponent() {
@@ -119,6 +120,7 @@ export const StockYjsChHook = ({ ydoc, userSocket }) => ({
   // On (re)connect, fetch "canonical" counter
   syncWithServer() {
     if (!this.channel) return;
+    console.log("syncWithServer");
 
     const clicks = this.ymap.get("clicks") || 0;
     const payload = {

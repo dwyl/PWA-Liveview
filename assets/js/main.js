@@ -16,7 +16,6 @@ const CONFIG = {
     elec: { path: "/", id: "users-elec" },
   },
   CONTENT_SELECTOR: "#main-content",
-  // MapID: "hook-map",
   MapID: "hook-map",
   hooks: {
     PgStockHook: "hook-pg",
@@ -32,12 +31,13 @@ export { CONFIG };
 // without SolidJS proxy interference.
 export const pwaRegistry = {};
 
+const log = console.log;
 //<- debugging only
-// window.appState = appState;
+window.appState = appState;
 // window.pwaRegistry = pwaRegistry;
 
 async function startApp() {
-  console.log(" **** App started ****");
+  log(" **** App started ****");
   try {
     const [
       { checkServer },
@@ -157,7 +157,7 @@ async function initLiveSocket() {
     setAppState("hooks", hooks);
 
     const liveSocket = new LiveSocket("/live", Socket, {
-      // longPollFallbackMs: 2000,
+      longPollFallbackMs: 1000,
       params: { _csrf_token: csrfToken },
       hooks,
     });
@@ -174,7 +174,7 @@ async function initLiveSocket() {
 
 async function initOfflineComponents() {
   if (appState.isOnline) return;
-  console.log("Init Offline Components---------");
+  log("Init Offline Components---------");
   const {
     cleanExistingHooks,
     mountOfflineComponents,
@@ -184,47 +184,50 @@ async function initOfflineComponents() {
   attachNavigationListeners();
   // and then render the current view
   const _module = await mountOfflineComponents();
-  // console.log(module);
+  window.liveSocket.disconnect();
 }
 
 // Register service worker early ----------------
 document.addEventListener("DOMContentLoaded", async () => {
-  const [{ configureTopbar }, { registerServiceWorker }, { UAParser }] =
-    await Promise.all([
-      import("@js/utilities/configureTopbar"),
-      import("@js/utilities/pwaRegistration"),
-      import("ua-parser-js"),
-    ]);
+  const [{ configureTopbar }, { registerServiceWorker }] = await Promise.all([
+    import("@js/utilities/configureTopbar"),
+    import("@js/utilities/pwaRegistration"),
+    // import("ua-parser-js"),
+  ]);
 
   await Promise.all([configureTopbar(), registerServiceWorker()]);
-  await maybeProposeAndroidInstall(new UAParser());
+  await maybeProposeAndroidInstall();
+  // await maybeProposeAndroidInstall(new UAParser());
 });
 
-async function maybeProposeAndroidInstall(parser) {
+async function maybeProposeAndroidInstall() {
   const installButton = document.getElementById("install-button");
-
-  const result = parser.getResult();
-
-  if (result.os.name === "Android") {
-    const { installAndroid } = await import(
-      "@js/utilities/installAndroidButton"
-    );
-    installButton.classList.remove("hidden");
-    installButton.classList.add("flex");
-
-    return installAndroid(installButton);
-  } else {
-    console.log("[UAParser] Not Android, no install button");
+  if (installButton.dataset.os.toLowerCase() !== "android") {
+    log("Not Android---");
+    return;
   }
+
+  // const result = parser.getResult();
+
+  // if (result.os.name === "Android") {
+  const { installAndroid } = await import("@js/utilities/installAndroidButton");
+  installButton.classList.remove("hidden");
+  installButton.classList.add("flex");
+
+  return installAndroid(installButton);
+  // } else {
+  //   console.log("[UAParser] Not Android, no install button");
+  // }
 }
 
 // trigger offline rendering if offline ---------------
 window.addEventListener("connection-status-changed", async (e) => {
-  console.log("Connection status changed to:", e.detail.status);
+  log("Connection status changed to:", e.detail.status);
   if (e.detail.status === "offline") {
     setAppState("status", "offline");
     return await initOfflineComponents();
   } else {
+    log("what else??");
     window.location.reload();
   }
 });

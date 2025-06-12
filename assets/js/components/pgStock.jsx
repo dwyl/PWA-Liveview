@@ -1,27 +1,33 @@
-import { createEffect, createSignal } from "solid-js";
+import { createSignal, batch } from "solid-js";
 import { render } from "solid-js/web";
 
 export const PgStock = ({ ydoc, max, el }) => {
-  const [localCounter, setLocalCounter] = createSignal(20);
+  const ymap = ydoc.getMap("pg-data");
 
-  const [clicks, setClicks] = createSignal(0);
+  const [localCounter, setLocalCounter] = createSignal(
+    ymap.get("pg-count") || max
+  );
+  const [clicks, setClicks] = createSignal(ymap.get("clicks") || 0);
 
   const decrement = () => {
-    const ymap = ydoc.getMap("pg-data");
     const new_value = localCounter() == 0 ? max : localCounter() - 1;
     const new_clicks = clicks() + 1;
-    setClicks(new_clicks);
+    batch(() => {
+      setClicks(new_clicks);
+      setLocalCounter(new_value);
+      ymap.set("clicks", new_clicks);
+      ymap.set("pg-count", new_value);
+    });
 
-    ymap.set("clicks", new_clicks);
-    ymap.set("pg-count", new_value);
-    setLocalCounter(new_value);
+    console.log("update ymap", ymap.toJSON());
   };
 
-  createEffect(() => {
-    const ymap = ydoc.getMap("pg-data");
-    setLocalCounter(Math.round(Number(ymap.get("pg-count"))) || props.max);
-    setClicks(Math.round(Number(ymap.get("clicks"))) || 0);
-  });
+  // createEffect(() => {
+  // const ymap = ydoc.getMap("pg-data");
+  // setLocalCounter(Math.round(Number(ymap.get("pg-count"))) || max);
+  // setClicks(Math.round(Number(ymap.get("clicks"))) || 0);
+  // console.log("effect", localCounter(), clicks());
+  // });
 
   // createEffect(() => {
   //   const ymap = props.ydoc.getMap("pg-data");
@@ -42,6 +48,7 @@ export const PgStock = ({ ydoc, max, el }) => {
             name="dec-pg-sync-counter"
             value={localCounter()}
             aria-label="displayed-pg-stock"
+            disabled
           />
           <span class="ml-8">{localCounter()}</span>
         </form>
