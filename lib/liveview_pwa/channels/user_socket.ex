@@ -9,14 +9,10 @@ defmodule LiveviewPwa.UserSocket do
 
   @impl true
   def connect(%{"userToken" => user_token}, socket) do
-    case Phoenix.Token.verify(Endpoint, "user token", user_token, max_age: 31_536_000) do
+    case Phoenix.Token.verify(Endpoint, "user token", user_token) do
       {:ok, user_id} ->
         Logger.debug("User token verified")
         {:ok, assign(socket, :user_id, user_id)}
-
-      {:error, :expired} ->
-        Logger.error("User token expired. Please login again.")
-        :error
 
       {:error, _reason} ->
         Logger.error("Failed to verify user token")

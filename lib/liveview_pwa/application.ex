@@ -10,7 +10,7 @@ defmodule LiveviewPwa.Application do
   def start(_type, _args) do
     LiveviewPwa.Release.migrate()
 
-    db = setupDbPath()
+    db = setup_db_path()
 
     children = [
       LiveviewPwaWeb.Telemetry,
@@ -37,7 +37,7 @@ defmodule LiveviewPwa.Application do
     :ok
   end
 
-  defp setupDbPath do
+  defp setup_db_path do
     _db = Application.get_env(:liveview_pwa, LiveviewPwa.Sql3Repo)[:database]
   end
 end

@@ -39,7 +39,7 @@ defmodule LiveviewPwaWeb.MountUser do
       }
     } = ua
 
-    %{os: os_familly, device_familly: device_familly} |> dbg()
+    %{os: os_familly, device_familly: device_familly}
   end
 
   defp handle_path_params(_params, url, socket) do

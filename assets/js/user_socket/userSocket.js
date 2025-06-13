@@ -4,6 +4,11 @@ export async function setUserSocket(userToken) {
     params: { userToken },
     // binaryType: "arraybuffer",
   });
-  userSocket.connect();
+  userSocket.connect()
+  userSocket.onError(()=> {
+    console.error("User socket error")
+    throw new Error("User socket error");
+  })
+  
   return userSocket;
 }

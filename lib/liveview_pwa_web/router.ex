@@ -59,8 +59,6 @@ defmodule LiveviewPwaWeb.Router do
         |> put_session(:user_id, user_id)
         |> put_session(:user_token, user_token)
 
-      # |> put_session(:style_nonce, conn.assigns.style_nonce)
-
       _user_id ->
         conn
     end
