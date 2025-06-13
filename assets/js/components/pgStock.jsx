@@ -18,15 +18,14 @@ export const PgStock = ({ ydoc, max, el }) => {
       ymap.set("clicks", new_clicks);
       ymap.set("pg-count", new_value);
     });
-
-    console.log("update ymap", ymap.toJSON());
   };
 
+  createEffect(() => console.log("update ymap", ymap.toJSON()));
   // createEffect(() => {
-  // const ymap = ydoc.getMap("pg-data");
-  // setLocalCounter(Math.round(Number(ymap.get("pg-count"))) || max);
-  // setClicks(Math.round(Number(ymap.get("clicks"))) || 0);
-  // console.log("effect", localCounter(), clicks());
+  //   // const ymap = ydoc.getMap("pg-data");
+  //   setLocalCounter(Math.round(Number(ymap.get("pg-count"))) || max);
+  //   setClicks(Math.round(Number(ymap.get("clicks"))) || 0);
+  //   // console.log("effect", localCounter(), clicks());
   // });
 
   // createEffect(() => {
