@@ -20,7 +20,6 @@ export const PgStock = ({ ydoc, max, el }) => {
     });
   };
 
-  createEffect(() => console.log("update ymap", ymap.toJSON()));
   // createEffect(() => {
   //   // const ymap = ydoc.getMap("pg-data");
   //   setLocalCounter(Math.round(Number(ymap.get("pg-count"))) || max);
