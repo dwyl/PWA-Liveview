@@ -472,6 +472,8 @@ Available at "/elec"
 
 Available at `/map`.
 
+> ! It uses a free tier of Maptiler, so might not available!
+
 It displays an _interactive_ and _collaborative_ (two-user input) route planning with vector tiles.
 The UI displays a form with two inputs, which are pushed to Phoenix and broadcasted via Phoenix PubSub. A marker is drawn by `Leaflet` to display the choosen airport on a vector-tiled map using `MapTiler`.
 
@@ -515,6 +517,20 @@ sequenceDiagram
         Client->>Client: update localStorage + Valtio
     end
 ```
+
+## Login
+
+It displays a dummay login, just to assign a user_id and an "access\_\_token" and a "refresh_token".
+
+The _access token_ is passed into the session, thus avialable in the LiveView, and the _refresh token_ is saved into a cookie.
+
+We use the _access token_ in the `connect/3` of "UserSocket". If it fails, it returns an error.
+
+In "userSocket.js", we use [Socket.onError](https://hexdocs.pm/phoenix/js/index.html#socketonerror).
+
+The error sent by the server is captured in this listener. We trigger a `fetch("POST")` with credentials (the "refresh" cookie) and CSRF to the "/refresh" endpoint. It will renew the _access_token_ and the _refresh token_.
+
+We stop and reconnect the userSocket with the new credentials.
 
 ## Navigation
 
