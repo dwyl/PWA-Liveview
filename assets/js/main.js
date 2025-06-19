@@ -46,7 +46,7 @@ function readCSRFToken() {
 
 //  ----------------
 document.addEventListener("DOMContentLoaded", async () => {
-  console.log("[DomContentLoaded] loading...");
+  // console.log("[DomContentLoaded] loading...");
   // DOM ready ensures we have a CSRF token
   // alert(readCSRFToken());
 
@@ -56,19 +56,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     status: isOnline ? "online" : "offline",
   });
 
+  await startApp().then(() => {
+    !appState.interval && startPolling();
+  });
+
   const [{ configureTopbar }, { maybeProposeAndroidInstall }] =
     await Promise.all([
       import("@js/utilities/configureTopbar"),
       import("@js/utilities/installAndroid"),
     ]);
-
-  await Promise.all([
-    configureTopbar(),
-    maybeProposeAndroidInstall(),
-    startApp(),
-  ]);
-
-  return !appState.interval && startPolling();
+  await Promise.all([configureTopbar(), maybeProposeAndroidInstall()]);
 });
 
 async function startApp() {
