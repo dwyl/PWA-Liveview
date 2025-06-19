@@ -35,7 +35,7 @@ defmodule LiveviewPwaWeb.Endpoint do
       compress: true,
       csp_nonce_assign_key: :main_nonce,
       auth_token: true,
-      check_origin: :conn
+      check_origin: ["http://localhost:4000", "https://liveview-pwa.fly.dev"]
     ],
     longpoll: [connect_info: [session: @session_options]]
 
@@ -44,7 +44,7 @@ defmodule LiveviewPwaWeb.Endpoint do
       csp_nonce_assign_key: :main_nonce,
       connect_info: [
         session: @session_options,
-        check_origin: :conn
+        check_origin: ["http://localhost:4000", "https://liveview-pwa.fly.dev"]
       ]
     ]
 
