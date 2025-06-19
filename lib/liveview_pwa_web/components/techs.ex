@@ -9,7 +9,7 @@ defmodule LiveviewPwaWeb.Tech do
   def render(assigns) do
     ~H"""
     <div class="flex flex-col items-center gap-1 p-2 rounded hover:bg-gray-50 transition-colors">
-      <img loading="lazy" class="w-8 h-8 object-contain" alt={@name} src={ViteHelper.path(@path)} />
+      <img class="w-8 h-8 object-contain" alt={@name} src={ViteHelper.path(@path)} />
       <span class="text-xs text-zinc-600 font-medium">{@name}</span>
     </div>
     """
