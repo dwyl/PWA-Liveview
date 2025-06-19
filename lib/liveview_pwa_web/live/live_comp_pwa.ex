@@ -1,6 +1,6 @@
 defmodule LiveviewPwaWeb.PwaLiveComp do
   use LiveviewPwaWeb, :live_component
-  alias LiveviewPwaWeb.{Pwa}
+  alias LiveviewPwaWeb.Pwa
   require Logger
 
   @moduledoc """

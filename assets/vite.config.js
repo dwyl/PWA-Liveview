@@ -10,6 +10,7 @@ import fg from "fast-glob"; // for recursive file scanning
 // but v3.4 instead as Tailwind v4 throws away the tailwind.config.js file
 // and Phoenix CSS won't be parsed by Vite without it
 import tailwindcss from "tailwindcss";
+// import cssnano from "cssnano"; // for CSS minification
 
 // import { analyzer } from "vite-bundle-analyzer";
 
@@ -185,6 +186,7 @@ const buildOps = (mode) => ({
   // to their hashed versions, which can then be used by a server framework
   // to render the correct asset links.
   manifest: true, // path  --> .vite/manifest.json.
+  path: ".vite/manifest.json",
   minify: mode === "production",
   emptyOutDir: true, // Remove old assets
   // sourcemap: mode === "development" ? "inline" : true,
@@ -242,15 +244,15 @@ const LiveView = [
       },
     },
   },
-  // {
-  //   urlPattern: ({ url }) => url.pathname.startsWith("/api/"),
-  //   handler: "NetworkOnly",
-  //   options: {
-  //     fetchOptions: {
-  //       credentials: "same-origin",
-  //     },
-  //   },
-  // },
+  {
+    urlPattern: ({ url }) => url.pathname.startsWith("/api/"),
+    handler: "NetworkOnly",
+    options: {
+      fetchOptions: {
+        credentials: "same-origin",
+      },
+    },
+  },
 ];
 
 const MapTiler = {
@@ -335,11 +337,13 @@ const PWAConfig = (mode) => ({
     type: "module", //  ES module for dev SW
   },
   suppressWarnings: true,
-  injectRegister: "null", // It is injected in the main.js script
+  injectRegister: "script", // It is injected in the main.js script
   filename: "sw.js", // Service worker filename
   strategies: "generateSW", // Let Workbox auto-generate the service worker from config
   registerType: "prompt", // App manually prompts user to update SW when available
-
+  devOptions: {
+    enabled: false,
+  },
   outDir: staticDir,
   manifest: manifestOpts,
   manifestFilename: "manifest.webmanifest",
@@ -377,7 +381,8 @@ const PWAConfig = (mode) => ({
     ],
 
     additionalManifestEntries: [
-      { url: "/", revision: `${Date.now()}` }, // Manually precache root route
+      // { url: "/", revision: `${Date.now()}` },
+      { url: "/sync", revision: `${Date.now()}` }, // Manually precache sync route
       { url: "/yjs", revision: `${Date.now()}` }, // Manually precache elec route
       { url: "/map", revision: `${Date.now()}` }, // Manually precache map route
     ],
@@ -481,6 +486,12 @@ export default defineConfig(({ command, mode }) => {
         plugins: [tailwindcss()],
       },
     },
+    server: {
+      cors: {
+        origin: "http://localhost:4000", // Allow CORS for local dev
+      },
+    },
+
     define: {
       /* Note: i
        - mport.meta.env: Runtime access to .env variables

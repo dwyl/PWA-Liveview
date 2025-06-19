@@ -3,6 +3,11 @@ defmodule LiveviewPwaWeb.MountUser do
   import Phoenix.Component
   require Logger
 
+  use Phoenix.VerifiedRoutes,
+    router: LiveviewPwaWeb.Router,
+    endpoint: LiveviewPwaWeb.Endpoint,
+    statics: ~w(assets fonts images favicon.ico robots.txt)
+
   @max 20
 
   @moduledoc """
@@ -16,8 +21,8 @@ defmodule LiveviewPwaWeb.MountUser do
 
   def on_mount(
         :ensure_authenticated,
-        _params,
-        %{"user_id" => user_id, "user_agent" => %UAParser.UA{} = ua} = _session,
+        _p,
+        %{"user_id" => user_id, "user_agent" => ua} = session,
         socket
       ) do
     {:cont,
@@ -25,10 +30,18 @@ defmodule LiveviewPwaWeb.MountUser do
      #  shared assigns and PWA button handler delegated to a LiveComponent
      |> assign(:max, @max)
      |> assign(:user_id, user_id)
+     |> push_event("access-token-ready", %{
+       "user_token" => session["user_token"],
+       "user_id" => user_id
+     })
      |> assign(:os, set_ua(ua).os)
      |> assign(:update_available, false)
      |> attach_hook(:active, :handle_params, &handle_path_params/3)
      |> attach_hook(:sw, :handle_event, &handle_pwa_event/3)}
+  end
+
+  def on_mount(:ensure_authenticated, _params, _session, socket) do
+    {:halt, redirect(socket, to: ~p"/")}
   end
 
   defp set_ua(ua) do

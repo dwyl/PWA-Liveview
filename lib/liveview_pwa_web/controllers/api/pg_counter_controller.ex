@@ -1,4 +1,4 @@
-defmodule LiveviewPwaWeb.PgCounterController do
+defmodule LiveviewPwaWeb.Api.PgCounterController do
   use LiveviewPwaWeb, :controller
 
   def show(conn, _params) do

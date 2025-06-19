@@ -6,10 +6,7 @@ export const PwaHook = {
     window.removeEventListener("sw-ready", this.handleReady);
     window.removeEventListener("sw-error", this.handleError);
     window.removeEventListener("sw-update", this.handleUpdate);
-    // window.removeEventListener(
-    //   "sw-controller-change",
-    //   this.handleControllerChange
-    // );
+
     console.log("[PwaHook] ------> destroyed");
   },
   async mounted() {
@@ -35,11 +32,9 @@ export const PwaHook = {
       _this.pushEventTo(pwaAction, "sw-lv-update", {
         update: event.detail.update,
       });
-      // localStorage.removeItem("pwa_update_available");
     };
 
     this.handleEvent("sw-lv-skip-waiting", async () => {
-      console.log("type updateSW", typeof pwaRegistry.updateSW);
       if (pwaRegistry.updateSW) {
         return await pwaRegistry.updateSW();
       }
@@ -52,18 +47,10 @@ export const PwaHook = {
       });
     };
 
-    // at the end! the callbacks need to be defined before
+    // !! the callbacks need to be defined before calling them
     window.addEventListener("sw-ready", this.handleReady);
     window.addEventListener("sw-error", this.handleError);
     window.addEventListener("sw-update", this.handleUpdate);
     console.log("[PwaHook] ----> mounted");
-
-    // this.handleControllerChange = (event) => {
-    //   _this.pushEvent("sw-lv-change", {
-    //     changed: event.detail.changed,
-    //   });
-    // };
-
-    // window.addEventListener("sw-change", this.handleControllerChange);
   },
 };

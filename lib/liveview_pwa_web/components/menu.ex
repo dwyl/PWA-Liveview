@@ -11,7 +11,7 @@ defmodule LiveviewPwaWeb.Menu do
 
   defp menu do
     [
-      %{id: "elec", title: "PhxSync", path: ~p"/", icon: "hero-bolt"},
+      %{id: "elec", title: "PhxSync", path: ~p"/sync", icon: "hero-bolt"},
       %{id: "countdown", title: "YjsChannel", path: ~p"/yjs", icon: "hero-wrench"},
       %{id: "mapform", title: "FlightMap", path: ~p"/map", icon: "hero-globe-alt"}
     ]
@@ -23,7 +23,7 @@ defmodule LiveviewPwaWeb.Menu do
     "px-4 py-2 border-2 flex flex-col justify-center flex-1 items-center ounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300"
   end
 
-  attr :active_path, :string, default: "/"
+  attr :active_path, :string, default: "/sync"
 
   def display(assigns) do
     ~H"""

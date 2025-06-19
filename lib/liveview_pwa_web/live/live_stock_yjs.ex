@@ -1,7 +1,7 @@
 defmodule LiveviewPwaWeb.StockYjsLive do
   use LiveviewPwaWeb, :live_view
   # alias Phoenix.PubSub
-  alias LiveviewPwaWeb.{PwaLiveComp, Users, Menu}
+  alias LiveviewPwaWeb.{Menu, PwaLiveComp, Users}
 
   require Logger
 

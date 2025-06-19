@@ -1,8 +1,7 @@
 defmodule LiveviewPwaWeb.Router do
   use LiveviewPwaWeb, :router
 
-  alias LiveviewPwaWeb.{Endpoint, MountUser}
-  alias Phoenix.Token
+  alias LiveviewPwaWeb.MountUser
 
   # Note: After adding 'preload', submit your domain to
   # Ensure you can maintain HTTPS for the entire domain and all subdomains
@@ -13,10 +12,10 @@ defmodule LiveviewPwaWeb.Router do
     plug :fetch_session
     plug :fetch_live_flash
     plug :put_root_layout, html: {LiveviewPwaWeb.Layouts, :root}
-    plug BrowserCSP
-    plug PlugUA
-    plug :set_current_user
     plug :protect_from_forgery
+    plug PlugUA
+    plug :put_secure_browser_headers
+    plug BrowserCSP
   end
 
   pipeline :api do
@@ -28,9 +27,13 @@ defmodule LiveviewPwaWeb.Router do
   scope "/", LiveviewPwaWeb do
     pipe_through :browser
 
+    # get "/", LoginController, :login
+    live "/", LoginLive, :index
+    post "/set_session", LoginController, :set_session
+
     live_session :pretend_authenticated,
       on_mount: {MountUser, :ensure_authenticated} do
-      live "/", StockPhxSyncLive, :index
+      live "/sync", StockPhxSyncLive, :index
       live "/yjs", StockYjsLive, :index
       live "/map", MapLive, :index
     end
@@ -38,30 +41,16 @@ defmodule LiveviewPwaWeb.Router do
     match(:*, "/:p", NotFound, :render)
   end
 
-  scope "/api", LiveviewPwaWeb do
+  scope "/api", LiveviewPwaWeb.Api do
     pipe_through :api
 
     get "/connectivity", ConnectivityController, :check
-    get "/user_token", UserTokenController, :show
+    post "/refresh_token", UserTokenController, :refresh
     get "/wasm", WasmController, :load
+
     # test endpoints
     get "/sql3_counter", Sql3CounterController, :show
     get "/pg_counter", PgCounterController, :show
-  end
-
-  def set_current_user(conn, _opts) do
-    case get_session(conn, :user_id) do
-      nil ->
-        user_id = :rand.uniform(10_000)
-        user_token = Token.sign(Endpoint, "user token", user_id)
-
-        conn
-        |> put_session(:user_id, user_id)
-        |> put_session(:user_token, user_token)
-
-      _user_id ->
-        conn
-    end
   end
 
   # Enable LiveDashboard in development

@@ -19,6 +19,11 @@ import Config
 
 config :exqlite, default_chunk_size: 100
 
+# User token configuration
+# Token expiry time in seconds (default: 24 hours = 86400 seconds)
+# config :liveview_pwa, :user_token,
+#   max_age: System.get_env("USER_TOKEN_MAX_AGE", "15") |> String.to_integer()
+
 if System.get_env("PHX_SERVER") do
   config :liveview_pwa, LiveviewPwaWeb.Endpoint, server: true
 end
@@ -89,6 +94,7 @@ if config_env() == :prod do
   config :liveview_pwa, LiveviewPwaWeb.Endpoint,
     # <- CDN [host: "cdn.example.com"],
     static_url: [path: "/"],
+    cache_static_manifest: "priv/static/manifest.webmanifest",
     url: [host: host, port: port, scheme: "https"],
     http: [
       {:port, port},
@@ -98,6 +104,12 @@ if config_env() == :prod do
     secret_key_base: secret_key_base,
     check_origin: ["//#{host}", "//localhost"],
     force_ssl: [hsts: true]
+
+  config :liveview_pwa,
+    # 15 minutes
+    access_token_ttl: 60 * 15,
+    # 1 year
+    refresh_token_ttl: 60 * 60 * 24 * 365 * 10
 
   # ## SSL Support
   #

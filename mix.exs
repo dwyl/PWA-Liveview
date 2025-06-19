@@ -68,6 +68,13 @@ defmodule LiveviewPwa.MixProject do
         # https://vite.dev/config/
         "cmd --cd assets vite build --config vite.config.js",
         "phx.digest"
+      ],
+      qa: [
+        "compile --warnings-as-errors",
+        "format --check-formatted",
+        # "sobelow --skip Config",
+        # "credo --strict",
+        "dialyzer"
       ]
     ]
   end

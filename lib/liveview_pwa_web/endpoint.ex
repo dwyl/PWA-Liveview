@@ -30,10 +30,12 @@ defmodule LiveviewPwaWeb.Endpoint do
 
   socket "/live", Phoenix.LiveView.Socket,
     websocket: [
-      connect_info: [session: @session_options],
+      connect_info: [{:session, @session_options}],
       # <- reduces payload size of airports
       compress: true,
-      csp_nonce_assign_key: :main_nonce
+      csp_nonce_assign_key: :main_nonce,
+      auth_token: true,
+      check_origin: :conn
     ],
     longpoll: [connect_info: [session: @session_options]]
 
@@ -42,12 +44,7 @@ defmodule LiveviewPwaWeb.Endpoint do
       csp_nonce_assign_key: :main_nonce,
       connect_info: [
         session: @session_options,
-        check_origin: true
-        # :websocket_origins is set in config/runtime.exs
-        # to the value of the environment variable PHX_HOST
-        # which is set in the Dockerfile.
-        # This allows the Yjs WebSocket connection to be
-        # established from the client.
+        check_origin: :conn
       ]
     ]
 
@@ -58,13 +55,17 @@ defmodule LiveviewPwaWeb.Endpoint do
   # deploy compressed static files in production.
   plug Plug.Static,
     encodings: [{"zstd", ".zstd"}],
-    brotli: true,
-    gzip: true,
+    brotli: not code_reloading?,
+    gzip: not code_reloading?,
     at: "/",
     from: :liveview_pwa,
     only: LiveviewPwaWeb.static_paths(),
     headers: %{
       "cache-control" => "public, max-age=31536000"
+    },
+    content_types: %{
+      "webmanifest" => "application/manifest+json",
+      "wasm" => "application/wasm"
     }
 
   # Code reloading can be explicitly enabled under the

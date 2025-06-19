@@ -2,7 +2,7 @@ import { createStore } from "solid-js/store";
 
 export const [appState, setAppState] = createStore({
   status: "offline",
-  isOnline: true,
+  isOnline: false,
   interval: null,
   globalYdoc: null,
   userSocket: null,

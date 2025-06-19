@@ -29,8 +29,6 @@ const components = {
       },
       // special case when the component is SSR/Liveview and needs to be cleaned up before the Solid component mounts
       before: () => {
-        // const lvPgForm = document.getElementById("lv-pg-form");
-        // if (lvPgForm) lvPgForm.remove();
         const lvPgHook = document.getElementById("phx-sync-count");
         if (lvPgHook) lvPgHook.remove();
       },
@@ -131,7 +129,6 @@ function cleanExistingHooks() {
 }
 
 function cleanupOfflineComponents() {
-  console.log(offlineComponents);
   for (const [key, cleanupFn] of Object.entries(offlineComponents)) {
     if (cleanupFn) {
       cleanupFn();
@@ -153,10 +150,9 @@ async function handleOfflineNavigation(event) {
     const link = event.currentTarget;
     const path = link.getAttribute("data-path") || link.getAttribute("href");
 
-    // Update URL without page reload
     window.history.pushState({ path }, "", path);
 
-    // Try to get the page from cache via fetch
+    // Get the page from cache via fetch
     const response = await fetch(path);
     if (!response.ok)
       throw new Error(`Failed to fetch ${path}: ${response.status}`);
@@ -184,6 +180,11 @@ async function handleOfflineNavigation(event) {
 }
 
 function attachNavigationListeners() {
+  // disable the home link
+  const home = document.getElementById("login-link");
+  home.addEventListener("click", (e) => e.preventDefault());
+  home.removeAttribute("href");
+
   const navLinks = document.querySelectorAll("nav a");
   navLinks.forEach((link) => {
     link.removeEventListener("click", handleOfflineNavigation);

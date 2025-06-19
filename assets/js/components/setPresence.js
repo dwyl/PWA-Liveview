@@ -43,14 +43,12 @@ export async function setPresence(userSocket, topic, user_token) {
         usersComponent.update({ userIDs, userID, el });
         return;
       } else {
-        console.log(
-          "[tryRender] Different element, disposing old, mounting new..."
-        );
+        console.log("[tryRender] Disposing old, mounting new...");
         usersComponent.dispose();
         usersComponent = MountUsers({ userIDs, userID, el });
       }
     } else {
-      console.log("[tryRender] No existing component, mounting...");
+      console.log("[tryRender] No component, mounting...");
       usersComponent = MountUsers({ userIDs, userID, el });
     }
     // usersComponent.el = el;
@@ -65,7 +63,6 @@ export async function setPresence(userSocket, topic, user_token) {
 
   // Handle LiveView navigation
   window.addEventListener("phx:page-loading-stop", () => {
-    console.log("[phx:page-loading-stop]");
     tryRender();
   });
 }

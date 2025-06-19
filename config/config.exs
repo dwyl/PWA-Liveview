@@ -8,6 +8,10 @@ config :liveview_pwa,
 
 config :liveview_pwa, :csp_nonce, :crypto.strong_rand_bytes(16) |> Base.encode16()
 
+config :liveview_pwa,
+  access_token_ttl: 60,
+  refresh_token_ttl: 2 * 60
+
 config :liveview_pwa, LiveviewPwa.Sql3Repo,
   adapter: Ecto.Adapters.SQLite3,
   default_transaction_mode: :immediate,

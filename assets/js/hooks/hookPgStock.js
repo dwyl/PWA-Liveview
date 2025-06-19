@@ -1,8 +1,12 @@
-export const PgStockHook = ({ ydoc, userSocket }) => ({
+import { appState } from "@js/stores/AppStore";
+
+export const PgStockHook = ({ ydoc }) => ({
   ymap: null,
   channel: null,
+  topic: "pg-counter",
 
   async mounted() {
+    console.log("[PgStockHook] mounting...");
     this.userID = Number(this.el.dataset.userid);
     if (!localStorage.getItem("userID")) {
       localStorage.setItem("userID", this.userID);
@@ -17,36 +21,21 @@ export const PgStockHook = ({ ydoc, userSocket }) => ({
 
     // 'online' mode: from the LV, received reply from handle_event "dec"
     this.handleEvent("update-local-store", ({ counter }) => {
+      console.log("update-local-store", counter);
       this.ymap.set("pg-count", counter);
     });
 
     this.pushClicks = this.pushClicks.bind(this);
-    // this.actionPushClicks = this.actionPushClicks.bind(this);
     this.setupChannel = this.setupChannel.bind(this);
 
-    await this.setupChannel(userSocket, "pg-counter").then((channelState) => {
-      channelState === "joined" && this.pushClicks();
-    });
+    window.addEventListener("user-socket-ready", this.setupChannel);
 
-    // window.addEventListener("connection-status-changed", this.actionPushClicks);
     console.log("[PgStockHook] mounted");
   },
 
-  // async actionPushClicks({ detail }) {
-  // console.log("actionPushClicks", detail.status);
-  // if (!detail.status == "online") return;
-
-  // const channelJoined = await this.setupChannel(userSocket, "pg-counter");
-  // console.log("[PgStockHook] actionPushClicks", detail.status, channelJoined);
-
-  // if (channelJoined === "joined") {
-  //   this.pushClicks();
-  // }
-  // },
-
   // 'online' mode: using Channel
   pushClicks() {
-    console.log("pushClicks", this.ymap.get("clicks"), this.channel.state);
+    console.log("[pushClicks]", this.ymap.get("clicks"), this.channel.state);
     this.channel &&
       this.channel
         .push("client-clicks", {
@@ -58,25 +47,27 @@ export const PgStockHook = ({ ydoc, userSocket }) => ({
         });
   },
 
-  async setupChannel(userSocket, topic) {
+  async setupChannel() {
     const { useChannel } = await import("@js/user_socket/useChannel");
-    this.channel = await useChannel(userSocket, topic, {
+    const userSocket = appState.userSocket;
+    this.channel = await useChannel(userSocket, this.topic, {
       userID: this.userID,
       max: this.max,
     });
 
-    return this.channel.state;
+    if (this.channel.state === "joined") {
+      this.pushClicks();
+    }
   },
 
   destroyed() {
-    // window.removeEventListener(
-    //   "connection-status-changed",
-    //   this.actionPushClicks
-    // );
     if (this.channel) {
       this.channel.leave();
       this.channel = null;
     }
+
+    window.removeEventListener("user-socket-ready", this.setupChannel);
+
     console.log("[PgStockHook] destroyed");
   },
 });

@@ -1,6 +1,7 @@
 import { checkServer } from "@js/utilities/checkServer";
+import { appState } from "@js/stores/AppStore.js";
 
-export const StockYjsChHook = ({ ydoc, userSocket }) => ({
+export const StockYjsChHook = ({ ydoc }) => ({
   isOnline: false,
   status: "offline",
   channel: null,
@@ -8,7 +9,7 @@ export const StockYjsChHook = ({ ydoc, userSocket }) => ({
   max: null,
   stockComponent: null,
   cleanupSolid: null,
-  ymap: null,
+  topic: "sql3-counter",
 
   async mounted() {
     this.userID = Number(this.el.dataset.userid);
@@ -26,45 +27,15 @@ export const StockYjsChHook = ({ ydoc, userSocket }) => ({
     this.cleanupSolid = await this.stockComponent();
 
     this.setupChannel = this.setupChannel.bind(this);
+    window.addEventListener("user-socket-ready", this.setupChannel);
+    if (appState.userSocket) {
+      this.setupChannel();
+    }
+
     this.handleYUpdate = this.handleYUpdate.bind(this);
     this.syncWithServer = this.syncWithServer.bind(this);
-    // this.runSync = this.runSync.bind(this);
-
-    await this.setupChannel(userSocket, "sql3-counter").then((msg) => {
-      if (msg !== "joined") throw new Error("Channel setup failed");
-      this.syncWithServer();
-    });
-
-    // window.addEventListener("connection-status-changed", this.runSync);
-
-    // Listen to yjs updates (component will update clicks/counter)
-    ydoc.on("update", this.handleYUpdate);
 
     console.log("[StockYjsCh] mounted");
-  },
-
-  // runSync({ detail }) {
-  //   console.log("runSync", detail.status);
-  //   if (detail.status === "online") {
-  //     this.status = "online";
-  //     this.syncWithServer();
-  //   } else {
-  //     this.status = "offline";
-  //   }
-  // },
-
-  destroyed() {
-    if (ydoc) ydoc.off("update", this.handleYUpdate);
-    // window.removeEventListener("connection-status-changed", this.runSync);
-    if (this.cleanupSolid) {
-      this.cleanupSolid();
-      this.cleanupSolid = null;
-    }
-    if (this.channel) {
-      this.channel.leave();
-      this.channel = null;
-    }
-    console.log("[StockYjsChHook] destroyed");
   },
 
   async stockComponent() {
@@ -77,28 +48,34 @@ export const StockYjsChHook = ({ ydoc, userSocket }) => ({
     });
   },
 
-  async setupChannel(userSocket, topic) {
+  async setupChannel() {
     const { useChannel } = await import("@js/user_socket/useChannel");
-    this.channel = await useChannel(userSocket, topic, {
+    const userSocket = appState.userSocket;
+    this.channel = await useChannel(userSocket, this.topic, {
       userID: this.userID,
       max: this.max,
     });
 
-    // Receive new counter from server, update local doc and reset clicks
-    this.channel.on("counter-update", ({ counter, from }) => {
-      if (from === this.userID) return; // ignore own updates
-      ydoc.transact(() => {
-        this.ymap.set("counter", counter);
-        // do not reset clicks here, only in handleYUpdate
-        // as they may contain pending local state
-      }, "remote");
-    });
+    if (this.channel.state === "joined") {
+      this.syncWithServer();
 
-    return this.channel.state;
+      // Remote updates from server, update local doc and reset clicks
+      this.channel.on("counter-update", ({ counter, from }) => {
+        if (from === this.userID) return; // ignore own updates
+        ydoc.transact(() => {
+          this.ymap.set("counter", counter);
+          // do not reset clicks here, only in handleYUpdate
+          // as they may contain pending local state
+        }, "remote");
+      });
+      // local updates from the client, push to server
+      ydoc.on("update", this.handleYUpdate);
+    }
   },
 
   // ydoc.'on':  listens to all YDoc changes
   async handleYUpdate(update, origin) {
+    console.log("[handleYUpdate]");
     // accept only local updates and ignore remote ones or init
     if (origin == "local") {
       this.isOnline = await checkServer();
@@ -120,7 +97,7 @@ export const StockYjsChHook = ({ ydoc, userSocket }) => ({
   // On (re)connect, fetch "canonical" counter
   syncWithServer() {
     if (!this.channel) return;
-    console.log("syncWithServer");
+    console.log("[syncWithServer]");
 
     const clicks = this.ymap.get("clicks") || 0;
     const payload = {
@@ -135,5 +112,23 @@ export const StockYjsChHook = ({ ydoc, userSocket }) => ({
           this.ymap.set("clicks", 0);
         }, "init");
       });
+  },
+
+  destroyed() {
+    if (ydoc) {
+      ydoc.off("update", this.handleYUpdate);
+    }
+
+    window.removeEventListener("user-socket-ready", this.setupChannel);
+
+    if (this.cleanupSolid) {
+      this.cleanupSolid();
+      this.cleanupSolid = null;
+    }
+    if (this.channel) {
+      this.channel.leave();
+      this.channel = null;
+    }
+    console.log("[StockYjsChHook] destroyed");
   },
 });

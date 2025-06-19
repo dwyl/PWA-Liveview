@@ -1,7 +1,6 @@
 // pwa-registration.js
 // Central module for PWA and Service Worker registration
 import { pwaRegistry } from "@js/main";
-// let updateSWFunction = null;
 
 export async function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return false;
@@ -44,7 +43,8 @@ export async function registerServiceWorker() {
       },
     });
 
-    console.log("registerServiceWorker------");
+    console.log("[SW registered] ------");
+
     return (pwaRegistry.updateSW = updateSWFunction);
   } catch (error) {
     console.error("[PWA] Failed to load PWA module:", error);

@@ -3,8 +3,9 @@ import "@css/app.css";
 import "phoenix_html";
 
 import { appState, setAppState } from "@js/stores/AppStore.js";
+import { checkServer } from "@js/utilities/checkServer.js";
 
-const CONFIG = {
+export const CONFIG = {
   POLL_INTERVAL: 1_000,
   ICONS: {
     online: new URL("@assets/online.svg", import.meta.url).href,
@@ -13,7 +14,7 @@ const CONFIG = {
   NAVIDS: {
     yjs: { path: "/yjs", id: "users-yjs" },
     map: { path: "/map", id: "users-map" },
-    elec: { path: "/", id: "users-elec" },
+    elec: { path: "/sync", id: "users-elec" },
   },
   CONTENT_SELECTOR: "#main-content",
   MapID: "hook-map",
@@ -25,70 +26,92 @@ const CONFIG = {
   },
 };
 
-export { CONFIG };
-
 // NOTE: pwaRegistry is a plain object so we can store callable functions
 // without SolidJS proxy interference.
 export const pwaRegistry = {};
 
 const log = console.log;
+
 //<- debugging only
 window.appState = appState;
 // window.pwaRegistry = pwaRegistry;
 
+function readCSRFToken() {
+  const csrfTokenEl = document.querySelector("meta[name='csrf-token']");
+  if (!csrfTokenEl) {
+    throw new Error("CSRF token not found in meta tag");
+  }
+  return csrfTokenEl.content;
+}
+
+//  ----------------
+document.addEventListener("DOMContentLoaded", async () => {
+  console.log("[DomContentLoaded] loading...");
+  // DOM ready ensures we have a CSRF token
+  // alert(readCSRFToken());
+
+  const isOnline = await checkServer();
+  setAppState({
+    isOnline: isOnline,
+    status: isOnline ? "online" : "offline",
+  });
+
+  const [{ configureTopbar }, { maybeProposeAndroidInstall }] =
+    await Promise.all([
+      import("@js/utilities/configureTopbar"),
+      import("@js/utilities/installAndroid"),
+    ]);
+
+  await Promise.all([
+    configureTopbar(),
+    maybeProposeAndroidInstall(),
+    startApp(),
+  ]);
+
+  return !appState.interval && startPolling();
+});
+
 async function startApp() {
-  log(" **** App started ****");
   try {
-    const [
-      { checkServer },
-      { initYDoc },
-      { setUserSocket },
-      { setPresence },
-      response,
-    ] = await Promise.all([
-      import("@js/utilities/checkServer"),
-      import("@js/stores/initYJS"),
-      import("@js/user_socket/userSocket"),
-      import("@js/components/setPresence"),
-      fetch("/api/user_token", { cache: "no-store" }),
-    ]);
+    // const csrf_token = readCSRFToken();
+    // if (!csrf_token) {
+    //   throw new Error("CSRF token not found in meta tag");
+    // }
 
-    const { user_token } = await response.json();
+    // const isOnline = await checkServer();
+    if (!(await checkServer())) {
+      return await initOfflineComponents();
+    }
 
-    const [globalYdoc, isOnline, userSocket] = await Promise.all([
-      initYDoc(),
-      checkServer(),
-      setUserSocket(user_token),
-    ]);
-    await setPresence(userSocket, "proxy:presence", user_token);
+    // // console.log(isOnline);
+    // setAppState({
+    //   isOnline: isOnline,
+    //   status: isOnline ? "online" : "offline",
+    // });
 
-    setAppState({
-      userToken: user_token,
-      globalYdoc,
-      isOnline,
-      userSocket,
-      status: isOnline ? "online" : "offline",
+    if (!window.liveSocket?.isConnected()) {
+      // window.liveSocket?.disconnect();
+      window.liveSocket = await initLiveSocket();
+      window.liveSocket.connect();
+      log(" **** App started ****");
+    }
+
+    window.liveSocket.getSocket().onOpen(() => {
+      console.warn("[LiveSocket] connected");
     });
-
-    return (window.liveSocket = await initLiveSocket());
   } catch (error) {
     console.error("Initialization error:", error);
   }
 }
 
 // we start the polling heartbeat when the app is loaded
-startApp().then(() => {
-  return !appState.interval && startPolling();
-});
-
-// Polling ----------
 function startPolling(interval = CONFIG.POLL_INTERVAL) {
   if (appState.interval) return;
 
   setAppState(
     "interval",
     setInterval(async () => {
-      const { checkServer } = await import("@js/utilities/checkServer");
+      // const { checkServer } = await import("@js/utilities/checkServer");
       const isOnline = await checkServer();
       return updateConnectionStatus(isOnline);
     }, interval)
@@ -120,6 +143,7 @@ function updateConnectionStatus(isOnline) {
 async function initLiveSocket() {
   try {
     const [
+      { initYDoc },
       { PgStockHook },
       { StockYjsChHook },
       { PwaHook },
@@ -128,6 +152,7 @@ async function initLiveSocket() {
       { LiveSocket },
       { Socket },
     ] = await Promise.all([
+      import("@js/stores/initYJS"),
       import("@js/hooks/hookPgStock"),
       import("@js/hooks/hookYjsChStock.js"),
       import("@js/hooks/hookPwa.js"),
@@ -137,34 +162,28 @@ async function initLiveSocket() {
       import("phoenix"),
     ]);
 
-    const csrfToken = document
-      .querySelector("meta[name='csrf-token']")
-      .getAttribute("content");
+    const globalYdoc = await initYDoc();
+    setAppState("globalYdoc", globalYdoc);
 
     const hooks = {
       StockYjsChHook: StockYjsChHook({
         ydoc: appState.globalYdoc,
-        userSocket: appState.userSocket,
       }),
       PgStockHook: PgStockHook({
         ydoc: appState.globalYdoc,
-        userSocket: appState.userSocket,
       }),
       MapHook: MapHook({ mapID: CONFIG.MapID }),
       FormHook,
       PwaHook,
     };
+
     setAppState("hooks", hooks);
 
+    // pass a function to rebuild the CSRF token if changed
     const liveSocket = new LiveSocket("/live", Socket, {
-      longPollFallbackMs: 1000,
-      params: { _csrf_token: csrfToken },
+      params: () => ({ _csrf_token: readCSRFToken() }),
       hooks,
     });
-
-    liveSocket.connect();
-    // liveSocket.getSocket().onOpen(async () => {
-    // });
     return liveSocket;
   } catch (error) {
     console.error("Error initializing LiveSocket:", error);
@@ -172,9 +191,37 @@ async function initLiveSocket() {
   }
 }
 
+// JS.dispatcher for clearing cache
+window.addEventListener("phx:clear-cache", async () => {
+  const { clearApplicationCaches } = await import("@js/utilities/cacheManager");
+  const confirmation = window.confirm(
+    "You are going to clear the client cache. Reset now?"
+  );
+  console.log(confirmation);
+  if (confirmation) {
+    await clearApplicationCaches();
+    window.location.href = "/";
+  }
+  return;
+});
+
+// sent when the authenticated LiveViews mounts
+window.addEventListener("phx:access-token-ready", async ({ detail }) => {
+  const { user_token, user_id } = detail;
+  if (!detail.user_token || appState.userSocket) {
+    console.log("[userSocket] already set");
+    return;
+  }
+  return await setOnLineFunctions({ user_token, user_id });
+});
+
 async function initOfflineComponents() {
+  console.log(appState.isOnline, "offline components init");
   if (appState.isOnline) return;
-  log("Init Offline Components---------");
+  log("[Init Offline]---------");
+  appState.userSocket?.disconnect();
+  window.liveSocket?.disconnect();
+
   const {
     cleanExistingHooks,
     mountOfflineComponents,
@@ -184,50 +231,56 @@ async function initOfflineComponents() {
   attachNavigationListeners();
   // and then render the current view
   const _module = await mountOfflineComponents();
-  window.liveSocket.disconnect();
+  window.liveSocket?.disconnect();
 }
 
-// Register service worker early ----------------
-document.addEventListener("DOMContentLoaded", async () => {
-  const [{ configureTopbar }, { registerServiceWorker }] = await Promise.all([
-    import("@js/utilities/configureTopbar"),
+async function setOnLineFunctions({ user_token, user_id }) {
+  const [
+    { checkServer },
+    { setUserSocket },
+    { setPresence },
+    { registerServiceWorker },
+  ] = await Promise.all([
+    import("@js/utilities/checkServer"),
+    import("@js/user_socket/userSocket"),
+    import("@js/components/setPresence"),
     import("@js/utilities/pwaRegistration"),
-    // import("ua-parser-js"),
   ]);
 
-  await Promise.all([configureTopbar(), registerServiceWorker()]);
-  await maybeProposeAndroidInstall();
-  // await maybeProposeAndroidInstall(new UAParser());
-});
+  const isOnline = await checkServer();
+  if (!isOnline) return;
 
-async function maybeProposeAndroidInstall() {
-  const installButton = document.getElementById("install-button");
-  if (installButton.dataset.os.toLowerCase() !== "android") {
-    log("Not Android---");
+  const userSocket = await setUserSocket(user_token);
+  userSocket.onOpen(async () => {
+    log("[userSocket]: open for user:", user_id);
+
+    await setPresence(userSocket, "proxy:presence", user_token);
+    setAppState({
+      userToken: user_token,
+      isOnline,
+      userSocket,
+      status: isOnline ? "online" : "offline",
+    });
+    window.dispatchEvent(new CustomEvent("user-socket-ready", {}));
+    await registerServiceWorker();
     return;
-  }
-
-  // const result = parser.getResult();
-
-  // if (result.os.name === "Android") {
-  const { installAndroid } = await import("@js/utilities/installAndroidButton");
-  installButton.classList.remove("hidden");
-  installButton.classList.add("flex");
-
-  return installAndroid(installButton);
-  // } else {
-  //   console.log("[UAParser] Not Android, no install button");
-  // }
+  });
 }
 
 // trigger offline rendering if offline ---------------
 window.addEventListener("connection-status-changed", async (e) => {
   log("Connection status changed to:", e.detail.status);
   if (e.detail.status === "offline") {
-    setAppState("status", "offline");
     return await initOfflineComponents();
   } else {
-    log("what else??");
     window.location.reload();
   }
+});
+
+// debug ---
+window.addEventListener("phx:live_reload:attached", ({ detail: reloader }) => {
+  // Enable server log streaming to client.
+  // Disable with reloader.disableServerLogs()
+  reloader.enableServerLogs();
+  window.liveReloader = reloader;
 });

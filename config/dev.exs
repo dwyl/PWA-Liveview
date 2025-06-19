@@ -1,5 +1,10 @@
 import Config
 
+# Configure token TTL settings
+# 30 seconds for access token
+config :liveview_pwa, :access_token_ttl, 20
+# 5 minutes for refresh token
+config :liveview_pwa, :refresh_token_ttl, 60 * 60 * 24 * 365 * 10
 # we configured Sqlite to save the database in the project root
 # so that we can easily access it from the host machine
 config :liveview_pwa, LiveviewPwa.Sql3Repo,
@@ -18,6 +23,7 @@ config :liveview_pwa, LiveviewPwaWeb.Endpoint,
   debug_errors: true,
   secret_key_base: "cOwEjvqFsw3kkx0aVeZDDPdVsLolgX9XRc5ve9BDvVsvwV4485cBFyuNVg+GlAke",
   live_reload: [
+    web_console_logger: true,
     patterns: [
       ~r{priv/static/.*(js|css|png|jpeg|jpg|gif)$},
       ~r{lib/liveview_pwa_web/views/.*(ex)$},

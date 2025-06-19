@@ -3,7 +3,7 @@ defmodule LiveviewPwaWeb.MapLive do
   use Phoenix.Component
   alias Phoenix.LiveView.AsyncResult
   alias Phoenix.PubSub
-  alias LiveviewPwaWeb.{PwaLiveComp, Users, Menu}
+  alias LiveviewPwaWeb.{Menu, PwaLiveComp, Users}
   # alias LiveviewPwaWeb.Presence
 
   @moduledoc """
@@ -25,6 +25,8 @@ defmodule LiveviewPwaWeb.MapLive do
       <Users.display user_id={@user_id} module_id="users-map" />
 
       <Menu.display active_path={@active_path} />
+      <br />
+      <p>The map below may not be displayed if the free tier usage is exceeded for the month.</p>
       <br />
       <div
         id="hook-map"
@@ -119,7 +121,7 @@ defmodule LiveviewPwaWeb.MapLive do
 
   # hash don't match
   def handle_event("cache-checked", %{"cached" => true, "version" => hash}, socket) do
-    Logger.info("#{inspect({hash, socket.assigns.hash})}")
+    Logger.debug("#{inspect({hash, socket.assigns.hash})}")
     #  version does not match, fetch from DB
     {:noreply,
      socket

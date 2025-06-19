@@ -1,4 +1,26 @@
-export function installAndroid() {
+export async function maybeProposeAndroidInstall() {
+  const installButton = document.getElementById("install-button");
+  if (installButton.dataset.os.toLowerCase() !== "android") {
+    console.log("Not Android---");
+    return;
+  }
+
+  const { UAParser } = await import("ua-parser-js");
+  const result = UAParser.getResult();
+
+  if (result.os.name === "Android") {
+    installButton.classList.remove("hidden");
+    installButton.classList.add("flex");
+
+    return installAndroid(installButton);
+  } else {
+    console.log("[UAParser] Not Android, no install button");
+    installButton.classList.add("hidden");
+    installButton.classList.remove("flex");
+  }
+}
+
+function installAndroid() {
   const installButton = document.getElementById("install-button");
   if (!("BeforeInstallPromptEvent" in window)) {
     console.log("beforeinstallprompt not supported");
@@ -53,15 +75,4 @@ export function installAndroid() {
       }
     }
   }
-
-  console.log(navigator.userAgent);
-  // if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-  //   document.addEventListener("DOMContentLoaded", () => {
-  //     if (installButton) {
-  //       installButton.style.display = "none";
-  //     }
-  //   });
-
-  //   console.log("iOS detected - users can install via Safari Share menu");
-  // }
 }

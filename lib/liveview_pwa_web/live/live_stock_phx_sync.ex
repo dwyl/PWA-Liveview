@@ -1,8 +1,8 @@
 defmodule LiveviewPwaWeb.StockPhxSyncLive do
   use LiveviewPwaWeb, :live_view
 
-  alias LiveviewPwaWeb.{PwaLiveComp, Users, Menu}
   alias LiveviewPwa.PhxSyncCount
+  alias LiveviewPwaWeb.{Menu, PwaLiveComp, Users}
   # alias LiveviewPwaWeb.Presence
 
   import LiveviewPwaWeb.CoreComponents
@@ -57,17 +57,19 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
     """
   end
 
-  # :if={@streams.phx_sync_counter}
-
   @impl true
   def mount(_params, _session, socket) do
     query = PhxSyncCount.query_current()
+    counter = PhxSyncCount.current() |> Map.get(:counter) |> dbg()
 
     {:ok,
      socket
      |> assign(:page_title, "PhxSync")
      |> assign(:show_stream, false)
      |> sync_stream(:phx_sync_counter, query)}
+
+    #  update local Yjs on mount
+    #  |> push_event("update-local-store", %{counter: counter})}
   end
 
   @impl true
@@ -77,17 +79,23 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
 
   # pass through
   def handle_info({:sync, event}, socket) do
-    {:noreply, sync_stream_update(socket, event)}
+    case event do
+      {_, :phx_sync_counter, :insert, %{id: "phx-sync", counter: count}, _} ->
+        {:noreply,
+         sync_stream_update(socket, event) |> push_event("update-local-store", %{counter: count})}
+
+      _ ->
+        {:noreply, sync_stream_update(socket, event)}
+    end
   end
 
   # LV rendering of online clicks
   # and uses the liveSocket to updte YDoc
   @impl true
   def handle_event("dec", _, socket) do
-    # !! buiness logic to put a circular counter is delegated to the PhxSynCount module
+    # logic to put a circular counter is delegated to the PhxSynCount module
     {:ok, new_val} = PhxSyncCount.decrement(1)
     Logger.debug("decrement val to----------->: #{new_val}")
-
     {:reply, %{new_val: new_val}, push_event(socket, "update-local-store", %{counter: new_val})}
   end
 

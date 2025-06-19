@@ -1,4 +1,4 @@
-defmodule LiveviewPwaWeb.WasmController do
+defmodule LiveviewPwaWeb.Api.WasmController do
   use LiveviewPwaWeb, :controller
 
   def load(conn, _params) do
