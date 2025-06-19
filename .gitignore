@@ -26,5 +26,6 @@ erl_crash.dump
 .env
 /pgdata/
 cre.txt
-
+mcp-proxy
+_old/
 

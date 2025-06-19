@@ -34,7 +34,7 @@ defmodule LiveviewPwaWeb.Endpoint do
       # <- reduces payload size of airports
       compress: true,
       csp_nonce_assign_key: :main_nonce,
-      auth_token: true,
+      # auth_token: true,
       check_origin: ["http://localhost:4000", "https://liveview-pwa.fly.dev"]
     ],
     longpoll: [connect_info: [session: @session_options]]

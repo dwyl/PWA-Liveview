@@ -60,7 +60,7 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
   @impl true
   def mount(_params, _session, socket) do
     query = PhxSyncCount.query_current()
-    counter = PhxSyncCount.current() |> Map.get(:counter) |> dbg()
+    # counter = PhxSyncCount.current() |> Map.get(:counter) |> dbg()
 
     {:ok,
      socket
@@ -82,7 +82,9 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
     case event do
       {_, :phx_sync_counter, :insert, %{id: "phx-sync", counter: count}, _} ->
         {:noreply,
-         sync_stream_update(socket, event) |> push_event("update-local-store", %{counter: count})}
+         socket
+         |> sync_stream_update(event)
+         |> push_event("update-local-store", %{counter: count})}
 
       _ ->
         {:noreply, sync_stream_update(socket, event)}

@@ -7,8 +7,6 @@ defmodule LiveviewPwaWeb.Menu do
   A menu component that displays navigation links for the application.
   """
 
-  # class="flex flex-col items-center"
-
   defp menu do
     [
       %{id: "elec", title: "PhxSync", path: ~p"/sync", icon: "hero-bolt"},
@@ -16,8 +14,6 @@ defmodule LiveviewPwaWeb.Menu do
       %{id: "mapform", title: "FlightMap", path: ~p"/map", icon: "hero-globe-alt"}
     ]
   end
-
-  # class="px-4 py-2 border-2 rounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300"
 
   defp link_class do
     "px-4 py-2 border-2 flex flex-col justify-center flex-1 items-center ounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300"
@@ -48,5 +44,3 @@ defmodule LiveviewPwaWeb.Menu do
     """
   end
 end
-
-# class=["px-4 py-2 border-2 rounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300", "#{@active == item.path} &&  ] --%>

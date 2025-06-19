@@ -29,6 +29,9 @@ export const PgStockHook = ({ ydoc }) => ({
     this.setupChannel = this.setupChannel.bind(this);
 
     window.addEventListener("user-socket-ready", this.setupChannel);
+    if (appState.userSocket) {
+      this.setupChannel();
+    }
 
     console.log("[PgStockHook] mounted");
   },

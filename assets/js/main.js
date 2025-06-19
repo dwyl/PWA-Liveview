@@ -4,6 +4,10 @@ import "phoenix_html";
 
 import { appState, setAppState } from "@js/stores/AppStore.js";
 import { checkServer } from "@js/utilities/checkServer.js";
+import { configureTopbar } from "@js/utilities/configureTopbar.js";
+import { initYDoc } from "@js/stores/initYJS.js";
+// import { Socket } from "phoenix";
+// import { LiveSocket } from "phoenix_live_view";
 
 export const CONFIG = {
   POLL_INTERVAL: 1_000,
@@ -33,7 +37,7 @@ export const pwaRegistry = {};
 const log = console.log;
 
 //<- debugging only
-window.appState = appState;
+// window.appState = appState;
 // window.pwaRegistry = pwaRegistry;
 
 function readCSRFToken() {
@@ -46,7 +50,6 @@ function readCSRFToken() {
 
 //  ----------------
 document.addEventListener("DOMContentLoaded", async () => {
-  // console.log("[DomContentLoaded] loading...");
   // DOM ready ensures we have a CSRF token
   // alert(readCSRFToken());
 
@@ -56,46 +59,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     status: isOnline ? "online" : "offline",
   });
 
-  await startApp().then(() => {
+  startApp().then(() => {
     !appState.interval && startPolling();
   });
-
-  const [{ configureTopbar }, { maybeProposeAndroidInstall }] =
-    await Promise.all([
-      import("@js/utilities/configureTopbar"),
-      import("@js/utilities/installAndroid"),
-    ]);
-  await Promise.all([configureTopbar(), maybeProposeAndroidInstall()]);
+  configureTopbar();
 });
 
 async function startApp() {
   try {
-    // const csrf_token = readCSRFToken();
-    // if (!csrf_token) {
-    //   throw new Error("CSRF token not found in meta tag");
-    // }
-
-    // const isOnline = await checkServer();
-    if (!(await checkServer())) {
-      return await initOfflineComponents();
-    }
-
-    // // console.log(isOnline);
-    // setAppState({
-    //   isOnline: isOnline,
-    //   status: isOnline ? "online" : "offline",
-    // });
-
     if (!window.liveSocket?.isConnected()) {
-      // window.liveSocket?.disconnect();
       window.liveSocket = await initLiveSocket();
       window.liveSocket.connect();
       log(" **** App started ****");
+      // window.liveSocket.getSocket().onOpen(() => {
+      //   console.warn("[LiveSocket] connected");
+      // });
     }
-
-    window.liveSocket.getSocket().onOpen(() => {
-      console.warn("[LiveSocket] connected");
-    });
   } catch (error) {
     console.error("Initialization error:", error);
   }
@@ -140,7 +119,7 @@ function updateConnectionStatus(isOnline) {
 async function initLiveSocket() {
   try {
     const [
-      { initYDoc },
+      // { initYDoc },
       { PgStockHook },
       { StockYjsChHook },
       { PwaHook },
@@ -149,7 +128,7 @@ async function initLiveSocket() {
       { LiveSocket },
       { Socket },
     ] = await Promise.all([
-      import("@js/stores/initYJS"),
+      // import("@js/stores/initYJS"),
       import("@js/hooks/hookPgStock"),
       import("@js/hooks/hookYjsChStock.js"),
       import("@js/hooks/hookPwa.js"),

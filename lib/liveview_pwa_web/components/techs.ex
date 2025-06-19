@@ -6,6 +6,10 @@ defmodule LiveviewPwaWeb.Tech do
   @doc """
   Renders a list of technology icons with their names.
   """
+
+  attr :name, :string, required: true, doc: "Name of the technology"
+  attr :path, :string, required: true, doc: "Path to the technology"
+
   def render(assigns) do
     ~H"""
     <div class="flex flex-col items-center gap-1 p-2 rounded hover:bg-gray-50 transition-colors">
