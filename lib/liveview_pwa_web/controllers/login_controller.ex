@@ -5,19 +5,26 @@ defmodule LiveviewPwaWeb.LoginController do
   alias LiveviewPwaWeb.Endpoint
   alias Phoenix.Token
 
-  # version Controller
-  # def login(conn, _params) do
-  #   os_family = "unknown"
+  def index(conn, _params) do
+    # This is the initial page load, we don't have a user_id yet
+    # so we just render the login page with no user_id
+    os = get_session(conn, :os) || "unknown"
+    id = get_session(conn, :user_id) || nil
 
-  #   Plug.CSRFProtection.get_csrf_token()
-  #   id = get_session(conn, :user_id) |> dbg()
+    # delete_csrf_token()
+    # get_csrf_token()
 
-  #   conn
-  #   |> put_layout(html: {LiveviewPwaWeb.Layouts, :app})
-  #   |> assign(:os, os_family)
-  #   |> assign(:user_id, id)
-  #   |> render(:login)
-  # end
+    conn
+    |> put_layout(html: {LiveviewPwaWeb.Layouts, :app})
+    |> assign(:os, os)
+    |> assign(:user_id, id)
+    |> assign(:trigger, false)
+    |> assign(:update_available, false)
+    |> assign(:user_token, get_session(conn, :user_token))
+    |> assign(:page_title, "Login")
+    |> assign(:csrf_token, get_csrf_token())
+    |> render(:login)
+  end
 
   @doc """
   POST endpoint to set the session with a user token and refresh token in a cookie
@@ -34,11 +41,13 @@ defmodule LiveviewPwaWeb.LoginController do
       Token.sign(Endpoint, refresh_salt, user_id, max_age: ApiUserToken.refresh_ttl())
 
     delete_csrf_token()
+    os = get_session(conn, :os) || "unknown"
 
     conn
     |> configure_session(renew: true)
     |> clear_session()
-    |> put_session(:os, "unknown")
+    |> delete_resp_cookie("_csrf_token")
+    |> put_session(:os, os)
     |> put_session(:user_id, user_id)
     |> put_session(:user_token, access_token)
     |> put_resp_cookie("refresh", refresh_token,
@@ -46,6 +55,24 @@ defmodule LiveviewPwaWeb.LoginController do
       secure: true,
       same_site: "Strict"
     )
-    |> redirect(to: ~p"/")
+    |> redirect(to: ~p"/logged-in")
+    |> halt()
   end
 end
+
+# version Controller
+# def logged_in(conn, _params) do
+#   os = get_session(conn, :os) |> dbg()
+#   id = get_session(conn, :user_id) |> dbg()
+#   token = get_session(conn, :user_token) |> dbg()
+
+#   delete_csrf_token()
+#   get_csrf_token()
+
+#   conn
+#   |> put_layout(html: {LiveviewPwaWeb.Layouts, :app})
+#   |> assign(:os, os)
+#   |> assign(:user_id, id)
+#   |> assign(:user_token, token)
+#   |> render(:login)
+# end

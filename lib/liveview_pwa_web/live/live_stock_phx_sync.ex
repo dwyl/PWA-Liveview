@@ -77,18 +77,8 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
     {:noreply, assign(socket, :show_stream, true)}
   end
 
-  # pass through
   def handle_info({:sync, event}, socket) do
-    case event do
-      {_, :phx_sync_counter, :insert, %{id: "phx-sync", counter: count}, _} ->
-        {:noreply,
-         socket
-         |> sync_stream_update(event)
-         |> push_event("update-local-store", %{counter: count})}
-
-      _ ->
-        {:noreply, sync_stream_update(socket, event)}
-    end
+    {:noreply, sync_stream_update(socket, event)}
   end
 
   # LV rendering of online clicks

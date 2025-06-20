@@ -22,6 +22,7 @@ export const PgStockHook = ({ ydoc }) => ({
     // 'online' mode: from the LV, received reply from handle_event "dec"
     this.handleEvent("update-local-store", ({ counter }) => {
       console.log("update-local-store", counter);
+
       this.ymap.set("pg-count", counter);
     });
 

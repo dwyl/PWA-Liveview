@@ -10,10 +10,10 @@ import { LiveSocket } from "phoenix_live_view";
 import { PgStockHook } from "@js/hooks/hookPgStock";
 import { StockYjsChHook } from "@js/hooks/hookYjsChStock.js";
 import { PwaHook } from "@js/hooks/hookPwa.js";
-import { MapHook } from "@js/hooks/hookMap.js";
+// import { MapHook } from "@js/hooks/hookMap.js";
 import { FormHook } from "@js/hooks/hookForm.js";
-import { setUserSocket } from "@js/user_socket/userSocket";
-import { setPresence } from "@js/components/setPresence";
+// import { setUserSocket } from "@js/user_socket/userSocket";
+// import { setPresence } from "@js/components/setPresence";
 import { registerServiceWorker } from "@js/utilities/pwaRegistration";
 import {
   cleanExistingHooks,
@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // alert(readCSRFToken());
 
   window.liveSocket = await initLiveSocket();
-  log(" **** App started ****");
+  // log("**** App started ****");
   window.liveSocket.getSocket().onOpen(async () => {
     console.warn("[LiveSocket] connected");
     !appState.interval && startPolling();
@@ -90,15 +90,15 @@ async function initLiveSocket() {
     setAppState("globalYdoc", globalYdoc);
 
     const hooks = {
+      FormHook,
+      PwaHook,
       StockYjsChHook: StockYjsChHook({
         ydoc: appState.globalYdoc,
       }),
-      PgStockHook: PgStockHook({
-        ydoc: appState.globalYdoc,
-      }),
-      MapHook: MapHook({ mapID: CONFIG.MapID }),
-      FormHook,
-      PwaHook,
+      PgStockHook: PgStockHook({ ydoc: appState.globalYdoc }),
+      MapHook: await import("@js/hooks/hookMap.js").then(({ MapHook }) =>
+        MapHook({ mapID: CONFIG.MapID })
+      ),
     };
 
     setAppState("hooks", hooks);
@@ -121,7 +121,7 @@ function readCSRFToken() {
   if (!csrfTokenEl) {
     throw new Error("CSRF token not found in meta tag");
   }
-  return csrfTokenEl.content;
+  return csrfTokenEl.getAttribute("content");
 }
 
 // JS.dispatcher for clearing cache
@@ -150,7 +150,6 @@ window.addEventListener("phx:access-token-ready", async ({ detail }) => {
 });
 
 async function initOfflineComponents() {
-  console.log(appState.isOnline, "offline components init");
   if (appState.isOnline) return;
   log("[Init Offline]---------");
   appState.userSocket?.disconnect();
@@ -163,22 +162,20 @@ async function initOfflineComponents() {
 }
 
 async function setOnLineFunctions({ user_token, user_id }) {
-  const isOnline = await checkServer();
-  if (!isOnline) return;
-
+  const [{ setUserSocket }, { setPresence }] = await Promise.all([
+    import("@js/user_socket/userSocket"),
+    import("@js/components/setPresence"),
+  ]);
   const userSocket = await setUserSocket(user_token);
   userSocket.onOpen(async () => {
-    log("[userSocket]: open for user:", user_id);
+    log("[userSocket]: opened for:", user_id);
 
     await setPresence(userSocket, "proxy:presence", user_token);
     setAppState({
       userToken: user_token,
-      isOnline,
       userSocket,
-      status: isOnline ? "online" : "offline",
     });
     window.dispatchEvent(new CustomEvent("user-socket-ready", {}));
-    await registerServiceWorker();
     return;
   });
 }

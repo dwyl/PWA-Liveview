@@ -19,22 +19,20 @@ defmodule LiveviewPwaWeb.MountUser do
   - handle the params to set the active path
   """
 
-  def on_mount(
-        :ensure_authenticated,
-        _p,
-        %{"user_id" => user_id, "user_agent" => ua} = session,
-        socket
-      ) do
+  def on_mount(:ensure_authenticated, _p, %{"user_id" => user_id} = session, socket) do
+    os = session["os"]
+
+    #  shared assigns and PWA button handler delegated to a LiveComponent
     {:cont,
      socket
-     #  shared assigns and PWA button handler delegated to a LiveComponent
      |> assign(:max, @max)
      |> assign(:user_id, user_id)
+     #  async push the user token to the client to setup cusstom userSocket
      |> push_event("access-token-ready", %{
        "user_token" => session["user_token"],
        "user_id" => user_id
      })
-     |> assign(:os, set_ua(ua).os)
+     |> assign(:os, os)
      |> assign(:update_available, false)
      |> attach_hook(:active, :handle_params, &handle_path_params/3)
      |> attach_hook(:sw, :handle_event, &handle_pwa_event/3)}
@@ -42,17 +40,6 @@ defmodule LiveviewPwaWeb.MountUser do
 
   def on_mount(:ensure_authenticated, _params, _session, socket) do
     {:halt, redirect(socket, to: ~p"/")}
-  end
-
-  defp set_ua(ua) do
-    %UAParser.UA{
-      device: %UAParser.Device{family: device_familly},
-      os: %UAParser.OperatingSystem{
-        family: os_familly
-      }
-    } = ua
-
-    %{os: os_familly, device_familly: device_familly}
   end
 
   defp handle_path_params(_params, url, socket) do

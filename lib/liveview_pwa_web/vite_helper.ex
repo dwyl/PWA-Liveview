@@ -8,18 +8,26 @@ defmodule ViteHelper do
 
   It reads the Vite manifest file to find the correct path for the asset.
 
+  The manifest file is only available after the Vite build process has run.
+
+  In DEV mode:
+  - if the browser is already open, this crashes as the manifest is not yet  produced
+
+  It is recommended to use this in __production__ or __after__ the build process
+  This means in DEV mode: 1) compile the files, 2) then open the browser
+
     ## Example
     To use this module, you can call the `path/1` function with the asset name:
 
     - in the template:
-      ```html
-        <script src={ViteHelper.path("assets/app.js")}></script>
-      ```
+
+      `<script src={ViteHelper.path("assets/app.js")}></script>`
+
 
     - in the console:
 
-          iex> ViteHelper.path("assets/app.js")
-          "/assets/app-1234567890abcdef.js"
+          iex> ViteHelper.get_css()
+          "/assets/main-1234567890abcdef.css"
   """
 
   def path(asset) do
@@ -31,7 +39,6 @@ defmodule ViteHelper do
     end
   end
 
-  # !!! this can possibly crash if the manifest is not found in DEV mode
   defp get_manifest do
     Path.join(:code.priv_dir(:liveview_pwa), "/static/.vite/manifest.json")
     |> File.read!()

@@ -12,16 +12,17 @@ defmodule PlugUA do
 
   @impl true
   def call(conn, _opts) do
-    ua =
-      conn
-      |> Plug.Conn.get_req_header("user-agent")
-      |> List.first()
-      |> UAParser.parse()
-
     case get_session(conn, :user_agent) do
       nil ->
-        conn
-        |> put_session(:user_agent, ua)
+        os =
+          conn
+          |> Plug.Conn.get_req_header("user-agent")
+          |> List.first()
+          |> UAParser.parse()
+          |> Map.get(:os)
+          |> Map.get(:family)
+
+        put_session(conn, :os, os)
 
       _ ->
         conn

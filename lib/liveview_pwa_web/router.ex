@@ -27,11 +27,12 @@ defmodule LiveviewPwaWeb.Router do
   scope "/", LiveviewPwaWeb do
     pipe_through :browser
 
-    # get "/", LoginController, :login
-    live "/", LoginLive, :index
+    # live "/", LoginLive, :index
+    get "/", LoginController, :index
     post "/set_session", LoginController, :set_session
+    get "/logged-in", LoginController, :index
 
-    live_session :pretend_authenticated,
+    live_session :authenticated,
       on_mount: {MountUser, :ensure_authenticated} do
       live "/sync", StockPhxSyncLive, :index
       live "/yjs", StockYjsLive, :index
