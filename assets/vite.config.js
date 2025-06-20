@@ -195,11 +195,35 @@ const buildOps = (mode) => ({
 // Service Worker Rentime Caching Strategies
 
 // fetch for Android
-const FetchvAll = {
-  urlPattern: ({ request }) => request.mode === "navigate",
+// const FetchvAll = {
+//   urlPattern: ({ request }) => request.mode === "navigate",
+//   handler: "NetworkFirst",
+//   options: {
+//     cacheName: "pages",
+//     networkTimeoutSeconds: 3,
+//     expiration: {
+//       maxEntries: 50,
+//       maxAgeSeconds: 60 * 60 * 24, // 1 day
+//     },
+//     cacheableResponse: {
+//       statuses: [0, 200],
+//     },
+//   },
+// };
+
+const PageShells = {
+  urlPattern: ({ request, url }) => {
+    // Only match navigation requests (page loads), and exclude LiveView endpoints
+    return (
+      request.mode === "navigate" &&
+      !url.pathname.startsWith("/live/") &&
+      !url.pathname.startsWith("/phoenix/") &&
+      !url.pathname.startsWith("/api/")
+    );
+  },
   handler: "NetworkFirst",
   options: {
-    cacheName: "pages",
+    cacheName: "page-shells",
     networkTimeoutSeconds: 3,
     expiration: {
       maxEntries: 50,
@@ -213,36 +237,12 @@ const FetchvAll = {
 
 const LiveView = [
   {
-    urlPattern: ({ url }) => {
-      return url.pathname.startsWith("/live/longpoll");
-    },
-    handler: "NetworkOnly",
-    options: {
-      fetchOptions: {
-        credentials: "same-origin",
-      },
-    },
-  },
-  {
-    urlPattern: ({ url }) => url.pathname.startsWith("/phoenix/live_reload/"),
-    handler: "NetworkOnly",
-    options: {
-      fetchOptions: {
-        credentials: "same-origin",
-      },
-    },
-  },
-  {
-    urlPattern: ({ url }) => url.pathname.startsWith("/user/"),
-    handler: "NetworkOnly",
-    options: {
-      fetchOptions: {
-        credentials: "same-origin",
-      },
-    },
-  },
-  {
-    urlPattern: ({ url }) => url.pathname.startsWith("/api/"),
+    urlPattern: ({ url }) =>
+      url.pathname.startsWith("/live/longpoll") ||
+      url.pathname.startsWith("/live/websocket") ||
+      url.pathname.startsWith("/phoenix/live_reload/") ||
+      url.pathname.startsWith("/api/") ||
+      url.pathname.startsWith("/user/"),
     handler: "NetworkOnly",
     options: {
       fetchOptions: {
@@ -251,24 +251,6 @@ const LiveView = [
     },
   },
 ];
-
-const MapTiler = {
-  urlPattern: ({ url }) =>
-    (url.hostname === "api.maptiler.com" &&
-      (url.pathname.startsWith("/maps/") || // Style configs
-        url.pathname.startsWith("/resources/"))) || // SDK assets
-    url.pathname.startsWith("/tiles/") || // Raster/vector tiles
-    url.pathname.startsWith("/data/") || // Tile JSON
-    url.pathname.startsWith("/metrics"),
-  handler: "StaleWhileRevalidate",
-  options: {
-    cacheName: "maptiler",
-    cacheableResponse: {
-      statuses: [0, 200],
-    },
-    expiration: { maxEntries: 10, maxAgeSeconds: 604800 }, // 7 days
-  },
-};
 
 const OtherStaticAssets = {
   urlPattern: ({ url }) =>
@@ -287,6 +269,24 @@ const OtherStaticAssets = {
     cacheableResponse: {
       statuses: [0, 200],
     },
+  },
+};
+
+const MapTiler = {
+  urlPattern: ({ url }) =>
+    (url.hostname === "api.maptiler.com" &&
+      (url.pathname.startsWith("/maps/") || // Style configs
+        url.pathname.startsWith("/resources/"))) || // SDK assets
+    url.pathname.startsWith("/tiles/") || // Raster/vector tiles
+    url.pathname.startsWith("/data/") || // Tile JSON
+    url.pathname.startsWith("/metrics"),
+  handler: "StaleWhileRevalidate",
+  options: {
+    cacheName: "maptiler",
+    cacheableResponse: {
+      statuses: [0, 200],
+    },
+    expiration: { maxEntries: 10, maxAgeSeconds: 604800 }, // 7 days
   },
 };
 
@@ -316,11 +316,11 @@ const Fonts = {
 };
 
 const runtimeCaching = [
+  PageShells,
   OtherStaticAssets,
   ...LiveView,
   MapTiler, // Add the SDK route before Tiles
   Fonts,
-  FetchvAll,
 ];
 
 // =============================================
@@ -378,7 +378,6 @@ const PWAConfig = (mode) => ({
     ],
 
     additionalManifestEntries: [
-      { url: "/", revision: `${Date.now()}` },
       { url: "/sync", revision: `${Date.now()}` }, // Manually precache sync route
       { url: "/yjs", revision: `${Date.now()}` }, // Manually precache elec route
       { url: "/map", revision: `${Date.now()}` }, // Manually precache map route

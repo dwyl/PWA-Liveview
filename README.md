@@ -942,15 +942,11 @@ We can use the `Cache API` as an alternative to `Workbox` to cache pages. The im
 
 ```javascript
 // Cache current page if it's in the configured routes
-async function addCurrentPageToCache({ current, routes }) {
+async function addCurrentPageToCache() {
   await navigator.serviceWorker.ready;
-  const newPath = new URL(current).pathname;
-
-  // Only cache configured routes once
-  if (!routes.includes(newPath) || AppState.paths.has(newPath)) return;
+  const newPath = window.location.pathname;
 
   if (newPath === window.location.pathname) {
-    AppState.paths.add(newPath);
     const htmlContent = document.documentElement.outerHTML;
     const contentLength = new TextEncoder().encode(htmlContent).length;
 
@@ -963,13 +959,13 @@ async function addCurrentPageToCache({ current, routes }) {
     });
 
     const cache = await caches.open(CONFIG.CACHE_NAME);
-    return cache.put(current, response);
+    return cache.put(current, response.clone());
   }
 }
 
 // Monitor navigation events
-navigation.addEventListener("navigate", async ({ destination: { url } }) => {
-  return addCurrentPageToCache({ current: url, routes: CONFIG.ROUTES });
+navigation.addEventListener("navigate", async () => {
+  return addCurrentPageToCache();
 });
 ```
 

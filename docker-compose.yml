@@ -49,6 +49,7 @@ services:
     user: nobody
     env_file:
       - .env.docker
+  
   grafana:
     image: grafana/grafana:latest
     ports:

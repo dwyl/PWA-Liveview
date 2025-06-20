@@ -181,8 +181,10 @@ async function handleOfflineNavigation(event) {
 function attachNavigationListeners() {
   // disable the home link
   const home = document.getElementById("login-link");
-  home.addEventListener("click", (e) => e.preventDefault());
-  home.removeAttribute("href");
+  if (home) {
+    home.addEventListener("click", (e) => e.preventDefault());
+    home.removeAttribute("href");
+  }
 
   const navLinks = document.querySelectorAll("nav a");
   navLinks.forEach((link) => {
@@ -195,4 +197,45 @@ export {
   cleanExistingHooks,
   mountOfflineComponents,
   attachNavigationListeners,
+  // cacheCurrentPage,
+  // addCurrentPageToCache,
 };
+
+// async function addCurrentPageToCache() {
+//   await navigator.serviceWorker.ready;
+//   const url = window.location.pathname;
+
+//   const htmlContent = document.documentElement.outerHTML;
+//   const contentLength = new TextEncoder().encode(htmlContent).length;
+
+//   const response = new Response(htmlContent, {
+//     headers: {
+//       "Content-Type": "text/html",
+//       "Content-Length": contentLength,
+//     },
+//     status: 200,
+//   });
+
+//   const cache = await caches.open(PAGES_CACHE);
+//   return cache.put(url, response.clone());
+// }
+
+// async function cacheCurrentPage() {
+//   await navigator.serviceWorker.ready;
+//   // const newPath = new URL(current).pathname;
+
+//   const url = window.location.pathname;
+//   const cache = await caches.open("page-shells");
+
+//   try {
+//     const response = await fetch(url, {
+//       credentials: "same-origin",
+//     });
+//     if (response.ok) {
+//       await cache.put(url, response.clone());
+//       console.log(`[SW] Cached ${url}`);
+//     }
+//   } catch (e) {
+//     console.warn(`[SW] Failed to cache ${url}:`, e);
+//   }
+// }

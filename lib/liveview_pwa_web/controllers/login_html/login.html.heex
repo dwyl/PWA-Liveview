@@ -23,7 +23,7 @@
           My dummy Login
         </h1>
 
-        <.form for={%{}} action={~p"/set_session"} phx-trigger-action={@trigger}>
+        <.form for={%{}} action={~p"/set_session"} method="post">
           <button
             type="submit"
             aria-label="Login as Guest"

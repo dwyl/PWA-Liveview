@@ -12,20 +12,18 @@ defmodule LiveviewPwaWeb.StockYjsLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div>
-      <.live_component module={PwaLiveComp} id="pwa_action-yjs" update_available={@update_available} />
-      <br />
-      <Users.display user_id={@user_id} module_id="users-yjs" />
-      <Menu.display active_path={@active_path} />
-      <br />
-      <div
-        id="hook-yjs-sql3"
-        phx-hook="StockYjsChHook"
-        phx-update="ignore"
-        data-userid={@user_id}
-        data-max={@max}
-      >
-      </div>
+    <.live_component module={PwaLiveComp} id="pwa_action-yjs" update_available={@update_available} />
+    <br />
+    <Users.display user_id={@user_id} module_id="users-yjs" />
+    <Menu.display active_path={@active_path} />
+    <br />
+    <div
+      id="hook-yjs-sql3"
+      phx-hook="StockYjsChHook"
+      phx-update="ignore"
+      data-userid={@user_id}
+      data-max={@max}
+    >
     </div>
     """
   end

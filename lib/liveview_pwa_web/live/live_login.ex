@@ -24,8 +24,7 @@
 #             </h1>
 #             <div class="bg-slateblue border border-midnightblue text-white rounded-lg p-4 mt-2">
 #               <p class="text-lg font-medium">
-#                 You are currently logged in as user:
-#                 <span class="font-mono underline">@{@user_id}</span>
+#                 You are currently logged in as user: <code>{@user_id}</code>
 #               </p>
 #             </div>
 #           <% else %>
@@ -33,8 +32,7 @@
 #             <h1 class="text-2xl font-bold text-white">
 #               My dummy Login
 #             </h1>
-
-#             <.form for={%{}} action={~p"/set_session"} phx-trigger-action={@trigger}>
+#             <.form for={%{}} action={~p"/set_session"}>
 #               <button
 #                 type="submit"
 #                 aria-label="Login as Guest"
@@ -52,8 +50,8 @@
 
 #   @impl true
 #   def mount(_params, session, socket) do
-#     user_id = session["user_id"]
 #     dbg(session)
+#     user_id = session["user_id"] |> dbg()
 #     os = session["os"]
 
 #     socket =

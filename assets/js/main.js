@@ -10,10 +10,7 @@ import { LiveSocket } from "phoenix_live_view";
 import { PgStockHook } from "@js/hooks/hookPgStock";
 import { StockYjsChHook } from "@js/hooks/hookYjsChStock.js";
 import { PwaHook } from "@js/hooks/hookPwa.js";
-// import { MapHook } from "@js/hooks/hookMap.js";
 import { FormHook } from "@js/hooks/hookForm.js";
-// import { setUserSocket } from "@js/user_socket/userSocket";
-// import { setPresence } from "@js/components/setPresence";
 import { registerServiceWorker } from "@js/utilities/pwaRegistration";
 import {
   cleanExistingHooks,
@@ -23,23 +20,16 @@ import {
 
 const CONFIG = appState.CONFIG;
 
-// NOTE: pwaRegistry is a plain object so we can store callable functions
-// without SolidJS proxy interference.
+// NOTE: pwaRegistry is a plain object so we can store functions without SolidJS proxy interference.
 export const pwaRegistry = {};
 
 const log = console.log;
 
-//<- debugging only
-// window.appState = appState;
-// window.pwaRegistry = pwaRegistry;
-
 //  ----------------
 document.addEventListener("DOMContentLoaded", async () => {
-  //   // DOM ready ensures we have a CSRF token
-  // alert(readCSRFToken());
+  // alert(readCSRFToken()); //DOM ready ensures we have a CSRF token
 
   window.liveSocket = await initLiveSocket();
-  // log("**** App started ****");
   window.liveSocket.getSocket().onOpen(async () => {
     console.warn("[LiveSocket] connected");
     !appState.interval && startPolling();
@@ -103,7 +93,6 @@ async function initLiveSocket() {
 
     setAppState("hooks", hooks);
 
-    // pass a function to rebuild the CSRF token if changed
     const liveSocket = new LiveSocket("/live", Socket, {
       params: () => ({ _csrf_token: readCSRFToken() }),
       hooks,
@@ -137,6 +126,11 @@ window.addEventListener("phx:clear-cache", async () => {
   }
   return;
 });
+
+// window.addEventListener("phx:page-loading-stop", async () => {
+//   console.log("[phx:page-loading-stop] ----- caching current page");
+//   await addCurrentPageToCache();
+// });
 
 // sent when the authenticated LiveViews mounts
 window.addEventListener("phx:access-token-ready", async ({ detail }) => {
