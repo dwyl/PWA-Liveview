@@ -1,4 +1,6 @@
-import { CONFIG } from "@js/main";
+import { appState } from "@js/stores/AppStore";
+
+const NAVIDS = appState.CONFIG.NAVIDS;
 
 export async function setPresence(userSocket, topic, user_token) {
   const [{ Presence }, { useChannel }, { MountUsers }] = await Promise.all([
@@ -24,10 +26,10 @@ export async function setPresence(userSocket, topic, user_token) {
     const path = window.location.pathname;
     const id =
       path === "/yjs"
-        ? CONFIG.NAVIDS.yjs.id
+        ? NAVIDS.yjs.id
         : path === "/map"
-        ? CONFIG.NAVIDS.map.id
-        : CONFIG.NAVIDS.elec.id;
+        ? NAVIDS.map.id
+        : NAVIDS.elec.id;
     return document.getElementById(id);
   };
 

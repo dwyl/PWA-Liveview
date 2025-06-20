@@ -33,17 +33,19 @@ defmodule LiveviewPwaWeb.LoginController do
     refresh_token =
       Token.sign(Endpoint, refresh_salt, user_id, max_age: ApiUserToken.refresh_ttl())
 
-    URI.encode_www_form(Plug.CSRFProtection.get_csrf_token()) |> dbg()
+    delete_csrf_token()
 
     conn
+    |> configure_session(renew: true)
+    |> clear_session()
+    |> put_session(:os, "unknown")
     |> put_session(:user_id, user_id)
     |> put_session(:user_token, access_token)
-    |> put_session("_csrf_token", get_csrf_token())
     |> put_resp_cookie("refresh", refresh_token,
       http_only: true,
       secure: true,
       same_site: "Strict"
     )
-    |> redirect(to: ~p"/sync")
+    |> redirect(to: ~p"/")
   end
 end

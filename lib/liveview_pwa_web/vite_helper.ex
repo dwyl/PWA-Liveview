@@ -37,4 +37,13 @@ defmodule ViteHelper do
     |> File.read!()
     |> Jason.decode!()
   end
+
+  def get_css do
+    get_manifest()
+    |> Enum.flat_map(fn {_key, entry} ->
+      Map.get(entry, "css", [])
+    end)
+    |> Enum.uniq()
+    |> List.first()
+  end
 end

@@ -98,6 +98,7 @@ The standalone PWA is 2.1 MB (page weigth).
     - [Yjs-Ch and PhxSync stock "manager"](#yjs-ch-and-phxsync-stock-manager)
     - [Pg-Sync-Stock](#pg-sync-stock)
     - [FlightMap](#flightmap)
+  - [Login](#login)
   - [Navigation](#navigation)
   - [Vite](#vite)
     - [Configuration and settings](#configuration-and-settings)

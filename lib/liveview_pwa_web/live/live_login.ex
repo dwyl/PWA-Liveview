@@ -1,6 +1,7 @@
 defmodule LiveviewPwaWeb.LoginLive do
   use LiveviewPwaWeb, :live_view
   alias LiveviewPwaWeb.PwaLiveComp
+  require Logger
 
   @impl true
   def render(assigns) do
@@ -32,7 +33,7 @@ defmodule LiveviewPwaWeb.LoginLive do
             <h1 class="text-2xl font-bold text-white">
               My dummy Login
             </h1>
-            <.form for={%{}} action={~p"/set_session"} method="post">
+            <.form for={%{}} action={~p"/set_session"} phx-trigger-action={true}>
               <button
                 type="submit"
                 aria-label="Login as Guest"
@@ -61,5 +62,15 @@ defmodule LiveviewPwaWeb.LoginLive do
       |> assign(:page_title, "Login")
 
     {:ok, socket}
+  end
+
+  @impl true
+  def handle_event("sw-lv-ready", _, socket) do
+    Logger.debug("sw-lv-ready")
+    {:noreply, put_flash(socket, :info, "Service Worker ready")}
+  end
+
+  def handle_event("sw-lv-error", _, socket) do
+    {:noreply, put_flash(socket, :error, "Service Worker error. This app can't work offline")}
   end
 end

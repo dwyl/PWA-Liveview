@@ -10,9 +10,6 @@ import fg from "fast-glob"; // for recursive file scanning
 // but v3.4 instead as Tailwind v4 throws away the tailwind.config.js file
 // and Phoenix CSS won't be parsed by Vite without it
 import tailwindcss from "tailwindcss";
-// import cssnano from "cssnano"; // for CSS minification
-
-// import { analyzer } from "vite-bundle-analyzer";
 
 // autoprefixing CSS, eg --webkit for flex/grid, --moz for transitions, etc
 // but "ligntningcss" is used for minification and autoprefixing
@@ -152,7 +149,7 @@ const getEntryPoints = () => {
     }
   });
   // Add WASM & CSS explicitly
-  entries.push(path.resolve(cssDir, "app.css"));
+  // entries.push(path.resolve(cssDir, "app.css"));
   entries.push(path.resolve(wasmDir, "great_circle.wasm"));
 
   fg.sync([`${srcImgDir}/**/*.*`]).forEach((file) => {
@@ -381,7 +378,7 @@ const PWAConfig = (mode) => ({
     ],
 
     additionalManifestEntries: [
-      // { url: "/", revision: `${Date.now()}` },
+      { url: "/", revision: `${Date.now()}` },
       { url: "/sync", revision: `${Date.now()}` }, // Manually precache sync route
       { url: "/yjs", revision: `${Date.now()}` }, // Manually precache elec route
       { url: "/map", revision: `${Date.now()}` }, // Manually precache map route

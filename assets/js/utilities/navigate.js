@@ -1,7 +1,6 @@
 import { appState, setAppState } from "@js/stores/AppStore.js";
-import { CONFIG } from "@js/main";
 
-const { CONTENT_SELECTOR: selector, hooks } = CONFIG;
+const { CONTENT_SELECTOR: selector, hooks } = appState.CONFIG;
 
 // instantiate when the user goes offline
 const offlineComponents = {
@@ -115,7 +114,7 @@ function cleanExistingHooks() {
 
   for (const key in appState.hooks) {
     if (key !== "MapHook") {
-      const domId = CONFIG.hooks[key];
+      const domId = hooks[key];
       const domElt = document.getElementById(domId);
       if (domElt && typeof appState.hooks[key].destroyed === "function") {
         appState.hooks[key].destroyed();

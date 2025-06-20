@@ -1,34 +1,27 @@
 import "@css/app.css";
 // Include phoenix_html to handle method=PUT/DELETE in forms and buttons.
 import "phoenix_html";
-
 import { appState, setAppState } from "@js/stores/AppStore.js";
 import { checkServer } from "@js/utilities/checkServer.js";
 import { configureTopbar } from "@js/utilities/configureTopbar.js";
 import { initYDoc } from "@js/stores/initYJS.js";
-// import { Socket } from "phoenix";
-// import { LiveSocket } from "phoenix_live_view";
+import { Socket } from "phoenix";
+import { LiveSocket } from "phoenix_live_view";
+import { PgStockHook } from "@js/hooks/hookPgStock";
+import { StockYjsChHook } from "@js/hooks/hookYjsChStock.js";
+import { PwaHook } from "@js/hooks/hookPwa.js";
+import { MapHook } from "@js/hooks/hookMap.js";
+import { FormHook } from "@js/hooks/hookForm.js";
+import { setUserSocket } from "@js/user_socket/userSocket";
+import { setPresence } from "@js/components/setPresence";
+import { registerServiceWorker } from "@js/utilities/pwaRegistration";
+import {
+  cleanExistingHooks,
+  mountOfflineComponents,
+  attachNavigationListeners,
+} from "@js/utilities/navigate";
 
-export const CONFIG = {
-  POLL_INTERVAL: 1_000,
-  ICONS: {
-    online: new URL("@assets/online.svg", import.meta.url).href,
-    offline: new URL("@assets/offline.svg", import.meta.url).href,
-  },
-  NAVIDS: {
-    yjs: { path: "/yjs", id: "users-yjs" },
-    map: { path: "/map", id: "users-map" },
-    elec: { path: "/sync", id: "users-elec" },
-  },
-  CONTENT_SELECTOR: "#main-content",
-  MapID: "hook-map",
-  hooks: {
-    PgStockHook: "hook-pg",
-    StockYjsChHook: "hook-yjs-sql3",
-    MapHook: "hook-map",
-    FormHook: "hook-select-form",
-  },
-};
+const CONFIG = appState.CONFIG;
 
 // NOTE: pwaRegistry is a plain object so we can store callable functions
 // without SolidJS proxy interference.
@@ -40,45 +33,21 @@ const log = console.log;
 // window.appState = appState;
 // window.pwaRegistry = pwaRegistry;
 
-function readCSRFToken() {
-  const csrfTokenEl = document.querySelector("meta[name='csrf-token']");
-  if (!csrfTokenEl) {
-    throw new Error("CSRF token not found in meta tag");
-  }
-  return csrfTokenEl.content;
-}
-
 //  ----------------
 document.addEventListener("DOMContentLoaded", async () => {
-  // DOM ready ensures we have a CSRF token
+  //   // DOM ready ensures we have a CSRF token
   // alert(readCSRFToken());
 
-  const isOnline = await checkServer();
-  setAppState({
-    isOnline: isOnline,
-    status: isOnline ? "online" : "offline",
+  window.liveSocket = await initLiveSocket();
+  log(" **** App started ****");
+  window.liveSocket.getSocket().onOpen(async () => {
+    console.warn("[LiveSocket] connected");
+    !appState.interval && startPolling();
+    await registerServiceWorker();
   });
 
-  startApp().then(() => {
-    !appState.interval && startPolling();
-  });
   configureTopbar();
 });
-
-async function startApp() {
-  try {
-    if (!window.liveSocket?.isConnected()) {
-      window.liveSocket = await initLiveSocket();
-      window.liveSocket.connect();
-      log(" **** App started ****");
-      // window.liveSocket.getSocket().onOpen(() => {
-      //   console.warn("[LiveSocket] connected");
-      // });
-    }
-  } catch (error) {
-    console.error("Initialization error:", error);
-  }
-}
 
 // we start the polling heartbeat when the app is loaded
 function startPolling(interval = CONFIG.POLL_INTERVAL) {
@@ -87,7 +56,6 @@ function startPolling(interval = CONFIG.POLL_INTERVAL) {
   setAppState(
     "interval",
     setInterval(async () => {
-      // const { checkServer } = await import("@js/utilities/checkServer");
       const isOnline = await checkServer();
       return updateConnectionStatus(isOnline);
     }, interval)
@@ -118,26 +86,6 @@ function updateConnectionStatus(isOnline) {
 
 async function initLiveSocket() {
   try {
-    const [
-      // { initYDoc },
-      { PgStockHook },
-      { StockYjsChHook },
-      { PwaHook },
-      { MapHook },
-      { FormHook },
-      { LiveSocket },
-      { Socket },
-    ] = await Promise.all([
-      // import("@js/stores/initYJS"),
-      import("@js/hooks/hookPgStock"),
-      import("@js/hooks/hookYjsChStock.js"),
-      import("@js/hooks/hookPwa.js"),
-      import("@js/hooks/hookMap.js"),
-      import("@js/hooks/hookForm.js"),
-      import("phoenix_live_view"),
-      import("phoenix"),
-    ]);
-
     const globalYdoc = await initYDoc();
     setAppState("globalYdoc", globalYdoc);
 
@@ -160,11 +108,20 @@ async function initLiveSocket() {
       params: () => ({ _csrf_token: readCSRFToken() }),
       hooks,
     });
+    liveSocket.connect();
     return liveSocket;
   } catch (error) {
     console.error("Error initializing LiveSocket:", error);
     return await initOfflineComponents();
   }
+}
+
+function readCSRFToken() {
+  const csrfTokenEl = document.querySelector("meta[name='csrf-token']");
+  if (!csrfTokenEl) {
+    throw new Error("CSRF token not found in meta tag");
+  }
+  return csrfTokenEl.content;
 }
 
 // JS.dispatcher for clearing cache
@@ -188,6 +145,7 @@ window.addEventListener("phx:access-token-ready", async ({ detail }) => {
     console.log("[userSocket] already set");
     return;
   }
+  console.log("[phx:access-token-ready]");
   return await setOnLineFunctions({ user_token, user_id });
 });
 
@@ -197,12 +155,6 @@ async function initOfflineComponents() {
   log("[Init Offline]---------");
   appState.userSocket?.disconnect();
   window.liveSocket?.disconnect();
-
-  const {
-    cleanExistingHooks,
-    mountOfflineComponents,
-    attachNavigationListeners,
-  } = await import("@js/utilities/navigate");
   cleanExistingHooks();
   attachNavigationListeners();
   // and then render the current view
@@ -211,18 +163,6 @@ async function initOfflineComponents() {
 }
 
 async function setOnLineFunctions({ user_token, user_id }) {
-  const [
-    { checkServer },
-    { setUserSocket },
-    { setPresence },
-    { registerServiceWorker },
-  ] = await Promise.all([
-    import("@js/utilities/checkServer"),
-    import("@js/user_socket/userSocket"),
-    import("@js/components/setPresence"),
-    import("@js/utilities/pwaRegistration"),
-  ]);
-
   const isOnline = await checkServer();
   if (!isOnline) return;
 
@@ -254,9 +194,9 @@ window.addEventListener("connection-status-changed", async (e) => {
 });
 
 // debug ---
-window.addEventListener("phx:live_reload:attached", ({ detail: reloader }) => {
-  // Enable server log streaming to client.
-  // Disable with reloader.disableServerLogs()
-  reloader.enableServerLogs();
-  window.liveReloader = reloader;
-});
+// window.addEventListener("phx:live_reload:attached", ({ detail: reloader }) => {
+//   // Enable server log streaming to client.
+//   // Disable with reloader.disableServerLogs()
+//   reloader.enableServerLogs();
+//   window.liveReloader = reloader;
+// });

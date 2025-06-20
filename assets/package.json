@@ -27,7 +27,6 @@
     "@mongodb-js/zstd": "^2.0.1",
     "@tailwindcss/forms": "^0.5.10",
     "@vite-pwa/assets-generator": "^1.0.0",
-    "cssnano": "^7.0.7",
     "eslint": "^9.29.0",
     "eslint-plugin-solid": "^0.14.5",
     "fast-glob": "^3.3.3",
