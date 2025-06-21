@@ -50,8 +50,7 @@ defmodule LiveviewPwaWeb.LoginLive do
 
   @impl true
   def mount(_params, session, socket) do
-    dbg(session)
-    user_id = session["user_id"] |> dbg()
+    user_id = session["user_id"]
     os = session["os"]
 
     socket =

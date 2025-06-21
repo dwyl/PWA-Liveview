@@ -98,7 +98,7 @@ The standalone PWA is 2.1 MB (page weigth).
     - [Yjs-Ch and PhxSync stock "manager"](#yjs-ch-and-phxsync-stock-manager)
     - [Pg-Sync-Stock](#pg-sync-stock)
     - [FlightMap](#flightmap)
-  - [Login](#login)
+  - [Login and rotating access token](#login-and-rotating-access-token)
   - [Navigation](#navigation)
   - [Vite](#vite)
     - [Configuration and settings](#configuration-and-settings)
@@ -111,11 +111,8 @@ The standalone PWA is 2.1 MB (page weigth).
   - [Yjs](#yjs)
   - [Misc](#misc)
     - [Presence through Live-navigation](#presence-through-live-navigation)
-    - [CSP rules and evaluation](#csp-rules-and-evaluation)
-    - [Icons](#icons)
     - [Manifest](#manifest)
-    - [Performance](#performance)
-    - [\[Optional\] Page Caching](#optional-page-caching)
+    - [Page Caching](#page-caching)
   - [Publish](#publish)
   - [Postgres setup to use Phoenix.Sync](#postgres-setup-to-use-phoenixsync)
   - [Fly volumes](#fly-volumes)
@@ -519,9 +516,13 @@ sequenceDiagram
     end
 ```
 
-## Login
+## Login and rotating access token
 
-It displays a dummay login, just to assign a user_id and an "access\_\_token" and a "refresh_token".
+The flow is:
+
+- Live login page => POST controller => redirect to a logged-in controller
+
+It displays a dummy login, just to assign a user_id and an "access\_\_token" and a "refresh_token".
 
 The _access token_ is passed into the session, thus avialable in the LiveView, and the _refresh token_ is saved into a cookie.
 
@@ -670,7 +671,7 @@ We used a helper [ViteHelper](https://github.com/dwyl/PWA-Liveview/blob/main/lib
 <link
   phx-track-static
   rel="stylesheet"
-  href={ViteHelper.path("css/app.css")}
+  href={ViteHelper.get_css()}
   # href={~p"/assets/app.css"}
   crossorigin="anonymous"
 />
@@ -763,6 +764,8 @@ PWAConfig = {
 
 ❗️ It is important _not to split_ the "sw.js" file because `Vite` produces a fingerprint from the splitted files. However, Phoenix serves hardcoded nmes and can't know the name in advance.
 
+❗️ You don't want to cache pages with Wrrokbox but instead trigger a "manual" cache. This is because you will get a CSRF mismatch as the token will be outdated. However, you want to pre-cache static assets so you cache the first page "Login" here.
+
 ```js
 workbox: {
   // Disable to avoid interference with Phoenix LiveView WebSocket negotiation
@@ -777,10 +780,10 @@ workbox: {
   // preload all the built static assets
   globPatterns: ["assets/**/*.*"],
 
-  // cached the HTML for offline rendering
+  // this will preload static assets during the LoginLive mount.
+  // You can do this because the login will redirect to a controller.
   additionalManifestEntries: [
     { url: "/", revision: `${Date.now()}` }, // Manually precache root route
-    { url: "/map", revision: `${Date.now()}` }, // Manually precache map route
   ],
 
 }
@@ -821,75 +824,6 @@ The key points are:
 - use the `presence.onSync` listener to get a `Presence` list up-to-date and render the UI with this list
 - a `phx:page-loading-stop` listener to udpate the UI when navigating between Liveviews because we target DOM elements to render the reactive component.
 
-### CSP rules and evaluation
-
-The application implements security CSP headers set by a plug: `BrowserCSP`.
-
-We mainly protect the "main.js" file - run as a script in the "root.html" template - is protected with a **dynamic nonce**.
-
-<details>
-<summary>Detail of dynamic nonce</summary>
-
-```elixir
-defmodule SoldiyjsWeb.BrowserCSP do
-  @behaviour Plug
-
-  def init(opts), do: opts
-
-  def call(conn, _opts) do
-    nonce = :crypto.strong_rand_bytes(16) |> Base.encode16(case: :lower)
-    Plug.Conn.assign(conn, :csp_nonce, nonce)
-  end
-end
-```
-
-````elixir
-# root.html.heex
-<script nonce="<%= assigns[:csp_nonce] %>">
-  // Your inline script here
-</script>
-
-```elixir
-defp put_csp_headers(conn) do
-  nonce = conn.assigns[:csp_nonce] || ""
-
-  csp_policy =
-    """
-    script-src 'self' 'nonce-#{nonce}' 'wasm-unsafe-eval' https://cdn.maptiler.com;
-    object-src 'none';
-    connect-src 'self' http://localhost:* ws://localhost:* https://api.maptiler.com https://*.maptiler.com;
-    img-src 'self' data: https://*.maptiler.com https://api.maptiler.com;
-    worker-src 'self' blob:;
-    style-src 'self' 'unsafe-inline';
-    default-src 'self';
-    frame-ancestors 'self' http://localhost:*;
-    base-uri 'self'
-    """
-  |> String.replace("\n", " ")
-
-  put_resp_header(conn, "content-security-policy", csp_policy)
-end
-````
-
-</details>
-
-The nonce-xxx attribute is an assign populated in the plug BrowserCSP.
-Indeed, the "root" template is rendered on the first mount, and has access to the `conn.assigns`.
-
-➡️ Link to check the endpoint: <https://csp-evaluator.withgoogle.com/>
-
-<br/>
-<img width="581" alt="Screenshot 2025-05-02 at 21 18 09" src="https://github.com/user-attachments/assets/f80d2c0e-0f2f-460c-bec6-e0b5ff884120" />
-<br/>
-
-The WASM module needs `'wasm-unsafe-eval'` as the browser runs `eval`.
-
-### Icons
-
-You will need is to have at least two very low resolution icons of size 192 and 512, one extra of 180 for OSX and one 62 for Microsoft, all placed in "/priv/static".
-
-Check [Resources](#resources)
-
 ### Manifest
 
 The "manifest.webmanifest" file will be generated from "vite.config.js".
@@ -925,52 +859,38 @@ Source: check [PWABuilder](https://www.pwabuilder.com)
 </head>
 ```
 
-### Performance
+### Page Caching
 
-Lighthouse results:
+We want to cache HTML documents to render offline pages.
 
-<div align="center"><img width="619" alt="Screenshot 2024-12-28 at 04 45 26" src="https://github.com/user-attachments/assets/e6244e79-2d31-47df-9bce-a2d2a4984a33" /></div>
+If we cache pages via Workbox, we will save an outdated CSRF token and the LiveViews will fail.
 
-### [Optional] Page Caching
+We need to cache the visited pages. We use `phx:navigate` to trigger the caching:
 
-<details>
-<summary>Direct usage of Cache API instead of Workbox</summary>
-
-We can use the `Cache API` as an alternative to `Workbox` to cache pages. The important part is to calculate the "Content-Length" to be able to cache it.
-
-> Note: we cache a page only once by using a `Set`
+> It is important part is to calculate the "Content-Length" to be able to cache it.
 
 ```javascript
 // Cache current page if it's in the configured routes
-async function addCurrentPageToCache() {
+async function addCurrentPageToCache(path) {
   await navigator.serviceWorker.ready;
-  const newPath = window.location.pathname;
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  // const url = new URL(path, window.location.origin).pathname;
 
-  if (newPath === window.location.pathname) {
-    const htmlContent = document.documentElement.outerHTML;
-    const contentLength = new TextEncoder().encode(htmlContent).length;
+  const htmlContent = document.documentElement.outerHTML;
+  const contentLength = new TextEncoder().encode(htmlContent).length;
 
-    const response = new Response(htmlContent, {
-      headers: {
-        "Content-Type": "text/html",
-        "Content-Length": contentLength,
-      },
-      status: 200,
-    });
+  const response = new Response(htmlContent, {
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Content-Length": contentLength,
+    },
+    status: 200,
+  });
 
-    const cache = await caches.open(CONFIG.CACHE_NAME);
-    return cache.put(current, response.clone());
-  }
+  const cache = await caches.open("page-shells");
+  return cache.put(path, response.clone());
 }
-
-// Monitor navigation events
-navigation.addEventListener("navigate", async () => {
-  return addCurrentPageToCache();
-});
 ```
-
-</Details>
-</br>
 
 ## Publish
 
