@@ -33,11 +33,24 @@ defmodule LiveviewPwaWeb.Menu do
           id={item.id}
           data-path={item.path}
           patch={item.path}
+          href={item.id == "off" && item.path}
           replace
           class={[if(@active_path == item.path, do: "border-midnightblue", else: nil), link_class()]}
         >
           <.icon name={item.icon} />
           <span class="text-sm [390px]:text-base">{item.title}</span>
+        </.link>
+        <.link
+          id="off"
+          href={~p"/off-session"}
+          replace
+          class={[
+            if(@active_path == "/off-session", do: "border-midnightblue", else: nil),
+            link_class()
+          ]}
+        >
+          <.icon name="hero-arrow-up-right" />
+          <span class="text-sm [390px]:text-base">Off Session</span>
         </.link>
       </nav>
     </div>

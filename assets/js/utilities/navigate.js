@@ -1,7 +1,6 @@
 import { appState, setAppState } from "@js/stores/AppStore.js";
 
 const { CONTENT_SELECTOR: selector, hooks } = appState.CONFIG;
-
 // instantiate when the user goes offline
 const offlineComponents = {
   PgStockHook: null,
@@ -47,6 +46,10 @@ const components = {
       }),
       assign: async (instance) =>
         (offlineComponents.StockYjsChHook = await instance),
+      before: () => {
+        const lvYjsHook = document.getElementById("hook-yjs-sql3");
+        if (lvYjsHook) lvYjsHook.innerHTML = "";
+      },
     },
   ],
   // multiple hooks in the same view
@@ -146,18 +149,23 @@ Reattach navigation listeners to handle future navigation
 async function handleOfflineNavigation(event) {
   try {
     event.preventDefault();
-    const link = event.currentTarget;
-    const path = link.getAttribute("data-path") || link.getAttribute("href");
+    const normPath = event.currentTarget.href;
+    // const path = link.getAttribute("data-path") || link.getAttribute("href");
+    // const normPath = new URL(path, window.location.origin).pathname;
 
-    window.history.pushState({ path }, "", path);
+    window.history.pushState({ path: normPath }, "", normPath);
 
-    // Get the page from cache via fetch
-    const response = await fetch(path);
+    const cache = await caches.open("page-shells");
+    const response = await cache.match(normPath);
+
+    if (!response) {
+      throw new Error(`No cached content found for ${normPath}`);
+    }
+
     if (!response.ok)
       throw new Error(`Failed to fetch ${path}: ${response.status}`);
 
     const html = await response.text();
-    // Parse the HTML
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
     const newContent = doc.querySelector(selector);
@@ -197,28 +205,28 @@ export {
   cleanExistingHooks,
   mountOfflineComponents,
   attachNavigationListeners,
-  // cacheCurrentPage,
-  // addCurrentPageToCache,
+  addCurrentPageToCache,
 };
 
-// async function addCurrentPageToCache() {
-//   await navigator.serviceWorker.ready;
-//   const url = window.location.pathname;
+async function addCurrentPageToCache(path) {
+  await navigator.serviceWorker.ready;
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  // const url = new URL(path, window.location.origin).pathname;
 
-//   const htmlContent = document.documentElement.outerHTML;
-//   const contentLength = new TextEncoder().encode(htmlContent).length;
+  const htmlContent = document.documentElement.outerHTML;
+  const contentLength = new TextEncoder().encode(htmlContent).length;
 
-//   const response = new Response(htmlContent, {
-//     headers: {
-//       "Content-Type": "text/html",
-//       "Content-Length": contentLength,
-//     },
-//     status: 200,
-//   });
+  const response = new Response(htmlContent, {
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Content-Length": contentLength,
+    },
+    status: 200,
+  });
 
-//   const cache = await caches.open(PAGES_CACHE);
-//   return cache.put(url, response.clone());
-// }
+  const cache = await caches.open("page-shells");
+  return cache.put(path, response.clone());
+}
 
 // async function cacheCurrentPage() {
 //   await navigator.serviceWorker.ready;
@@ -238,4 +246,13 @@ export {
 //   } catch (e) {
 //     console.warn(`[SW] Failed to cache ${url}:`, e);
 //   }
+// }
+
+// async function debugCache() {
+//   const cache = await caches.open("page-shells");
+//   const keys = await cache.keys();
+//   console.log(
+//     "Cached URLs:",
+//     keys.map((req) => req.url)
+//   );
 // }

@@ -44,7 +44,8 @@ defmodule LiveviewPwaWeb.MountUser do
 
   defp handle_path_params(_params, url, socket) do
     path = URI.new!(url) |> Map.get(:path)
-    {:halt, assign(socket, :active_path, path)}
+
+    {:halt, socket |> assign(:active_path, path)}
   end
 
   defp handle_pwa_event("sw-lv-ready", _, socket) do

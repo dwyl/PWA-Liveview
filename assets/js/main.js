@@ -16,6 +16,7 @@ import {
   cleanExistingHooks,
   mountOfflineComponents,
   attachNavigationListeners,
+  addCurrentPageToCache,
 } from "@js/utilities/navigate";
 
 const CONFIG = appState.CONFIG;
@@ -34,6 +35,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.warn("[LiveSocket] connected");
     !appState.interval && startPolling();
     await registerServiceWorker();
+    await addCurrentPageToCache(window.location.pathname);
   });
 
   configureTopbar();
@@ -112,6 +114,16 @@ function readCSRFToken() {
   }
   return csrfTokenEl.getAttribute("content");
 }
+
+// https://github.com/phoenixframework/phoenix_live_view/issues/2559
+window.addEventListener("phx:navigate", async ({ detail }) => {
+  if (appState.isOnline) {
+    console.warn("[Navigate Cache]-----", detail.href);
+
+    const path = new URL(detail.href).pathname;
+    await addCurrentPageToCache(path);
+  }
+});
 
 // JS.dispatcher for clearing cache
 window.addEventListener("phx:clear-cache", async () => {

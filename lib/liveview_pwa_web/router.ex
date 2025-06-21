@@ -27,8 +27,10 @@ defmodule LiveviewPwaWeb.Router do
   scope "/", LiveviewPwaWeb do
     pipe_through :browser
 
-    # live "/", LoginLive, :index
-    get "/", LoginController, :index
+    # get "/", LoginController, :index
+    live "/", LoginLive, :index
+    live "/off-session", OffSessionLive, :index
+
     post "/set_session", LoginController, :set_session
     get "/logged-in", LoginController, :index
 

@@ -5,10 +5,11 @@ defmodule LiveviewPwaWeb.LoginController do
   alias LiveviewPwaWeb.Endpoint
   alias Phoenix.Token
 
+  # CONTROLLER VERSION
+  # This is the initial page load, we don't have a user_id yet
+  # so we just render the login page with no user_id
+  # after the POST request, we re-render this page with the user_id
   def index(conn, _params) do
-    # This is the initial page load, we don't have a user_id yet
-    # so we just render the login page with no user_id
-    # after the POST request, we re-render this page with the user_id
     os = get_session(conn, :os) || "unknown"
     id = get_session(conn, :user_id) || nil
 

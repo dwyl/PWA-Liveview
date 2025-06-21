@@ -14,7 +14,7 @@ export const [appState, setAppState] = createStore({
       online: new URL("@assets/online.svg", import.meta.url).href,
       offline: new URL("@assets/offline.svg", import.meta.url).href,
     },
-    PAGES_CACHE: "page-shell",
+    PAGES_CACHE: "page-shells",
     NAVIDS: {
       yjs: { path: "/yjs", id: "users-yjs" },
       map: { path: "/map", id: "users-map" },

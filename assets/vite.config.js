@@ -211,29 +211,29 @@ const buildOps = (mode) => ({
 //   },
 // };
 
-const PageShells = {
-  urlPattern: ({ request, url }) => {
-    // Only match navigation requests (page loads), and exclude LiveView endpoints
-    return (
-      request.mode === "navigate" &&
-      !url.pathname.startsWith("/live/") &&
-      !url.pathname.startsWith("/phoenix/") &&
-      !url.pathname.startsWith("/api/")
-    );
-  },
-  handler: "NetworkFirst",
-  options: {
-    cacheName: "page-shells",
-    networkTimeoutSeconds: 3,
-    expiration: {
-      maxEntries: 50,
-      maxAgeSeconds: 60 * 60 * 24, // 1 day
-    },
-    cacheableResponse: {
-      statuses: [0, 200],
-    },
-  },
-};
+// const PageShells = {
+//   urlPattern: ({ request, url }) => {
+//     // Only match navigation requests (page loads), and exclude LiveView endpoints
+//     return (
+//       request.mode === "navigate" &&
+//       !url.pathname.startsWith("/live/") &&
+//       !url.pathname.startsWith("/phoenix/") &&
+//       !url.pathname.startsWith("/api/")
+//     );
+//   },
+//   handler: "NetworkFirst",
+//   options: {
+//     cacheName: "page-shells",
+//     networkTimeoutSeconds: 3,
+//     expiration: {
+//       maxEntries: 50,
+//       maxAgeSeconds: 60 * 60 * 24, // 1 day
+//     },
+//     cacheableResponse: {
+//       statuses: [0, 200],
+//     },
+//   },
+// };
 
 const LiveView = [
   {
@@ -316,9 +316,9 @@ const Fonts = {
 };
 
 const runtimeCaching = [
-  PageShells,
-  OtherStaticAssets,
+  // PageShells,
   ...LiveView,
+  OtherStaticAssets,
   MapTiler, // Add the SDK route before Tiles
   Fonts,
 ];
@@ -378,9 +378,10 @@ const PWAConfig = (mode) => ({
     ],
 
     additionalManifestEntries: [
-      { url: "/sync", revision: `${Date.now()}` }, // Manually precache sync route
-      { url: "/yjs", revision: `${Date.now()}` }, // Manually precache elec route
-      { url: "/map", revision: `${Date.now()}` }, // Manually precache map route
+      { url: "/", revision: `${Date.now()}` }, // Manually precache root route
+      // { url: "/sync", revision: `${Date.now()}` }, // Manually precache sync route
+      // { url: "/yjs", revision: `${Date.now()}` }, // Manually precache elec route
+      // { url: "/map", revision: `${Date.now()}` }, // Manually precache map route
     ],
     runtimeCaching,
     // Update behaviour
