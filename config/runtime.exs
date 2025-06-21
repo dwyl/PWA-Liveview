@@ -108,7 +108,7 @@ if config_env() == :prod do
   config :liveview_pwa,
     # 15 minutes
     access_token_ttl: 60 * 15,
-    # 1 year
+    # 10 year
     refresh_token_ttl: 60 * 60 * 24 * 365 * 10
 
   # ## SSL Support
