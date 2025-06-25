@@ -44,7 +44,6 @@ export const FormHook = {
     this.handleEvent("airports", ({ airports, hash }) => {
       localStorage.setItem("airports", JSON.stringify(airports));
       localStorage.setItem("version", hash);
-      // state.airports.splice(0, state.airports.length, ...airports);
       state.airports = [...airports];
     });
 

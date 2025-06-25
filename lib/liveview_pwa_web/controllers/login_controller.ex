@@ -18,6 +18,7 @@ defmodule LiveviewPwaWeb.LoginController do
     |> assign(:os, os)
     |> assign(:user_id, id)
     |> assign(:page_title, "Login")
+    |> assign(:active_path, "/")
     |> render(:login)
   end
 
@@ -48,6 +49,6 @@ defmodule LiveviewPwaWeb.LoginController do
       secure: true,
       same_site: "Strict"
     )
-    |> redirect(to: ~p"/logged-in")
+    |> redirect(to: ~p"/logged-in", replace: false)
   end
 end

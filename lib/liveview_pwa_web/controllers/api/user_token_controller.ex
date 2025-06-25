@@ -26,7 +26,7 @@ defmodule LiveviewPwaWeb.Api.UserTokenController do
     with true <- is_maybe_refresh_token != nil,
          {:ok, new_access_token, new_refresh_token} <-
            verify_and_access_refresh(is_maybe_refresh_token, user_id) do
-      Logger.warning("User token refreshed successfully")
+      Logger.debug("User token refreshed successfully")
 
       # Endpoint.broadcast("users_token:" <> user_id, "access-renewed", %{})
 
@@ -44,13 +44,11 @@ defmodule LiveviewPwaWeb.Api.UserTokenController do
         # Endpoint.broadcast("users_token:" <> user_id, "disconnect", %{})
 
         conn
-        # |> configure_session(drop: true)
-        # |> clear_session()
-        # |> delete_resp_cookie("refresh")
+        |> configure_session(drop: true)
+        |> clear_session()
         |> put_status(:unauthorized)
         |> json(%{error: "Refresh token expired", type: "refresh"})
-
-        # |> redirect(to: ~p"/")
+        |> halt()
     end
   end
 
@@ -58,7 +56,10 @@ defmodule LiveviewPwaWeb.Api.UserTokenController do
     case Token.verify(Endpoint, refresh_salt(), token, max_age: refresh_ttl()) do
       {:ok, ^user_id} ->
         new_access_token = Token.sign(Endpoint, access_salt(), user_id, max_age: access_ttl())
-        new_refresh_token = Token.sign(Endpoint, refresh_salt(), user_id, max_age: refresh_ttl())
+
+        new_refresh_token =
+          Token.sign(Endpoint, refresh_salt(), user_id, max_age: refresh_ttl())
+
         {:ok, new_access_token, new_refresh_token}
 
       {:error, _} ->

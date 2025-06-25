@@ -7,11 +7,10 @@ export function MountUsers({ userID, el, userIDs } = _props) {
   const [users, setUsers] = createSignal(userIDs);
 
   const dispose =
-    el &&
     render(
       () => (
-        <p class="text-sm text-midnightblue mt-4 mb-4" id="users">
-          <span class="mr-2">{users().length}</span>
+        <p class="text-sm text-gray-600 mt-4 mb-4" id="users">
+          <span class="mr-2" >{users().length}</span>
           Online user(s): &nbsp
           <For each={users()}>
             {(user) => (

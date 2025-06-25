@@ -64,13 +64,14 @@ export async function setUserSocket(initialUserToken) {
         return true;
       } else {
         reset();
+        window.location.href = "/";
       }
 
       return false;
     } catch (err) {
       error("[refreshTokenAndUpdate]: ", err);
       reset();
-      return false;
+      window.location.href = "/";
     }
   }
 

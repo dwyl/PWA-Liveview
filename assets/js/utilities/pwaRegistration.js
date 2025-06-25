@@ -20,8 +20,7 @@ export async function registerServiceWorker() {
       },
 
       onNeedRefresh: () => {
-        console.log("[SW] New version available");
-        // localStorage.setItem("pwa_update_available", "1");
+        console.warn("[SW] New version is available");
         if (window.liveSocket) {
           window.dispatchEvent(
             new CustomEvent("sw-update", {

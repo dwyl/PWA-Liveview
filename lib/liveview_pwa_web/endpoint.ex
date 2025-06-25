@@ -48,17 +48,16 @@ defmodule LiveviewPwaWeb.Endpoint do
       ]
     ]
 
-  # longpoll: false
-
+  # plug PlugDevProxy
   # Serve at "/" the static files from "priv/static" directory.
   # set brotli compression so phx.digest will
   # deploy compressed static files in production.
   plug Plug.Static,
+    at: "/",
+    from: :liveview_pwa,
     encodings: [{"zstd", ".zstd"}],
     brotli: not code_reloading?,
     gzip: not code_reloading?,
-    at: "/",
-    from: :liveview_pwa,
     only: LiveviewPwaWeb.static_paths(),
     headers: %{
       "cache-control" => "public, max-age=31536000"
@@ -74,6 +73,7 @@ defmodule LiveviewPwaWeb.Endpoint do
     socket "/phoenix/live_reload/socket", Phoenix.LiveReloader.Socket
     plug Phoenix.LiveReloader
     plug Phoenix.CodeReloader
+    plug Phoenix.Ecto.CheckRepoStatus, otp_app: :liveview_pwa
   end
 
   plug Phoenix.LiveDashboard.RequestLogger,

@@ -6,14 +6,15 @@ defmodule LiveviewPwaWeb.OffSessionLive do
     ~H"""
     <%!-- <.live_component module={PwaLiveComp} id="pwa_action-map" update_available={@update_available} /> --%>
     <Users.display user_id={@user_id} module_id="users-map" />
-    <Menu.display />
-    <h1 class="mt-4">
+    <Menu.display active_path={@active_path} />
+    <h1 class="mt-4 text-gray-800">
       This is an "Off" <code>live_session</code> LiveView.
     </h1>
+    <p class="text-gray-800">Hint to navigate to the dashboard: "admin", "password" !</p>
     """
   end
 
   def mount(_params, session, socket) do
-    {:ok, assign(socket, :user_id, session["user_id"])}
+    {:ok, socket |> assign(:user_id, session["user_id"]) |> assign(:active_path, "/off-session")}
   end
 end

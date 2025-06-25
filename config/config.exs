@@ -30,6 +30,8 @@ config :phoenix_sync,
   mode: :embedded,
   repo: LiveviewPwa.PgRepo
 
+config :liveview_pwa, env: config_env()
+
 # Configures the endpoint
 config :liveview_pwa, LiveviewPwaWeb.Endpoint,
   url: [host: "localhost"],

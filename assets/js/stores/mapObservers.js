@@ -1,5 +1,7 @@
 import { state } from "./vStore.js";
 import { subscribe } from "valtio/vanilla";
+import airplaneIcon from "@assets/airplane.svg?url";
+import airplaneIconInverse from "@assets/airplane_inv.svg?url";
 
 export async function createFlightObserver({ L, map, group }) {
   let currentAnimationInterval = null;
@@ -7,8 +9,10 @@ export async function createFlightObserver({ L, map, group }) {
   const { loadWasm } = await import("@js/utilities/loadWasm");
 
   function airplaneMarker(L, latLngs, inverse = false) {
-    const east = new URL("/images/airplane.svg", import.meta.url).href;
-    const west = new URL("/images/airplane_inv.svg", import.meta.url).href;
+    const east = airplaneIcon;
+    const west = airplaneIconInverse;
+    // const east = new URL("/images/airplane.svg", import.meta.url).href;
+    // const west = new URL("/images/airplane_inv.svg", import.meta.url).href;
     const airplane = L.marker(latLngs[0], {
       icon: new L.Icon({
         iconUrl: inverse ? east : west,

@@ -43,7 +43,7 @@ end
 if config_env() == :prod do
   database_path =
     System.get_env("DATABASE_PATH") ||
-      "/db/main.db"
+      "/db/main.sql3"
 
   config :liveview_pwa, LiveviewPwa.Sql3Repo,
     database: database_path,
@@ -108,8 +108,8 @@ if config_env() == :prod do
   config :liveview_pwa,
     # 15 minutes
     access_token_ttl: 60 * 15,
-    # 10 year
-    refresh_token_ttl: 60 * 60 * 24 * 365 * 10
+    # 1 day
+    refresh_token_ttl: 60 * 60 * 24
 
   # ## SSL Support
   #

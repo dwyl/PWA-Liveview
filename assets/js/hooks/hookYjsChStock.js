@@ -45,6 +45,7 @@ export const StockYjsChHook = ({ ydoc }) => ({
       userID: this.userID,
       max: this.max,
       ydoc,
+      inv: false, // inverse style
     });
   },
 

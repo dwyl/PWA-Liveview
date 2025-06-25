@@ -37,16 +37,16 @@ defmodule BrowserCSP do
 
   defp build_csp(nonce1, nonce2) do
     """
-      script-src 'self' 'nonce-#{nonce1}' 'nonce-#{nonce2}' 'strict-dynamic' 'wasm-unsafe-eval' https://unpkg.com/leaflet@1.9.4/dist/leaflet.css https://cdn.maptiler.com/  https://solidjs-lively-pine-4375.fly.dev https://*.maptiler.com/ https://api.maptiler.com/ http://localhost:* ws://localhost:* wss://solidyjs-lively-pine-4375.fly.dev;
+      script-src 'self' 'nonce-#{nonce1}' 'nonce-#{nonce2}' 'strict-dynamic' 'wasm-unsafe-eval' http://localhost:5173/ https://unpkg.com/leaflet@1.9.4/dist/leaflet.css https://cdn.maptiler.com/  https://solidjs-lively-pine-4375.fly.dev https://*.maptiler.com/ https://api.maptiler.com/ http://localhost:* ws://localhost:* wss://solidyjs-lively-pine-4375.fly.dev;
       object-src 'none';
-      connect-src 'self' http://localhost:* https://solidyjs-lively-pine-4375.fly.dev wss://solidyjs-lively-pine-4375.fly.dev ws://solidyjs-lively-pine-4375.fly.dev ws://localhost:* https://api.maptiler.com/ https://*.maptiler.com/;
-      img-src 'self' data: https://*.maptiler.com/ https://api.maptiler.com/ http://localhost:4000 https://leafletjs.com;
+      connect-src 'self' http://localhost:5173/ http://localhost:* https://solidyjs-lively-pine-4375.fly.dev wss://solidyjs-lively-pine-4375.fly.dev ws://solidyjs-lively-pine-4375.fly.dev ws://localhost:* https://api.maptiler.com/ https://*.maptiler.com/;
+      img-src 'self' data: http://localhost:5173/ https://*.maptiler.com/ https://api.maptiler.com/ http://localhost:4000 https://leafletjs.com;
       worker-src 'self' blob:;
-      style-src 'self'  'unsafe-inline' https://unpkg.com/leaflet@1.9.4/dist/leaflet.css;
-      default-src 'self' https://solidjs-lively-pine-4375.fly.dev;
-      frame-ancestors 'self' https://solidyjs-lively-pine-4375.fly.dev;
+      style-src 'self'  'unsafe-inline' http://localhost:5173/ https://unpkg.com/leaflet@1.9.4/dist/leaflet.css;
+      default-src 'self' http://localhost:5173/ https://solidjs-lively-pine-4375.fly.dev;
+      frame-ancestors 'self' http://localhost:5173/ https://solidyjs-lively-pine-4375.fly.dev;
       font-src 'self' https://fonts.maptiler.com;
-      base-uri 'self'
+      base-uri 'self' http://localhost:5173/
     """
     |> String.replace("\n", " ")
 

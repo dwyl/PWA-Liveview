@@ -15,7 +15,7 @@ export default function City(props) {
   const [inputValue, setInputValue] = createSignal("");
   const [suggestions, setSuggestions] = createSignal([]);
   const [isOpen, setIsOpen] = createSignal(false);
-  const [hasSelection, setHasSelection] = createSignal(false); // New signal for tracking selection
+  const [_hasSelection, setHasSelection] = createSignal(false); // New signal for tracking selection
 
   // Create a subscription to the selection store to update the input value
   const unsubscribe = subscribe(state.selection, () => {
@@ -27,7 +27,7 @@ export default function City(props) {
           setHasSelection(true); // Selection found, update the selection status
         });
       }
-    } else if (hasSelection()) {
+    } else {
       // If selection is removed externally, reset the input field
       batch(() => {
         setInputValue("");
@@ -125,7 +125,7 @@ export default function City(props) {
         value={inputValue()}
         onInput={handleInputChange}
         placeholder={`Search for ${props.label || "an airport"}...`}
-        class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        class="w-full text-gray-800 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         role="combobox"
         aria-label={`Search for ${props.label || "an airport"}`}
         aria-controls="airport-listbox"
@@ -144,7 +144,7 @@ export default function City(props) {
               <li
                 onClick={() => handleSelect(city)}
                 role="option"
-                class="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                class="text-gray-800 px-4 py-2 cursor-pointer hover:bg-gray-100"
               >
                 {city.name || "Unknown Airport"}
                 {(city.city || city.country) && " ("}

@@ -5,7 +5,7 @@ const getCircularValue = (currentValue, max) => {
   return currentValue === 0 ? max : currentValue - 1;
 };
 
-export const YjsStock = ({ ydoc, userID, el, max }) => {
+export const YjsStock = ({ ydoc, userID, el, max, inv }) => {
   console.log("[YjsStock] component mounting");
 
   const ymap = ydoc.getMap("sql3-data");
@@ -45,7 +45,7 @@ export const YjsStock = ({ ydoc, userID, el, max }) => {
     }, "local");
   };
 
-  const Counter = lazy(() => import("@jsx/components/counter"));
+  const Counter = lazy(() => import("@js/components/counter"));
   const range = [...Array(Number(max) + 1).keys()];
 
   const dispose = render(
@@ -57,6 +57,7 @@ export const YjsStock = ({ ydoc, userID, el, max }) => {
         max={max}
         userID={userID}
         range={range}
+        inv={inv}
       />
     ),
     el

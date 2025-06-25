@@ -7,17 +7,22 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "workspaces": [
+    "../deps/phoenix",
+    "../deps/phoenix_html",
+    "../deps/phoenix_live_view"
+  ],
   "dependencies": {
     "@electric-sql/client": "^1.0.4",
     "@maptiler/leaflet-maptilersdk": "^4.1.0",
-    "@maptiler/sdk": "^3.4.1",
+    "@maptiler/sdk": "^3.3.0",
     "leaflet": "^1.9.4",
-    "phoenix": "file:../deps/phoenix",
-    "phoenix_html": "file:../deps/phoenix_html",
-    "phoenix_live_view": "file:../deps/phoenix_live_view",
+    "phoenix": "workspace:*",
+    "phoenix_html": "workspace:*",
+    "phoenix_live_view": "workspace:*",
     "solid-js": "^1.9.7",
     "topbar": "^3.0.0",
-    "ua-parser-js": "^2.0.4",
+    "ua-parser-js": "^2.0.3",
     "valtio": "^2.1.5",
     "y-indexeddb": "^9.0.12",
     "yjs": "^13.6.27"
@@ -26,22 +31,20 @@
     "@eslint/js": "^9.29.0",
     "@mongodb-js/zstd": "^2.0.1",
     "@tailwindcss/forms": "^0.5.10",
-    "@tailwindcss/upgrade": "^4.1.10",
     "@tailwindcss/vite": "^4.1.10",
     "@vite-pwa/assets-generator": "^1.0.0",
-    "daisyui": "^5.0.43",
     "eslint": "^9.29.0",
     "eslint-plugin-solid": "^0.14.5",
     "fast-glob": "^3.3.3",
     "lightningcss": "^1.30.1",
     "tailwindcss": "^4.1.10",
-    "vite": "npm:rolldown-vite@^6.3.21",
+    "vite": "6.3.5",
     "vite-bundle-analyzer": "^0.22.3",
     "vite-plugin-checker": "^0.9.3",
     "vite-plugin-compression2": "^1.4.0",
     "vite-plugin-eslint": "^1.8.1",
     "vite-plugin-pwa": "^1.0.0",
-    "vite-plugin-solid": "^2.11.7",
+    "vite-plugin-solid": "^2.11.6",
     "vite-plugin-static-copy": "^2.3.1",
     "vite-plugin-wasm": "^3.4.1",
     "workbox-precaching": "^7.3.0",
@@ -49,23 +52,7 @@
     "workbox-strategies": "^7.3.0",
     "workbox-window": "^7.3.0"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@mongodb-js/zstd",
-      "@tailwindcss/oxide",
-      "esbuild",
-      "sharp",
-      "tree-sitter",
-      "tree-sitter-javascript"
-    ],
-    "ignoredBuiltDependencies": [
-      "pngquant-bin",
-      "tree-sitter-typescript"
-    ]
-  },
   "scripts": {
-    "lint": "eslint . --ext .js,.jsx",
-    "generate": "npx pwa-assets-generator --preset minimal-2023 ./logo.png"
-  },
-  "packageManager": "pnpm@10.12.3"
+    "lint": "eslint . --ext .js,.jsx"
+  }
 }

@@ -1,7 +1,7 @@
 defmodule LiveviewPwa.UserSocket do
   use Phoenix.Socket
   alias LiveviewPwaWeb.Endpoint
-  alias LiveviewPwaWeb.Api.UserTokenController, as: UserToken
+  alias LiveviewPwaWeb.Api.UserTokenController, as: ApiUserToken
   require Logger
 
   channel "pg-counter", LiveviewPwa.PgCounterChannel
@@ -12,12 +12,12 @@ defmodule LiveviewPwa.UserSocket do
   @impl true
   @spec connect(map(), any(), any()) :: {:error, any()} | {:ok, Phoenix.Socket.t()}
   def connect(%{"userToken" => user_token}, socket, _connect_info) do
-    salt = UserToken.access_salt()
-    max_age = UserToken.access_ttl()
+    salt = ApiUserToken.access_salt()
+    max_age = ApiUserToken.access_ttl()
 
     case Phoenix.Token.verify(Endpoint, salt, user_token, max_age: max_age) do
       {:ok, user_id} ->
-        Logger.warning("User token verified")
+        Logger.info("User token verified")
         {:ok, assign(socket, :user_id, user_id)}
 
       {:error, reason} ->

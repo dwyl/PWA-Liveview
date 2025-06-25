@@ -46,7 +46,7 @@ Writes are _serialized_ but actions are concurrent. What we do have is _asynchro
 
 ### Rendering Strategy: SSR vs. Client-Side Hooks
 
-To keep the UI interactive both online and offline, we mix `LiveView`’s server-side rendering (SSR) with a client-side reactive framework:
+To keep the UI interactive both online and offline, we mix `LiveView`’s server-side rendering (SSR) with a client-side reactive framework. We used `SolidJS` because it's lightweight, no virtual DOM, and has simple a simple primitives  (`render`, `createSignal`) when we want to inject such a component into the DOM.
 
 - Online (`LiveView` SSR or JS-hooks):
 
@@ -55,8 +55,8 @@ To keep the UI interactive both online and offline, we mix `LiveView`’s server
 
 - Offline (Manual Rendering)
   - We detect the status switch via a server polling.
-  - The Service Worker serves the cached HTML & JS bundle.
-  - We hydrate the cached HTML with the correct JS component.
+  - We retrive the HTML document from the `Cache API`.
+  - We update the current DOM with the cached HTML and inject the correct JS component.
   - The component reads from and writes to the local `Yjs`+`IndexedDB` replica and remains fully interactive.
 
 ### Service Worker & Asset Caching
@@ -102,10 +102,14 @@ The standalone PWA is 2.1 MB (page weigth).
   - [Navigation](#navigation)
   - [Vite](#vite)
     - [Configuration and settings](#configuration-and-settings)
-      - [Watcher](#watcher)
-      - [Tailwind](#tailwind)
+      - [HMR in DEV mode](#hmr-in-dev-mode)
+      - [Tailwind v4](#tailwind-v4)
+      - [Import assets](#import-assets)
+      - [Optmise CSS with `lightningCSS` in prod mode](#optmise-css-with-lightningcss-in-prod-mode)
       - [Client Env](#client-env)
     - [Static assets](#static-assets)
+      - [DEV mode](#dev-mode)
+      - [PROD mode](#prod-mode)
     - [Performance optimisation: Dynamic CSS loading](#performance-optimisation-dynamic-css-loading)
     - [VitePWA plugin and Workbox Caching Strategies](#vitepwa-plugin-and-workbox-caching-strategies)
   - [Yjs](#yjs)
@@ -119,7 +123,7 @@ The standalone PWA is 2.1 MB (page weigth).
   - [Documentation source](#documentation-source)
   - [Resources](#resources)
   - [License](#license)
-  - [Credits](#credits)
+  - [Enhance](#enhance)
 
 ## What?
 
@@ -214,29 +218,29 @@ We use different approaches based on the page requirements:
 
 ## About the Yjs-Stock page
 
-```mermaid
----
-title: "SQLite & Channel & YDoc Implementation"
----
-flowchart
-    YDoc(YDoc <br>IndexedDB)
-    Channel[Phoenix Channel]
-    SQLite[(SQLite DB)]
-    Client[Client]
+  ```mermaid
+  ---
+  title: "SQLite & Channel & YDoc Implementation"
+  ---
+  flowchart
+      YDoc(YDoc <br>IndexedDB)
+      Channel[Phoenix Channel]
+      SQLite[(SQLite DB)]
+      Client[Client]
 
-    Client -->|Local update| YDoc
-    YDoc -->|Send ops| Channel
-    Channel -->|Update counter| SQLite
-    SQLite -->|Return new value| Channel
-    Channel -->|Broadcast| Client
-    Client -->|Remote Update| YDoc
+      Client -->|Local update| YDoc
+      YDoc -->|Send ops| Channel
+      Channel -->|Update counter| SQLite
+      SQLite -->|Return new value| Channel
+      Channel -->|Broadcast| Client
+      Client -->|Remote Update| YDoc
 
-    YDoc -.->|Reconnect <br> send stored ops| Channel
+      YDoc -.->|Reconnect <br> send stored ops| Channel
 
 
-style YDoc fill:#e1f5fe
-style Channel fill:#fff3e0
-```
+  style YDoc fill:#e1f5fe
+  style Channel fill:#fff3e0
+  ```
 
 <br/>
 
@@ -520,7 +524,7 @@ sequenceDiagram
 
 The flow is:
 
-- Live login page => POST controller => redirect to a logged-in controller
+- Live login page => POST controller => redirect to a logged-in controller => display menu for live_navigation
 
 It displays a dummy login, just to assign a user_id and an "access\_\_token" and a "refresh_token".
 
@@ -530,7 +534,9 @@ We use the _access token_ in the `connect/3` of "UserSocket". If it fails, it re
 
 In "userSocket.js", we use [Socket.onError](https://hexdocs.pm/phoenix/js/index.html#socketonerror).
 
-The error sent by the server is captured in this listener. We trigger a `fetch("POST")` with credentials (the "refresh" cookie) and CSRF to the "/refresh" endpoint. It will renew the _access_token_ and the _refresh token_.
+The error sent by the server ("user_socket.ex") is captured in this listener.
+We trigger a `fetch("POST")` with credentials (the "refresh" cookie) and CSRF to the "/refresh" endpoint.
+It will renew the _access_token_ and the _refresh token_.
 
 We stop and reconnect the userSocket with the new credentials.
 
@@ -542,7 +548,7 @@ When the user goes offline, we have the same smooth navigation thanks to navigat
 
 When the user reconnects, we have a full-page reload.
 
-This si implemented in [navigate.js](https://github.com/dwyl/PWA-Liveview/blob/main/assets/js/utilities/navigate.js).
+This is implemented in [navigate.js](https://github.com/dwyl/PWA-Liveview/blob/main/assets/js/utilities/navigate.js).
 
 **Lifecycle**:
 
@@ -558,24 +564,32 @@ This si implemented in [navigate.js](https://github.com/dwyl/PWA-Liveview/blob/m
 
 ## Vite
 
+Run `pnpm init` and `pnpm install` to install "package.json", or add packages with eg `pnpm add -D taildwindcss @tailwindcss/vite`.
+
+```json
+"devDependencies": {
+  "vite": "npm:rolldown-vite@^6.3.21",
+  [...]
+}
+```
+
 ### Configuration and settings
 
-All the client code is managed by `Vite` and done (mostly) in a declarative way in the file [vite.config.js](https://github.com/dwyl/PWA-Liveview/blob/main/assets/vite.config.js).
+All the client code is managed by `Vite` and done in the file [vite.config.js](https://github.com/dwyl/PWA-Liveview/blob/main/assets/vite.config.js).
 
 > Most declarations are done programatically as it is run by `NodeJS`.
 
-#### Watcher
+#### HMR in DEV mode
 
-There is a watcher configured in "config/dev.exs" which replaces, thus removes, `esbuild` and `tailwindCSS` (which are also removed from the mix deps).
+Besides the `live_reload`, there is a watcher configured in "config/dev.exs" which replaces, thus removes, `esbuild` and `tailwindCSS` (which are also removed from the mix deps).
 
 ```elixir
 watchers: [
-    npx: [
+    pnpm: [
       "vite",
-      "build",
+      "dev",
       "--mode",
       "development",
-      "--watch",
       "--config",
       "vite.config.js",
       cd: Path.expand("../assets", __DIR__)
@@ -583,26 +597,48 @@ watchers: [
   ]
 ```
 
-#### Tailwind
+#### Tailwind v4
 
-⚠️You can't use v4 but should _keep v3.4_. Indeed, Tailwind v4 drops the "tailwind.config.js" and there is no proper way to parse the SSR files (.ex, .heex) without it.
 
-Tailwind is used as a PostCSS plugin. In the `Vite` config, it is set with the declaration:
+Tailwind is used as a plugin. You add `tailwindcss` and `@tailwindcss/vite` to your dev dependencies.
+
+In the `Vite` config, it is set with the declaration:
 
 ```js
-import tailwindcss from "tailwindcss";
+import tailwindcss from "@tailwindcss/vite";
 [...]
 // in `defineConfig`, add:
-css: {
-  postcss: {
+defineConfig({
     plugins: [tailwindcss()],
   },
-},
+),
 ```
 
-and reads automatically the "tailwind.configjs" which sits next to "vite.config.js".
+Then, in "css/app.css", you import tailwindcss and add the `@source` where you use Tailwind classes: HEEX and JS.
 
-> Note. We use `lightningCSS` for further optimze the CSS and `autoprefixer` is built in (if "-weebkit" for flex/grid or "-moz" for transitions are needed).
+```css
+@import tailwindcss;
+@source "../css";
+@source "../js";
+@source "../../lib/liveview_pwa_web";
+```
+
+#### Import assets
+
+You will benefit from using the `resolve` config by using alias.
+For example:
+
+```js
+import img from "@assets/images/img.web";
+
+// or dynamic at runtime inside a function
+
+const img = new URL("@assets/images/img.web`", import.meta.url).href;
+```
+
+#### Optmise CSS with `lightningCSS` in prod mode
+
+We use `lightningCSS` in the rollup options to further optimze the CSS. There is no need to bring in `autoprefixer` since it is built in (eg  "-webkit" for flex/grid or "-moz" for transitions are needed).
 
 #### Client Env
 
@@ -642,55 +678,12 @@ The env arguments are loaded with `loadEnv`.
 
 ### Static assets
 
-We do not use the step `mix phx.digest` and removed from the Dockerfile.
-We fingerprint and compress the static files via `Vite`.
+We have two types of static assets:
 
-```js
-rollupOptions.output: {
-  assetFileNames: "assets/[name]-[hash][extname]",
-  chunkFileNames: "assets/[name]-[hash].js",
-  entryFileNames: "assets/[name]-[hash].js",
-},
-```
+- fingerprinted by Rolldown as shown below
+- and not, such as icons, iamges related to the webmanifest, SEO files such as sitemap.xml or robotx.txt, and the service worker file "sw.js". 
 
-We do this because we want the SW to be able to detect client code changes and update the app. The Phoenix work would interfer.
-
-**Caveat**: versioned fils have dynamic so how to pass them to the "root.html.heex" component?
-
-When assets are not fingerprinted, Phoenix can serve them "normally" as names are known:
-
-```elixir
-<link rel="icon" href="/favicon.ico" type="image/png" sizes="48x48" />
-<link rel="manifest" href="/manifest.webmanifest" />
-```
-
-When the asset reference is versioned, we use the `.vte/manifest` dictionary to find the new name.
-We used a helper [ViteHelper](https://github.com/dwyl/PWA-Liveview/blob/main/lib/soldiyjsweb/vite_helper.ex) to map the original name to the versioned one (the one in "priv/static/assets").
-
-```elixir
-<link
-  phx-track-static
-  rel="stylesheet"
-  href={ViteHelper.get_css()}
-  # href={~p"/assets/app.css"}
-  crossorigin="anonymous"
-/>
-
-<script
-  defer
-  phx-track-static
-  nonce={assigns[:main_nonce]}
-  type="module"
-  src={ViteHelper.path("js/main.js")}
-  # src={~p"/app.css"}
-  crossorigin="anonymous"
->
-</script>
-```
-
-Not all assets need to be fingerprinted, such as "robotx.txt", icons.... To copy these files , we use the plugin `vite-plugin-static-copy`.
-
-We also compress files to _ZSTD_ known for its compression performance and deflating speed. We use the plugin `vite-plugin-compression2` and use `@mongodb-js/zstd`.
+The "non-fingerprinted" asets are served by `Phoenix` directly by listing them in the `LiveviewPwaWeb.static_path()` function. 
 
 We modify "endpoint.ex" to accept these encodings:
 
@@ -701,19 +694,75 @@ plug Plug.Static,
   gzip: true,
   at: "/",
   from: :liveview_pwa,
-  only: ~w(
-    assets
-    icons
-    robots.txt
-    sw.js
-    manifest.webmanifest
-    sitemap.xml
-    ),
+  only: LiveviewPwaWeb.static_paths(),
   headers: %{
     "cache-control" => "public, max-age=31536000"
   }
   [...]
 ```
+
+where:
+
+```elixir
+def static_paths,
+  do: ~w(assets icons robots.txt sw.js manifest.webmanifest sitemap.xml)
+```
+
+We can them reference in the HEEX components as usual:
+
+```elixir
+<link rel="icon" href="icons/favicon-192.png" type="image/png" sizes="192x192" />
+<link rel="manifest" href="/manifest.webmanifest" />
+```
+
+We use the plugin `vite-plugin-static-copy` to let Vite copy the selected ones (eg the folder "assets/seo/{robots.txt, sitemap.xml}" or "/assets/icons") into the folder "/priv/static".
+
+
+When the asset reference is versioned, we use the `.vte/manifest` dictionary to find the new name.
+We used a helper [ViteHelper](https://github.com/dwyl/PWA-Liveview/blob/main/lib/soldiyjsweb/vite_helper.ex) to map the original name to the versioned one (the one in "priv/static/assets") 
+
+#### DEV mode
+
+In DEV mode, the helper will preprend the file name with `http://localhost:5173` because they are served by Vite DEV server.
+
+
+#### PROD mode
+
+Vite will build the assets. They are fingerprint (and compressed). This is set in `rollupOptions.output`:
+
+```js
+rollupOptions.output: mod === 'production' && {
+  assetFileNames: 'assets/[name]-[hash][extname]',
+  chunkFileNames: 'assets/[name]-[hash].js',
+  entryFileNames: 'assets/[name]-[hash].js',
+},
+```
+
+We do this because we want the SW to be able to detect client code changes and update the app. The Phoenix work would interfer.
+
+Therefor, we do not use the step `mix phx.digest` and removed from the `Dockerfile`.
+
+```elixir
+<link
+  phx-track-static
+  rel="stylesheet"
+  href={Vite.path("css/app.css")}
+  crossorigin="anonymous"
+/>
+
+<script
+  defer
+  phx-track-static
+  nonce={assigns[:main_nonce]}
+  type="module"
+  src={Vite.path("js/main.js")}
+  crossorigin="anonymous"
+>
+</script>
+```
+
+
+We also compress files to _ZSTD_ known for its compression performance and deflating speed. We use the plugin `vite-plugin-compression2` and use `@mongodb-js/zstd`.
 
 ### Performance optimisation: Dynamic CSS loading
 
@@ -853,9 +902,10 @@ Source: check [PWABuilder](https://www.pwabuilder.com)
 ```html
 <!-- root.html.heex -->
 <head>
-  [...] <link rel="icon-192" href={~p"/icons/icon-192.png"} /> <link
-  rel="icon-512" href={~p"/icons/icon-512.png"} /> [...] <link rel="manifest"
-  href={~p"/manifest.webmanifest"} /> [...]
+  [...] 
+  <link rel="icon-192" href={~p"icons/icon-192.png"}/>
+  <link rel="icon-512" href={~p"icons/icon-512.png"}/>
+  <link rel="manifest" href={~p"/manifest.webmanifest"}/> 
 </head>
 ```
 
@@ -939,7 +989,6 @@ We set the Fly secret: `DATABASE_PATH=mnt/db/main.db`.
 
 Besides Phoenix LiveView:
 
-- [Yex with Channel](https://github.com/satoren/y-phoenix-channel)
 - [Yjs Documentation](https://docs.yjs.dev/)
 - [Vite PWA Plugin Guide](https://vite-pwa-org.netlify.app/guide/)
 - [MDN PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Best_practices)
@@ -952,8 +1001,8 @@ Besides Phoenix LiveView:
 
 [GNU License](LICENSE)
 
-## Credits
+## Enhance
 
-To enhance this project, you may want to use `y_ex`, the `Elixir` port of `y-crdt`.
+To enhance this project, you may want to use the library `y_ex`, the `Elixir` port of `y-crdt`.
 
-Cf [Satoren](https://github.com/satoren) for [Yex](https://github.com/satoren/y_ex)
+Credit to: [Satoren](https://github.com/satoren) for [Yex](https://github.com/satoren/y_ex)

@@ -11,7 +11,7 @@ import { PgStockHook } from "@js/hooks/hookPgStock";
 import { StockYjsChHook } from "@js/hooks/hookYjsChStock.js";
 import { PwaHook } from "@js/hooks/hookPwa.js";
 import { FormHook } from "@js/hooks/hookForm.js";
-import { registerServiceWorker } from "@js/utilities/pwaRegistration";
+
 import {
   cleanExistingHooks,
   mountOfflineComponents,
@@ -29,12 +29,21 @@ const log = console.log;
 //  ----------------
 document.addEventListener("DOMContentLoaded", async () => {
   // alert(readCSRFToken()); //DOM ready ensures we have a CSRF token
+  log("App start-----");
 
   window.liveSocket = await initLiveSocket();
   window.liveSocket.getSocket().onOpen(async () => {
     console.warn("[LiveSocket] connected");
     !appState.interval && startPolling();
-    await registerServiceWorker();
+    if (import.meta.env.MODE === "development") {
+      console.warn("Service Worker disabled");
+    } else {
+      const { registerServiceWorker } = await import(
+        "@js/utilities/pwaRegistration"
+      );
+      await registerServiceWorker();
+    }
+    // first page cached when the app is loaded
     await addCurrentPageToCache(window.location.pathname);
   });
 
@@ -115,15 +124,19 @@ function readCSRFToken() {
   return csrfTokenEl.getAttribute("content");
 }
 
-// https://github.com/phoenixframework/phoenix_live_view/issues/2559
-window.addEventListener("phx:navigate", async ({ detail }) => {
+window.addEventListener("phx:page-loading-stop", async ({ detail }) => {
+  console.log("Page loading?", detail.to);
   if (appState.isOnline) {
-    console.warn("[Navigate Cache]-----", detail.href);
-
-    const path = new URL(detail.href).pathname;
-    await addCurrentPageToCache(path);
+    console.log("[Navigate Cache]-----", detail.to);
+    if (detail.to) {
+      const path = new URL(detail.to).pathname;
+      await addCurrentPageToCache(path);
+    }
   }
 });
+
+// https://github.com/phoenixframework/phoenix_live_view/issues/2559
+//
 
 // JS.dispatcher for clearing cache
 window.addEventListener("phx:clear-cache", async () => {
@@ -131,7 +144,6 @@ window.addEventListener("phx:clear-cache", async () => {
   const confirmation = window.confirm(
     "You are going to clear the client cache. Reset now?"
   );
-  console.log(confirmation);
   if (confirmation) {
     await clearApplicationCaches();
     window.location.href = "/";

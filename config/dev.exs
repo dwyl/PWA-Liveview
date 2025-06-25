@@ -1,23 +1,21 @@
 import Config
 
-# Configure token TTL settings
-# 30 seconds for access token
+# Configure token TTL settings for testting: 30 seconds for access token
 config :liveview_pwa, :access_token_ttl, 20
-# 5 minutes for refresh token
-config :liveview_pwa, :refresh_token_ttl, 60 * 60 * 24 * 365 * 10
+# 1 minutes for refresh token
+config :liveview_pwa, :refresh_token_ttl, 600
+
 # we configured Sqlite to save the database in the project root
 # so that we can easily access it from the host machine
 config :liveview_pwa, LiveviewPwa.Sql3Repo,
-  database: Path.expand("../db/main.db", Path.dirname(__ENV__.file))
+  database: Path.expand("../db/main.sql3", Path.dirname(__ENV__.file))
 
-# Postgres is running in a docker container with local replication enabled
-# and is accessible on localhost:3001
+# !! Postgres is running in a docker container with local replication enabled
+# and is accessible on localhost:3001, cf docker-compose.yml
 config :liveview_pwa, LiveviewPwa.PgRepo, url: "ecto://postgres:1234@localhost:3001/elec_prod"
 
 config :liveview_pwa, LiveviewPwaWeb.Endpoint,
-  # Binding to loopback ipv4 address prevents access from other machines.
-  # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
-  http: [ip: {0, 0, 0, 0}, port: 4000],
+  http: [ip: {127, 0, 0, 1}, port: 4000],
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
@@ -25,18 +23,16 @@ config :liveview_pwa, LiveviewPwaWeb.Endpoint,
   live_reload: [
     web_console_logger: true,
     patterns: [
-      ~r{priv/static/.*(js|css|png|jpeg|jpg|gif)$},
-      ~r{lib/liveview_pwa_web/views/.*(ex)$},
-      ~r{lib/liveview_pwa_web/templates/.*(eex)$}
+      ~r"priv/static/(?!uploads/).*(js|css|png|jpeg|jpg|gif)$",
+      ~r"lib/liveview_pwa_web/(?:controllers|live|components|router)/?.*\.(ex|heex)$"
     ]
   ],
   watchers: [
-    npx: [
+    pnpm: [
       "vite",
-      "build",
+      "dev",
       "--mode",
       "development",
-      "--watch",
       "--config",
       "vite.config.js",
       cd: Path.expand("../assets", __DIR__)
@@ -72,7 +68,7 @@ config :liveview_pwa, LiveviewPwaWeb.Endpoint,
     web_console_logger: true,
     patterns: [
       ~r"priv/static/(?!uploads/).*(js|css|png|jpeg|jpg|gif|svg)$",
-      ~r"lib/LiveviewPwa_web/(controllers|live|components)/.*(ex|heex)$"
+      ~r"lib/LiveviewPwa_web/(?:controllers|live|components|router)/?.*\.(ex|heex)$"
     ]
   ]
 

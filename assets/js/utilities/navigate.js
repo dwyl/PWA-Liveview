@@ -15,12 +15,13 @@ const components = {
     {
       id: hooks.PgStockHook,
       component: "PgStock",
-      import: () => import("@jsx/components/pgStock.jsx"),
+      import: () => import("@js/components/pgStock"),
       args: (el) => ({
         el,
         ydoc: appState.globalYdoc,
         max: Number(localStorage.getItem("max")),
         userID: localStorage.getItem("userID"),
+        inv: true, // inverse style
       }),
       assign: async (instance) => {
         return (offlineComponents.PgStockHook = await instance);
@@ -37,12 +38,13 @@ const components = {
     {
       id: hooks.StockYjsChHook,
       component: "YjsStock",
-      import: () => import("@jsx/components/yjsStock.jsx"),
+      import: () => import("@js/components/yjsStock"),
       args: (el) => ({
         el,
         ydoc: appState.globalYdoc,
         max: Number(localStorage.getItem("max")),
         userID: localStorage.getItem("userID"),
+        inv: true, // inverse style
       }),
       assign: async (instance) =>
         (offlineComponents.StockYjsChHook = await instance),
@@ -58,7 +60,7 @@ const components = {
     {
       id: hooks.FormHook,
       component: "CitiesForm",
-      import: () => import("@jsx/components/citiesForm.jsx"),
+      import: () => import("@js/components/citiesForm"),
       args: (el) => ({
         el,
         _this: null,
@@ -96,7 +98,7 @@ async function mountOfflineComponents() {
         const module = await compConf.import();
         const Component = module[compConf.component];
         const args = compConf.args(el);
-        // work around for Laflet (re)mounting
+        // work around for Leaflet (re)mounting
         try {
           const instance = await Component(args);
           if (compConf.assign) await compConf.assign(instance);
@@ -135,7 +137,7 @@ function cleanupOfflineComponents() {
     if (cleanupFn) {
       cleanupFn();
       offlineComponents[key] = null;
-      console.log("Offline component [", key, "] cleaned");
+      // console.log("Offline component [", key, "] cleaned");
     }
   }
 }
@@ -149,17 +151,17 @@ Reattach navigation listeners to handle future navigation
 async function handleOfflineNavigation(event) {
   try {
     event.preventDefault();
-    const normPath = event.currentTarget.href;
+    const path = event.currentTarget.href;
     // const path = link.getAttribute("data-path") || link.getAttribute("href");
     // const normPath = new URL(path, window.location.origin).pathname;
 
-    window.history.pushState({ path: normPath }, "", normPath);
+    window.history.pushState({ path }, "", path);
 
     const cache = await caches.open("page-shells");
-    const response = await cache.match(normPath);
+    const response = await cache.match(path);
 
     if (!response) {
-      throw new Error(`No cached content found for ${normPath}`);
+      throw new Error(`No cached content found for ${path}`);
     }
 
     if (!response.ok)
@@ -168,14 +170,14 @@ async function handleOfflineNavigation(event) {
     const html = await response.text();
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
-    const newContent = doc.querySelector(selector);
-    if (!newContent)
+    const cachedContent = doc.querySelector(selector);
+    if (!cachedContent)
       throw new Error(`Main content element not found in fetched HTML`);
 
     // Replace only the main content, not the entire body
     const currentContent = document.querySelector(selector);
     if (currentContent) {
-      currentContent.innerHTML = newContent.innerHTML;
+      currentContent.innerHTML = cachedContent.innerHTML;
       cleanupOfflineComponents();
       await mountOfflineComponents();
       return attachNavigationListeners();

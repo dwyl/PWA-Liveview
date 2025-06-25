@@ -20,13 +20,20 @@ defmodule LiveviewPwaWeb.MapLive do
   def render(assigns) do
     ~H"""
     <div>
-      <.live_component module={PwaLiveComp} id="pwa_action-map" update_available={@update_available} />
+      <.live_component
+        :if={@env === :prod}
+        module={PwaLiveComp}
+        id="pwa_action-map"
+        update_available={@update_available}
+      />
       <br />
       <Users.display user_id={@user_id} module_id="users-map" />
 
       <Menu.display active_path={@active_path} />
       <br />
-      <p>The map below may not be displayed if the free tier usage is exceeded for the month.</p>
+      <p class="text-gray-800">
+        The map below may not be displayed if the free tier usage is exceeded for the month.
+      </p>
       <br />
       <div
         id="hook-map"

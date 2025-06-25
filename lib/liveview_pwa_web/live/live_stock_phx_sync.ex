@@ -15,6 +15,7 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
     ~H"""
     <div>
       <.live_component
+        :if={@env === :prod}
         module={PwaLiveComp}
         id="pwa_action-phx-sync"
         update_available={@update_available}
@@ -24,34 +25,64 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
 
       <Menu.display active_path={@active_path} />
       <br />
-      <h2 class="mt-4 mb-4 text-xl text-gray-600">
+      <h2 class="mt-4 mb-4 text-xl text-gray-800">
         The counter is synchronised server-side by <code>Phoenix_sync</code>
         with <code>Postgres</code>
         and persisted client-side with <code>Yjs</code>.
       </h2>
-      <p>
+      <p class="mt-4 mb-4 text-xl text-gray-800">
         When online, the component below is rendered by <code>LiveView</code>.
       </p>
-      <p>When offline, the component is a <code>SolidJS</code> rendered component.</p>
+      <p class="mt-4 mb-4 text-xl text-gray-600">
+        When offline, the component is a <code>SolidJS</code> rendered component.
+      </p>
       <br />
-      <div id="phx-sync-count" phx-update="stream" class={unless(@show_stream, do: "opacity-0")}>
-        <div :for={{id, item} <- @streams.phx_sync_counter} id={id}>
-          <form phx-submit="dec" id="lv-pg-form">
-            <.button id="dec-btn">Decrement Stock</.button>
-            <input
-              type="range"
-              min="0"
-              max={@max}
-              name="dec-phx-sync-counter"
-              value={item.counter}
-              disabled
-              aria-label="displayed-stock"
-            />
-            <span class="ml-8">{item.counter}</span>
+      <div
+        id="phx-sync-count"
+        phx-update="stream"
+        class={[unless(@show_stream, do: "opacity-0"), "max-w-[450px]"]}
+      >
+        <div :for={{id, item} <- @streams.phx_sync_counter} id={id} class="mt-2 flex flex-col">
+          <form phx-submit="dec" id="lv-pg-form" class="w-full">
+            <.button class="btn btn-custom w-full" id="dec-btn">Decrement Stock</.button>
           </form>
+          <label for="range-input" class="text-sm text-gray-600 mt-4 mb-2">
+            <code>Phoenix.Sync</code>
+            PostgreSQL Stock: <span class="text-orange-600 ml-8">{item.counter}</span>
+          </label>
+
+          <input
+            id="range-input"
+            type="range"
+            min="0"
+            max={@max}
+            name="dec-phx-sync-counter"
+            value={item.counter}
+            disabled
+            aria-label="displayed-stock"
+            class="w-full"
+          />
+          <div class="grid grid-cols-21 w-full">
+            <span
+              :for={i <- 0..20}
+              class={[
+                if(i === item.counter, do: "text-orange-600", else: "text-gray-400 text-xs"),
+                "font-mono text-center w-5"
+              ]}
+            >
+              {i}
+            </span>
+          </div>
         </div>
       </div>
-      <p id="hook-pg" phx-hook="PgStockHook" data-max={@max} data-userid={@user_id}></p>
+      <p
+        id="hook-pg"
+        phx-hook="PgStockHook"
+        data-max={@max}
+        data-userid={@user_id}
+        class="max-w-[450px]"
+      >
+      </p>
       <br />
     </div>
     """
@@ -60,16 +91,16 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
   @impl true
   def mount(_params, _session, socket) do
     query = PhxSyncCount.query_current()
-    # counter = PhxSyncCount.current() |> Map.get(:counter)
+    counter = PhxSyncCount.current() |> Map.get(:counter)
 
     {:ok,
      socket
      |> assign(:page_title, "PhxSync")
      |> assign(:show_stream, false)
-     |> sync_stream(:phx_sync_counter, query)}
+     |> sync_stream(:phx_sync_counter, query)
 
-    #  update local Yjs on mount
-    #  |> push_event("update-local-store", %{counter: counter})}
+     #  update local Yjs on mount
+     |> push_event("update-local-store", %{counter: counter})}
   end
 
   @impl true

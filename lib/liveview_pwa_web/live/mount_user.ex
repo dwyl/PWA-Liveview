@@ -21,12 +21,14 @@ defmodule LiveviewPwaWeb.MountUser do
 
   def on_mount(:ensure_authenticated, _p, %{"user_id" => user_id} = session, socket) do
     os = session["os"]
+    env = Application.fetch_env!(:liveview_pwa, :env)
 
     #  shared assigns and PWA button handler delegated to a LiveComponent
     {:cont,
      socket
      |> assign(:max, @max)
      |> assign(:user_id, user_id)
+     |> assign(:env, env)
      #  async push the user token to the client to setup cusstom userSocket
      |> push_event("access-token-ready", %{
        "user_token" => session["user_token"],

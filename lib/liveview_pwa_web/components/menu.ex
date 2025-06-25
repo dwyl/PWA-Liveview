@@ -7,7 +7,7 @@ defmodule LiveviewPwaWeb.Menu do
   A menu component that displays navigation links for the application.
   """
 
-  defp menu do
+  defp session_menu do
     [
       %{id: "sync", title: "PhxSync", path: ~p"/sync", icon: "hero-bolt"},
       %{id: "yjsch", title: "YjsChannel", path: ~p"/yjs", icon: "hero-wrench"},
@@ -15,45 +15,57 @@ defmodule LiveviewPwaWeb.Menu do
     ]
   end
 
-  defp link_class do
-    "px-4 py-2 border-2 flex flex-col justify-center flex-1 items-center ounded-md text-midnightblue bg-bisque hover:text-bisque hover:bg-midnightblue transition-colors duration-300"
+  defp off_menu do
+    [
+      %{id: "off", title: "Off session", path: ~p"/off-session", icon: "hero-arrow-up-right"},
+      %{id: "dashboard", title: " Dashboard", path: "/dashboard", icon: "hero-wrench-screwdriver"}
+    ]
   end
 
-  attr :active_path, :string, default: "/sync"
+  attr :active_path, :string, default: "/"
 
   def display(assigns) do
     ~H"""
-    <div id="menu">
-      <nav
-        id="navbar"
-        class="mt-4 bg-gradient-to-r from-blue-200 to-purple-200 p-2 rounded-lg shadow-md flex justify-between items-center"
-      >
-        <.link
-          :for={item <- menu()}
-          id={item.id}
-          data-path={item.path}
-          patch={item.path}
-          href={item.id == "off" && item.path}
-          replace
-          class={[if(@active_path == item.path, do: "border-midnightblue", else: nil), link_class()]}
-        >
-          <.icon name={item.icon} />
-          <span class="text-sm [390px]:text-base">{item.title}</span>
-        </.link>
-        <.link
-          id="off"
-          href={~p"/off-session"}
-          replace
-          class={[
-            if(@active_path == "/off-session", do: "border-midnightblue", else: nil),
-            link_class()
-          ]}
-        >
-          <.icon name="hero-arrow-up-right" />
-          <span class="text-sm [390px]:text-base">Off Session</span>
-        </.link>
-      </nav>
-    </div>
+    <nav
+      id="menu"
+      class="flex justify-center navbar navbar-center bg-primary text-primary-content shadow-sm"
+    >
+      <ul class="menu menu-lg sm:menu-horizontal bg-base-800 rounded-box">
+        <li :for={item <- session_menu()}>
+          <.link
+            data-path={item.path}
+            id={item.id}
+            patch={item.path}
+            href={item.id == "off" && item.path}
+            target={item.id === "dashboard" && "_blank"}
+            replace
+            class={[
+              if(@active_path == item.path, do: "menu-active", else: nil),
+              "text-white font-bold"
+            ]}
+          >
+            <.icon name={item.icon} />
+            <span>{item.title}</span>
+          </.link>
+        </li>
+        <li :for={item <- off_menu()}>
+          <.link
+            data-path={item.path}
+            id={item.id}
+            href={item.path}
+            target={item.id === "dashboard" && "_blank"}
+            replace
+            class={[
+              if(@active_path == item.path, do: "menu-active", else: nil),
+              "text-white font-bold"
+            ]}
+          >
+            <.icon name={item.icon} />
+            <span>{item.title}</span>
+          </.link>
+        </li>
+      </ul>
+    </nav>
     """
   end
 end

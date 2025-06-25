@@ -29,7 +29,12 @@ export async function setPresence(userSocket, topic, user_token) {
         ? NAVIDS.yjs.id
         : path === "/map"
         ? NAVIDS.map.id
-        : NAVIDS.elec.id;
+        : path === "/sync"
+        ? NAVIDS.sync.id
+        : null;
+    if (!id) {
+      return null;
+    }
     return document.getElementById(id);
   };
 
@@ -64,7 +69,5 @@ export async function setPresence(userSocket, topic, user_token) {
   });
 
   // Handle LiveView navigation
-  window.addEventListener("phx:page-loading-stop", () => {
-    tryRender();
-  });
+  window.addEventListener("phx:page-loading-stop", () => tryRender());
 }

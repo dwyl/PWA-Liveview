@@ -40,8 +40,6 @@ defmodule LiveviewPwaWeb.Router do
       live "/yjs", StockYjsLive, :index
       live "/map", MapLive, :index
     end
-
-    match(:*, "/:p", NotFound, :render)
   end
 
   scope "/api", LiveviewPwaWeb.Api do
@@ -49,7 +47,7 @@ defmodule LiveviewPwaWeb.Router do
 
     get "/connectivity", ConnectivityController, :check
     post "/refresh_token", UserTokenController, :refresh
-    get "/wasm", WasmController, :load
+    # get "/wasm", WasmController, :load
 
     # test endpoints
     get "/sql3_counter", Sql3CounterController, :show
@@ -57,18 +55,42 @@ defmodule LiveviewPwaWeb.Router do
   end
 
   # Enable LiveDashboard in development
-  if Application.compile_env(:liveview_pwa, :dev_routes) do
-    # If you want to use the LiveDashboard in production, you should put
-    # it behind authentication and allow only admins to access it.
-    # If your application does not have an admins-only section yet,
-    # you can use Plug.BasicAuth to set up some basic authentication
-    # as long as you are also using SSL (which you should anyway).
-    import Phoenix.LiveDashboard.Router
+  # if Application.compile_env(:liveview_pwa, :dev_routes) do
+  # If you want to use the LiveDashboard in production, you should put
+  # it behind authentication and allow only admins to access it.
+  # If your application does not have an admins-only section yet,
+  # you can use Plug.BasicAuth to set up some basic authentication
+  # as long as you are also using SSL (which you should anyway).
 
-    scope "/dev" do
-      pipe_through :browser
+  pipeline :dashboard do
+    plug :accepts, ["html"]
+    plug :fetch_session
+    plug :fetch_live_flash
+    plug :put_root_layout, html: {LiveviewPwaWeb.Layouts, :root}
+    plug :protect_from_forgery
+    plug :put_secure_browser_headers
+    plug :auth
 
-      live_dashboard "/dashboard", metrics: LiveviewPwaWeb.Telemetry
+    # import Plug.BasicAuth
+
+    defp auth(conn, _opts) do
+      username = System.get_env("AUTH_USERNAME", "admin")
+      password = System.get_env("AUTH_PASSWORD", "password")
+      Plug.BasicAuth.basic_auth(conn, username: username, password: password)
     end
+  end
+
+  import Phoenix.LiveDashboard.Router
+  pipe_through :dashboard
+
+  scope "/" do
+    live_dashboard "/dashboard",
+      metrics: LiveviewPwaWeb.Telemetry,
+      ecto_repos: [LiveviewPwa.Sql3Repo, LiveviewPwa.PgRepo]
+  end
+
+  scope "/", LiveviewPwaWeb do
+    pipe_through :browser
+    match(:*, "/*path", NotFoundController, :display)
   end
 end

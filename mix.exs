@@ -32,11 +32,15 @@ defmodule LiveviewPwa.MixProject do
       {:phoenix, "~> 1.7"},
       {:phoenix_html, "~> 4.1"},
       {:phoenix_live_view, "~> 1.0"},
+      {:phoenix_ecto, "~> 4.6"},
       {:bandit, "~> 1.6"},
       {:req, "~> 0.5.8"},
       {:nimble_csv, "~> 1.2"},
       {:exqlite, "0.30.1"},
       {:ecto_sqlite3, "~> 0.19.0"},
+      {:ecto_watch, "~> 0.13.2"},
+      {:ecto_psql_extras, "~> 0.6"},
+      {:ecto_sqlite3_extras, "~> 1.2.0"},
       {:postgrex, "~> 0.20.0"},
       {:electric, "~> 1.0.13"},
       {:phoenix_sync, "~> 0.4.3"},
@@ -53,10 +57,10 @@ defmodule LiveviewPwa.MixProject do
        app: false,
        compile: false,
        depth: 1},
+      {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:sobelow, "~> 0.13", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
-      {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:floki, ">= 0.30.0", only: :test}
     ]
   end

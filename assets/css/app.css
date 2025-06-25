@@ -1,14 +1,57 @@
-/* Tailwind directives */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* See the Tailwind configuration guide for advanced usage
+   https://tailwindcss.com/docs/configuration */
 
-body {
-  font-family: "Inter", sans-serif;
+@import "tailwindcss";
+
+@plugin "daisyui";
+
+@source "../css";
+@source "../**/.*{js, jsx}";
+@source "../../lib/liveview_pwa_web/";
+
+/* A Tailwind plugin that makes "hero-#{ICON}" classes available.
+   The heroicons installation itself is managed by your mix.exs */
+@plugin "../vendor/heroicons";
+
+@theme {
+  --color-bisque: #ffe4c4;
+  --color-bisque-contrast: oklch(0.08 0.06 70);
+  --color-midnightblue: #191979;
+  --color-midnightblue-contrast: oklch(0.9 0.1 270);
 }
 
-h1 {
-  color: #1a202c;
-  font-size: 2rem;
-  font-weight: bold;
+.btn-custom {
+  @apply text-midnightblue bg-bisque border-[#ffe4c4] p-2 rounded-lg;
+  @apply hover:bg-[#ffd4a3] hover:border-[#ffd4a3];
+  @apply active:bg-[#ffcc99] active:scale-95;
+  @apply transition-all duration-150 ease-in-out;
+  @apply shadow-md hover:shadow-lg;
 }
+
+.btn-custom:focus {
+  @apply outline-none ring-2 ring-[#191970];
+}
+
+.btn-custom-inverted {
+  @apply text-[#ffe4c4] bg-[#191970] border-[#191970];
+  @apply hover:bg-[#1e1e7f] hover:border-[#1e1e7f];
+  @apply active:bg-[#0f0f3f] active:scale-95;
+  @apply transition-all duration-150 ease-in-out;
+  @apply shadow-md hover:shadow-lg;
+}
+
+.btn-custom-inverted:focus {
+  @apply outline-none ring-2 ring-[#ffe4c4];
+}
+
+/* Add variants based on LiveView classes */
+@custom-variant phx-click-loading (.phx-click-loading&, .phx-click-loading &);
+@custom-variant phx-submit-loading (.phx-submit-loading&, .phx-submit-loading &);
+@custom-variant phx-change-loading (.phx-change-loading&, .phx-change-loading &);
+
+/* Make LiveView wrapper divs transparent for layout */
+[data-phx-session] {
+  display: contents;
+}
+
+/* This file is for your main application CSS */

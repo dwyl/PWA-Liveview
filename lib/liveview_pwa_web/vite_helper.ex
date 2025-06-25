@@ -1,56 +1,59 @@
-defmodule ViteHelper do
-  require Logger
+if Application.compile_env!(:liveview_pwa, :env) == :prod do
+  defmodule Vite do
+    require Logger
 
-  @moduledoc """
-  A helper module to manage Vite fingerprinted assets in a Phoenix application.
+    @moduledoc """
+    A helper module to manage Vite file discovery.
 
-  This module provides a function to retrieve the path of an asset based on its fingerprinted name.
+    It appends "http://localhost:5173" in DEV mode.
 
-  It reads the Vite manifest file to find the correct path for the asset.
+    It finds the fingerprinted name in PROD mode from the .vite/manifest.json file.
+    """
 
-  The manifest file is only available after the Vite build process has run.
+    # Ensure the manifest is loaded at compile time in production
+    def path(asset) do
+      manifest = get_manifest()
 
-  In DEV mode:
-  - if the browser is already open, this crashes as the manifest is not yet  produced
+      case Path.extname(asset) do
+        ".css" ->
+          get_main_css_in(manifest)
 
-  It is recommended to use this in __production__ or __after__ the build process
-  This means in DEV mode: 1) compile the files, 2) then open the browser
+        _ ->
+          get_name_in(manifest, asset)
+      end
+    end
 
-    ## Example
-    To use this module, you can call the `path/1` function with the asset name:
+    defp get_manifest do
+      manifest_path = Path.join(:code.priv_dir(:liveview_pwa), "static/.vite/manifest.json")
 
-    - in the template:
+      with {:ok, content} <- File.read(manifest_path),
+           {:ok, decoded} <- Jason.decode(content) do
+        decoded
+      else
+        _ -> raise "Could not read or decode Vite manifest at #{manifest_path}"
+      end
+    end
 
-      `<script src={ViteHelper.path("assets/app.js")}></script>`
+    def get_main_css_in(manifest) do
+      manifest
+      |> Enum.flat_map(fn {_key, entry} ->
+        Map.get(entry, "css", [])
+      end)
+      |> Enum.filter(fn file -> String.contains?(file, "main") end)
+      |> List.first()
+    end
 
-
-    - in the console:
-
-          iex> ViteHelper.get_css()
-          "/assets/main-1234567890abcdef.css"
-  """
-
-  def path(asset) do
-    manifest = get_manifest()
-
-    case manifest[asset] do
-      %{"file" => file} -> "/#{file}"
-      _ -> raise "Asset #{asset} not found in manifest"
+    def get_name_in(manifest, asset) do
+      case manifest[asset] do
+        %{"file" => file} -> "/#{file}"
+        _ -> raise "Asset #{asset} not found in manifest"
+      end
     end
   end
-
-  defp get_manifest do
-    Path.join(:code.priv_dir(:liveview_pwa), "/static/.vite/manifest.json")
-    |> File.read!()
-    |> Jason.decode!()
-  end
-
-  def get_css do
-    get_manifest()
-    |> Enum.flat_map(fn {_key, entry} ->
-      Map.get(entry, "css", [])
-    end)
-    |> Enum.uniq()
-    |> List.first()
+else
+  defmodule Vite do
+    def path(asset) do
+      "http://localhost:5173/#{asset}"
+    end
   end
 end

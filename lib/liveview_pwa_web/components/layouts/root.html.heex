@@ -11,31 +11,35 @@
     <.live_title>
       {assigns[:page_title] || "LiveviewPwa"}
     </.live_title>
-    <%!-- -------------------%>
 
-    <link rel="icon" href="/icons/favicon-16.png" type="image/png" sizes="16x16" />
-    <link rel="icon" href="/icons/favicon-32.png" type="image/png" sizes="32x32" />
-    <link rel="icon" href="/icons/favicon-64.png" type="image/png" sizes="64x64" />
-    <link rel="icon" href="/icons/favicon.ico" type="image/png" sizes="48x48" />
-    <link rel="icon" href="/icons/favicon-192.png" type="image/png" sizes="192x192" />
-    <link rel="icon" href="/icons/favicon-512.png" type="image/png" sizes="512x512" />
-    <link rel="mask-icon" href="/icons/pwa-maskable-192.png" color="#FFFFFF" />
-    <link rel="mask-icon" href="/icons/pwa-maskable-512.png" color="#FFFFFF" />
+    <link rel="icon" href="icons/favicon-16.png" type="image/png" sizes="16x16" />
+    <link rel="icon" href="icons/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="icons/favicon-64.png" type="image/png" sizes="64x64" />
+    <link rel="icon" href="icons/favicon.ico" type="image/png" sizes="48x48" />
+    <link rel="icon" href="icons/favicon-192.png" type="image/png" sizes="192x192" />
+    <link rel="icon" href="icons/favicon-512.png" type="image/png" sizes="512x512" />
+    <link rel="mask-icon" href="icons/pwa-maskable-192.png" color="#FFFFFF" />
+    <link rel="mask-icon" href="icons/pwa-maskable-512.png" color="#FFFFFF" />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <%!-- -------------------%>
-    <link phx-track-static rel="stylesheet" href={ViteHelper.get_css()} crossorigin="anonymous" />
+
+    <link
+      phx-track-static
+      rel="stylesheet"
+      href={Vite.path("css/app.css")}
+      crossorigin="anonymous"
+    />
 
     <script
       defer
       phx-track-static
       nonce={assigns[:main_nonce]}
       type="module"
-      src={ViteHelper.path("js/main.js")}
+      src={Vite.path("js/main.js")}
       crossorigin="anonymous"
     >
     </script>
   </head>
-  <body class="bg-grey">
+  <body class=" dark:bg-gray-300">
     {@inner_content}
   </body>
 </html>

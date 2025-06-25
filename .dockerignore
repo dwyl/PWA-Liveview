@@ -38,9 +38,13 @@
 
 erl_crash.dump
 
+
 # Static artifacts - These should be fetched and built inside the Docker image
 /assets/node_modules/
 /assets/logo.png
+/assets/.DS_Store
+/assets/eslint.config.js
+/assets/.env.client_example
 
 /priv/phx-static-resources/
 /priv/static/

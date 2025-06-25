@@ -3,7 +3,7 @@ export default function Icon(props) {
     <img
       src={props.url}
       alt="Fly Icon"
-      class="w-6 h-6 mr-2 aspect-square object-contain"
+      class="w-6 h-6 aspect-square object-contain"
     />
   );
 }

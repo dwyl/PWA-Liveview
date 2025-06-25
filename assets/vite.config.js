@@ -1,19 +1,12 @@
 import { defineConfig } from "vite";
 
-import checker from "vite-plugin-checker";
-
 import fs from "fs"; // for file system operations
 import path from "path";
 import fg from "fast-glob"; // for recursive file scanning
 
-// <-- !! do not use @tailwindcss/vite v4
-// but v3.4 instead as Tailwind v4 throws away the tailwind.config.js file
-// and Phoenix CSS won't be parsed by Vite without it
-import tailwindcss from "tailwindcss";
+import tailwindcss from "@tailwindcss/vite";
 
-// autoprefixing CSS, eg --webkit for flex/grid, --moz for transitions, etc
-// but "ligntningcss" is used for minification and autoprefixing
-// import autoprefixer from "autoprefixer";
+// "ligntningcss" is used for minification and autoprefixing
 
 import { VitePWA } from "vite-plugin-pwa";
 import solidPlugin from "vite-plugin-solid";
@@ -75,13 +68,13 @@ const manifestOpts = {
   },
   screenshots: [
     {
-      src: "icons/Screenshot-map.png",
+      src: "/icons/Screenshot-map.png",
       type: "image/png",
       sizes: "1204x1610",
       form_factor: "wide",
     },
     {
-      src: "icons/Screenshot-stock.png",
+      src: "/icons/Screenshot-stock.png",
       type: "image/png",
       sizes: "1190x1150",
     },
@@ -150,7 +143,7 @@ const getEntryPoints = () => {
   });
   // Add WASM & CSS explicitly
   // entries.push(path.resolve(cssDir, "app.css"));
-  entries.push(path.resolve(wasmDir, "great_circle.wasm"));
+  // entries.push(path.resolve(wasmDir, "great_circle.wasm"));
 
   fg.sync([`${srcImgDir}/**/*.*`]).forEach((file) => {
     if (/\.(jpg|png|svg|webp)$/.test(file)) {
@@ -172,8 +165,9 @@ const buildOps = (mode) => ({
   cssCodeSplit: true, // Split CSS for better caching
   cssMinify: "lightningcss", // Use lightningcss for CSS minification
   rollupOptions: {
-    input: getEntryPoints(),
-    output: {
+    input:
+      mode == "production" ? getEntryPoints() : ["js/main.js", "css/app/js"],
+    output: mode === "production" && {
       assetFileNames: "assets/[name]-[hash][extname]",
       chunkFileNames: "assets/[name]-[hash].js",
       entryFileNames: "assets/[name]-[hash].js",
@@ -182,7 +176,7 @@ const buildOps = (mode) => ({
   // generate a manifest file that contains a mapping of non-hashed asset filenames
   // to their hashed versions, which can then be used by a server framework
   // to render the correct asset links.
-  manifest: true, // path  --> .vite/manifest.json.
+  manifest: true,
   path: ".vite/manifest.json",
   minify: mode === "production",
   emptyOutDir: true, // Remove old assets
@@ -193,47 +187,6 @@ const buildOps = (mode) => ({
 
 // =============================================
 // Service Worker Rentime Caching Strategies
-
-// fetch for Android
-// const FetchvAll = {
-//   urlPattern: ({ request }) => request.mode === "navigate",
-//   handler: "NetworkFirst",
-//   options: {
-//     cacheName: "pages",
-//     networkTimeoutSeconds: 3,
-//     expiration: {
-//       maxEntries: 50,
-//       maxAgeSeconds: 60 * 60 * 24, // 1 day
-//     },
-//     cacheableResponse: {
-//       statuses: [0, 200],
-//     },
-//   },
-// };
-
-// const PageShells = {
-//   urlPattern: ({ request, url }) => {
-//     // Only match navigation requests (page loads), and exclude LiveView endpoints
-//     return (
-//       request.mode === "navigate" &&
-//       !url.pathname.startsWith("/live/") &&
-//       !url.pathname.startsWith("/phoenix/") &&
-//       !url.pathname.startsWith("/api/")
-//     );
-//   },
-//   handler: "NetworkFirst",
-//   options: {
-//     cacheName: "page-shells",
-//     networkTimeoutSeconds: 3,
-//     expiration: {
-//       maxEntries: 50,
-//       maxAgeSeconds: 60 * 60 * 24, // 1 day
-//     },
-//     cacheableResponse: {
-//       statuses: [0, 200],
-//     },
-//   },
-// };
 
 const LiveView = [
   {
@@ -316,7 +269,6 @@ const Fonts = {
 };
 
 const runtimeCaching = [
-  // PageShells,
   ...LiveView,
   OtherStaticAssets,
   MapTiler, // Add the SDK route before Tiles
@@ -327,26 +279,22 @@ const runtimeCaching = [
 // PWA Configuration Generator
 // <https://vite-pwa-org.netlify.app/guide/>
 
-const PWAConfig = (mode) => ({
-  // https://vite-pwa-org.netlify.app/guide/inject-manifest.html#development
-  devOptions: {
-    enabled: mode === "development",
-    type: "module", //  ES module for dev SW
-  },
+const PWAConfig = {
+  // devOptions: {
+  //   enabled: true,
+  //   type: "module", // Use module syntax for dev server
+  //   navigateFallback: "/", // Fallback for dev server
+  // },
   suppressWarnings: true,
   injectRegister: "script", // It is injected in the main.js script
   filename: "sw.js", // Service worker filename
   strategies: "generateSW", // Let Workbox auto-generate the service worker from config
   registerType: "prompt", // App manually prompts user to update SW when available
-  devOptions: {
-    enabled: false,
-  },
   outDir: staticDir,
   manifest: manifestOpts,
   manifestFilename: "manifest.webmanifest",
-  // injectManifest: {
-  //   injectionPoint: undefined,
-  // }, // Do not inject the SW registration script as "index.html" does not exist
+
+  // injectManifest: // Do not inject the SW registration script as "index.html" does not exist
 
   // Cache exceptions
   ignoreURLParametersMatching: [
@@ -377,12 +325,12 @@ const PWAConfig = (mode) => ({
       /^_csrf$/, // CSRF tokens ],
     ],
 
-    additionalManifestEntries: [
-      { url: "/", revision: `${Date.now()}` }, // Manually precache root route
-      // { url: "/sync", revision: `${Date.now()}` }, // Manually precache sync route
-      // { url: "/yjs", revision: `${Date.now()}` }, // Manually precache elec route
-      // { url: "/map", revision: `${Date.now()}` }, // Manually precache map route
-    ],
+    // additionalManifestEntries: [
+    // { url: "/", revision: `${Date.now()}` }, // Manually precache root route
+    // { url: "/sync", revision: `${Date.now()}` }, // Manually precache sync route
+    // { url: "/yjs", revision: `${Date.now()}` }, // Manually precache elec route
+    // { url: "/map", revision: `${Date.now()}` }, // Manually precache map route
+    // ],
     runtimeCaching,
     // Update behaviour
     clientsClaim: true, // Claim control over all uncontrolled pages as soon as the SW is activated
@@ -391,9 +339,9 @@ const PWAConfig = (mode) => ({
     // while others use new ones, which could lead to inconsistent behavior in your offline capabilities.
     // Ensure HTML responses are cached correctly
     cleanupOutdatedCaches: true,
-    mode: mode === "development" ? "development" : "production", // workbox own mode
+    mode: "production", // workbox own mode
   },
-});
+};
 
 // Alias helpers =============================================
 /*
@@ -403,7 +351,7 @@ you can use @js/components/Button
 */
 const resolveConfig = {
   alias: {
-    // "@": rootDir,
+    "@": rootDir,
     "@js": jsDir,
     "@jsx": jsDir,
     "@css": cssDir,
@@ -419,16 +367,38 @@ Static Copy of icons and SEO files sitemap.xml, robots.txt
 to priv/static/icons and priv/static
 to not fingerprint them
 */
-const targets = [
-  {
-    src: path.resolve(seoDir, "**", "*"),
-    dest: path.resolve(staticDir),
-  },
-  {
-    src: path.resolve(iconsDir, "**", "*"),
-    dest: path.resolve(destIconsDir),
-  },
-];
+const getTargets = (mode) => {
+  const baseTargets = [];
+
+  // Only add targets if source directories exist
+  if (fs.existsSync(seoDir)) {
+    baseTargets.push({
+      src: path.resolve(seoDir, "**", "*"),
+      dest: path.resolve(staticDir),
+    });
+  }
+
+  if (fs.existsSync(iconsDir)) {
+    baseTargets.push({
+      src: path.resolve(iconsDir, "**", "*"),
+      dest: path.resolve(staticDir, "icons"),
+    });
+  }
+
+  if (fs.existsSync(wasmDir)) {
+    baseTargets.push({
+      src: path.resolve(wasmDir, "**", "*.wasm"),
+      dest: path.resolve(staticDir, "wasm"),
+    });
+  }
+
+  if (mode === "development") {
+    const devManifestPath = path.resolve(staticDir, "manifest.webmanifest");
+    fs.writeFileSync(devManifestPath, JSON.stringify(manifestOpts, null, 2));
+  }
+
+  return baseTargets;
+};
 
 // Compression =============================================
 // ZSTD Compression of assets
@@ -445,6 +415,16 @@ const compressOpts = {
   verbose: true,
 };
 
+// Dev server config =============================================
+const devServer = {
+  cors: { origin: "http://localhost:4000" },
+  allowedHosts: ["localhost"],
+  strictPort: true,
+  origin: "http://localhost:5173", // Vite dev server origin
+  port: 5173, // Vite dev server port
+  host: "localhost", // Vite dev server host
+};
+
 // Main config =============================================
 
 export default defineConfig(({ command, mode }) => {
@@ -459,39 +439,26 @@ export default defineConfig(({ command, mode }) => {
   return {
     base: "/", // "https://cdn.example.com/assets/", // CDN base URL
     plugins: [
-      mode == "production"
-        ? null
-        : checker({
-            eslint: {
-              lintCommand: 'eslint "./js/**/*.{js,jsx}"',
-            },
-          }),
       wasm(),
-      VitePWA(PWAConfig(mode)),
       solidPlugin(),
-      viteStaticCopy({ targets }),
-      mode == "production" ? compression(compressOpts) : null,
-      // mode == "development" ? analyzer() : null,
-      // tailwindcss(),
+      viteStaticCopy({ targets: getTargets(mode) }),
+      tailwindcss(),
+      mode === "production" && VitePWA(PWAConfig),
+      VitePWA(PWAConfig),
+      mode == "production" && compression(compressOpts),
     ],
     resolve: resolveConfig,
     // Disable default public dir (using Phoenix's)
     publicDir: false,
     build: buildOps(mode),
-    css: {
-      postcss: {
-        plugins: [tailwindcss()],
-      },
-    },
-    server: {
-      cors: {
-        origin: "http://localhost:4000", // Allow CORS for local dev
-      },
-    },
+    server: mode === "development" && devServer,
+  };
+});
 
-    define: {
-      /* Note: i
-       - mport.meta.env: Runtime access to .env variables
+/*
+define: {
+       Note: i
+       - import.meta.env: Runtime access to .env variables
        - define: Compile-time global constant replacement
 
       Example:
@@ -506,10 +473,9 @@ export default defineConfig(({ command, mode }) => {
       This is dead-code elimination after tree-shaking,
       so it will be removed in production builds.
 
-      */
+      
     },
-  };
-});
+  */
 
 // Waiting for CDN =============================================
 
@@ -525,3 +491,27 @@ export default defineConfig(({ command, mode }) => {
 //     },
 //   },
 // }
+
+// const PageShells = {
+//   urlPattern: ({ request, url }) => {
+//     // Only match navigation requests (page loads), and exclude LiveView endpoints
+//     return (
+//       request.mode === "navigate" &&
+//       !url.pathname.startsWith("/live/") &&
+//       !url.pathname.startsWith("/phoenix/") &&
+//       !url.pathname.startsWith("/api/")
+//     );
+//   },
+//   handler: "NetworkFirst",
+//   options: {
+//     cacheName: "page-shells",
+//     networkTimeoutSeconds: 3,
+//     expiration: {
+//       maxEntries: 50,
+//       maxAgeSeconds: 60 * 60 * 24, // 1 day
+//     },
+//     cacheableResponse: {
+//       statuses: [0, 200],
+//     },
+//   },
+// };

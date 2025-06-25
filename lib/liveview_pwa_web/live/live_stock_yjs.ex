@@ -12,7 +12,12 @@ defmodule LiveviewPwaWeb.StockYjsLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <.live_component module={PwaLiveComp} id="pwa_action-yjs" update_available={@update_available} />
+    <.live_component
+      :if={@env === :prod}
+      module={PwaLiveComp}
+      id="pwa_action-yjs"
+      update_available={@update_available}
+    />
     <br />
     <Users.display user_id={@user_id} module_id="users-yjs" />
     <Menu.display active_path={@active_path} />
