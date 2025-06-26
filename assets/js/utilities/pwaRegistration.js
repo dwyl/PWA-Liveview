@@ -20,7 +20,7 @@ export async function registerServiceWorker() {
       },
 
       onNeedRefresh: () => {
-        console.warn("[SW] New version is available");
+        console.log("[SW] New version is available");
         if (window.liveSocket) {
           window.dispatchEvent(
             new CustomEvent("sw-update", {

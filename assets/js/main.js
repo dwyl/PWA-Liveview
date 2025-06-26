@@ -125,9 +125,9 @@ function readCSRFToken() {
 }
 
 window.addEventListener("phx:page-loading-stop", async ({ detail }) => {
-  console.log("Page loading?", detail.to);
+  // console.log("Page loading?", detail.to);
   if (appState.isOnline) {
-    console.log("[Navigate Cache]-----", detail.to);
+    // console.log("[Navigate Cache]-----", detail.to);
     if (detail.to) {
       const path = new URL(detail.to).pathname;
       await addCurrentPageToCache(path);
@@ -136,7 +136,6 @@ window.addEventListener("phx:page-loading-stop", async ({ detail }) => {
 });
 
 // https://github.com/phoenixframework/phoenix_live_view/issues/2559
-//
 
 // JS.dispatcher for clearing cache
 window.addEventListener("phx:clear-cache", async () => {
@@ -151,19 +150,13 @@ window.addEventListener("phx:clear-cache", async () => {
   return;
 });
 
-// window.addEventListener("phx:page-loading-stop", async () => {
-//   console.log("[phx:page-loading-stop] ----- caching current page");
-//   await addCurrentPageToCache();
-// });
-
 // sent when the authenticated LiveViews mounts
 window.addEventListener("phx:access-token-ready", async ({ detail }) => {
   const { user_token, user_id } = detail;
   if (!detail.user_token || appState.userSocket) {
-    console.log("[userSocket] already set");
+    // console.log("[userSocket] already set");
     return;
   }
-  console.log("[phx:access-token-ready]");
   return await setOnLineFunctions({ user_token, user_id });
 });
 

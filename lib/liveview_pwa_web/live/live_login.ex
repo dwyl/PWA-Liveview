@@ -1,6 +1,6 @@
 defmodule LiveviewPwaWeb.LoginLive do
   use LiveviewPwaWeb, :live_view
-  alias LiveviewPwaWeb.PwaLiveComp
+  alias LiveviewPwaWeb.{Menu, PwaLiveComp}
   require Logger
 
   @impl true
@@ -13,7 +13,7 @@ defmodule LiveviewPwaWeb.LoginLive do
       update_available={@update_available}
     />
 
-    <%!-- <LiveviewPwaWeb.Menu.display active_path={@active_path} /> --%>
+    <Menu.display active_path={@active_path} />
 
     <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto lg:py-0 mt-8">
       <div class={[
