@@ -1,7 +1,5 @@
 if Application.compile_env!(:liveview_pwa, :env) == :prod do
   defmodule Vite do
-    require Logger
-
     @moduledoc """
     A helper module to manage Vite file discovery.
 
@@ -9,6 +7,7 @@ if Application.compile_env!(:liveview_pwa, :env) == :prod do
 
     It finds the fingerprinted name in PROD mode from the .vite/manifest.json file.
     """
+    require Logger
 
     # Ensure the manifest is loaded at compile time in production
     def path(asset) do

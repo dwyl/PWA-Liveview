@@ -1,14 +1,16 @@
 defmodule Airport do
-  use Ecto.Schema
-  alias Exqlite.Sqlite3
-  require Logger
-
   @moduledoc """
   - define `schema` matching CSV format:
   1|Goroka Airport|Goroka|Papua New Guinea|GKA|AYGA|-6.08168983459|145.391998291|5282.0|10|U|Pacific/Port_Moresby|airport|OurAirports
 
   - getter `municipalities/0` returns all airports from the database.
   """
+
+  use Ecto.Schema
+
+  alias Exqlite.Sqlite3
+
+  require Logger
 
   # schema "airports" do
   #   field(:airport_id, :string)

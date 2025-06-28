@@ -29,3 +29,10 @@ cre.txt
 mcp-proxy
 _old/
 
+node_modules
+Dockerfile.bun
+.github/
+assets/.prettier.json
+assets/eslint.config.json
+assets/logo.png
+assets/package.json.bun

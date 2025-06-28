@@ -1,11 +1,4 @@
 defmodule LiveviewPwaWeb.MapLive do
-  use LiveviewPwaWeb, :live_view
-  use Phoenix.Component
-  alias Phoenix.LiveView.AsyncResult
-  alias Phoenix.PubSub
-  alias LiveviewPwaWeb.{Menu, PwaLiveComp, Users}
-  # alias LiveviewPwaWeb.Presence
-
   @moduledoc """
   LiveView for the map page.
   This module handles the rendering of the map and the
@@ -14,6 +7,15 @@ defmodule LiveviewPwaWeb.MapLive do
   airports.
 
   """
+  use LiveviewPwaWeb, :live_view
+  use Phoenix.Component
+
+  alias LiveviewPwaWeb.{Menu, PwaLiveComp, Users}
+  alias Phoenix.LiveView.AsyncResult
+  alias Phoenix.PubSub
+
+  # alias LiveviewPwaWeb.Presence
+
   require Logger
 
   @impl true
@@ -118,11 +120,7 @@ defmodule LiveviewPwaWeb.MapLive do
   end
 
   # all good cache-checked :ok
-  def handle_event(
-        "cache-checked",
-        %{"cached" => true, "version" => hash},
-        %{assigns: %{hash: hash}} = socket
-      ) do
+  def handle_event("cache-checked", %{"cached" => true, "version" => hash}, %{assigns: %{hash: hash}} = socket) do
     {:noreply, socket}
   end
 
@@ -161,9 +159,7 @@ defmodule LiveviewPwaWeb.MapLive do
       PubSub.broadcast(
         :pubsub,
         "remove_airport",
-        Map.merge(old_airport, %{
-          "action" => "delete_airports"
-        })
+        Map.put(old_airport, "action", "delete_airports")
       )
 
     {:noreply, socket}
@@ -192,10 +188,10 @@ defmodule LiveviewPwaWeb.MapLive do
     Logger.debug("#{user_id} Received PubSub event: #{action} from #{from}")
 
     # delete action has no "from" field as it applies to all clients
-    if user_id != from do
-      {:noreply, push_event(socket, action, payload)}
-    else
+    if user_id == from do
       {:noreply, socket}
+    else
+      {:noreply, push_event(socket, action, payload)}
     end
   end
 

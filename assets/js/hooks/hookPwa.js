@@ -1,5 +1,5 @@
 // import { appState } from "@js/stores/AppStore.js";
-import { pwaRegistry } from "@js/main";
+import { appState } from "@js/stores/AppStore";
 
 export const PwaHook = {
   destroyed() {
@@ -17,8 +17,6 @@ export const PwaHook = {
       return;
     }
 
-    // received from regissterServiceWorker()
-
     this.handleReady = (event) => {
       // push to the LV for the on_mount/attach_hook to fire the flash
       _this.pushEvent("sw-lv-ready", {
@@ -35,9 +33,7 @@ export const PwaHook = {
     };
 
     this.handleEvent("sw-lv-skip-waiting", async () => {
-      if (pwaRegistry.updateSW) {
-        return await pwaRegistry.updateSW();
-      }
+      return await appState.pwaRegistry();
     });
 
     this.handleError = (event) => {

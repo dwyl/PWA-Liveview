@@ -2,6 +2,7 @@
 ARG ELIXIR_VERSION=1.18.3
 ARG OTP_VERSION=27.3.4
 ARG DEBIAN_VERSION=bullseye-20250428-slim
+ARG pnpm_VERSION=10.12.4
 
 
 ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
@@ -21,11 +22,11 @@ RUN apt-get update -y && apt-get install -y \
 
 ARG MIX_ENV
 ARG NODE_ENV
-ENV MIX_ENV=${MIX_ENV} \
-  NODE_ENV=${NODE_ENV}
+ENV MIX_ENV=${MIX_ENV} 
+ENV NODE_ENV=${NODE_ENV}
 
 # Install pnpm
-RUN corepack enable && corepack prepare pnpm@10.12.1 --activate
+RUN corepack enable && corepack prepare pnpm@${pnpm_VERSION} --activate
 
 # Prepare build dir
 WORKDIR /app
@@ -33,7 +34,7 @@ WORKDIR /app
 # Install Elixir deps
 RUN mix local.hex --force && mix local.rebar --force
 
-COPY mix.exs mix.lock ./
+COPY mix.exs mix.lock pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN mix deps.get --only ${MIX_ENV}
 RUN mkdir config
 
@@ -43,15 +44,12 @@ RUN mix deps.compile
 
 # compile Node deps
 WORKDIR /app/assets
-COPY assets/package.json assets/pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY assets/package.json  ./
 WORKDIR /app
+RUN pnpm install --frozen-lockfile
 
-# Copy app server code---------
-#### Note: 
-#  the server code may contain Tailwind classes
-# and Tailwind will read the server (and client code)
-# thus needs to be copied before the assets
+# Copy app server code before building the assets
+# since the server code may contain Tailwind code.
 COPY lib lib
 
 # Copy, install & build assets--------

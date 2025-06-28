@@ -1,8 +1,4 @@
 defmodule LiveviewPwa.PresenceChannel do
-  use Phoenix.Channel
-  alias LiveviewPwa.Presence
-  require Logger
-
   @moduledoc """
   Channel for presence tracking.
   This channel tracks user presence and broadcasts the list of users
@@ -10,6 +6,12 @@ defmodule LiveviewPwa.PresenceChannel do
   It uses Phoenix Presence to manage the presence state
   and sends teh Presence list via a Channel.
   """
+
+  use Phoenix.Channel
+
+  alias LiveviewPwa.Presence
+
+  require Logger
 
   @impl true
   def join("proxy:presence", _params, socket) do

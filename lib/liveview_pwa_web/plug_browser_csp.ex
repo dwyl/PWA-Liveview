@@ -1,11 +1,11 @@
 defmodule BrowserCSP do
-  @behaviour Plug
-  import Plug.Conn
-
   @moduledoc """
   This module is a Plug that sets the Content Security Policy (CSP) headers
   For WASM ressource, you need "wasm-unsafe-eval" in the script-src directive.
   """
+  @behaviour Plug
+
+  import Plug.Conn
 
   # Two years in seconds (recommended for preload)
   @hsts_max_age 63_072_000

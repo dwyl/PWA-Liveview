@@ -1,9 +1,11 @@
 defmodule LiveviewPwaWeb.LoginController do
   use LiveviewPwaWeb, :controller
-  require Logger
+
   alias LiveviewPwaWeb.Api.UserTokenController, as: ApiUserToken
   alias LiveviewPwaWeb.Endpoint
   alias Phoenix.Token
+
+  require Logger
 
   # CONTROLLER VERSION
   # This is the initial page load, we don't have a user_id yet
@@ -12,11 +14,13 @@ defmodule LiveviewPwaWeb.LoginController do
   def index(conn, _params) do
     os = get_session(conn, :os) || "unknown"
     id = get_session(conn, :user_id) || nil
+    env = Application.fetch_env!(:liveview_pwa, :env)
 
     conn
     |> put_layout(html: {LiveviewPwaWeb.Layouts, :app})
     |> assign(:os, os)
     |> assign(:user_id, id)
+    |> assign(:env, env)
     |> assign(:page_title, "Login")
     |> assign(:active_path, "/")
     |> render(:login)

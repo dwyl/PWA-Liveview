@@ -1,23 +1,5 @@
 import Config
 
-config :liveview_pwa,
-  generators: [timestamp_type: :utc_datetime]
-
-config :liveview_pwa,
-  ecto_repos: [LiveviewPwa.PgRepo, LiveviewPwa.Sql3Repo]
-
-config :liveview_pwa, :csp_nonce, :crypto.strong_rand_bytes(16) |> Base.encode16()
-
-config :liveview_pwa,
-  access_token_ttl: 60,
-  refresh_token_ttl: 2 * 60
-
-config :liveview_pwa, LiveviewPwa.Sql3Repo,
-  adapter: Ecto.Adapters.SQLite3,
-  default_transaction_mode: :immediate,
-  show_sensitive_data_on_connection_error: true,
-  pool_size: 5
-
 config :exqlite, force_build: true
 
 config :liveview_pwa, LiveviewPwa.PgRepo,
@@ -25,12 +7,11 @@ config :liveview_pwa, LiveviewPwa.PgRepo,
   show_sensitive_data_on_connection_error: true,
   pool_size: 5
 
-config :phoenix_sync,
-  env: config_env(),
-  mode: :embedded,
-  repo: LiveviewPwa.PgRepo
-
-config :liveview_pwa, env: config_env()
+config :liveview_pwa, LiveviewPwa.Sql3Repo,
+  adapter: Ecto.Adapters.SQLite3,
+  default_transaction_mode: :immediate,
+  show_sensitive_data_on_connection_error: true,
+  pool_size: 5
 
 # Configures the endpoint
 config :liveview_pwa, LiveviewPwaWeb.Endpoint,
@@ -43,6 +24,20 @@ config :liveview_pwa, LiveviewPwaWeb.Endpoint,
     layout: false
   ]
 
+config :liveview_pwa, :csp_nonce, :crypto.strong_rand_bytes(16) |> Base.encode16()
+
+config :liveview_pwa,
+  access_token_ttl: 60,
+  refresh_token_ttl: 2 * 60
+
+config :liveview_pwa,
+  ecto_repos: [LiveviewPwa.PgRepo, LiveviewPwa.Sql3Repo]
+
+config :liveview_pwa, env: config_env()
+
+config :liveview_pwa,
+  generators: [timestamp_type: :utc_datetime]
+
 # Configures Elixir's Logger
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
@@ -50,6 +45,11 @@ config :logger, :console,
 
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
+
+config :phoenix_sync,
+  env: config_env(),
+  mode: :embedded,
+  repo: LiveviewPwa.PgRepo
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

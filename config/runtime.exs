@@ -45,11 +45,6 @@ if config_env() == :prod do
     System.get_env("DATABASE_PATH") ||
       "/db/main.sql3"
 
-  config :liveview_pwa, LiveviewPwa.Sql3Repo,
-    database: database_path,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
-    show_sensitive_data_on_connection_error: true
-
   database_url =
     System.get_env("DATABASE_URL") ||
       raise """
@@ -64,19 +59,6 @@ if config_env() == :prod do
     socket_options: maybe_ipv6
   ]
 
-  config :liveview_pwa, LiveviewPwa.PgRepo, pg_config
-
-  config :phoenix_sync,
-    env: config_env(),
-    mode: :embedded,
-    repo: LiveviewPwa.PgRepo
-
-  # config :electric,
-  #   replication_connection_opts: Electric.Config.parse_postgresql_uri!(pg_config[:url])
-
-  config :liveview_pwa, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
-  config :logger, level: :info
-
   secret_key_base =
     System.get_env("SECRET_KEY_BASE") ||
       raise """
@@ -87,7 +69,18 @@ if config_env() == :prod do
   host = System.get_env("PHX_HOST") || "localhost"
   port = String.to_integer(System.get_env("PORT") || "4000")
 
+  config :liveview_pwa, LiveviewPwa.PgRepo, pg_config
+
+  config :liveview_pwa, LiveviewPwa.Sql3Repo,
+    database: database_path,
+    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
+    show_sensitive_data_on_connection_error: true
+
+  # config :electric,
+
   # Enable IPv6 and bind on all interfaces.
+  #   replication_connection_opts: Electric.Config.parse_postgresql_uri!(pg_config[:url])
+
   # Set it to  {0, 0, 0, 0, 0, 0, 0, 1} for local network only access.
   # See the documentation on https://hexdocs.pm/bandit/Bandit.html#t:options/0
   # for details about using IPv6 vs IPv4 and loopback vs public addresses.
@@ -105,11 +98,20 @@ if config_env() == :prod do
     check_origin: ["//#{host}", "//localhost"],
     force_ssl: [hsts: true]
 
+  config :liveview_pwa, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
+
   config :liveview_pwa,
     # 15 minutes
     access_token_ttl: 60 * 15,
     # 1 day
     refresh_token_ttl: 60 * 60 * 24
+
+  config :logger, level: :info
+
+  config :phoenix_sync,
+    env: config_env(),
+    mode: :embedded,
+    repo: LiveviewPwa.PgRepo
 
   # ## SSL Support
   #

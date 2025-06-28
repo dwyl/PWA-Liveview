@@ -1,45 +1,45 @@
-<header class="px-4 sm:px-6 lg:px-8">
-  <div class="flex items-center justify-between py-3 text-sm">
-    <section class="relative flex items-center gap-4">
-      <button
-        id="hamburger-menu"
-        type="button"
-        class="flex flex-col justify-center items-center w-8 h-8 space-y-1 text-black"
-        phx-click={
-          JS.toggle(to: "#tech-menu") |> JS.toggle_class("menu-open", to: "#hamburger-menu")
-        }
-        aria-label="Toggle menu"
-      >
-        <.icon name="hero-bars-3" />
-      </button>
-      <LiveviewPwaWeb.Techs.display />
+<main class="h-screen bg-gray-300 px-4 py-2 sm:px-6 lg:px-8 mx-auto max-w-2xl">
+  <header class="bg-gray-300 px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between py-3 text-sm">
+      <section class="relative flex items-center gap-4">
+        <button
+          id="hamburger-menu"
+          type="button"
+          class="flex flex-col justify-center items-center w-8 h-8 space-y-1 text-black"
+          phx-click={
+            JS.toggle(to: "#tech-menu") |> JS.toggle_class("menu-open", to: "#hamburger-menu")
+          }
+          aria-label="Toggle menu"
+        >
+          <.icon name="hero-bars-3" />
+        </button>
+        <LiveviewPwaWeb.Techs.display />
 
-      <div>
-        <.link id="login-link" alt="login" aria-label="login" href={~p"/"}>
-          <.icon name="hero-home" class="text-black h-5 w-5" />
-        </.link>
-      </div>
-    </section>
-    <section class="text-lg font-semibold leading-6 text-zinc-900 flex items-center gap-4">
-      <button
-        type="button"
-        id="clear-cache-button"
-        phx-click={JS.dispatch("phx:clear-cache")}
-        aria-label="clear cache"
-      >
-        <.icon name="hero-arrow-path" class="h-5 w-5" />
-      </button>
-      <img
-        class="aspect-square"
-        width="30px"
-        alt="status"
-        id="online-status"
-        src={Vite.path("images/online.svg")}
-      />
-    </section>
-  </div>
-</header>
-<main class="px-4 py-20 sm:px-6 lg:px-8 mx-auto max-w-2xl" id="main-content">
+        <div>
+          <.link id="login-link" alt="login" aria-label="login" href={~p"/"}>
+            <.icon name="hero-home" class="text-black h-5 w-5" />
+          </.link>
+        </div>
+      </section>
+      <section class="text-lg font-semibold leading-6 text-zinc-900 flex items-center gap-4">
+        <button
+          type="button"
+          id="clear-cache-button"
+          phx-click={JS.dispatch("phx:clear-cache")}
+          aria-label="clear cache"
+        >
+          <.icon name="hero-arrow-path" class="h-5 w-5" />
+        </button>
+        <img
+          class="aspect-square"
+          width="30px"
+          alt="status"
+          id="online-status"
+          src={Vite.path("images/online.svg")}
+        />
+      </section>
+    </div>
+  </header>
   <.flash_group flash={@flash} />
   <!-- <div class="flex items-center gap-2">
     <button class="border p-2  hidden items-center gap-2" id="install-button" data-os={@os}>
@@ -51,5 +51,7 @@
     </button>
   </div>
 -->
-  {@inner_content}
+  <div id="main-content">
+    {@inner_content}
+  </div>
 </main>

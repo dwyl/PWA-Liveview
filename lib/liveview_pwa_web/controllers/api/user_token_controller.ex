@@ -1,15 +1,14 @@
 defmodule LiveviewPwaWeb.Api.UserTokenController do
   use LiveviewPwaWeb, :controller
+
   alias LiveviewPwaWeb.Endpoint
   alias Phoenix.Token
 
   require Logger
 
-  def access_ttl,
-    do: Application.get_env(:liveview_pwa, :access_token_ttl, 30)
+  def access_ttl, do: Application.get_env(:liveview_pwa, :access_token_ttl, 30)
 
-  def refresh_ttl,
-    do: Application.get_env(:liveview_pwa, :refresh_token_ttl, 60)
+  def refresh_ttl, do: Application.get_env(:liveview_pwa, :refresh_token_ttl, 60)
 
   def access_salt, do: "user token"
   def refresh_salt, do: "refresh token"

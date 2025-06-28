@@ -1,15 +1,4 @@
 defmodule LiveviewPwaWeb.MountUser do
-  import Phoenix.LiveView
-  import Phoenix.Component
-  require Logger
-
-  use Phoenix.VerifiedRoutes,
-    router: LiveviewPwaWeb.Router,
-    endpoint: LiveviewPwaWeb.Endpoint,
-    statics: ~w(assets fonts images favicon.ico robots.txt)
-
-  @max 20
-
   @moduledoc """
   This module is used for shared features between the LiveView modules.
   in the same sesson.
@@ -18,6 +7,18 @@ defmodule LiveviewPwaWeb.MountUser do
   - handle the shared PWA button delegated to a LC
   - handle the params to set the active path
   """
+
+  use Phoenix.VerifiedRoutes,
+    router: LiveviewPwaWeb.Router,
+    endpoint: LiveviewPwaWeb.Endpoint,
+    statics: ~w(assets fonts images favicon.ico robots.txt)
+
+  import Phoenix.Component
+  import Phoenix.LiveView
+
+  require Logger
+
+  @max 20
 
   def on_mount(:ensure_authenticated, _p, %{"user_id" => user_id} = session, socket) do
     os = session["os"]

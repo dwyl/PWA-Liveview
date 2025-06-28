@@ -1,6 +1,4 @@
 defmodule LiveviewPwaWeb.Endpoint do
-  use Phoenix.Endpoint, otp_app: :liveview_pwa
-
   @moduledoc """
   The session will be stored in the cookie and signed,
   this means its contents can be read but not tampered with.
@@ -21,6 +19,12 @@ defmodule LiveviewPwaWeb.Endpoint do
   against the application environment variable `:websocket_origins`.
   """
 
+  use Phoenix.Endpoint, otp_app: :liveview_pwa
+
+  alias Phoenix.Ecto.CheckRepoStatus
+  alias Phoenix.LiveDashboard.RequestLogger
+  alias Phoenix.LiveView.Socket
+
   @session_options [
     store: :cookie,
     key: "_liveview_pwa_key",
@@ -28,7 +32,7 @@ defmodule LiveviewPwaWeb.Endpoint do
     same_site: "Lax"
   ]
 
-  socket "/live", Phoenix.LiveView.Socket,
+  socket "/live", Socket,
     websocket: [
       connect_info: [{:session, @session_options}],
       # <- reduces payload size of airports
@@ -73,10 +77,10 @@ defmodule LiveviewPwaWeb.Endpoint do
     socket "/phoenix/live_reload/socket", Phoenix.LiveReloader.Socket
     plug Phoenix.LiveReloader
     plug Phoenix.CodeReloader
-    plug Phoenix.Ecto.CheckRepoStatus, otp_app: :liveview_pwa
+    plug CheckRepoStatus, otp_app: :liveview_pwa
   end
 
-  plug Phoenix.LiveDashboard.RequestLogger,
+  plug RequestLogger,
     param_key: "request_logger",
     cookie_key: "request_logger"
 

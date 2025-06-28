@@ -362,12 +362,50 @@ const resolveConfig = {
 };
 
 // Static Copy =============================================
+
+// Dev static assets copy in priv/static
+function copyStaticAssetsDev() {
+  console.log("[vite.config] Copying non-fingerprinted assets in dev mode...");
+
+  const copyTargets = [
+    {
+      srcDir: seoDir,
+      destDir: staticDir, // place directly into priv/static
+    },
+    {
+      srcDir: iconsDir,
+      destDir: path.resolve(staticDir, "icons"),
+    },
+  ];
+
+  copyTargets.forEach(({ srcDir, destDir }) => {
+    if (!fs.existsSync(srcDir)) {
+      console.log(`[vite.config] Source dir not found: ${srcDir}`);
+      return;
+    }
+    if (!fs.existsSync(destDir)) {
+      fs.mkdirSync(destDir, { recursive: true });
+    }
+
+    fg.sync(`${srcDir}/**/*.*`).forEach((srcPath) => {
+      const relPath = path.relative(srcDir, srcPath);
+      const destPath = path.join(destDir, relPath);
+      const destSubdir = path.dirname(destPath);
+      if (!fs.existsSync(destSubdir)) {
+        fs.mkdirSync(destSubdir, { recursive: true });
+      }
+
+      fs.copyFileSync(srcPath, destPath);
+    });
+  });
+}
+
 /* 
-Static Copy of icons and SEO files sitemap.xml, robots.txt
+Build Static Copy of icons and SEO files sitemap.xml, robots.txt
 to priv/static/icons and priv/static
 to not fingerprint them
 */
-const getTargets = (mode) => {
+const getBuildTargets = () => {
   const baseTargets = [];
 
   // Only add targets if source directories exist
@@ -392,10 +430,8 @@ const getTargets = (mode) => {
     });
   }
 
-  if (mode === "development") {
-    const devManifestPath = path.resolve(staticDir, "manifest.webmanifest");
-    fs.writeFileSync(devManifestPath, JSON.stringify(manifestOpts, null, 2));
-  }
+  const devManifestPath = path.resolve(staticDir, "manifest.webmanifest");
+  fs.writeFileSync(devManifestPath, JSON.stringify(manifestOpts, null, 2));
 
   return baseTargets;
 };
@@ -423,16 +459,18 @@ const devServer = {
   origin: "http://localhost:5173", // Vite dev server origin
   port: 5173, // Vite dev server port
   host: "localhost", // Vite dev server host
+  watch: {
+    ignored: ["**/priv/static/**", "**/lib/**", "**/*.ex", "**/*.exs"],
+  },
 };
 
 // Main config =============================================
 
 export default defineConfig(({ command, mode }) => {
-  if (command != "build") {
-    process.stdin.on("close", () => {
-      process.exit(0);
-    });
-
+  if (command == "serve") {
+    console.log("[vite.config] Running in development mode");
+    copyStaticAssetsDev();
+    process.stdin.on("close", () => process.exit(0));
     process.stdin.resume();
   }
 
@@ -441,15 +479,14 @@ export default defineConfig(({ command, mode }) => {
     plugins: [
       wasm(),
       solidPlugin(),
-      viteStaticCopy({ targets: getTargets(mode) }),
+      viteStaticCopy({ targets: getBuildTargets() }),
       tailwindcss(),
-      mode === "production" && VitePWA(PWAConfig),
       VitePWA(PWAConfig),
       mode == "production" && compression(compressOpts),
     ],
     resolve: resolveConfig,
     // Disable default public dir (using Phoenix's)
-    publicDir: false,
+    publicDir: mode === "development" ? "public" : false,
     build: buildOps(mode),
     server: mode === "development" && devServer,
   };

@@ -30,6 +30,14 @@
     />
 
     <script
+      :if={@env === :dev}
+      type="module"
+      nonce={assigns[:main_nonce]}
+      src="http://localhost:5173/@vite/client"
+    >
+    </script>
+
+    <script
       defer
       phx-track-static
       nonce={assigns[:main_nonce]}
@@ -39,7 +47,7 @@
     >
     </script>
   </head>
-  <body class=" dark:bg-gray-300">
+  <body class="h-full">
     {@inner_content}
   </body>
 </html>

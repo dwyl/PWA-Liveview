@@ -24,6 +24,7 @@ defmodule LiveviewPwaWeb.Techs do
   @moduledoc false
   use Phoenix.Component
   use LiveviewPwaWeb, :verified_routes
+
   alias LiveviewPwaWeb.Tech
   alias Phoenix.LiveView.JS
 

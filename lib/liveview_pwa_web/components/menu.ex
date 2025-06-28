@@ -1,11 +1,12 @@
 defmodule LiveviewPwaWeb.Menu do
-  use Phoenix.Component
-  import LiveviewPwaWeb.CoreComponents, only: [icon: 1]
-  use LiveviewPwaWeb, :verified_routes
-
   @moduledoc """
   A menu component that displays navigation links for the application.
   """
+
+  use Phoenix.Component
+  use LiveviewPwaWeb, :verified_routes
+
+  import LiveviewPwaWeb.CoreComponents, only: [icon: 1]
 
   defp session_menu do
     [

@@ -1,8 +1,4 @@
 defmodule LiveviewPwa.Counter do
-  use GenServer
-  alias Exqlite.Sqlite3
-  require Logger
-
   @moduledoc """
   A GenServer interface to handle synchronous calls to save
   and retrieve a single counter value in a SQLite database,
@@ -14,6 +10,12 @@ defmodule LiveviewPwa.Counter do
 
   Uses Exqlite for DB access.
   """
+
+  use GenServer
+
+  alias Exqlite.Sqlite3
+
+  require Logger
 
   ## Public API
 

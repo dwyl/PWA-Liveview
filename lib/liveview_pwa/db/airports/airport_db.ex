@@ -1,14 +1,15 @@
 defmodule AirportDB do
-  use GenServer, restart: :transient
-  alias Exqlite.Sqlite3
-  require Logger
-
   @moduledoc """
   This module is responsible for managing the SQLite database connection
   and ensuring that the airports data is loaded into the database.
   It handles the initialization of the database, including setting up
   the necessary tables and inserting data from a CSV file.
   """
+  use GenServer, restart: :transient
+
+  alias Exqlite.Sqlite3
+
+  require Logger
 
   ### Public API
   def start_link([db]) do

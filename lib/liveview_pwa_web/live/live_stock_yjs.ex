@@ -1,13 +1,13 @@
 defmodule LiveviewPwaWeb.StockYjsLive do
+  @moduledoc """
+  LiveView for the stock_yjs page.
+  """
+
   use LiveviewPwaWeb, :live_view
   # alias Phoenix.PubSub
   alias LiveviewPwaWeb.{Menu, PwaLiveComp, Users}
 
   require Logger
-
-  @moduledoc """
-  LiveView for the stock_yjs page.
-  """
 
   @impl true
   def render(assigns) do

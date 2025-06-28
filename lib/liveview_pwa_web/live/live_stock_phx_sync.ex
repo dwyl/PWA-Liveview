@@ -1,13 +1,13 @@
 defmodule LiveviewPwaWeb.StockPhxSyncLive do
   use LiveviewPwaWeb, :live_view
 
+  import LiveviewPwaWeb.CoreComponents
+  import Phoenix.Sync.LiveView
+
   alias LiveviewPwa.PhxSyncCount
   alias LiveviewPwaWeb.{Menu, PwaLiveComp, Users}
   # alias LiveviewPwaWeb.Presence
 
-  import LiveviewPwaWeb.CoreComponents
-
-  import Phoenix.Sync.LiveView
   require Logger
 
   @impl true

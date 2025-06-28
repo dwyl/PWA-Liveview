@@ -101,13 +101,18 @@ The standalone PWA is 2.1 MB (page weigth).
   - [Login and rotating access token](#login-and-rotating-access-token)
   - [Navigation](#navigation)
   - [Vite](#vite)
-    - [Configuration and settings](#configuration-and-settings)
-      - [HMR in DEV mode](#hmr-in-dev-mode)
-      - [Tailwind v4](#tailwind-v4)
-      - [Import assets](#import-assets)
-      - [Optmise CSS with `lightningCSS` in prod mode](#optmise-css-with-lightningcss-in-prod-mode)
-      - [Client Env](#client-env)
+    - [Package.json and `pnpm` workspace (nor not)](#packagejson-and-pnpm-workspace-nor-not)
+    - [Phoenix live\_reload](#phoenix-live_reload)
+    - [HMR in DEV mode](#hmr-in-dev-mode)
+    - ["env" config](#env-config)
+    - [Root layout in :dev/:prod setup](#root-layout-in-devprod-setup)
+    - [Tailwind v4](#tailwind-v4)
+    - [Resolve assets with Vite config](#resolve-assets-with-vite-config)
+    - [Optmise CSS with `lightningCSS` in prod mode](#optmise-css-with-lightningcss-in-prod-mode)
+    - [Client Env](#client-env)
     - [Static assets](#static-assets)
+      - [`Vite.ex` module](#viteex-module)
+      - [Static copy](#static-copy)
       - [DEV mode](#dev-mode)
       - [PROD mode](#prod-mode)
     - [Performance optimisation: Dynamic CSS loading](#performance-optimisation-dynamic-css-loading)
@@ -564,22 +569,81 @@ This is implemented in [navigate.js](https://github.com/dwyl/PWA-Liveview/blob/m
 
 ## Vite
 
-Run `pnpm init` and `pnpm install` to install "package.json", or add packages with eg `pnpm add -D taildwindcss @tailwindcss/vite`.
-
-```json
-"devDependencies": {
-  "vite": "npm:rolldown-vite@^6.3.21",
-  [...]
-}
-```
-
-### Configuration and settings
+Source: < https://vite.dev/guide/backend-integration.html>
 
 All the client code is managed by `Vite` and done in the file [vite.config.js](https://github.com/dwyl/PWA-Liveview/blob/main/assets/vite.config.js).
 
-> Most declarations are done programatically as it is run by `NodeJS`.
+### Package.json and `pnpm` workspace (nor not)
 
-#### HMR in DEV mode
+You can use workspace.
+From the root folder, add a file "pnpm-workpsace.yml".
+You reference the "assets" folder and the "deps" folder.
+
+```yml
+packages:
+  - assets
+  - deps/phoenix
+  - deps/phoenix_html
+  - deps/phoenix_live_view
+```
+
+Then go to the "assets"folder, and:
+
+- run `pnpm init`, 
+- add the packages you want, eg `pnpm add -D taildwindcss @tailwindcss/vite`.
+
+```json
+{
+  "dependencies": {
+    "phoenix": "workspace:*",
+    "phoenix_html": "workspace:*",
+    "phoenix_live_view": "workspace:*", 
+    "topbar": "^3.0.0"
+    };
+  "devDependencies": {
+    "vite": "npm:rolldown-vite@^6.3.21",
+    "@tailwindcss/vite": "^4.1.11",
+    "tailwindcss": "^4.1.11",
+    "daisyui": "^5.0.43",
+    [...]
+  }
+}
+```
+
+Then, return to the root folder and run `pnpm i`.
+
+Alternatively, you may _not use workspace_ and set directly reference `phoenix` with:
+
+```json
+{
+  "dependencies": {
+    "phoenix": "file:../deps/phoenix",
+    "phoenix_html": "file:../deps/phoenix_html",
+    "phoenix_live_view": "file:../deps/phoenix_live_view",
+  },
+  "devDependencies": {
+    [...]
+  }
+}
+```
+
+From the folder "assets", you can run `pnpm i` (and `pnpm add ...`).
+
+### Phoenix live_reload
+
+In "dev.exs", use the following in "config :liveview_pwa, LiveviewPwaWeb.Endpoint,":
+
+```elixir
+live_reload: [
+    web_console_logger: true,
+    patterns: [
+      ~r"lib/liveview_pwa_web/(controllers|live|components|router)/.*\.(ex|heex)$",
+      ~r"lib/liveview_pwa_web/.*/.*\.heex$"
+    ]
+  ],
+```
+
+### HMR in DEV mode
 
 Besides the `live_reload`, there is a watcher configured in "config/dev.exs" which replaces, thus removes, `esbuild` and `tailwindCSS` (which are also removed from the mix deps).
 
@@ -587,7 +651,7 @@ Besides the `live_reload`, there is a watcher configured in "config/dev.exs" whi
 watchers: [
     pnpm: [
       "vite",
-      "dev",
+      "serve",
       "--mode",
       "development",
       "--config",
@@ -597,8 +661,58 @@ watchers: [
   ]
 ```
 
-#### Tailwind v4
+### "env" config
 
+Add an assign "env":
+
+```elixir
+# config.exs
+config :liveview_pwa, env: config_env()
+```
+
+and assign it in a live component and/or controller to pass the value:
+
+```elixir
+#xx_live.ex
+
+socket |> assign(:env, Application.fetch_env!(:liveview_pwa, :env))
+```
+
+### Root layout in :dev/:prod setup
+
+Modify the layout "root.html.heex" to:
+
+- use the `Vite.ex` module to set the correct paths for the files
+- bring in the `Vite` WebSocket _only in dev mode_ via the assign `@env`.
+
+```elixir
+<link
+  phx-track-static
+  rel="stylesheet"
+  href={Vite.path("css/app.css")}
+  crossorigin="anonymous"
+/>
+
+<script
+  :if={@env === :dev}
+  type="module"
+  nonce={assigns[:main_nonce]}
+  src="http://localhost:5173/@vite/client"
+>
+</script>
+
+<script
+  defer
+  phx-track-static
+  nonce={assigns[:main_nonce]}
+  type="module"
+  src={Vite.path("js/main.js")}
+  crossorigin="anonymous"
+>
+</script>
+```
+
+### Tailwind v4
 
 Tailwind is used as a plugin. You add `tailwindcss` and `@tailwindcss/vite` to your dev dependencies.
 
@@ -618,12 +732,73 @@ Then, in "css/app.css", you import tailwindcss and add the `@source` where you u
 
 ```css
 @import tailwindcss;
-@source "../css";
-@source "../js";
-@source "../../lib/liveview_pwa_web";
+@source "../**/.*{js, jsx}";
+@source "../../lib/liveview_pwa_web/";
+@plugin "daisyui";
+@plugin "../vendor/heroicons.js";
 ```
 
-#### Import assets
+where "heroicons.js" is set as (cf `phoenix 1.8`):
+
+<details>
+<summary>--- heroicons.js ---</summary>
+
+```js
+const plugin = require("tailwindcss/plugin");
+const fs = require("fs");
+const path = require("path");
+
+module.exports = plugin(function ({ matchComponents, theme }) {
+  const iconsDir = path.join(__dirname, "../../deps/heroicons/optimized");
+  const values = {};
+  const icons = [
+    ["", "/24/outline"],
+    ["-solid", "/24/solid"],
+    ["-mini", "/20/solid"],
+    ["-micro", "/16/solid"],
+  ];
+  icons.forEach(([suffix, dir]) => {
+    fs.readdirSync(path.join(iconsDir, dir)).forEach((file) => {
+      const name = path.basename(file, ".svg") + suffix;
+      values[name] = { name, fullPath: path.join(iconsDir, dir, file) };
+    });
+  });
+  matchComponents(
+    {
+      hero: ({ name, fullPath }) => {
+        let content = fs
+          .readFileSync(fullPath)
+          .toString()
+          .replace(/\r?\n|\r/g, "");
+        content = encodeURIComponent(content);
+        let size = theme("spacing.6");
+        if (name.endsWith("-mini")) {
+          size = theme("spacing.5");
+        } else if (name.endsWith("-micro")) {
+          size = theme("spacing.4");
+        }
+        return {
+          [`--hero-${name}`]: `url('data:image/svg+xml;utf8,${content}')`,
+          "-webkit-mask": `var(--hero-${name})`,
+          mask: `var(--hero-${name})`,
+          "mask-repeat": "no-repeat",
+          "background-color": "currentColor",
+          "vertical-align": "middle",
+          display: "inline-block",
+          width: size,
+          height: size,
+        };
+      },
+    },
+    { values }
+  );
+});
+```
+
+</details>
+<br/>
+
+### Resolve assets with Vite config
 
 You will benefit from using the `resolve` config by using alias.
 For example:
@@ -636,11 +811,11 @@ import img from "@assets/images/img.web";
 const img = new URL("@assets/images/img.web`", import.meta.url).href;
 ```
 
-#### Optmise CSS with `lightningCSS` in prod mode
+### Optmise CSS with `lightningCSS` in prod mode
 
 We use `lightningCSS` in the rollup options to further optimze the CSS. There is no need to bring in `autoprefixer` since it is built in (eg  "-webkit" for flex/grid or "-moz" for transitions are needed).
 
-#### Client Env
+### Client Env
 
 The env arguments are loaded with `loadEnv`.
 
@@ -681,9 +856,9 @@ The env arguments are loaded with `loadEnv`.
 We have two types of static assets:
 
 - fingerprinted by Rolldown as shown below
-- and not, such as icons, iamges related to the webmanifest, SEO files such as sitemap.xml or robotx.txt, and the service worker file "sw.js". 
+- and not, such as icons, iamges related to the webmanifest, SEO files such as sitemap.xml or robotx.txt, and the service worker file "sw.js".
 
-The "non-fingerprinted" asets are served by `Phoenix` directly by listing them in the `LiveviewPwaWeb.static_path()` function. 
+The "non-fingerprinted" asets are served by `Phoenix` directly by listing them in the `LiveviewPwaWeb.static_path()` function.
 
 We modify "endpoint.ex" to accept these encodings:
 
@@ -715,8 +890,81 @@ We can them reference in the HEEX components as usual:
 <link rel="manifest" href="/manifest.webmanifest" />
 ```
 
-We use the plugin `vite-plugin-static-copy` to let Vite copy the selected ones (eg the folder "assets/seo/{robots.txt, sitemap.xml}" or "/assets/icons") into the folder "/priv/static".
+#### `Vite.ex` module
 
+An `Elixir` file path resolving module.
+This is needed to resolve the file path in dev or in prod mode.
+
+<details>
+<summary> --- Vite.ex module --- </summary>
+
+```elixir
+if Application.compile_env!(:liveview_pwa, :env) == :prod do
+  defmodule Vite do
+    @moduledoc """
+    A helper module to manage Vite file discovery.
+
+    It appends "http://localhost:5173" in DEV mode.
+
+    It finds the fingerprinted name in PROD mode from the .vite/manifest.json file.
+    """
+    require Logger
+
+    # Ensure the manifest is loaded at compile time in production
+    def path(asset) do
+      manifest = get_manifest()
+
+      case Path.extname(asset) do
+        ".css" ->
+          get_main_css_in(manifest)
+
+        _ ->
+          get_name_in(manifest, asset)
+      end
+    end
+
+    defp get_manifest do
+      manifest_path = Path.join(:code.priv_dir(:liveview_pwa), "static/.vite/manifest.json")
+
+      with {:ok, content} <- File.read(manifest_path),
+           {:ok, decoded} <- Jason.decode(content) do
+        decoded
+      else
+        _ -> raise "Could not read or decode Vite manifest at #{manifest_path}"
+      end
+    end
+
+    def get_main_css_in(manifest) do
+      manifest
+      |> Enum.flat_map(fn {_key, entry} ->
+        Map.get(entry, "css", [])
+      end)
+      |> Enum.filter(fn file -> String.contains?(file, "main") end)
+      |> List.first()
+    end
+
+    def get_name_in(manifest, asset) do
+      case manifest[asset] do
+        %{"file" => file} -> "/#{file}"
+        _ -> raise "Asset #{asset} not found in manifest"
+      end
+    end
+  end
+else
+  defmodule Vite do
+    def path(asset) do
+      "http://localhost:5173/#{asset}"
+    end
+  end
+end
+```
+
+</details>
+<br/>
+
+#### Static copy
+
+We use the plugin `vite-plugin-static-copy` to let Vite copy the selected ones (eg the folder "assets/seo/{robots.txt, sitemap.xml}" or "/assets/icons") into the folder "/priv/static".
 
 When the asset reference is versioned, we use the `.vte/manifest` dictionary to find the new name.
 We used a helper [ViteHelper](https://github.com/dwyl/PWA-Liveview/blob/main/lib/soldiyjsweb/vite_helper.ex) to map the original name to the versioned one (the one in "priv/static/assets") 
@@ -724,7 +972,6 @@ We used a helper [ViteHelper](https://github.com/dwyl/PWA-Liveview/blob/main/lib
 #### DEV mode
 
 In DEV mode, the helper will preprend the file name with `http://localhost:5173` because they are served by Vite DEV server.
-
 
 #### PROD mode
 
@@ -741,26 +988,6 @@ rollupOptions.output: mod === 'production' && {
 We do this because we want the SW to be able to detect client code changes and update the app. The Phoenix work would interfer.
 
 Therefor, we do not use the step `mix phx.digest` and removed from the `Dockerfile`.
-
-```elixir
-<link
-  phx-track-static
-  rel="stylesheet"
-  href={Vite.path("css/app.css")}
-  crossorigin="anonymous"
-/>
-
-<script
-  defer
-  phx-track-static
-  nonce={assigns[:main_nonce]}
-  type="module"
-  src={Vite.path("js/main.js")}
-  crossorigin="anonymous"
->
-</script>
-```
-
 
 We also compress files to _ZSTD_ known for its compression performance and deflating speed. We use the plugin `vite-plugin-compression2` and use `@mongodb-js/zstd`.
 
@@ -989,6 +1216,7 @@ We set the Fly secret: `DATABASE_PATH=mnt/db/main.db`.
 
 Besides Phoenix LiveView:
 
+- [Vite backend integration](https://vite.dev/guide/backend-integration.html)
 - [Yjs Documentation](https://docs.yjs.dev/)
 - [Vite PWA Plugin Guide](https://vite-pwa-org.netlify.app/guide/)
 - [MDN PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Best_practices)
@@ -999,7 +1227,7 @@ Besides Phoenix LiveView:
 
 ## License
 
-[GNU License](LICENSE)
+[MIT License](LICENSE)
 
 ## Enhance
 

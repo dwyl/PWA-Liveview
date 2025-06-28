@@ -1,6 +1,8 @@
 defmodule LiveviewPwaWeb.LoginLive do
   use LiveviewPwaWeb, :live_view
+
   alias LiveviewPwaWeb.{Menu, PwaLiveComp}
+
   require Logger
 
   @impl true
@@ -43,13 +45,14 @@ defmodule LiveviewPwaWeb.LoginLive do
                 aria-label="Login as Guest"
                 class="w-full text-xl btn btn-soft btn-primary"
               >
-                Click to enable navigation
+                Click here!
               </button>
             </.form>
           <% end %>
         </div>
       </div>
     </div>
+    <.icon name="hero-home text-white h-5 w-5" />
     """
   end
 

@@ -1,6 +1,4 @@
 defmodule Airports do
-  require Logger
-
   @moduledoc """
   - This module is responsible for downloading and parsing the airports CSV file.
 
@@ -13,6 +11,8 @@ defmodule Airports do
   - The function `stream_download/0` is a debug function to download the CSV file
     and save it to a local file.
   """
+
+  require Logger
 
   NimbleCSV.define(CSVParser, separator: ",", escape: "\"")
 

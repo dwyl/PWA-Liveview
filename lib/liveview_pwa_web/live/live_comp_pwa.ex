@@ -1,8 +1,4 @@
 defmodule LiveviewPwaWeb.PwaLiveComp do
-  use LiveviewPwaWeb, :live_component
-  alias LiveviewPwaWeb.Pwa
-  require Logger
-
   @moduledoc """
   Live component for handling PWA updates.
   This component listens for service worker updates and provides a button
@@ -10,6 +6,12 @@ defmodule LiveviewPwaWeb.PwaLiveComp do
   It uses a Phoenix hook to manage the service worker lifecycle events.
   It is used in the LiveView modules to display a button when an update is available.
   """
+
+  use LiveviewPwaWeb, :live_component
+
+  alias LiveviewPwaWeb.Pwa
+
+  require Logger
 
   @impl true
   def render(assigns) do

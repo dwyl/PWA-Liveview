@@ -1,6 +1,8 @@
 defmodule LiveviewPwaWeb.Router do
   use LiveviewPwaWeb, :router
 
+  import Phoenix.LiveDashboard.Router
+
   alias LiveviewPwaWeb.MountUser
 
   # Note: After adding 'preload', submit your domain to
@@ -71,8 +73,6 @@ defmodule LiveviewPwaWeb.Router do
     plug :put_secure_browser_headers
     plug :auth
 
-    # import Plug.BasicAuth
-
     defp auth(conn, _opts) do
       username = System.get_env("AUTH_USERNAME", "admin")
       password = System.get_env("AUTH_PASSWORD", "password")
@@ -80,7 +80,6 @@ defmodule LiveviewPwaWeb.Router do
     end
   end
 
-  import Phoenix.LiveDashboard.Router
   pipe_through :dashboard
 
   scope "/" do

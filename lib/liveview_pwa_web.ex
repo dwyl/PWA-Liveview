@@ -17,8 +17,7 @@ defmodule LiveviewPwaWeb do
   those modules here.
   """
 
-  def static_paths,
-    do: ~w(assets
+  def static_paths, do: ~w(assets
       icons
       robots.txt
       sw.js
@@ -29,10 +28,11 @@ defmodule LiveviewPwaWeb do
     quote do
       use Phoenix.Router, helpers: false
 
-      # Import common connection and controller functions to use in pipelines
-      import Plug.Conn
       import Phoenix.Controller
       import Phoenix.LiveView.Router
+
+      # Import common connection and controller functions to use in pipelines
+      import Plug.Conn
     end
   end
 
@@ -86,10 +86,10 @@ defmodule LiveviewPwaWeb do
 
   defp html_helpers do
     quote do
+      import LiveviewPwaWeb.CoreComponents
       # HTML escaping functionality
       import Phoenix.HTML
       # Core UI components and translation
-      import LiveviewPwaWeb.CoreComponents
 
       # Shortcut for generating JS commands
       alias Phoenix.LiveView.JS

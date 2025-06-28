@@ -1,7 +1,7 @@
 defmodule LiveviewPwaWeb.Users do
-  use Phoenix.Component
-
   @moduledoc false
+
+  use Phoenix.Component
 
   attr :user_id, :string, required: true
   attr :module_id, :string, required: true

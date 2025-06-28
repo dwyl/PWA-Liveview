@@ -1,7 +1,9 @@
 defmodule LiveviewPwa.UserSocket do
   use Phoenix.Socket
-  alias LiveviewPwaWeb.Endpoint
+
   alias LiveviewPwaWeb.Api.UserTokenController, as: ApiUserToken
+  alias LiveviewPwaWeb.Endpoint
+
   require Logger
 
   channel "pg-counter", LiveviewPwa.PgCounterChannel

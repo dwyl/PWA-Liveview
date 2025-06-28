@@ -1,12 +1,14 @@
 defmodule LiveviewPwa.PgCounterChannel do
-  use Phoenix.Channel
-  alias LiveviewPwa.PhxSyncCount
-  require Logger
-
   @moduledoc """
   Channel for collaborative counter with offline/online support.
   Uses Yjs/Yex server-side: receives "clicks" deltas and sends back the authoritative counter.
   """
+  use Phoenix.Channel
+
+  alias LiveviewPwa.PhxSyncCount
+
+  require Logger
+
   @impl true
   def join("pg-counter", %{"max" => max_value, "userID" => user_id} = _params, socket) do
     Logger.info("#{user_id} joined PgCounter channel")
