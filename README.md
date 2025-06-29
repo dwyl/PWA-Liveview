@@ -631,7 +631,7 @@ From the folder "assets", you can run `pnpm i` (and `pnpm add ...`).
 
 ### Phoenix live_reload
 
-In "dev.exs", use the following in "config :liveview_pwa, LiveviewPwaWeb.Endpoint,":
+In "dev.exs", use the following in "config :liveview_pwa, LiveviewPwaWeb.Endpoint," to let `Phoenix` code reload listen to only `.ex |.heex` file changes (_no_ static asset):
 
 ```elixir
 live_reload: [
@@ -646,6 +646,8 @@ live_reload: [
 ### HMR in DEV mode
 
 Besides the `live_reload`, there is a watcher configured in "config/dev.exs" which replaces, thus removes, `esbuild` and `tailwindCSS` (which are also removed from the mix deps).
+
+The watcher below runs the `Vite` dev server on port 5173. It will listen _only_ to static assets changes (`.js`, `.svg`, ...)
 
 ```elixir
 watchers: [
