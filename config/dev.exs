@@ -21,29 +21,23 @@ config :liveview_pwa, LiveviewPwaWeb.Endpoint,
       ~r"lib/liveview_pwa_web/.*/.*\.heex$"
     ]
   ],
-
-watchers: [
-  pnpm: [
-    "vite",
-    "serve",
-    "--mode",
-    "development",
-    "--config",
-    "vite.config.js",
-    cd: Path.expand("../assets", __DIR__)
+  watchers: [
+    pnpm: [
+      "vite",
+      "serve",
+      "--mode",
+      "development",
+      "--config",
+      "vite.config.js",
+      cd: Path.expand("../assets", __DIR__)
+    ]
   ]
-]
 
 # Configure token TTL settings for testting: 30 seconds for access token
-#     "--config",
-#     "vite.config.js",
-config :liveview_pwa, :access_token_ttl, 2000
-# 1 minutes for refresh token
-#     cd: Path.expand("../assets", __DIR__)
-#   ]
-# ]
+config :liveview_pwa, :access_token_ttl, 30
+# 2 minutes for refresh token
+config :liveview_pwa, :refresh_token_ttl, 60*2
 
-config :liveview_pwa, :refresh_token_ttl, 6000
 
 # Enable dev routes for dashboard and mailbox
 config :liveview_pwa, dev_routes: true

@@ -23,14 +23,14 @@
     "yjs": "^13.6.27"
   },
   "devDependencies": {
-    "@eslint/js": "^9.29.0",
+    "@eslint/js": "^9.30.0",
     "@mongodb-js/zstd": "^2.0.1",
     "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/upgrade": "^4.1.11",
     "@tailwindcss/vite": "^4.1.11",
     "@vite-pwa/assets-generator": "^1.0.0",
     "daisyui": "^5.0.43",
-    "eslint": "^9.29.0",
+    "eslint": "^9.30.0",
     "eslint-plugin-solid": "^0.14.5",
     "fast-glob": "^3.3.3",
     "lightningcss": "^1.30.1",

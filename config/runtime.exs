@@ -19,21 +19,11 @@ import Config
 
 config :exqlite, default_chunk_size: 100
 
-# User token configuration
-# Token expiry time in seconds (default: 24 hours = 86400 seconds)
-# config :liveview_pwa, :user_token,
-#   max_age: System.get_env("USER_TOKEN_MAX_AGE", "15") |> String.to_integer()
 
 if System.get_env("PHX_SERVER") do
   config :liveview_pwa, LiveviewPwaWeb.Endpoint, server: true
 end
 
-# if config_env() == :dev do
-#   database_path =
-#     Path.expand("../db/main.db", Application.app_dir(:liveview_pwa))
-
-#   config :liveview_pwa, LiveviewPwa.Sql3Repo, database: database_path
-# end
 
 # The secret key base is used to sign/encrypt cookies and other secrets.
 # A default value is used in config/dev.exs and config/test.exs but you
@@ -99,6 +89,10 @@ if config_env() == :prod do
     force_ssl: [hsts: true]
 
   config :liveview_pwa, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
+
+  # User access token configuration
+  # config :liveview_pwa, :access_token_ttl,
+  #   System.get_env("ACCESS_TOKEN_MAX_AGE", "15") |> String.to_integer()
 
   config :liveview_pwa,
     # 15 minutes
