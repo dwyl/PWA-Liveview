@@ -73,8 +73,6 @@ export const CitiesForm = ({ el, userID, _this }) => {
       }
     }
 
-    // const dispose = render(
-    // () => (
     return (
       <>
         {isInitialized() ? (

@@ -1,9 +1,9 @@
 /* See the Tailwind configuration guide for advanced usage
    https://tailwindcss.com/docs/configuration */
 
-@import 'tailwindcss';
+@import "tailwindcss";
 
-@source "../**/.*{js, jsx}";
+@source "../js";
 @source "../../lib/liveview_pwa_web/";
 
 @plugin "daisyui";
@@ -13,34 +13,34 @@
 @plugin "../vendor/heroicons.js";
 
 @theme {
-    --color-bisque: #ffe4c4;
-    --color-bisque-contrast: oklch(0.08 0.06 70);
-    --color-midnightblue: #191979;
-    --color-midnightblue-contrast: oklch(0.9 0.1 270);
+  --color-bisque: #ffe4c4;
+  --color-bisque-contrast: oklch(0.08 0.06 70);
+  --color-midnightblue: #191979;
+  --color-midnightblue-contrast: oklch(0.9 0.1 270);
 }
 
 .btn-custom {
-    @apply text-midnightblue bg-bisque rounded-lg border-[#ffe4c4] p-2;
-    @apply hover:border-[#ffd4a3] hover:bg-[#ffd4a3];
-    @apply active:scale-95 active:bg-[#ffcc99];
-    @apply transition-all duration-150 ease-in-out;
-    @apply shadow-md hover:shadow-lg;
+  @apply text-midnightblue bg-bisque rounded-lg border-[#ffe4c4] p-2;
+  @apply hover:border-[#ffd4a3] hover:bg-[#ffd4a3];
+  @apply active:scale-95 active:bg-[#ffcc99];
+  @apply transition-all duration-150 ease-in-out;
+  @apply shadow-md hover:shadow-lg;
 }
 
 .btn-custom:focus {
-    @apply ring-2 ring-[#191970] outline-none;
+  @apply ring-2 ring-[#191970] outline-none;
 }
 
 .btn-custom-inverted {
-    @apply border-[#191970] bg-[#191970] text-[#ffe4c4];
-    @apply hover:border-[#1e1e7f] hover:bg-[#1e1e7f];
-    @apply active:scale-95 active:bg-[#0f0f3f];
-    @apply transition-all duration-150 ease-in-out;
-    @apply shadow-md hover:shadow-lg;
+  @apply border-[#191970] bg-[#191970] text-[#ffe4c4];
+  @apply hover:border-[#1e1e7f] hover:bg-[#1e1e7f];
+  @apply active:scale-95 active:bg-[#0f0f3f];
+  @apply transition-all duration-150 ease-in-out;
+  @apply shadow-md hover:shadow-lg;
 }
 
 .btn-custom-inverted:focus {
-    @apply ring-2 ring-[#ffe4c4] outline-none;
+  @apply ring-2 ring-[#ffe4c4] outline-none;
 }
 
 /* Add variants based on LiveView classes */
@@ -50,7 +50,7 @@
 
 /* Make LiveView wrapper divs transparent for layout */
 [data-phx-session] {
-    display: contents;
+  display: contents;
 }
 
 /* This file is for your main application CSS */

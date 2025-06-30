@@ -576,10 +576,10 @@ All the client code is managed by `Vite` and done in the file [vite.config.js](h
 ### Package.json and `pnpm` workspace (nor not)
 
 You can use workspace.
-From the root folder, add a file "pnpm-workpsace.yml".
+From the root folder, add a file "pnpm-workpsace.yaml" (not "yml" !).
 You reference the "assets" folder and the "deps" folder.
 
-```yml
+```yaml
 packages:
   - assets
   - deps/phoenix

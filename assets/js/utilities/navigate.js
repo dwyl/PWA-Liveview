@@ -90,6 +90,19 @@ const components = {
   ],
 };
 
+/**
+ * Mounts offline SolidJS components based on DOM elements present in the current page.
+ * Checks for required DOM elements and dynamically imports/renders the corresponding components.
+ *
+ * @async
+ * @function mountOfflineComponents
+ * @returns {Promise<Array|undefined>} Array of mounted component instances, or undefined if no components were mounted
+ * @example
+ * const instances = await mountOfflineComponents();
+ * if (instances) {
+ *   console.log('Mounted components:', instances);
+ * }
+ */
 async function mountOfflineComponents() {
   const results = [];
 
@@ -123,6 +136,15 @@ async function mountOfflineComponents() {
   return results.length ? results : undefined;
 }
 
+/**
+ * Cleans up existing LiveView hooks by calling their destroyed() method and clearing DOM content.
+ * Skips the MapHook component during cleanup.
+ *
+ * @function cleanExistingHooks
+ * @returns {void}
+ * @example
+ * cleanExistingHooks(); // Cleans up all hooks except MapHook
+ */
 function cleanExistingHooks() {
   if (appState.hooks === null) return;
 
@@ -141,6 +163,14 @@ function cleanExistingHooks() {
   setAppState("hooks", null);
 }
 
+/**
+ * Cleans up all offline components by calling their cleanup functions and resetting references.
+ *
+ * @function cleanupOfflineComponents
+ * @returns {void}
+ * @example
+ * cleanupOfflineComponents(); // Cleanup all offline component instances
+ */
 function cleanupOfflineComponents() {
   for (const [key, cleanupFn] of Object.entries(offlineComponents)) {
     if (cleanupFn) {
@@ -151,12 +181,18 @@ function cleanupOfflineComponents() {
   }
 }
 
-/*
-Clean up existing components
-Update the DOM structure with the cached HTML
-Render the new components into the updated DOM
-Reattach navigation listeners to handle future navigation
-*/
+/**
+ * Handles navigation in offline mode by fetching cached content and updating the DOM.
+ * Prevents default navigation, updates browser history, and renders appropriate components.
+ *
+ * @async
+ * @function handleOfflineNavigation
+ * @param {Event} event - The click event from a navigation link
+ * @returns {Promise<boolean|void>} Returns false on error, void on success
+ * @throws {Error} When cached content is not found or content element is missing
+ * @example
+ * link.addEventListener('click', handleOfflineNavigation);
+ */
 async function handleOfflineNavigation(event) {
   try {
     event.preventDefault();
@@ -194,6 +230,15 @@ async function handleOfflineNavigation(event) {
   }
 }
 
+/**
+ * Attaches click event listeners to navigation links for offline navigation.
+ * Disables the login link and adds offline navigation handlers to all nav links.
+ *
+ * @function attachNavigationListeners
+ * @returns {void}
+ * @example
+ * attachNavigationListeners(); // Set up offline navigation for all nav links
+ */
 function attachNavigationListeners() {
   // disable the home link
   const home = document.getElementById("login-link");
@@ -209,13 +254,18 @@ function attachNavigationListeners() {
   });
 }
 
-export {
-  cleanExistingHooks,
-  mountOfflineComponents,
-  attachNavigationListeners,
-  addCurrentPageToCache,
-};
-
+/**
+ * Adds the current page's HTML content to the browser cache for offline access.
+ * Waits for service worker to be ready before caching the complete document.
+ *
+ * @async
+ * @function addCurrentPageToCache
+ * @param {string} path - The URL path to cache the current page under
+ * @returns {Promise<void>} Promise that resolves when caching is complete
+ * @example
+ * await addCurrentPageToCache('/dashboard');
+ * console.log('Current page cached for offline access');
+ */
 async function addCurrentPageToCache(path) {
   await navigator.serviceWorker.ready;
   await new Promise((resolve) => setTimeout(resolve, 100));
@@ -235,6 +285,13 @@ async function addCurrentPageToCache(path) {
   const cache = await caches.open("page-shells");
   return cache.put(path, response.clone());
 }
+
+export {
+  cleanExistingHooks,
+  mountOfflineComponents,
+  attachNavigationListeners,
+  addCurrentPageToCache,
+};
 
 // async function cacheCurrentPage() {
 //   await navigator.serviceWorker.ready;

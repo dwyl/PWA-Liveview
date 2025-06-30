@@ -1,5 +1,24 @@
 import { state } from "@js/stores/vStore";
 
+/**
+ * Phoenix LiveView hook that manages an airport selection form with caching and offline support.
+ * Integrates with Valtio state management and renders a SolidJS component for the UI.
+ * Handles bidirectional data synchronization between server and local storage.
+ *
+ * @namespace FormHook
+ * @type {Object}
+ *
+ * @description
+ * This hook provides a complete form management system with:
+ * 1. User identification and persistence via localStorage
+ * 2. Airport data caching with version control
+ * 3. Bidirectional sync between server and local storage
+ * 4. SolidJS component rendering for reactive UI
+ * 5. Automatic cleanup of resources and state
+ *
+ * The hook manages offline scenarios by caching airport data locally
+ * and restoring it when the component mounts.
+ */
 export const FormHook = {
   userID: null,
   state,

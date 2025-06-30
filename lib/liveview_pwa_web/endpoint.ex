@@ -38,7 +38,6 @@ defmodule LiveviewPwaWeb.Endpoint do
       # <- reduces payload size of airports
       compress: true,
       csp_nonce_assign_key: :main_nonce,
-      # auth_token: true,
       check_origin: ["http://localhost:4000", "https://liveview-pwa.fly.dev"]
     ],
     longpoll: [connect_info: [session: @session_options]]
@@ -52,7 +51,6 @@ defmodule LiveviewPwaWeb.Endpoint do
       ]
     ]
 
-  # plug PlugDevProxy
   # Serve at "/" the static files from "priv/static" directory.
   # set brotli compression so phx.digest will
   # deploy compressed static files in production.

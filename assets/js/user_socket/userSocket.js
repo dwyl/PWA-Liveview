@@ -4,6 +4,38 @@ import { checkServer } from "@js/utilities/checkServer.js";
 const log = console.log;
 const error = console.error;
 
+/**
+ * Initializes and configures a Phoenix WebSocket connection for authenticated users.
+ * Sets up automatic error recovery with token refresh and connection lifecycle management.
+ * In case of socket errors, attempts to refresh the authentication token automatically.
+ * Redirects to "/" if token refresh fails or authentication is invalid.
+ *
+ * @async
+ * @function setUserSocket
+ * @param {string|null} initialUserToken - The initial user authentication token
+ * @returns {Promise<Socket|null>} Connected Phoenix Socket instance or null if no token provided
+ * @throws {Error} When socket creation or connection fails
+ *
+ * @description
+ * This function creates a complete WebSocket connection management system:
+ * 1. Validates initial token and returns null if not provided
+ * 2. Creates Phoenix Socket with authentication parameters
+ * 3. Sets up error recovery handlers that trigger token refresh
+ * 4. Configures connection lifecycle event handlers
+ * 5. Establishes the initial connection
+ *
+ * @example
+ * // Initialize socket with token
+ * const socket = await setUserSocket('user-token-123');
+ * if (socket) {
+ *   console.log('Socket connected successfully');
+ * }
+ *
+ * @example
+ * // Initialize without token (returns null)
+ * const socket = await setUserSocket(null);
+ * console.log(socket); // null
+ */
 export async function setUserSocket(initialUserToken) {
   const { Socket } = await import("phoenix");
 
@@ -15,8 +47,10 @@ export async function setUserSocket(initialUserToken) {
     return null;
   }
 
+  const csrf = document.querySelector("meta[name='csrf-token']")?.content;
+
   const userSocket = new Socket("/user", {
-    params: () => ({ userToken: initialUserToken }),
+    params: () => ({ userToken: initialUserToken, _csrf_token: csrf }),
   });
 
   function reset() {
@@ -75,6 +109,7 @@ export async function setUserSocket(initialUserToken) {
     }
   }
 
+  // --- Set up socket event handlers --- //
   userSocket.onError(async () => {
     if (isRefreshing) {
       return false;

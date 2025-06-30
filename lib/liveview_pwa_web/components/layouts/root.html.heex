@@ -22,12 +22,7 @@
     <link rel="mask-icon" href="icons/pwa-maskable-512.png" color="#FFFFFF" />
     <link rel="manifest" href="/manifest.webmanifest" />
 
-    <link
-      phx-track-static
-      rel="stylesheet"
-      href={Vite.path("css/app.css")}
-      crossorigin="anonymous"
-    />
+    <link :if={@env === :prod} rel="stylesheet" href={Vite.path("css/app.css")} />
 
     <script
       :if={@env === :dev}
@@ -37,14 +32,7 @@
     >
     </script>
 
-    <script
-      defer
-      phx-track-static
-      nonce={assigns[:main_nonce]}
-      type="module"
-      src={Vite.path("js/main.js")}
-      crossorigin="anonymous"
-    >
+    <script defer nonce={assigns[:main_nonce]} type="module" src={Vite.path("js/main.js")}>
     </script>
   </head>
   <body class="bg-gray-300 h-full">

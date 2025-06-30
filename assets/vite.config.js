@@ -15,7 +15,8 @@ import { compression } from "vite-plugin-compression2";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 import { compress } from "@mongodb-js/zstd";
 
-const rootDir = path.resolve(__dirname);
+const rootDir = path.resolve(import.meta.dirname);
+// or __dirname in CommonJS
 const cssDir = path.resolve(rootDir, "css");
 const jsDir = path.resolve(rootDir, "js");
 const seoDir = path.resolve(rootDir, "seo");
@@ -162,21 +163,19 @@ const buildOps = (mode) => ({
   target: ["esnext"],
   // Specify the directory to nest generated assets under (relative to build.outDir
   outDir: staticDir,
-  cssCodeSplit: true, // Split CSS for better caching
-  cssMinify: "lightningcss", // Use lightningcss for CSS minification
   rollupOptions: {
-    input:
-      mode == "production" ? getEntryPoints() : ["js/main.js", "css/app/js"],
+    input: mode == "production" ? getEntryPoints() : ["js/main.js"],
     output: mode === "production" && {
       assetFileNames: "assets/[name]-[hash][extname]",
       chunkFileNames: "assets/[name]-[hash].js",
       entryFileNames: "assets/[name]-[hash].js",
     },
   },
+  cssCodeSplit: mode === "production",
+  cssMinify: mode === "production" && "lightningcss", // Use lightningcss for CSS minification
   // generate a manifest file that contains a mapping of non-hashed asset filenames
-  // to their hashed versions, which can then be used by a server framework
-  // to render the correct asset links.
-  manifest: true,
+
+  manifest: mode === "production",
   path: ".vite/manifest.json",
   minify: mode === "production",
   emptyOutDir: true, // Remove old assets
@@ -362,48 +361,10 @@ const resolveConfig = {
 };
 
 // Static Copy =============================================
-
-// Dev static assets copy in priv/static
-function copyStaticAssetsDev() {
-  console.log("[vite.config] Copying non-fingerprinted assets in dev mode...");
-
-  const copyTargets = [
-    {
-      srcDir: seoDir,
-      destDir: staticDir, // place directly into priv/static
-    },
-    {
-      srcDir: iconsDir,
-      destDir: path.resolve(staticDir, "icons"),
-    },
-  ];
-
-  copyTargets.forEach(({ srcDir, destDir }) => {
-    if (!fs.existsSync(srcDir)) {
-      console.log(`[vite.config] Source dir not found: ${srcDir}`);
-      return;
-    }
-    if (!fs.existsSync(destDir)) {
-      fs.mkdirSync(destDir, { recursive: true });
-    }
-
-    fg.sync(`${srcDir}/**/*.*`).forEach((srcPath) => {
-      const relPath = path.relative(srcDir, srcPath);
-      const destPath = path.join(destDir, relPath);
-      const destSubdir = path.dirname(destPath);
-      if (!fs.existsSync(destSubdir)) {
-        fs.mkdirSync(destSubdir, { recursive: true });
-      }
-
-      fs.copyFileSync(srcPath, destPath);
-    });
-  });
-}
-
 /* 
-Build Static Copy of icons and SEO files sitemap.xml, robots.txt
+Build Static Copy of non-fingerprinted files
+such as icons, SEO files (sitemap.xml, robots.txt)...
 to priv/static/icons and priv/static
-to not fingerprint them
 */
 const getBuildTargets = () => {
   const baseTargets = [];
@@ -431,7 +392,10 @@ const getBuildTargets = () => {
   }
 
   const devManifestPath = path.resolve(staticDir, "manifest.webmanifest");
-  fs.writeFileSync(devManifestPath, JSON.stringify(manifestOpts, null, 2));
+
+  if (fs.existsSync(devManifestPath)) {
+    fs.writeFileSync(devManifestPath, JSON.stringify(manifestOpts, null, 2));
+  }
 
   return baseTargets;
 };
@@ -469,7 +433,6 @@ const devServer = {
 export default defineConfig(({ command, mode }) => {
   if (command == "serve") {
     console.log("[vite.config] Running in development mode");
-    copyStaticAssetsDev();
     process.stdin.on("close", () => process.exit(0));
     process.stdin.resume();
   }
@@ -486,7 +449,8 @@ export default defineConfig(({ command, mode }) => {
     ],
     resolve: resolveConfig,
     // Disable default public dir (using Phoenix's)
-    publicDir: mode === "development" ? "public" : false,
+    publicDir: false,
+    // publicDir: mode === "development" ? "public" : false,
     build: buildOps(mode),
     server: mode === "development" && devServer,
   };

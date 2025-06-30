@@ -25,7 +25,6 @@ defmodule LiveviewPwaWeb.LoginLive do
       ]}>
         <div class="p-6 space-y-6 sm:p-8 text-center">
           <%= if @user_id do %>
-            <!-- LOGGED IN STATE -->
             <h1 class="text-2xl font-bold text-orange-300">
               Start Browsing
             </h1>
@@ -35,7 +34,6 @@ defmodule LiveviewPwaWeb.LoginLive do
               </p>
             </div>
           <% else %>
-            <!-- LOGGED OUT STATE -->
             <h1 class="text-2xl font-bold text-indigo-800">
               My dummy Login
             </h1>
@@ -52,7 +50,6 @@ defmodule LiveviewPwaWeb.LoginLive do
         </div>
       </div>
     </div>
-    <.icon name="hero-home text-white h-5 w-5" />
     """
   end
 

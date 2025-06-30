@@ -12,7 +12,6 @@ defmodule LiveviewPwa.UserSocket do
   # channel "users_token:*", LiveviewPwa.UsersTokenChannel
 
   @impl true
-  @spec connect(map(), any(), any()) :: {:error, any()} | {:ok, Phoenix.Socket.t()}
   def connect(%{"userToken" => user_token}, socket, _connect_info) do
     salt = ApiUserToken.access_salt()
     max_age = ApiUserToken.access_ttl()
