@@ -689,10 +689,9 @@ Modify the layout "root.html.heex" to:
 
 ```elixir
 <link
-  phx-track-static
+  :if={@env === :prod}
   rel="stylesheet"
   href={Vite.path("css/app.css")}
-  crossorigin="anonymous"
 />
 
 <script
@@ -705,11 +704,9 @@ Modify the layout "root.html.heex" to:
 
 <script
   defer
-  phx-track-static
   nonce={assigns[:main_nonce]}
   type="module"
   src={Vite.path("js/main.js")}
-  crossorigin="anonymous"
 >
 </script>
 ```
@@ -723,9 +720,13 @@ In the `Vite` config, it is set with the declaration:
 ```js
 import tailwindcss from "@tailwindcss/vite";
 [...]
+
 // in `defineConfig`, add:
 defineConfig({
-    plugins: [tailwindcss()],
+    plugins: [
+      tailwindcss(), 
+      ...
+    ],
   },
 ),
 ```
@@ -733,7 +734,7 @@ defineConfig({
 Then, in "css/app.css", you import tailwindcss and add the `@source` where you use Tailwind classes: HEEX and JS.
 
 ```css
-@import tailwindcss;
+@import tailwindcss source(none);
 @source "../**/.*{js, jsx}";
 @source "../../lib/liveview_pwa_web/";
 @plugin "daisyui";
@@ -914,7 +915,8 @@ if Application.compile_env!(:liveview_pwa, :env) == :prod do
 
     # Ensure the manifest is loaded at compile time in production
     def path(asset) do
-      manifest = get_manifest()
+      app_ name = :liveview_pwa
+      manifest = get_manifest(app_name)
 
       case Path.extname(asset) do
         ".css" ->
@@ -925,8 +927,8 @@ if Application.compile_env!(:liveview_pwa, :env) == :prod do
       end
     end
 
-    defp get_manifest do
-      manifest_path = Path.join(:code.priv_dir(:liveview_pwa), "static/.vite/manifest.json")
+    defp get_manifest(app_name) do
+      manifest_path = Path.join(:code.priv_dir(app_name), "static/.vite/manifest.json")
 
       with {:ok, content} <- File.read(manifest_path),
            {:ok, decoded} <- Jason.decode(content) do
@@ -968,7 +970,7 @@ end
 
 We use the plugin `vite-plugin-static-copy` to let Vite copy the selected ones (eg the folder "assets/seo/{robots.txt, sitemap.xml}" or "/assets/icons") into the folder "/priv/static".
 
-When the asset reference is versioned, we use the `.vte/manifest` dictionary to find the new name.
+When the asset reference is versioned, we use the `.vite/manifest` dictionary to find the new name.
 We used a helper [ViteHelper](https://github.com/dwyl/PWA-Liveview/blob/main/lib/soldiyjsweb/vite_helper.ex) to map the original name to the versioned one (the one in "priv/static/assets") 
 
 #### DEV mode
