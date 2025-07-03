@@ -12,20 +12,6 @@ defmodule Airport do
 
   require Logger
 
-  # schema "airports" do
-  #   field(:airport_id, :string)
-  #   field(:name, :string)
-  #   field(:city, :string)
-  #   field(:country, :string)
-  #   field(:latitude, :float)
-  #   field(:longitude, :float)
-  # end
-
-  # def schema_headers do
-  #   [:id | headers] = Airport.__schema__(:fields)
-  #   headers
-  # end
-
   defp db do
     # Application.get_env(:liveview_pwa, LiveviewPwa.Sql3Repo)[:database]
     LiveviewPwa.Sql3Repo.config()[:database]

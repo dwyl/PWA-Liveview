@@ -1,7 +1,7 @@
 defmodule LiveviewPwaWeb.LoginLive do
   use LiveviewPwaWeb, :live_view
 
-  alias LiveviewPwaWeb.Api.UserTokenController
+  alias LiveviewPwa.User
   alias LiveviewPwaWeb.{Endpoint, Menu, PwaLiveComp}
 
   require Logger
@@ -62,8 +62,8 @@ defmodule LiveviewPwaWeb.LoginLive do
 
     env = Application.fetch_env!(:liveview_pwa, :env)
 
-    access_ttl = UserTokenController.access_ttl()
-    access_salt = UserTokenController.access_salt()
+    access_ttl = User.access_ttl()
+    access_salt = User.access_salt()
 
     case Phoenix.Token.verify(Endpoint, access_salt, user_token, max_age: access_ttl) do
       {:ok, ^user_id} ->

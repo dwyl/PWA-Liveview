@@ -146,8 +146,7 @@ window.addEventListener("phx:clear-cache", async () => {
 // sent when the authenticated LiveViews mounts
 window.addEventListener("phx:access-token-ready", setOnlineFunctionsWithToken);
 
-async function setOnlineFunctionsWithToken(e) {
-  const { detail } = e;
+async function setOnlineFunctionsWithToken({ detail }) {
   console.warn("[access-token-ready]");
   const { user_id } = detail;
   // already set
@@ -181,7 +180,7 @@ async function setOnLineFunctions({ user_id }) {
     window.dispatchEvent(new CustomEvent("user-socket-ready", {}));
     const { useChannel } = await import("@js/user_socket/useChannel");
     const channel = await useChannel(userSocket, `users_socket:${user_id}`, {});
-    channel.on("refreshed", (payload) => console.log(payload));
+    channel.on("refreshed", (payload) => console.log("users token", payload));
     return;
   });
 }

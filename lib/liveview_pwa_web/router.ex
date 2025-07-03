@@ -47,7 +47,6 @@ defmodule LiveviewPwaWeb.Router do
     pipe_through :api
 
     get "/connectivity", ConnectivityController, :check
-    # post "/refresh_token", UserTokenController, :refresh
     # get "/wasm", WasmController, :load
 
     # test endpoints

@@ -1,7 +1,7 @@
 defmodule LiveviewPwaWeb.UserSocket do
   use Phoenix.Socket
 
-  alias LiveviewPwaWeb.Api.UserTokenController, as: ApiUserToken
+  alias LiveviewPwa.User
   alias LiveviewPwaWeb.Endpoint
 
   require Logger
@@ -14,19 +14,19 @@ defmodule LiveviewPwaWeb.UserSocket do
   @impl true
   # def connect(%{"userToken" => user_token}, socket, connect_info) do
   def connect(_, socket, connect_info) do
-    salt = ApiUserToken.access_salt()
-    access_ttl = ApiUserToken.access_ttl()
+    salt = User.access_salt()
+    access_ttl = User.access_ttl()
 
     %{session: %{"user_token" => user_token, "user_id" => user_id}} = connect_info
 
     with %{id: ^user_id, is_valid: true} <-
-           LiveviewPwa.User.lookup(user_token),
+           User.lookup(user_token),
          {:ok, ^user_id} <-
            Phoenix.Token.verify(Endpoint, salt, user_token, max_age: access_ttl) do
       {:ok, assign(socket, %{user_id: user_id, user_token: user_token})}
     else
       _msg ->
-        LiveviewPwa.User.revoke(user_token)
+        User.revoke(user_token)
         topic = "users_socket:#{user_id}"
         Phoenix.PubSub.broadcast(:pubsub, topic, :disconnect)
 
