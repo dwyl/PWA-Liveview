@@ -31,7 +31,9 @@ defmodule LiveviewPwaWeb.Sql3CounterChannel do
            rem(new_counter + max_value + 1, max_value + 1),
          :ok <-
            Counter.set_counter(rescaled_counter) do
-      Logger.debug("[#{user_id}] client-update applied #{clicks} clicks: #{old_db_counter} -> #{rescaled_counter}")
+      Logger.debug(
+        "[#{user_id}] client-update applied #{clicks} clicks: #{old_db_counter} -> #{rescaled_counter}"
+      )
 
       broadcast!(socket, "counter-update", %{"counter" => rescaled_counter, "from" => user_id})
       {:reply, {:ok, %{"counter" => rescaled_counter}}, socket}
@@ -46,7 +48,9 @@ defmodule LiveviewPwaWeb.Sql3CounterChannel do
   def handle_in("client-update", _, socket) do
     case Counter.get_counter() do
       {:ok, counter} ->
-        Logger.debug("[#{socket.assigns.user_id}] client-udpate with no clicks: sending current counter #{counter}")
+        Logger.debug(
+          "[#{socket.assigns.user_id}] client-udpate with no clicks: sending current counter #{counter}"
+        )
 
         {:reply, {:ok, %{"counter" => counter}}, socket}
 

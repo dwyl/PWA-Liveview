@@ -12,7 +12,7 @@ defmodule LiveviewPwaWeb.PgCounterChannel do
   @impl true
   def join("pg-counter", %{"max" => max_value, "userID" => user_id} = _params, socket) do
     Logger.info("#{user_id} joined PgCounter channel")
-    {:ok, assign(socket, %{user_id: user_id, max_value: max_value})}
+    {:ok, assign(socket, :max_value, max_value)}
   end
 
   # endpoint of the hook

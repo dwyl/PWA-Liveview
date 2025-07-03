@@ -35,7 +35,6 @@ defmodule LiveviewPwaWeb.MountUser do
          |> assign(:env, env)
          #  async push the user token to the client to setup cusstom userSocket
          |> push_event("access-token-ready", %{
-           "user_token" => user_token,
            "user_id" => user_id
          })
          |> assign(:os, os)

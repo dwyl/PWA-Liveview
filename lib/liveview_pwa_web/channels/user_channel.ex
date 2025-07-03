@@ -1,5 +1,6 @@
 defmodule LiveviewPwaWeb.UserChannel do
   use LiveviewPwaWeb, :channel
+  require Logger
 
   @impl true
   def join("users_socket:" <> id, _params, socket) do
@@ -11,7 +12,7 @@ defmodule LiveviewPwaWeb.UserChannel do
 
   @impl true
   def handle_info(msg, socket) do
-    IO.inspect(msg, label: "UserChannel: ")
+    Logger.debug("#{inspect(msg)}")
     {:noreply, socket}
   end
 end

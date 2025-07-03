@@ -19,11 +19,9 @@ import Config
 
 config :exqlite, default_chunk_size: 100
 
-
 if System.get_env("PHX_SERVER") do
   config :liveview_pwa, LiveviewPwaWeb.Endpoint, server: true
 end
-
 
 # The secret key base is used to sign/encrypt cookies and other secrets.
 # A default value is used in config/dev.exs and config/test.exs but you
@@ -96,7 +94,7 @@ if config_env() == :prod do
 
   config :liveview_pwa,
     # 15 minutes
-    access_token_ttl: 60 * 15,
+    access_token_ttl: 60 * 60,
     # 1 day
     refresh_token_ttl: 60 * 60 * 24
 

@@ -149,13 +149,11 @@ window.addEventListener("phx:access-token-ready", setOnlineFunctionsWithToken);
 async function setOnlineFunctionsWithToken(e) {
   const { detail } = e;
   console.warn("[access-token-ready]");
-  const { user_token, user_id } = detail;
-  if (!detail.user_token || appState.userSocket) {
-    // console.log("[userSocket] already set");
-    return;
-  }
+  const { user_id } = detail;
+  // already set
+  if (appState.userSocket) return;
 
-  return await setOnLineFunctions({ user_token, user_id });
+  return await setOnLineFunctions({ user_id });
 }
 
 async function initOfflineComponents() {
@@ -170,20 +168,16 @@ async function initOfflineComponents() {
   window.liveSocket?.disconnect();
 }
 
-async function setOnLineFunctions({ user_token, user_id }) {
+async function setOnLineFunctions({ user_id }) {
   const [{ setUserSocket }, { setPresence }] = await Promise.all([
     import("@js/user_socket/userSocket"),
     import("@js/components/setPresence"),
   ]);
   const userSocket = await setUserSocket();
   userSocket.onOpen(async () => {
-    log("[userSocket]: opened for:", user_id);
-
-    await setPresence(userSocket, "proxy:presence", user_token, user_id);
-    setAppState({
-      userToken: user_token,
-      userSocket,
-    });
+    log("[userSocket]: opened");
+    await setPresence(userSocket, "proxy:presence");
+    setAppState({ userSocket });
     window.dispatchEvent(new CustomEvent("user-socket-ready", {}));
     const { useChannel } = await import("@js/user_socket/useChannel");
     const channel = await useChannel(userSocket, `users_socket:${user_id}`, {});
