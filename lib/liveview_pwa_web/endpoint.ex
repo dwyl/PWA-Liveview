@@ -42,7 +42,7 @@ defmodule LiveviewPwaWeb.Endpoint do
     ],
     longpoll: [connect_info: [session: @session_options]]
 
-  socket "/user", LiveviewPwa.UserSocket,
+  socket "/user", LiveviewPwaWeb.UserSocket,
     websocket: [
       csp_nonce_assign_key: :main_nonce,
       connect_info: [

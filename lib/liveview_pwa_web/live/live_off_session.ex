@@ -11,7 +11,7 @@ defmodule LiveviewPwaWeb.OffSessionLive do
     <h1 class="mt-4 text-gray-800">
       This is an "Off" <code>live_session</code> LiveView.
     </h1>
-    <p class="text-gray-800 mt-2">Hint:: to navigate to the dashboard: "admin", "password" !</p>
+    <p class="text-gray-800 mt-2">Hint: to navigate to the dashboard: "admin", "password" !</p>
     """
   end
 

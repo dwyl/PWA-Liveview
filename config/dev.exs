@@ -6,7 +6,8 @@ config :liveview_pwa, LiveviewPwa.PgRepo, url: "ecto://postgres:1234@localhost:3
 
 # we configured Sqlite to save the database in the project root
 # so that we can easily access it from the host machine
-config :liveview_pwa, LiveviewPwa.Sql3Repo, database: Path.expand("../db/main.sql3", Path.dirname(__ENV__.file))
+config :liveview_pwa, LiveviewPwa.Sql3Repo,
+  database: Path.expand("../db/main.sql3", Path.dirname(__ENV__.file))
 
 config :liveview_pwa, LiveviewPwaWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4000],
@@ -17,7 +18,7 @@ config :liveview_pwa, LiveviewPwaWeb.Endpoint,
   live_reload: [
     web_console_logger: true,
     patterns: [
-      ~r"lib/liveview_pwa_web/(controllers|live|components|router)/.*\.(ex|heex)$",
+      ~r"lib/liveview_pwa_web/(controllers|live|components|router|channels)/.*\.(ex|heex)$",
       ~r"lib/liveview_pwa_web/.*/.*\.heex$"
     ]
   ],
@@ -36,8 +37,7 @@ config :liveview_pwa, LiveviewPwaWeb.Endpoint,
 # Configure token TTL settings for testting: 30 seconds for access token
 config :liveview_pwa, :access_token_ttl, 30
 # 2 minutes for refresh token
-config :liveview_pwa, :refresh_token_ttl, 60*2
-
+config :liveview_pwa, :refresh_token_ttl, 60 * 2
 
 # Enable dev routes for dashboard and mailbox
 config :liveview_pwa, dev_routes: true

@@ -1,4 +1,4 @@
-defmodule LiveviewPwa.PgCounterChannel do
+defmodule LiveviewPwaWeb.PgCounterChannel do
   @moduledoc """
   Channel for collaborative counter with offline/online support.
   Uses Yjs/Yex server-side: receives "clicks" deltas and sends back the authoritative counter.

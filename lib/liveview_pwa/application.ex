@@ -20,9 +20,9 @@ defmodule LiveviewPwa.Application do
       LiveviewPwa.PgRepo,
       LiveviewPwa.Sql3Repo,
       LiveviewPwa.Presence,
-      {LiveviewPwaWeb.Endpoint, phoenix_sync: Phoenix.Sync.plug_opts()},
       {LiveviewPwa.Counter, [db]},
-      {AirportDB, [db]}
+      {AirportDB, [db]},
+      {LiveviewPwaWeb.Endpoint, phoenix_sync: Phoenix.Sync.plug_opts()}
     ]
 
     opts = [strategy: :one_for_one, name: LiveviewPwa.Supervisor]

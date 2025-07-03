@@ -1,4 +1,4 @@
-defmodule LiveviewPwa.Sql3CounterChannel do
+defmodule LiveviewPwaWeb.Sql3CounterChannel do
   @moduledoc """
   Channel for collaborative counter with offline/online support.
   Does NOT use Yjs/Yex server-side: only receives "clicks" deltas and sends back the authoritative counter.

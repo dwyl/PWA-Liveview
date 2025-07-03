@@ -171,8 +171,7 @@ const buildOps = (mode) => ({
       entryFileNames: "assets/[name]-[hash].js",
     },
   },
-  cssCodeSplit: mode === "production",
-  cssMinify: mode === "production" && "lightningcss", // Use lightningcss for CSS minification
+  cssMinify: true,
   // generate a manifest file that contains a mapping of non-hashed asset filenames
 
   manifest: mode === "production",
@@ -356,11 +355,47 @@ const resolveConfig = {
     "@css": cssDir,
     "@static": staticDir,
     "@assets": srcImgDir,
+    "@wasm": wasmDir,
   },
-  extensions: [".js", ".jsx", "png", ".css", "webp", "jpg", "svg"],
+  extensions: [".js", ".jsx", "png", ".css", "webp", "jpg", "svg", "wasm"],
 };
 
 // Static Copy =============================================
+function copyStaticAssetsDev() {
+  console.log("[vite.config] Copying non-fingerprinted assets in dev mode...");
+
+  const copyTargets = [
+    {
+      srcDir: seoDir,
+      destDir: staticDir, // place directly into priv/static
+    },
+    {
+      srcDir: iconsDir,
+      destDir: path.resolve(staticDir, "icons"),
+    },
+  ];
+
+  copyTargets.forEach(({ srcDir, destDir }) => {
+    if (!fs.existsSync(srcDir)) {
+      console.log(`[vite.config] Source dir not found: ${srcDir}`);
+      return;
+    }
+    if (!fs.existsSync(destDir)) {
+      fs.mkdirSync(destDir, { recursive: true });
+    }
+
+    fg.sync(`${srcDir}/**/*.*`).forEach((srcPath) => {
+      const relPath = path.relative(srcDir, srcPath);
+      const destPath = path.join(destDir, relPath);
+      const destSubdir = path.dirname(destPath);
+      if (!fs.existsSync(destSubdir)) {
+        fs.mkdirSync(destSubdir, { recursive: true });
+      }
+
+      fs.copyFileSync(srcPath, destPath);
+    });
+  });
+}
 /* 
 Build Static Copy of non-fingerprinted files
 such as icons, SEO files (sitemap.xml, robots.txt)...
@@ -433,6 +468,7 @@ const devServer = {
 export default defineConfig(({ command, mode }) => {
   if (command == "serve") {
     console.log("[vite.config] Running in development mode");
+    copyStaticAssetsDev();
     process.stdin.on("close", () => process.exit(0));
     process.stdin.resume();
   }

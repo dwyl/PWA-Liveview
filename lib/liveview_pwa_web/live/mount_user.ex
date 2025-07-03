@@ -24,27 +24,46 @@ defmodule LiveviewPwaWeb.MountUser do
     os = session["os"]
     env = Application.fetch_env!(:liveview_pwa, :env)
 
-    #  shared assigns and PWA button handler delegated to a LiveComponent
-    {:cont,
-     socket
-     |> assign(:max, @max)
-     |> assign(:user_id, user_id)
-     |> assign(:env, env)
-     #  async push the user token to the client to setup cusstom userSocket
-     |> push_event("access-token-ready", %{
-       "user_token" => session["user_token"],
-       "user_id" => user_id
-     })
-     |> assign(:os, os)
-     |> assign(:update_available, false)
-     |> attach_hook(:active, :handle_params, &handle_path_params/3)
-     |> attach_hook(:sw, :handle_event, &handle_pwa_event/3)}
+    user_token = Map.get(session, "user_token", nil)
+
+    case check_user(user_id, user_token) do
+      :ok ->
+        {:cont,
+         socket
+         |> assign(:max, @max)
+         |> assign(:user_id, user_id)
+         |> assign(:env, env)
+         #  async push the user token to the client to setup cusstom userSocket
+         |> push_event("access-token-ready", %{
+           "user_token" => user_token,
+           "user_id" => user_id
+         })
+         |> assign(:os, os)
+         |> assign(:update_available, false)
+         |> attach_hook(:active, :handle_params, &handle_path_params/3)
+         |> attach_hook(:sw, :handle_event, &handle_pwa_event/3)}
+
+      {:error, :not_found} ->
+        Logger.warning("User #{user_id} not found on mount")
+        {:halt, redirect(socket, to: ~p"/")}
+    end
   end
 
   def on_mount(:ensure_authenticated, _params, _session, socket) do
     {:halt, redirect(socket, to: ~p"/")}
   end
 
+  defp check_user(user_id, user_token) do
+    user = LiveviewPwa.User.lookup(user_token)
+
+    if Map.get(user, :id) == user_id and Map.get(user, :is_valid) do
+      :ok
+    else
+      {:error, :not_found}
+    end
+  end
+
+  #  shared assigns and PWA button handler delegated to a LiveComponent
   defp handle_path_params(_params, url, socket) do
     path = URI.new!(url) |> Map.get(:path)
 

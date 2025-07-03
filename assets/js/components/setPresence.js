@@ -2,14 +2,14 @@ import { appState } from "@js/stores/AppStore";
 
 const NAVIDS = appState.CONFIG.NAVIDS;
 
-export async function setPresence(userSocket, topic, user_token) {
+export async function setPresence(userSocket, topic, user_token, user_id) {
   const [{ Presence }, { useChannel }, { MountUsers }] = await Promise.all([
     import("phoenix"),
     import("@js/user_socket/useChannel"),
     import("@js/components/mountUsers"),
   ]);
 
-  const channel = await useChannel(userSocket, topic, { user_token });
+  const channel = await useChannel(userSocket, topic, { user_token, user_id });
   const presence = new Presence(channel);
 
   let userID = null;
@@ -28,10 +28,10 @@ export async function setPresence(userSocket, topic, user_token) {
       path === "/yjs"
         ? NAVIDS.yjs.id
         : path === "/map"
-        ? NAVIDS.map.id
-        : path === "/sync"
-        ? NAVIDS.sync.id
-        : null;
+          ? NAVIDS.map.id
+          : path === "/sync"
+            ? NAVIDS.sync.id
+            : null;
     if (!id) {
       return null;
     }

@@ -1,4 +1,4 @@
-defmodule LiveviewPwa.UserSocket do
+defmodule LiveviewPwaWeb.UserSocket do
   use Phoenix.Socket
 
   alias LiveviewPwaWeb.Api.UserTokenController, as: ApiUserToken
@@ -6,27 +6,36 @@ defmodule LiveviewPwa.UserSocket do
 
   require Logger
 
-  channel "pg-counter", LiveviewPwa.PgCounterChannel
-  channel "sql3-counter", LiveviewPwa.Sql3CounterChannel
+  channel "pg-counter", LiveviewPwaWeb.PgCounterChannel
+  channel "sql3-counter", LiveviewPwaWeb.Sql3CounterChannel
   channel "proxy:presence", LiveviewPwa.PresenceChannel
-  # channel "users_token:*", LiveviewPwa.UsersTokenChannel
+  channel "users_socket:*", LiveviewPwaWeb.UserChannel
 
   @impl true
-  def connect(%{"userToken" => user_token}, socket, _connect_info) do
+  # def connect(%{"userToken" => user_token}, socket, connect_info) do
+  def connect(_, socket, connect_info) do
     salt = ApiUserToken.access_salt()
-    max_age = ApiUserToken.access_ttl()
+    access_ttl = ApiUserToken.access_ttl()
 
-    case Phoenix.Token.verify(Endpoint, salt, user_token, max_age: max_age) do
-      {:ok, user_id} ->
-        Logger.info("User token verified")
-        {:ok, assign(socket, :user_id, user_id)}
+    %{session: %{"user_token" => user_token, "user_id" => user_id}} = connect_info
 
-      {:error, reason} ->
-        Logger.warning("Failed to verify user token: #{inspect(reason)}")
-        {:error, reason}
+    with %{id: ^user_id, is_valid: true} <-
+           LiveviewPwa.User.lookup(user_token),
+         {:ok, ^user_id} <-
+           Phoenix.Token.verify(Endpoint, salt, user_token, max_age: access_ttl) do
+      {:ok, assign(socket, %{user_id: user_id, user_token: user_token})}
+    else
+      _msg ->
+        LiveviewPwa.User.revoke(user_token)
+        topic = "users_socket:#{user_id}"
+        Phoenix.PubSub.broadcast(:pubsub, topic, :disconnect)
+
+        {:error, :invalid_token}
     end
   end
 
   @impl true
-  def id(socket), do: "users_socket:#{socket.assigns.user_id}"
+  def id(socket) do
+    "users_socket:#{socket.assigns.user_id}"
+  end
 end

@@ -154,6 +154,7 @@ async function setOnlineFunctionsWithToken(e) {
     // console.log("[userSocket] already set");
     return;
   }
+
   return await setOnLineFunctions({ user_token, user_id });
 }
 
@@ -174,16 +175,19 @@ async function setOnLineFunctions({ user_token, user_id }) {
     import("@js/user_socket/userSocket"),
     import("@js/components/setPresence"),
   ]);
-  const userSocket = await setUserSocket(user_token);
+  const userSocket = await setUserSocket();
   userSocket.onOpen(async () => {
     log("[userSocket]: opened for:", user_id);
 
-    await setPresence(userSocket, "proxy:presence", user_token);
+    await setPresence(userSocket, "proxy:presence", user_token, user_id);
     setAppState({
       userToken: user_token,
       userSocket,
     });
     window.dispatchEvent(new CustomEvent("user-socket-ready", {}));
+    const { useChannel } = await import("@js/user_socket/useChannel");
+    const channel = await useChannel(userSocket, `users_socket:${user_id}`, {});
+    channel.on("refreshed", (payload) => console.log(payload));
     return;
   });
 }

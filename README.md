@@ -12,6 +12,8 @@ This design enables:
 
 ✅ Reconciliation with a central, trusted source of truth when back online
 
+> A page won't be cached if it is not visited. This is because we don't want ot preload pages as it will capture an uotdated CSRF token.
+
 ## Architecture at a glance
 
 - Client-side CRDTs (`Yjs`) manage local state changes (e.g. counter updates), even when offline
@@ -98,7 +100,7 @@ The standalone PWA is 2.1 MB (page weigth).
     - [Yjs-Ch and PhxSync stock "manager"](#yjs-ch-and-phxsync-stock-manager)
     - [Pg-Sync-Stock](#pg-sync-stock)
     - [FlightMap](#flightmap)
-  - [Login and rotating access token](#login-and-rotating-access-token)
+  - [Login](#login)
   - [Navigation](#navigation)
   - [Vite](#vite)
     - [Package.json and `pnpm` workspace (nor not)](#packagejson-and-pnpm-workspace-nor-not)
@@ -525,25 +527,19 @@ sequenceDiagram
     end
 ```
 
-## Login and rotating access token
+## Login
 
 The flow is:
 
-- Live login page => POST controller => redirect to a logged-in controller => display menu for live_navigation
+- Live login page => POST controller => redirect to a logged-in LiveView => authorized to "live_navigate"
 
-It displays a dummy login, just to assign a user_id and an "access\_\_token" and a "refresh_token".
+It displays a dummy login, just to assign a (auto-incremented) user_id and an "access\_\_token".
 
-The _access token_ is passed into the session, thus avialable in the LiveView, and the _refresh token_ is saved into a cookie.
+The _access token_ is passed into the session, thus avialable in the LiveView.
 
-We use the _access token_ in the `connect/3` of "UserSocket". If it fails, it returns an error.
-
-In "userSocket.js", we use [Socket.onError](https://hexdocs.pm/phoenix/js/index.html#socketonerror).
-
-The error sent by the server ("user_socket.ex") is captured in this listener.
-We trigger a `fetch("POST")` with credentials (the "refresh" cookie) and CSRF to the "/refresh" endpoint.
-It will renew the _access_token_ and the _refresh token_.
-
-We stop and reconnect the userSocket with the new credentials.
+We use the _csrsf token_ to build the custom "userSocket".
+With this, you get the session via the `connect_info` in the `connect/3` of "UserSocket".
+You can now check if the token is expired or not, and against the database.
 
 ## Navigation
 
@@ -637,7 +633,7 @@ In "dev.exs", use the following in "config :liveview_pwa, LiveviewPwaWeb.Endpoin
 live_reload: [
     web_console_logger: true,
     patterns: [
-      ~r"lib/liveview_pwa_web/(controllers|live|components|router)/.*\.(ex|heex)$",
+      ~r"lib/liveview_pwa_web/(controllers|live|components|router|channels)/.*\.(ex|heex)$",
       ~r"lib/liveview_pwa_web/.*/.*\.heex$"
     ]
   ],
@@ -735,6 +731,7 @@ Then, in "css/app.css", you import tailwindcss and add the `@source` where you u
 
 ```css
 @import tailwindcss source(none);
+@source "../css";
 @source "../**/.*{js, jsx}";
 @source "../../lib/liveview_pwa_web/";
 @plugin "daisyui";

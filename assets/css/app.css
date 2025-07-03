@@ -2,8 +2,8 @@
    https://tailwindcss.com/docs/configuration */
 
 @import "tailwindcss";
-
-@source "../js";
+@source "../css";
+@source "../**/.*{js,jsx}";
 @source "../../lib/liveview_pwa_web/";
 
 @plugin "daisyui";

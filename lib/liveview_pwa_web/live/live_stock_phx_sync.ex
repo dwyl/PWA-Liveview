@@ -6,7 +6,6 @@ defmodule LiveviewPwaWeb.StockPhxSyncLive do
 
   alias LiveviewPwa.PhxSyncCount
   alias LiveviewPwaWeb.{Menu, PwaLiveComp, Users}
-  # alias LiveviewPwaWeb.Presence
 
   require Logger
 

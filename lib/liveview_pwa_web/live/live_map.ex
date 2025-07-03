@@ -14,8 +14,6 @@ defmodule LiveviewPwaWeb.MapLive do
   alias Phoenix.LiveView.AsyncResult
   alias Phoenix.PubSub
 
-  # alias LiveviewPwaWeb.Presence
-
   require Logger
 
   @impl true

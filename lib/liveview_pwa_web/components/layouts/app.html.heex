@@ -5,11 +5,12 @@
         <button
           id="hamburger-menu"
           type="button"
-          class="flex flex-col justify-center items-center w-8 h-8 space-y-1 text-black"
+          class="cursor-pointer tooltip tooltip-left flex flex-col justify-center items-center w-8 h-8 space-y-1 text-black"
           phx-click={
             JS.toggle(to: "#tech-menu") |> JS.toggle_class("menu-open", to: "#hamburger-menu")
           }
           aria-label="Toggle menu"
+          data-tip="Tech info"
         >
           <.icon name="hero-bars-3" />
         </button>
@@ -27,6 +28,8 @@
           id="clear-cache-button"
           phx-click={JS.dispatch("phx:clear-cache")}
           aria-label="clear cache"
+          class="cursor-pointer tooltip tooltip-left"
+          data-tip="Reset SW cache and redirect"
         >
           <.icon name="hero-arrow-path" class="h-5 w-5" />
         </button>

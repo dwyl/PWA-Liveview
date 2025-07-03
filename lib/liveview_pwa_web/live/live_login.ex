@@ -1,7 +1,8 @@
 defmodule LiveviewPwaWeb.LoginLive do
   use LiveviewPwaWeb, :live_view
 
-  alias LiveviewPwaWeb.{Menu, PwaLiveComp}
+  alias LiveviewPwaWeb.Api.UserTokenController
+  alias LiveviewPwaWeb.{Endpoint, Menu, PwaLiveComp}
 
   require Logger
 
@@ -24,8 +25,8 @@ defmodule LiveviewPwaWeb.LoginLive do
         !@user_id && "bg-orange-200"
       ]}>
         <div class="p-6 space-y-6 sm:p-8 text-center">
-          <%= if @user_id do %>
-            <h1 class="text-2xl font-bold text-orange-300">
+          <%= if not is_nil(@user_id) and @not_expired do %>
+            <h1 class="text-2xl font-bold text-orange-200">
               Start Browsing
             </h1>
             <div class="border border-black bg-orange-200 rounded-lg p-4 mt-2">
@@ -34,14 +35,14 @@ defmodule LiveviewPwaWeb.LoginLive do
               </p>
             </div>
           <% else %>
-            <h1 class="text-2xl font-bold text-indigo-800">
+            <h1 class="text-2xl font-bold text-midnightblue">
               My dummy Login
             </h1>
             <.form for={%{}} action={~p"/set_session"}>
               <button
                 type="submit"
                 aria-label="Login as Guest"
-                class="w-full text-xl btn btn-soft btn-primary"
+                class="w-full text-xl btn btn-primary"
               >
                 Click here!
               </button>
@@ -55,22 +56,64 @@ defmodule LiveviewPwaWeb.LoginLive do
 
   @impl true
   def mount(_params, session, socket) do
-    user_id = session["user_id"]
-    os = session["os"]
+    os = Map.get(session, "os", nil)
+    user_token = Map.get(session, "user_token", nil)
+    user_id = Map.get(session, "user_id", nil)
+
     env = Application.fetch_env!(:liveview_pwa, :env)
 
-    socket =
-      socket
-      |> assign(:user_id, user_id)
-      |> assign(:os, os)
-      |> assign(:env, env)
-      |> assign(:trigger, false)
-      |> assign(:update_available, false)
-      |> assign(:active_path, "/")
-      |> assign(:user_token, session["user_token"])
-      |> assign(:page_title, "Login")
+    access_ttl = UserTokenController.access_ttl()
+    access_salt = UserTokenController.access_salt()
 
-    {:ok, socket}
+    case Phoenix.Token.verify(Endpoint, access_salt, user_token, max_age: access_ttl) do
+      {:ok, ^user_id} ->
+        socket =
+          socket
+          |> assign(:user_id, user_id)
+          |> assign(:os, os)
+          |> assign(:env, env)
+          |> assign(:not_expired, true)
+          |> assign(:trigger, false)
+          |> assign(:update_available, false)
+          |> assign(:active_path, "/")
+          |> assign(:user_token, user_token)
+          |> assign(:page_title, "Login")
+
+        {:ok, socket}
+
+      {:error, :expired} ->
+        LiveviewPwa.User.revoke(user_token)
+
+        socket =
+          socket
+          |> assign(:user_id, nil)
+          |> assign(:os, os)
+          |> assign(:env, env)
+          |> assign(:not_expired, false)
+          |> assign(:trigger, false)
+          |> assign(:update_available, false)
+          |> assign(:active_path, "/")
+          |> assign(:user_token, nil)
+          |> assign(:page_title, "Login")
+          |> put_flash(:info, "Session expired")
+
+        {:ok, socket}
+
+      _ ->
+        socket =
+          socket
+          |> assign(:user_id, nil)
+          |> assign(:os, os)
+          |> assign(:env, env)
+          |> assign(:not_expired, false)
+          |> assign(:trigger, false)
+          |> assign(:update_available, false)
+          |> assign(:active_path, "/")
+          |> assign(:user_token, nil)
+          |> assign(:page_title, "Login")
+
+        {:ok, socket}
+    end
   end
 
   @impl true

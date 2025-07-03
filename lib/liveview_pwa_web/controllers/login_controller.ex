@@ -1,58 +1,52 @@
 defmodule LiveviewPwaWeb.LoginController do
   use LiveviewPwaWeb, :controller
 
-  alias LiveviewPwaWeb.Api.UserTokenController, as: ApiUserToken
-  alias LiveviewPwaWeb.Endpoint
-  alias Phoenix.Token
+  alias LiveviewPwa.{Sql3Repo, User}
 
   require Logger
-
-  # CONTROLLER VERSION
-  # This is the initial page load, we don't have a user_id yet
-  # so we just render the login page with no user_id
-  # after the POST request, we re-render this page with the user_id
-  def index(conn, _params) do
-    os = get_session(conn, :os) || "unknown"
-    id = get_session(conn, :user_id) || nil
-    env = Application.fetch_env!(:liveview_pwa, :env)
-
-    conn
-    |> put_layout(html: {LiveviewPwaWeb.Layouts, :app})
-    |> assign(:os, os)
-    |> assign(:user_id, id)
-    |> assign(:env, env)
-    |> assign(:page_title, "Login")
-    |> assign(:active_path, "/")
-    |> render(:login)
-  end
 
   @doc """
   POST endpoint to set the session with a user token and refresh token in a cookie
   """
   def set_session(conn, _params) do
-    user_id = to_string(:rand.uniform(1_000_000))
-    access_salt = ApiUserToken.access_salt()
-    refresh_salt = ApiUserToken.refresh_salt()
-
-    access_token =
-      Token.sign(Endpoint, access_salt, user_id, max_age: ApiUserToken.access_ttl())
-
-    refresh_token =
-      Token.sign(Endpoint, refresh_salt, user_id, max_age: ApiUserToken.refresh_ttl())
+    user =
+      Map.get(conn.assigns, :user_id, nil) |> get_or_create_user()
 
     os = get_session(conn, :os) || "unknown"
 
-    conn
-    |> configure_session(renew: true)
-    |> clear_session()
-    |> put_session(:os, os)
-    |> put_session(:user_id, user_id)
-    |> put_session(:user_token, access_token)
-    |> put_resp_cookie("refresh", refresh_token,
-      http_only: true,
-      secure: true,
-      same_site: "Strict"
-    )
-    |> redirect(to: ~p"/logged-in", replace: false)
+    case LiveviewPwa.User.add_token(user.id) do
+      {:ok, access_token, refresh_token} ->
+        conn
+        |> configure_session(renew: true)
+        |> clear_session()
+        |> put_session(:os, os)
+        |> put_session(:user_id, user.id)
+        |> put_session(:user_token, access_token)
+        |> put_session(:refresh_token, refresh_token)
+        #
+        # |> put_resp_cookie("refresh", refresh_token,
+        #   http_only: true,
+        #   secure: true,
+        #   same_site: "Strict"
+        # )
+        |> redirect(to: ~p"/", replace: false)
+
+      {:error, _} ->
+        Logger.error("Failed to add user token")
+
+        conn
+        |> put_flash(:error, "Failed to create user session")
+        |> redirect(to: ~p"/")
+    end
+  end
+
+  defp get_or_create_user(user_id) do
+    case user_id do
+      nil ->
+        LiveviewPwa.User.create_user()
+
+      id ->
+        Sql3Repo.get(User, id)
+    end
   end
 end
