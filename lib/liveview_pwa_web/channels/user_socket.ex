@@ -37,7 +37,7 @@ defmodule LiveviewPwaWeb.UserSocket do
   end
 
   def authenticate(user_token, user_id) do
-    with %{id: ^user_id, is_valid: true} <-
+    with %User{id: ^user_id, is_valid: true} <-
            User.lookup(user_token),
          {:ok, ^user_id} <-
            User.check_token(user_token) do

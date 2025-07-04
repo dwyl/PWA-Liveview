@@ -107,8 +107,19 @@ defmodule LiveviewPwa.User do
     end
   end
 
+  def check_token(user_token) when is_nil(user_token) do
+    {:error, :login}
+  end
+
   def check_token(user_token) do
-    Token.verify(Endpoint, access_salt(), user_token, max_age: access_ttl())
+    case Token.verify(Endpoint, access_salt(), user_token, max_age: access_ttl()) do
+      {:ok, user_id} ->
+        {:ok, user_id}
+
+      {:error, _} ->
+        revoke_by_token(user_token)
+        {:error, :unauthorized}
+    end
   end
 
   def access_ttl, do: Application.get_env(:liveview_pwa, :access_token_ttl, 30)

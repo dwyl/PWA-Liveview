@@ -74,9 +74,7 @@ defmodule LiveviewPwaWeb.LoginLive do
 
         {:ok, socket}
 
-      {:error, :expired} ->
-        User.revoke_by_token(user_token)
-
+      {:error, :unauthorized} ->
         socket =
           socket
           |> assign(:user_id, nil)

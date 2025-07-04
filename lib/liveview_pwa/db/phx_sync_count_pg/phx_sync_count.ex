@@ -59,7 +59,6 @@ defmodule LiveviewPwa.PhxSyncCount do
     |> PgRepo.update()
   end
 
-  @spec set_counter(integer()) :: {:ok, t()} | {:error, :not_found} | {:error, Ecto.Changeset.t()}
   def set_counter(new_counter) do
     case current() do
       nil -> {:error, :not_found}
@@ -67,7 +66,6 @@ defmodule LiveviewPwa.PhxSyncCount do
     end
   end
 
-  @spec decrement(integer()) :: {:ok, integer()} | {:error, any()}
   def decrement(d) do
     PgRepo.transaction(fn ->
       case current() do
