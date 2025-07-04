@@ -93,10 +93,8 @@ if config_env() == :prod do
   #   System.get_env("ACCESS_TOKEN_MAX_AGE", "15") |> String.to_integer()
 
   config :liveview_pwa,
-    # 15 minutes
-    access_token_ttl: 60 * 60,
-    # 1 day
-    refresh_token_ttl: 60 * 60 * 24
+    # 1 hour
+    access_token_ttl: 60 * 60
 
   config :logger, level: :info
 

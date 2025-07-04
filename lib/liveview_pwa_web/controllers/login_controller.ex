@@ -14,26 +14,17 @@ defmodule LiveviewPwaWeb.LoginController do
 
     os = get_session(conn, :os) || "unknown"
 
-    case LiveviewPwa.User.add_token(user.id) do
-      {:ok, access_token, refresh_token} ->
+    case User.add_token(%User{} = user) do
+      {:ok, user} ->
         conn
         |> configure_session(renew: true)
         |> clear_session()
         |> put_session(:os, os)
         |> put_session(:user_id, user.id)
-        |> put_session(:user_token, access_token)
-        |> put_session(:refresh_token, refresh_token)
-        #
-        # |> put_resp_cookie("refresh", refresh_token,
-        #   http_only: true,
-        #   secure: true,
-        #   same_site: "Strict"
-        # )
+        |> put_session(:user_token, user.access_token)
         |> redirect(to: ~p"/", replace: false)
 
-      {:error, _} ->
-        Logger.error("Failed to add user token")
-
+      :error ->
         conn
         |> put_flash(:error, "Failed to create user session")
         |> redirect(to: ~p"/")
@@ -43,7 +34,7 @@ defmodule LiveviewPwaWeb.LoginController do
   defp get_or_create_user(user_id) do
     case user_id do
       nil ->
-        LiveviewPwa.User.create_user()
+        User.create_user()
 
       id ->
         Sql3Repo.get(User, id)

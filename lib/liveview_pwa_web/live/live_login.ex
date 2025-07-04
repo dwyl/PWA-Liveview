@@ -2,7 +2,7 @@ defmodule LiveviewPwaWeb.LoginLive do
   use LiveviewPwaWeb, :live_view
 
   alias LiveviewPwa.User
-  alias LiveviewPwaWeb.{Endpoint, Menu, PwaLiveComp}
+  alias LiveviewPwaWeb.{Menu, PwaLiveComp}
 
   require Logger
 
@@ -39,11 +39,7 @@ defmodule LiveviewPwaWeb.LoginLive do
               My dummy Login
             </h1>
             <.form for={%{}} action={~p"/set_session"}>
-              <button
-                type="submit"
-                aria-label="Login as Guest"
-                class="w-full text-xl btn btn-primary"
-              >
+              <button type="submit" aria-label="Login as Guest" class="w-full text-xl btn btn-primary">
                 Click here!
               </button>
             </.form>
@@ -62,10 +58,7 @@ defmodule LiveviewPwaWeb.LoginLive do
 
     env = Application.fetch_env!(:liveview_pwa, :env)
 
-    access_ttl = User.access_ttl()
-    access_salt = User.access_salt()
-
-    case Phoenix.Token.verify(Endpoint, access_salt, user_token, max_age: access_ttl) do
+    case User.check_token(user_token) do
       {:ok, ^user_id} ->
         socket =
           socket
@@ -82,7 +75,7 @@ defmodule LiveviewPwaWeb.LoginLive do
         {:ok, socket}
 
       {:error, :expired} ->
-        LiveviewPwa.User.revoke(user_token)
+        User.revoke_by_token(user_token)
 
         socket =
           socket
@@ -118,12 +111,11 @@ defmodule LiveviewPwaWeb.LoginLive do
 
   @impl true
   def handle_event("create", _, socket) do
-    Logger.debug("click")
     {:noreply, assign(socket, :trigger, true)}
   end
 
   def handle_event("sw-lv-ready", _, socket) do
-    Logger.warning(" LOgin sw-lv-ready")
+    Logger.warning(" Login sw-lv-ready")
     {:noreply, put_flash(socket, :info, "Service Worker ready")}
   end
 

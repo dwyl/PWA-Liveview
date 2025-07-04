@@ -8,7 +8,7 @@ defmodule LiveviewPwa.User do
   import Ecto.Changeset
   import Ecto.Query
 
-  alias LiveviewPwa.{Sql3Repo, User}
+  alias LiveviewPwa.{Sql3Repo}
   alias LiveviewPwaWeb.Endpoint
   alias Phoenix.Token
 
@@ -16,14 +16,17 @@ defmodule LiveviewPwa.User do
 
   schema "users" do
     field(:user_token, :string)
-    field(:refresh_token, :string)
     field(:is_valid, :boolean, default: true)
     timestamps()
   end
 
   def changeset(%__MODULE__{} = user, attrs) do
     user
-    |> cast(attrs, [:user_token, :refresh_token, :is_valid])
+    |> cast(attrs, [:user_token, :is_valid])
+  end
+
+  def hash(token) do
+    :crypto.hash(:sha256, token) |> Base.encode16(case: :lower)
   end
 
   def create_user do
@@ -33,58 +36,82 @@ defmodule LiveviewPwa.User do
   end
 
   def lookup(user_token) do
-    query = from(u in __MODULE__, where: u.user_token == ^user_token)
+    token = hash(user_token)
+    query = from(u in __MODULE__, where: u.user_token == ^token)
     Sql3Repo.one(query)
   end
 
-  def add_token(user_id) do
+  def add_token(%__MODULE__{} = user) do
     access_token =
-      Token.sign(Endpoint, access_salt(), user_id, max_age: access_ttl())
+      Token.sign(Endpoint, access_salt(), user.id, max_age: access_ttl())
 
-    refresh_token =
-      Token.sign(Endpoint, refresh_salt(), user_id, max_age: refresh_ttl())
+    access_hash =
+      hash(access_token)
 
-    case Sql3Repo.get(__MODULE__, user_id) do
-      nil ->
-        {:error, :user_not_found}
+    user
+    |> changeset(%{user_token: access_hash})
+    |> Sql3Repo.update()
+    |> case do
+      {:ok, user} ->
+        {:ok, Map.merge(user, %{access_token: access_token})}
 
-      user ->
-        user
-        |> changeset(%{user_token: access_token, refresh_token: refresh_token})
-        |> Sql3Repo.update()
-
-        {:ok, access_token, refresh_token}
+      {:error, changeset} ->
+        Logger.debug("#{inspect(changeset)}")
+        :error
     end
   end
 
-  def revoke(user_id_or_user_token) do
-    value = "#{user_id_or_user_token}"
-
-    User.lookup(value)
-    |> case do
-      nil ->
-        Sql3Repo.get(__MODULE__, value)
-        |> case do
-          nil ->
-            Logger.warning("User not found: #{value}")
-            {:error, :user_not_found}
-
-          user ->
-            revoke(user.user_token)
-        end
-
-      user ->
-        Logger.warning("Revoking user token: #{user.user_token}")
-
-        {:ok, _} =
-          changeset(user, %{is_valid: false}) |> Sql3Repo.update()
+  def revoke_by_user_id(user_id) when is_integer(user_id) do
+    case Sql3Repo.update_all(
+           from(u in __MODULE__, where: u.id == ^user_id),
+           set: [is_valid: false]
+         ) do
+      {0, _} -> {:error, :user_not_found}
+      {1, _} -> {:ok, :revoked}
     end
+
+    # Sql3Repo.get(__MODULE__, user_id)
+    # |> case do
+    #   nil ->
+    #     {:error, :user_not_found}
+
+    #   user ->
+    #     user
+    #     |> changeset(%{is_valid: false})
+    #     |> Sql3Repo.update()
+    # end
+  end
+
+  def revoke_by_token(user_token) when is_binary(user_token) do
+    hash = hash(user_token)
+
+    case Sql3Repo.update_all(
+           from(u in __MODULE__, where: u.user_token == ^hash),
+           set: [is_valid: false]
+         ) do
+      {0, _} -> {:error, :token_not_found}
+      {1, _} -> {:ok, :revoked}
+    end
+  end
+
+  def check_user(user_id, user_token) do
+    Token.verify(Endpoint, access_salt(), user_token, max_age: access_ttl())
+    |> case do
+      {:ok, ^user_id} ->
+        :ok
+
+      {:error, _reason} ->
+        Logger.warning("User #{user_id} not found or token expired")
+        revoke_by_token(user_token)
+        {:error, :unauthorized}
+    end
+  end
+
+  def check_token(user_token) do
+    Token.verify(Endpoint, access_salt(), user_token, max_age: access_ttl())
   end
 
   def access_ttl, do: Application.get_env(:liveview_pwa, :access_token_ttl, 30)
 
-  def refresh_ttl, do: Application.get_env(:liveview_pwa, :refresh_token_ttl, 60)
-
   def access_salt, do: "user token"
-  def refresh_salt, do: "refresh token"
 end

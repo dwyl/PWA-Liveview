@@ -36,8 +36,6 @@ config :liveview_pwa, LiveviewPwaWeb.Endpoint,
 
 # Configure token TTL settings for testting: 30 seconds for access token
 config :liveview_pwa, :access_token_ttl, 30
-# 2 minutes for refresh token
-config :liveview_pwa, :refresh_token_ttl, 60 * 2
 
 # Enable dev routes for dashboard and mailbox
 config :liveview_pwa, dev_routes: true

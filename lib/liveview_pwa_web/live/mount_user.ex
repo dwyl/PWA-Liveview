@@ -16,6 +16,8 @@ defmodule LiveviewPwaWeb.MountUser do
   import Phoenix.Component
   import Phoenix.LiveView
 
+  alias LiveviewPwa.User
+
   require Logger
 
   @max 20
@@ -26,7 +28,7 @@ defmodule LiveviewPwaWeb.MountUser do
 
     user_token = Map.get(session, "user_token", nil)
 
-    case check_user(user_id, user_token) do
+    case User.check_user(user_id, user_token) do
       :ok ->
         {:cont,
          socket
@@ -42,24 +44,14 @@ defmodule LiveviewPwaWeb.MountUser do
          |> attach_hook(:active, :handle_params, &handle_path_params/3)
          |> attach_hook(:sw, :handle_event, &handle_pwa_event/3)}
 
-      {:error, :not_found} ->
-        Logger.warning("User #{user_id} not found on mount")
+      {:error, :unauthorized} ->
+        Logger.warning("User #{user_id} unauthorized on mount")
         {:halt, redirect(socket, to: ~p"/")}
     end
   end
 
   def on_mount(:ensure_authenticated, _params, _session, socket) do
     {:halt, redirect(socket, to: ~p"/")}
-  end
-
-  defp check_user(user_id, user_token) do
-    user = LiveviewPwa.User.lookup(user_token)
-
-    if Map.get(user, :id) == user_id and Map.get(user, :is_valid) do
-      :ok
-    else
-      {:error, :not_found}
-    end
   end
 
   #  shared assigns and PWA button handler delegated to a LiveComponent

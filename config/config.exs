@@ -27,10 +27,6 @@ config :liveview_pwa, LiveviewPwaWeb.Endpoint,
 config :liveview_pwa, :csp_nonce, :crypto.strong_rand_bytes(16) |> Base.encode16()
 
 config :liveview_pwa,
-  access_token_ttl: 60,
-  refresh_token_ttl: 2 * 60
-
-config :liveview_pwa,
   ecto_repos: [LiveviewPwa.PgRepo, LiveviewPwa.Sql3Repo]
 
 config :liveview_pwa, env: config_env()
