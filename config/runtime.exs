@@ -94,7 +94,7 @@ if config_env() == :prod do
 
   config :liveview_pwa,
     # 1 hour
-    access_token_ttl: 30
+    access_token_ttl: 60 * 60
 
   config :logger, level: :info
 
