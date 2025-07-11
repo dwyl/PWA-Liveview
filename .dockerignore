@@ -62,4 +62,5 @@ LICENSE
 .formatter.exs
 cre.txt
 mcp-proxy
+/lib/mix/
 
