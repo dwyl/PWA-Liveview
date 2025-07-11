@@ -1,0 +1,2 @@
+# Environment configuration added by mix vite.install
+config :<%= @app_name %>, :env, config_env()

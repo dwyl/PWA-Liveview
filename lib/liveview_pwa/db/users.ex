@@ -35,6 +35,16 @@ defmodule LiveviewPwa.User do
     |> Sql3Repo.insert!()
   end
 
+  def get_or_create_user(user_id) do
+    case user_id do
+      nil ->
+        create_user()
+
+      id ->
+        Sql3Repo.get(User, id)
+    end
+  end
+
   def lookup(user_token) do
     token = hash(user_token)
     query = from(u in __MODULE__, where: u.user_token == ^token)

@@ -1,7 +1,7 @@
 defmodule LiveviewPwaWeb.LoginController do
   use LiveviewPwaWeb, :controller
 
-  alias LiveviewPwa.{Sql3Repo, User}
+  alias LiveviewPwa.User
 
   require Logger
 
@@ -10,7 +10,7 @@ defmodule LiveviewPwaWeb.LoginController do
   """
   def set_session(conn, _params) do
     user =
-      Map.get(conn.assigns, :user_id, nil) |> get_or_create_user()
+      Map.get(conn.assigns, :user_id, nil) |> User.get_or_create_user()
 
     os = get_session(conn, :os) || "unknown"
 
@@ -28,16 +28,6 @@ defmodule LiveviewPwaWeb.LoginController do
         conn
         |> put_flash(:error, "Failed to create user session")
         |> redirect(to: ~p"/")
-    end
-  end
-
-  defp get_or_create_user(user_id) do
-    case user_id do
-      nil ->
-        User.create_user()
-
-      id ->
-        Sql3Repo.get(User, id)
     end
   end
 end

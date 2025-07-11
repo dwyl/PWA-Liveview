@@ -78,9 +78,9 @@ defmodule LiveviewPwaWeb.Router do
     end
   end
 
-  pipe_through :dashboard
-
   scope "/" do
+    pipe_through :dashboard
+
     live_dashboard "/dashboard",
       metrics: LiveviewPwaWeb.Telemetry,
       ecto_repos: [LiveviewPwa.Sql3Repo, LiveviewPwa.PgRepo]

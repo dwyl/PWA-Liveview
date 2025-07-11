@@ -20,9 +20,9 @@
     <link rel="icon" href="icons/favicon-512.png" type="image/png" sizes="512x512" />
     <link rel="mask-icon" href="icons/pwa-maskable-192.png" color="#FFFFFF" />
     <link rel="mask-icon" href="icons/pwa-maskable-512.png" color="#FFFFFF" />
-    <link rel="manifest" href="/manifest.webmanifest" />
+    <link :if={@env === :prod} rel="manifest" href="/manifest.webmanifest" />
 
-    <link :if={@env === :prod} rel="stylesheet" href={Vite.path("css/app.css")} />
+    <link :if={@env === :prod} rel="stylesheet" href={Vite.path("css/main.css")} />
 
     <script
       :if={@env === :dev}
