@@ -59,6 +59,7 @@ defmodule LiveviewPwa.MixProject do
       {:quokka, "~> 2.7", only: [:dev, :test], runtime: false},
       {:sobelow, "~> 0.13", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:tidewave, "~> 0.2", only: :dev},
       {:floki, ">= 0.30.0", only: :test}
     ]
   end

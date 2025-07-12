@@ -29,6 +29,7 @@ defmodule LiveviewPwaWeb.LoginLive do
             <h1 class="text-2xl font-bold text-orange-200">
               Start Browsing
             </h1>
+            <p class="text-white">You need to visit the pages to cache them!</p>
             <div class="border border-black bg-orange-200 rounded-lg p-4 mt-2">
               <p class="text-lg font-medium text-indigo-900">
                 You are currently logged in as user: <code>{@user_id}</code>

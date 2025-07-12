@@ -20,14 +20,14 @@
         "yjs": "^13.6.27"
     },
     "devDependencies": {
-        "@eslint/js": "^9.30.1",
+        "@eslint/js": "^9.31.0",
         "@mongodb-js/zstd": "^2.0.1",
         "@tailwindcss/forms": "^0.5.10",
         "@tailwindcss/upgrade": "^4.1.11",
         "@tailwindcss/vite": "^4.1.11",
         "@vite-pwa/assets-generator": "^1.0.0",
         "daisyui": "^5.0.46",
-        "eslint": "^9.30.1",
+        "eslint": "^9.31.0",
         "eslint-plugin-solid": "^0.14.5",
         "fast-glob": "^3.3.3",
         "lightningcss": "^1.30.1",
@@ -52,5 +52,5 @@
         "lint": "eslint . --ext .js,.jsx",
         "generate": "npx pwa-assets-generator --preset minimal-2023 ./logo.png"
     },
-    "packageManager": "pnpm@10.12.4"
+    "packageManager": "pnpm@10.13.1"
 }
