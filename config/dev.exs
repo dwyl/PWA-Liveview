@@ -79,3 +79,6 @@ config :phoenix_live_view,
   # different ports.
 
   enable_expensive_runtime_checks: true
+
+# Configure environment for Vite asset handling
+config :liveview_pwa, :env, :dev

@@ -37,17 +37,15 @@ defmodule LiveviewPwaWeb.Endpoint do
       connect_info: [{:session, @session_options}],
       # <- reduces payload size of airports
       compress: true,
-      csp_nonce_assign_key: :main_nonce,
-      check_origin: ["http://localhost:4000", "https://liveview-pwa.fly.dev"]
+      check_origin: true
     ],
     longpoll: [connect_info: [session: @session_options]]
 
   socket "/user", LiveviewPwaWeb.UserSocket,
     websocket: [
-      csp_nonce_assign_key: :main_nonce,
       connect_info: [
         session: @session_options,
-        check_origin: ["http://localhost:4000", "https://liveview-pwa.fly.dev"]
+        check_origin: true
       ]
     ]
 
@@ -57,7 +55,7 @@ defmodule LiveviewPwaWeb.Endpoint do
   plug Plug.Static,
     at: "/",
     from: :liveview_pwa,
-    encodings: [{"zstd", ".zstd"}],
+    encodings: [{"gzip", ".gz"}],
     brotli: not code_reloading?,
     gzip: not code_reloading?,
     only: LiveviewPwaWeb.static_paths(),
@@ -71,10 +69,6 @@ defmodule LiveviewPwaWeb.Endpoint do
 
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.
-
-  if code_reloading? do
-    plug Tidewave
-  end
 
   if code_reloading? do
     socket "/phoenix/live_reload/socket", Phoenix.LiveReloader.Socket

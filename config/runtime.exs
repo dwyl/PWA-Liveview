@@ -83,8 +83,7 @@ if config_env() == :prod do
       :inet6
     ],
     secret_key_base: secret_key_base,
-    check_origin: ["//#{host}", "//localhost"],
-    force_ssl: [hsts: true]
+    check_origin: ["http://localhost:4000", "https://liveview-pwa.fly.dev"]
 
   config :liveview_pwa, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
@@ -134,4 +133,7 @@ if config_env() == :prod do
   #       force_ssl: [hsts: true]
   #
   # Check `Plug.SSL` for all available options in `force_ssl`.
+
+  # Configure environment for Vite asset handling
+  config :liveview_pwa, :env, :prod
 end

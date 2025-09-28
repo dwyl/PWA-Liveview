@@ -4,14 +4,15 @@ packages:
   - deps/phoenix_html
   - deps/phoenix_live_view
 
-onlyBuiltDependencies:
-  - "@mongodb-js/zstd"
-  - "@tailwindcss/oxide"
-  - "esbuild"
-  - "sharp"
-  - "tree-sitter"
-  - "tree-sitter-javascript"
-
 ignoredBuiltDependencies:
-  - "pngquant-bin"
-  - "tree-sitter-typescript"
+  - pngquant-bin
+  - tree-sitter-typescript
+
+onlyBuiltDependencies:
+  - '@mongodb-js/zstd'
+  - '@tailwindcss/oxide'
+  - esbuild
+  - sharp
+  - tree-sitter
+  - tree-sitter-javascript
+  - unrs-resolver

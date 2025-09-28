@@ -9,6 +9,7 @@ defmodule LiveviewPwa.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
+      listeners: [Phoenix.CodeReloader],
       deps: deps()
     ]
   end
@@ -29,11 +30,11 @@ defmodule LiveviewPwa.MixProject do
 
   defp deps do
     [
-      {:phoenix, "~> 1.7"},
-      {:phoenix_html, "~> 4.1"},
-      {:phoenix_live_view, "~> 1.0"},
+      {:phoenix, "~> 1.8"},
+      {:phoenix_html, "~> 4.2"},
+      {:phoenix_live_view, "~> 1.1"},
       {:phoenix_ecto, "~> 4.6"},
-      {:bandit, "~> 1.6"},
+      {:bandit, "~> 1.8"},
       {:req, "~> 0.5.8"},
       {:nimble_csv, "~> 1.2"},
       {:exqlite, "0.30.1"},
@@ -42,8 +43,8 @@ defmodule LiveviewPwa.MixProject do
       {:ecto_psql_extras, "~> 0.6"},
       {:ecto_sqlite3_extras, "~> 1.2.0"},
       {:postgrex, "~> 0.20.0"},
-      {:electric, "~> 1.0.13"},
-      {:phoenix_sync, "~> 0.4.3"},
+      {:electric, "~> 1.1"},
+      {:phoenix_sync, "~> 0.6"},
       {:ua_parser, "~> 1.9.3"},
       {:phoenix_live_dashboard, "~> 0.8.3"},
       {:telemetry_metrics, "~> 1.0"},
@@ -51,7 +52,12 @@ defmodule LiveviewPwa.MixProject do
       {:jason, "~> 1.4"},
       {:dns_cluster, "~> 0.1.1"},
       {:heroicons,
-       github: "tailwindlabs/heroicons", tag: "v2.1.1", sparse: "optimized", app: false, compile: false, depth: 1},
+       github: "tailwindlabs/heroicons",
+       tag: "v2.1.1",
+       sparse: "optimized",
+       app: false,
+       compile: false,
+       depth: 1},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:credo_naming, "~> 2.1", only: [:dev, :test], runtime: false},
@@ -59,7 +65,6 @@ defmodule LiveviewPwa.MixProject do
       {:quokka, "~> 2.7", only: [:dev, :test], runtime: false},
       {:sobelow, "~> 0.13", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
-      {:tidewave, "~> 0.2", only: :dev},
       {:floki, ">= 0.30.0", only: :test}
     ]
   end
